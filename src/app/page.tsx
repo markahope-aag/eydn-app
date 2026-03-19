@@ -1,65 +1,88 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Show } from "@clerk/nextjs";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="flex-1 flex flex-col">
+      {/* Hero */}
+      <section className="flex-1 flex items-center justify-center bg-gradient-to-br from-rose-50 to-pink-100">
+        <div className="max-w-3xl mx-auto px-6 py-24 text-center">
+          <h1 className="text-5xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+            Plan Your Perfect Day
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-6 text-lg text-gray-600 max-w-xl mx-auto">
+            Manage your guest list, track RSVPs, organize tasks, and keep your
+            wedding budget on track — all in one place.
           </p>
+          <div className="mt-10 flex items-center justify-center gap-4">
+            <Show when="signed-in">
+              <Link
+                href="/dashboard"
+                className="rounded-full bg-rose-600 px-8 py-3 text-sm font-semibold text-white shadow hover:bg-rose-500 transition"
+              >
+                Go to Dashboard
+              </Link>
+            </Show>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Features */}
+      <section className="py-20 bg-white">
+        <div className="max-w-5xl mx-auto px-6">
+          <h2 className="text-3xl font-bold text-center text-gray-900">
+            Everything You Need
+          </h2>
+          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((f) => (
+              <div key={f.title} className="rounded-2xl border p-6">
+                <div className="text-3xl">{f.icon}</div>
+                <h3 className="mt-4 text-lg font-semibold text-gray-900">
+                  {f.title}
+                </h3>
+                <p className="mt-2 text-sm text-gray-600">{f.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
+
+const features = [
+  {
+    icon: "\u{1F4CB}",
+    title: "Guest Management",
+    description:
+      "Add guests, track RSVPs, manage meal preferences, and assign seating.",
+  },
+  {
+    icon: "\u{2705}",
+    title: "Task Checklist",
+    description:
+      "Stay organized with a categorized to-do list and due date reminders.",
+  },
+  {
+    icon: "\u{1F4B0}",
+    title: "Budget Tracker",
+    description:
+      "Set your budget and track spending across vendors and categories.",
+  },
+  {
+    icon: "\u{1F4C5}",
+    title: "Timeline",
+    description:
+      "See your countdown and key milestones on an interactive timeline.",
+  },
+  {
+    icon: "\u{1F4A1}",
+    title: "Vendor Directory",
+    description: "Keep all your vendor contacts, contracts, and notes in one spot.",
+  },
+  {
+    icon: "\u{1F4E7}",
+    title: "RSVP Invitations",
+    description: "Send digital invitations and collect RSVPs automatically.",
+  },
+];
