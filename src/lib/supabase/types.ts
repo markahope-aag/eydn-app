@@ -241,6 +241,44 @@ export type Database = {
           },
         ];
       };
+      user_roles: {
+        Row: {
+          id: string;
+          user_id: string;
+          role: "user" | "admin";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          role?: "user" | "admin";
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          role?: "user" | "admin";
+        };
+        Relationships: [];
+      };
+      app_settings: {
+        Row: {
+          key: string;
+          value: Record<string, unknown>;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value: Record<string, unknown>;
+          updated_at?: string;
+        };
+        Update: {
+          key?: string;
+          value?: Record<string, unknown>;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       seating_tables: {
         Row: {
           id: string;
