@@ -1,11 +1,18 @@
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems = [
   { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/guests", label: "Guests" },
   { href: "/dashboard/tasks", label: "Tasks" },
+  { href: "/dashboard/vendors", label: "Vendors" },
   { href: "/dashboard/budget", label: "Budget" },
+  { href: "/dashboard/guests", label: "Guests" },
+  { href: "/dashboard/wedding-party", label: "Wedding Party" },
+  { href: "/dashboard/seating", label: "Seating Chart" },
+  { href: "/dashboard/day-of", label: "Day-of Planner" },
+  { href: "/dashboard/chat", label: "Ask Eydn" },
+  { href: "/dashboard/settings", label: "Settings" },
 ];
 
 export default function DashboardLayout({
@@ -18,7 +25,7 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside className="w-64 border-r bg-white p-6 flex flex-col">
         <Link href="/dashboard" className="text-xl font-bold text-rose-600">
-          Wedding Planner
+          Eydn
         </Link>
         <nav className="mt-8 flex flex-col gap-1">
           {navItems.map((item) => (
@@ -31,8 +38,9 @@ export default function DashboardLayout({
             </Link>
           ))}
         </nav>
-        <div className="mt-auto pt-6 border-t">
+        <div className="mt-auto pt-6 border-t flex items-center gap-3">
           <UserButton />
+          <NotificationBell />
         </div>
       </aside>
 

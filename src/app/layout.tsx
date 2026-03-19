@@ -22,8 +22,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wedding Planner",
-  description: "Plan your perfect wedding day",
+  title: "Eydn",
+  description: "Your AI wedding planning guide",
 };
 
 export default function RootLayout({
@@ -40,7 +40,7 @@ export default function RootLayout({
         <ClerkProvider>
           <header className="flex items-center justify-between border-b bg-white px-6 py-3">
             <Link href="/" className="text-lg font-bold text-rose-600">
-              Wedding Planner
+              Eydn
             </Link>
             <div className="flex items-center gap-3">
               <Show when="signed-out">

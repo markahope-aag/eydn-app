@@ -1,0 +1,253 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { VENDOR_CATEGORIES, VENDOR_STATUSES } from "@/lib/vendors/categories";
+import { EmailTemplate } from "./EmailTemplate";
+
+type Vendor = {
+  id: string;
+  category: string;
+  name: string;
+  status: string;
+  poc_name: string | null;
+  poc_email: string | null;
+  poc_phone: string | null;
+  notes: string | null;
+  amount: number | null;
+  amount_paid: number | null;
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  searching: "bg-gray-100 text-gray-600",
+  contacted: "bg-blue-50 text-blue-600",
+  quote_received: "bg-yellow-50 text-yellow-700",
+  booked: "bg-green-50 text-green-600",
+  deposit_paid: "bg-emerald-50 text-emerald-600",
+  paid_in_full: "bg-rose-50 text-rose-600",
+};
+
+export default function VendorsPage() {
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [emailCategory, setEmailCategory] = useState<string | null>(null);
+
+  // Add form
+  const [newName, setNewName] = useState("");
+  const [newCategory, setNewCategory] = useState<string>(VENDOR_CATEGORIES[0]);
+
+  useEffect(() => {
+    fetch("/api/vendors")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then(setVendors)
+      .catch(() => toast.error("Failed to load vendors"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function addVendor(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newName.trim()) return;
+
+    const tempId = crypto.randomUUID();
+    const vendor: Vendor = {
+      id: tempId,
+      category: newCategory,
+      name: newName.trim(),
+      status: "searching",
+      poc_name: null,
+      poc_email: null,
+      poc_phone: null,
+      notes: null,
+      amount: null,
+      amount_paid: null,
+    };
+
+    setVendors((prev) => [...prev, vendor]);
+    setNewName("");
+    setShowAdd(false);
+
+    try {
+      const res = await fetch("/api/vendors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: vendor.name, category: vendor.category }),
+      });
+      if (!res.ok) throw new Error();
+      const saved = await res.json();
+      setVendors((prev) => prev.map((v) => (v.id === tempId ? saved : v)));
+      toast.success("Vendor added");
+    } catch {
+      setVendors((prev) => prev.filter((v) => v.id !== tempId));
+      toast.error("Failed to add vendor");
+    }
+  }
+
+  async function updateStatus(id: string, status: string) {
+    const prev = vendors;
+    setVendors((v) =>
+      v.map((x) => (x.id === id ? { ...x, status } : x))
+    );
+
+    try {
+      const res = await fetch(`/api/vendors/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setVendors(prev);
+      toast.error("Failed to update vendor");
+    }
+  }
+
+  async function deleteVendor(id: string) {
+    const prev = vendors;
+    setVendors((v) => v.filter((x) => x.id !== id));
+
+    try {
+      const res = await fetch(`/api/vendors/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast("Vendor removed");
+    } catch {
+      setVendors(prev);
+      toast.error("Failed to remove vendor");
+    }
+  }
+
+  // Group by category
+  const grouped = new Map<string, Vendor[]>();
+  for (const cat of VENDOR_CATEGORIES) {
+    const catVendors = vendors.filter((v) => v.category === cat);
+    if (catVendors.length > 0) {
+      grouped.set(cat, catVendors);
+    }
+  }
+
+  const bookedCount = vendors.filter(
+    (v) => v.status === "booked" || v.status === "deposit_paid" || v.status === "paid_in_full"
+  ).length;
+
+  if (loading) {
+    return <p className="text-sm text-gray-400 py-8">Loading vendors...</p>;
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Vendors</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {bookedCount} booked / {vendors.length} total
+          </p>
+        </div>
+        <button
+          onClick={() => setShowAdd(!showAdd)}
+          className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition"
+        >
+          Add Vendor
+        </button>
+      </div>
+
+      {showAdd && (
+        <form onSubmit={addVendor} className="mt-4 flex gap-3">
+          <input
+            type="text"
+            placeholder="Vendor name"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            className="rounded-lg border px-3 py-2 text-sm flex-1"
+            required
+            autoFocus
+          />
+          <select
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            className="rounded-lg border px-3 py-2 text-sm"
+          >
+            {VENDOR_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition"
+          >
+            Add
+          </button>
+        </form>
+      )}
+
+      <div className="mt-6 space-y-6">
+        {[...grouped.entries()].map(([category, catVendors]) => (
+          <div key={category}>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-semibold text-gray-700">{category}</h2>
+              <button
+                onClick={() => setEmailCategory(category)}
+                className="text-xs text-rose-600 hover:text-rose-500"
+              >
+                Email template
+              </button>
+            </div>
+            <div className="space-y-2">
+              {catVendors.map((vendor) => (
+                <div
+                  key={vendor.id}
+                  className="flex items-center gap-3 rounded-xl border bg-white px-4 py-3"
+                >
+                  <a
+                    href={`/dashboard/vendors/${vendor.id}`}
+                    className="flex-1 text-sm font-medium text-gray-900 hover:text-rose-600"
+                  >
+                    {vendor.name}
+                  </a>
+                  <select
+                    value={vendor.status}
+                    onChange={(e) => updateStatus(vendor.id, e.target.value)}
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium border-0 ${
+                      STATUS_COLORS[vendor.status] || ""
+                    }`}
+                  >
+                    {VENDOR_STATUSES.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                  {vendor.amount !== null && (
+                    <span className="text-xs text-gray-500">
+                      ${vendor.amount.toLocaleString()}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => deleteVendor(vendor.id)}
+                    className="text-xs text-red-500 hover:text-red-400"
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {vendors.length === 0 && (
+          <p className="text-sm text-gray-400 text-center py-8">
+            No vendors yet. Add one to start tracking!
+          </p>
+        )}
+      </div>
+
+      {emailCategory && (
+        <EmailTemplate
+          category={emailCategory}
+          onClose={() => setEmailCategory(null)}
+        />
+      )}
+    </div>
+  );
+}

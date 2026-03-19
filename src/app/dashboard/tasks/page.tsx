@@ -1,17 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { TaskList } from "./TaskList";
+import { TaskDetail } from "./TaskDetail";
+import { TaskFilters } from "./TaskFilters";
 
 type Task = {
   id: string;
   title: string;
-  category: string;
+  description: string | null;
+  category: string | null;
   due_date: string | null;
   completed: boolean;
+  edyn_message: string | null;
+  timeline_phase: string | null;
+  is_system_generated: boolean;
+  notes: string | null;
+  parent_task_id: string | null;
 };
 
-const categories = [
+const ADD_CATEGORIES = [
   "Venue",
   "Catering",
   "Photography",
@@ -19,6 +28,7 @@ const categories = [
   "Music",
   "Attire",
   "Invitations",
+  "Planning",
   "Other",
 ];
 
@@ -27,49 +37,184 @@ export default function TasksPage() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Other");
   const [dueDate, setDueDate] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  function addTask(e: React.FormEvent) {
+  // Filters
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterPhase, setFilterPhase] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
+  useEffect(() => {
+    fetch("/api/tasks")
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then(setTasks)
+      .catch(() => toast.error("Failed to load tasks"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const allCategories = useMemo(
+    () => [...new Set(tasks.map((t) => t.category).filter(Boolean) as string[])],
+    [tasks]
+  );
+
+  const allPhases = useMemo(
+    () =>
+      [...new Set(tasks.map((t) => t.timeline_phase).filter(Boolean) as string[])],
+    [tasks]
+  );
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((t) => {
+      if (filterCategory && t.category !== filterCategory) return false;
+      if (filterPhase && t.timeline_phase !== filterPhase) return false;
+      if (filterStatus === "completed" && !t.completed) return false;
+      if (filterStatus === "pending" && t.completed) return false;
+      if (filterStatus === "overdue") {
+        if (t.completed) return false;
+        if (!t.due_date) return false;
+        if (new Date(t.due_date) >= new Date()) return false;
+      }
+      return true;
+    });
+  }, [tasks, filterCategory, filterPhase, filterStatus]);
+
+  const completed = tasks.filter((t) => t.completed && !t.parent_task_id).length;
+  const total = tasks.filter((t) => !t.parent_task_id).length;
+
+  async function addTask(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
 
+    const tempId = crypto.randomUUID();
     const task: Task = {
-      id: crypto.randomUUID(),
+      id: tempId,
       title: title.trim(),
+      description: null,
       category,
       due_date: dueDate || null,
       completed: false,
+      edyn_message: null,
+      timeline_phase: null,
+      is_system_generated: false,
+      notes: null,
+      parent_task_id: null,
     };
 
     setTasks((prev) => [...prev, task]);
     setTitle("");
     setDueDate("");
-    toast.success("Task added");
+
+    try {
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: task.title,
+          category: task.category,
+          due_date: task.due_date,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const saved = await res.json();
+      setTasks((prev) => prev.map((t) => (t.id === tempId ? saved : t)));
+      toast.success("Task added");
+    } catch {
+      setTasks((prev) => prev.filter((t) => t.id !== tempId));
+      toast.error("Failed to add task");
+    }
   }
 
-  function toggleTask(id: string) {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+  async function toggleTask(id: string) {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+
+    const prev = tasks;
+    const newCompleted = !task.completed;
+    setTasks((t) =>
+      t.map((x) => (x.id === id ? { ...x, completed: newCompleted } : x))
     );
+    if (selectedTask?.id === id) {
+      setSelectedTask({ ...selectedTask, completed: newCompleted });
+    }
+
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: newCompleted }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setTasks(prev);
+      toast.error("Failed to update task");
+    }
   }
 
-  function removeTask(id: string) {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-    toast("Task removed");
+  async function deleteTask(id: string) {
+    const prev = tasks;
+    setTasks((t) => t.filter((x) => x.id !== id));
+
+    try {
+      const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast("Task removed");
+    } catch {
+      setTasks(prev);
+      toast.error("Failed to remove task");
+    }
   }
 
-  const completed = tasks.filter((t) => t.completed).length;
+  async function updateNotes(id: string, notes: string) {
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes }),
+      });
+      if (!res.ok) throw new Error();
+      setTasks((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, notes } : t))
+      );
+    } catch {
+      toast.error("Failed to save notes");
+    }
+  }
+
+  if (loading) {
+    return <p className="text-sm text-gray-400 py-8">Loading tasks...</p>;
+  }
+
+  const subTasks = selectedTask
+    ? tasks.filter((t) => t.parent_task_id === selectedTask.id)
+    : [];
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
       <p className="mt-1 text-sm text-gray-500">
-        {completed}/{tasks.length} completed
+        {completed}/{total} completed
       </p>
 
-      <form onSubmit={addTask} className="mt-6 flex gap-3">
+      {/* Filters */}
+      <div className="mt-4">
+        <TaskFilters
+          categories={allCategories}
+          phases={allPhases}
+          selectedCategory={filterCategory}
+          selectedPhase={filterPhase}
+          selectedStatus={filterStatus}
+          onCategoryChange={setFilterCategory}
+          onPhaseChange={setFilterPhase}
+          onStatusChange={setFilterStatus}
+        />
+      </div>
+
+      {/* Add task form */}
+      <form onSubmit={addTask} className="mt-4 flex gap-3">
         <input
           type="text"
-          placeholder="Task title"
+          placeholder="Add a custom task..."
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="rounded-lg border px-3 py-2 text-sm flex-1"
@@ -80,7 +225,7 @@ export default function TasksPage() {
           onChange={(e) => setCategory(e.target.value)}
           className="rounded-lg border px-3 py-2 text-sm"
         >
-          {categories.map((c) => (
+          {ADD_CATEGORIES.map((c) => (
             <option key={c} value={c}>
               {c}
             </option>
@@ -100,47 +245,34 @@ export default function TasksPage() {
         </button>
       </form>
 
-      <div className="mt-6 space-y-2">
-        {tasks.map((task) => (
-          <div
-            key={task.id}
-            className="flex items-center gap-3 rounded-xl border bg-white px-4 py-3"
-          >
-            <input
-              type="checkbox"
-              checked={task.completed}
-              onChange={() => toggleTask(task.id)}
-              className="h-4 w-4 rounded accent-rose-600"
-            />
-            <span
-              className={`flex-1 text-sm ${
-                task.completed
-                  ? "text-gray-400 line-through"
-                  : "text-gray-900"
-              }`}
-            >
-              {task.title}
-            </span>
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-              {task.category}
-            </span>
-            {task.due_date && (
-              <span className="text-xs text-gray-400">{task.due_date}</span>
-            )}
-            <button
-              onClick={() => removeTask(task.id)}
-              className="text-xs text-red-500 hover:text-red-400"
-            >
-              Delete
-            </button>
-          </div>
-        ))}
-        {tasks.length === 0 && (
+      {/* Task list grouped by phase */}
+      <div className="mt-6">
+        {filteredTasks.length > 0 ? (
+          <TaskList
+            tasks={filteredTasks}
+            onToggle={toggleTask}
+            onDelete={deleteTask}
+            onSelect={setSelectedTask}
+          />
+        ) : (
           <p className="text-sm text-gray-400 text-center py-8">
-            No tasks yet. Add one above to get started.
+            {tasks.length === 0
+              ? "No tasks yet. Complete onboarding to generate your timeline, or add tasks above."
+              : "No tasks match your filters."}
           </p>
         )}
       </div>
+
+      {/* Task detail modal */}
+      {selectedTask && (
+        <TaskDetail
+          task={selectedTask}
+          subTasks={subTasks}
+          onClose={() => setSelectedTask(null)}
+          onToggle={toggleTask}
+          onUpdateNotes={updateNotes}
+        />
+      )}
     </div>
   );
 }

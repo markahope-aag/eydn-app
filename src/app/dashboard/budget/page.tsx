@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 type Expense = {
@@ -24,20 +24,58 @@ const categories = [
 
 export default function BudgetPage() {
   const [budget, setBudget] = useState(0);
+  const [weddingId, setWeddingId] = useState<string | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Other");
+  const [loading, setLoading] = useState(true);
+  const budgetTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/expenses").then((r) => (r.ok ? r.json() : Promise.reject())),
+      fetch("/api/weddings").then((r) => (r.ok ? r.json() : Promise.reject())),
+    ])
+      .then(([expData, weddingData]) => {
+        setExpenses(expData);
+        if (weddingData) {
+          setBudget(weddingData.budget ?? 0);
+          setWeddingId(weddingData.id);
+        }
+      })
+      .catch(() => toast.error("Failed to load budget data"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  function handleBudgetChange(value: number) {
+    setBudget(value);
+    if (budgetTimer.current) clearTimeout(budgetTimer.current);
+    budgetTimer.current = setTimeout(async () => {
+      if (!weddingId) return;
+      try {
+        const res = await fetch(`/api/weddings/${weddingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ budget: value }),
+        });
+        if (!res.ok) throw new Error();
+      } catch {
+        toast.error("Failed to save budget");
+      }
+    }, 800);
+  }
 
   const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
   const remaining = budget - totalSpent;
 
-  function addExpense(e: React.FormEvent) {
+  async function addExpense(e: React.FormEvent) {
     e.preventDefault();
     if (!description.trim() || !amount) return;
 
+    const tempId = crypto.randomUUID();
     const expense: Expense = {
-      id: crypto.randomUUID(),
+      id: tempId,
       description: description.trim(),
       amount: parseFloat(amount),
       category,
@@ -47,18 +85,65 @@ export default function BudgetPage() {
     setExpenses((prev) => [...prev, expense]);
     setDescription("");
     setAmount("");
-    toast.success("Expense added");
+
+    try {
+      const res = await fetch("/api/expenses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: expense.description,
+          amount: expense.amount,
+          category: expense.category,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const saved = await res.json();
+      setExpenses((prev) => prev.map((x) => (x.id === tempId ? saved : x)));
+      toast.success("Expense added");
+    } catch {
+      setExpenses((prev) => prev.filter((x) => x.id !== tempId));
+      toast.error("Failed to add expense");
+    }
   }
 
-  function removeExpense(id: string) {
-    setExpenses((prev) => prev.filter((e) => e.id !== id));
-    toast("Expense removed");
+  async function removeExpense(id: string) {
+    const prev = expenses;
+    setExpenses((e) => e.filter((x) => x.id !== id));
+
+    try {
+      const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast("Expense removed");
+    } catch {
+      setExpenses(prev);
+      toast.error("Failed to remove expense");
+    }
   }
 
-  function togglePaid(id: string) {
-    setExpenses((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, paid: !e.paid } : e))
+  async function togglePaid(id: string) {
+    const expense = expenses.find((e) => e.id === id);
+    if (!expense) return;
+
+    const prev = expenses;
+    setExpenses((e) =>
+      e.map((x) => (x.id === id ? { ...x, paid: !x.paid } : x))
     );
+
+    try {
+      const res = await fetch(`/api/expenses/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paid: !expense.paid }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setExpenses(prev);
+      toast.error("Failed to update expense");
+    }
+  }
+
+  if (loading) {
+    return <p className="text-sm text-gray-400 py-8">Loading budget...</p>;
   }
 
   return (
@@ -74,7 +159,7 @@ export default function BudgetPage() {
             <input
               type="number"
               value={budget || ""}
-              onChange={(e) => setBudget(Number(e.target.value))}
+              onChange={(e) => handleBudgetChange(Number(e.target.value))}
               placeholder="0"
               className="text-2xl font-bold text-gray-900 w-full outline-none"
             />

@@ -1,0 +1,47 @@
+import { getWeddingForUser } from "@/lib/auth";
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  const { wedding, supabase } = result;
+
+  const { data, error } = await supabase
+    .from("seating_tables")
+    .select()
+    .eq("wedding_id", wedding.id)
+    .order("table_number", { ascending: true });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
+export async function POST(request: Request) {
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  const { wedding, supabase } = result;
+
+  const body = await request.json();
+  const { data, error } = await supabase
+    .from("seating_tables")
+    .insert({
+      wedding_id: wedding.id,
+      table_number: body.table_number,
+      name: body.name || null,
+      x: body.x || 0,
+      y: body.y || 0,
+      shape: body.shape || "round",
+      capacity: body.capacity || 8,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data, { status: 201 });
+}
