@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 type Stats = {
-  weddings: number;
-  guests: number;
-  tasks: number;
-  completed_tasks: number;
-  vendors: number;
-  expenses: number;
-  chat_messages: number;
+  total_subscribers: number;
+  new_signups_7d: number;
+  active_users_7d: number;
+  total_events: number;
+  onboarding_completed: number;
+  conversion_rate: number;
+  total_ai_chats: number;
 };
 
 type User = {
@@ -21,21 +21,6 @@ type User = {
   has_event: boolean;
   joined: number;
   last_sign_in: number | null;
-};
-
-type Event = {
-  id: string;
-  user_id: string;
-  name: string;
-  date: string | null;
-  venue: string | null;
-  budget: number | null;
-  spent: number;
-  guests: number;
-  tasks: number;
-  completed_tasks: number;
-  vendors: number;
-  created_at: string;
 };
 
 type AppSettings = {
@@ -59,12 +44,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   limits: { max_guests: 500, max_chat_messages_per_hour: 30, max_file_size_mb: 10 },
 };
 
-type Tab = "overview" | "users" | "events" | "settings";
+type Tab = "overview" | "subscribers" | "settings";
 
 export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
@@ -80,13 +64,11 @@ export default function AdminPage() {
         return r.ok ? r.json() : null;
       }),
       fetch("/api/admin/users").then((r) => (r.ok ? r.json() : [])),
-      fetch("/api/admin/events").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : DEFAULT_SETTINGS)),
     ])
-      .then(([s, u, e, st]) => {
+      .then(([s, u, st]) => {
         if (s) setStats(s);
         setUsers(u || []);
-        setEvents(e || []);
         setSettings({ ...DEFAULT_SETTINGS, ...st });
       })
       .catch(() => toast.error("Failed to load admin data"))
@@ -172,11 +154,11 @@ export default function AdminPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Admin</h1>
+      <h1 className="text-2xl font-bold text-gray-900">Platform Admin</h1>
 
       {/* Tabs */}
       <div className="mt-4 flex gap-1 border-b">
-        {(["overview", "users", "events", "settings"] as Tab[]).map((t) => (
+        {(["overview", "subscribers", "settings"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -193,34 +175,34 @@ export default function AdminPage() {
 
       {/* Overview Tab */}
       {tab === "overview" && stats && (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Users" value={users.length} />
-          <StatCard label="Events" value={stats.weddings} />
-          <StatCard label="Total Guests" value={stats.guests} />
-          <StatCard label="Total Tasks" value={stats.tasks} />
-          <StatCard
-            label="Task Completion"
-            value={
-              stats.tasks > 0
-                ? `${Math.round((stats.completed_tasks / stats.tasks) * 100)}%`
-                : "—"
-            }
-          />
-          <StatCard label="Vendors Tracked" value={stats.vendors} />
-          <StatCard label="Expenses Logged" value={stats.expenses} />
-          <StatCard label="Chat Messages" value={stats.chat_messages} />
+        <div className="mt-6 space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Total Subscribers" value={stats.total_subscribers} />
+            <StatCard label="New Signups (7d)" value={stats.new_signups_7d} />
+            <StatCard label="Active Users (7d)" value={stats.active_users_7d} />
+            <StatCard
+              label="Conversion Rate"
+              value={`${stats.conversion_rate}%`}
+              subtitle="Signup → Event created"
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatCard label="Total Events" value={stats.total_events} />
+            <StatCard label="Onboarding Completed" value={stats.onboarding_completed} />
+            <StatCard label="AI Chat Messages" value={stats.total_ai_chats} />
+          </div>
         </div>
       )}
 
-      {/* Users Tab */}
-      {tab === "users" && (
+      {/* Subscribers Tab */}
+      {tab === "subscribers" && (
         <div className="mt-6">
           <p className="text-sm text-gray-500 mb-4">
-            {users.length} registered {users.length === 1 ? "user" : "users"}
+            {users.length} registered {users.length === 1 ? "subscriber" : "subscribers"}
           </p>
           {users.length === 0 ? (
             <p className="text-sm text-gray-400 py-8 text-center">
-              No users yet.
+              No subscribers yet.
             </p>
           ) : (
             <div className="overflow-x-auto rounded-xl border bg-white">
@@ -229,9 +211,9 @@ export default function AdminPage() {
                   <tr>
                     <th className="px-4 py-3 text-left font-medium text-gray-600">Name</th>
                     <th className="px-4 py-3 text-left font-medium text-gray-600">Email</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">Event</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
                     <th className="px-4 py-3 text-left font-medium text-gray-600">Joined</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">Last Sign In</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-600">Last Active</th>
                     <th className="px-4 py-3 text-left font-medium text-gray-600">Role</th>
                   </tr>
                 </thead>
@@ -244,11 +226,11 @@ export default function AdminPage() {
                       <td className="px-4 py-3 text-gray-500">{user.email}</td>
                       <td className="px-4 py-3">
                         {user.has_event ? (
-                          <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs text-green-600">
+                          <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-600">
                             Active
                           </span>
                         ) : (
-                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                          <span className="rounded-full bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-600">
                             No event
                           </span>
                         )}
@@ -259,7 +241,7 @@ export default function AdminPage() {
                       <td className="px-4 py-3 text-gray-500">
                         {user.last_sign_in
                           ? new Date(user.last_sign_in).toLocaleDateString()
-                          : "—"}
+                          : "Never"}
                       </td>
                       <td className="px-4 py-3">
                         <select
@@ -271,7 +253,7 @@ export default function AdminPage() {
                               : "bg-gray-100 text-gray-600"
                           }`}
                         >
-                          <option value="user">User</option>
+                          <option value="user">Subscriber</option>
                           <option value="admin">Admin</option>
                         </select>
                       </td>
@@ -279,73 +261,6 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Events Tab */}
-      {tab === "events" && (
-        <div className="mt-6">
-          <p className="text-sm text-gray-500 mb-4">
-            {events.length} {events.length === 1 ? "event" : "events"}
-          </p>
-          {events.length === 0 ? (
-            <p className="text-sm text-gray-400 py-8 text-center">
-              No events yet.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {events.map((event) => (
-                <div
-                  key={event.id}
-                  className="rounded-xl border bg-white p-4"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-900">
-                        {event.name}
-                      </h3>
-                      <div className="mt-1 flex gap-3 text-xs text-gray-500">
-                        {event.date && <span>Date: {event.date}</span>}
-                        {event.venue && <span>Venue: {event.venue}</span>}
-                        <span>Created: {new Date(event.created_at).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                    {event.budget && (
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">Budget</p>
-                        <p className="text-sm font-medium text-gray-900">
-                          ${event.spent.toLocaleString()} / ${event.budget.toLocaleString()}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-3 flex gap-4">
-                    <MiniStat label="Guests" value={event.guests} />
-                    <MiniStat
-                      label="Tasks"
-                      value={`${event.completed_tasks}/${event.tasks}`}
-                    />
-                    <MiniStat label="Vendors" value={event.vendors} />
-                    {event.tasks > 0 && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-20 h-1.5 rounded-full bg-gray-200">
-                          <div
-                            className="h-full rounded-full bg-rose-500"
-                            style={{
-                              width: `${Math.round((event.completed_tasks / event.tasks) * 100)}%`,
-                            }}
-                          />
-                        </div>
-                        <span className="text-xs text-gray-400">
-                          {Math.round((event.completed_tasks / event.tasks) * 100)}%
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
             </div>
           )}
         </div>
@@ -367,7 +282,7 @@ export default function AdminPage() {
                 <div>
                   <p className="text-sm text-gray-900">Allow new signups</p>
                   <p className="text-xs text-gray-500">
-                    Disable to prevent new users from registering
+                    Disable to prevent new subscribers from registering
                   </p>
                 </div>
               </label>
@@ -381,7 +296,7 @@ export default function AdminPage() {
                 <div>
                   <p className="text-sm text-gray-900">Invite only</p>
                   <p className="text-xs text-gray-500">
-                    Only users with an invitation can sign up
+                    Only invited users can sign up
                   </p>
                 </div>
               </label>
@@ -431,7 +346,7 @@ export default function AdminPage() {
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">Max chat messages per hour</label>
+                <label className="text-xs text-gray-500">Max AI chat messages per hour</label>
                 <input
                   type="number"
                   defaultValue={settings.limits.max_chat_messages_per_hour}
@@ -464,20 +379,20 @@ export default function AdminPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
+function StatCard({
+  label,
+  value,
+  subtitle,
+}: {
+  label: string;
+  value: string | number;
+  subtitle?: string;
+}) {
   return (
     <div className="rounded-2xl border bg-white p-6">
       <p className="text-sm text-gray-500">{label}</p>
       <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
-    </div>
-  );
-}
-
-function MiniStat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div>
-      <p className="text-[10px] text-gray-400 uppercase">{label}</p>
-      <p className="text-sm font-medium text-gray-900">{value}</p>
+      {subtitle && <p className="mt-0.5 text-xs text-gray-400">{subtitle}</p>}
     </div>
   );
 }
