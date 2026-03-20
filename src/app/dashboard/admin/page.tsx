@@ -14,17 +14,17 @@ type Stats = {
 };
 
 type User = {
-  id: string;
   user_id: string;
-  partner1_name: string;
-  partner2_name: string;
-  date: string | null;
-  budget: number | null;
-  created_at: string;
+  email: string;
+  name: string;
   role: string;
+  has_wedding: boolean;
+  wedding_name: string | null;
+  wedding_date: string | null;
   guests: number;
   tasks: number;
   vendors: number;
+  joined: number;
 };
 
 type AppSettings = {
@@ -208,6 +208,12 @@ export default function AdminPage() {
                 <thead className="border-b bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left font-medium text-gray-600">
+                      User
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-600">
+                      Email
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-600">
                       Wedding
                     </th>
                     <th className="px-4 py-3 text-left font-medium text-gray-600">
@@ -220,9 +226,6 @@ export default function AdminPage() {
                       Tasks
                     </th>
                     <th className="px-4 py-3 text-left font-medium text-gray-600">
-                      Vendors
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">
                       Joined
                     </th>
                     <th className="px-4 py-3 text-left font-medium text-gray-600">
@@ -232,18 +235,23 @@ export default function AdminPage() {
                 </thead>
                 <tbody className="divide-y">
                   {users.map((user) => (
-                    <tr key={user.id}>
+                    <tr key={user.user_id}>
                       <td className="px-4 py-3 font-medium text-gray-900">
-                        {user.partner1_name} & {user.partner2_name}
+                        {user.name}
                       </td>
                       <td className="px-4 py-3 text-gray-500">
-                        {user.date || "—"}
+                        {user.email}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {user.wedding_name || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {user.wedding_date || "—"}
                       </td>
                       <td className="px-4 py-3 text-gray-500">{user.guests}</td>
                       <td className="px-4 py-3 text-gray-500">{user.tasks}</td>
-                      <td className="px-4 py-3 text-gray-500">{user.vendors}</td>
                       <td className="px-4 py-3 text-gray-500">
-                        {new Date(user.created_at).toLocaleDateString()}
+                        {new Date(user.joined).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3">
                         <select
