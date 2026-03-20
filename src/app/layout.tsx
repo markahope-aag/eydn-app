@@ -17,8 +17,8 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "eydn",
-  description: "Your AI wedding planning guide",
+  title: "eydn — Your AI Wedding Planning Guide",
+  description: "Plan your perfect wedding with eydn. AI-powered task timeline, budget tracker, vendor management, guest RSVPs, seating chart, and a beautiful wedding website — all in one place.",
 };
 
 export default function RootLayout({
@@ -30,21 +30,26 @@ export default function RootLayout({
     <html lang="en" className={`${nunito.className} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-whisper text-plum">
         <ClerkProvider>
-          <header className="flex items-center justify-between border-b border-border bg-white px-6 py-3">
-            <Link href="/" className="text-lg font-semibold bg-brand-gradient bg-clip-text text-transparent">
-              eydn
-            </Link>
+          <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-white/95 backdrop-blur px-6 py-3">
+            <div className="flex items-center gap-8">
+              <Link href="/" className="text-xl font-semibold bg-brand-gradient bg-clip-text text-transparent">
+                eydn
+              </Link>
+              <Show when="signed-out">
+                <nav className="hidden sm:flex items-center gap-6">
+                  <Link href="/#features" className="text-[15px] text-muted hover:text-plum transition">Features</Link>
+                  <Link href="/#how-it-works" className="text-[15px] text-muted hover:text-plum transition">How It Works</Link>
+                  <Link href="/#pricing" className="text-[15px] text-muted hover:text-plum transition">Pricing</Link>
+                </nav>
+              </Show>
+            </div>
             <div className="flex items-center gap-3">
               <Show when="signed-out">
                 <SignInButton>
-                  <button className="btn-ghost btn-sm">
-                    Sign In
-                  </button>
+                  <button className="btn-ghost btn-sm">Sign In</button>
                 </SignInButton>
                 <SignUpButton>
-                  <button className="btn-primary btn-sm">
-                    Get Started
-                  </button>
+                  <button className="btn-primary btn-sm">Start Free Trial</button>
                 </SignUpButton>
               </Show>
               <Show when="signed-in">
