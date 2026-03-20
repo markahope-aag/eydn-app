@@ -50,7 +50,7 @@ export function FileUpload({ entityType, entityId, onUpload }: Props) {
       <button
         onClick={() => fileRef.current?.click()}
         disabled={uploading}
-        className="text-xs text-rose-600 hover:text-rose-500 disabled:opacity-50"
+        className="text-[12px] text-violet hover:text-soft-violet disabled:opacity-50"
       >
         {uploading ? "Uploading..." : "Attach file"}
       </button>

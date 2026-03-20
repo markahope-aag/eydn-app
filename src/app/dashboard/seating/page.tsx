@@ -139,7 +139,7 @@ export default function SeatingPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-gray-400 py-8">Loading...</p>;
+    return <p className="text-[15px] text-muted py-8">Loading...</p>;
   }
 
   return (
@@ -147,17 +147,17 @@ export default function SeatingPage() {
       {/* Canvas */}
       <div className="flex-1">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">Seating Chart</h1>
+          <h1>Seating Chart</h1>
           <button
             onClick={addTable}
-            className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition"
+            className="btn-primary"
           >
             Add Table
           </button>
         </div>
 
         <div
-          className="relative bg-white rounded-xl border min-h-[500px] overflow-auto"
+          className="relative bg-white rounded-[16px] border-border min-h-[500px] overflow-auto"
           onDragOver={(e) => e.preventDefault()}
         >
           {tables.map((table) => {
@@ -183,14 +183,14 @@ export default function SeatingPage() {
               >
                 <div
                   className={`w-36 border-2 bg-white shadow-sm p-3 ${
-                    table.shape === "round" ? "rounded-full" : "rounded-xl"
-                  } ${isFull ? "border-green-300" : "border-gray-200"}`}
+                    table.shape === "round" ? "rounded-full" : "rounded-[16px]"
+                  } ${isFull ? "border-violet" : "border-border"}`}
                 >
                   <div className="text-center">
-                    <p className="text-xs font-semibold text-gray-900">
+                    <p className="text-[12px] font-semibold text-plum">
                       {table.name || `Table ${table.table_number}`}
                     </p>
-                    <p className="text-[10px] text-gray-400">
+                    <p className="text-[10px] text-muted">
                       {tableGuests.length}/{table.capacity}
                     </p>
                   </div>
@@ -200,12 +200,12 @@ export default function SeatingPage() {
                         key={g.id}
                         className="flex items-center justify-between text-[10px]"
                       >
-                        <span className="text-gray-700 truncate">
+                        <span className="text-muted truncate">
                           {g.name}
                         </span>
                         <button
                           onClick={() => unassignGuest(g.id)}
-                          className="text-red-400 hover:text-red-600 ml-1"
+                          className="text-error hover:opacity-80 ml-1"
                         >
                           x
                         </button>
@@ -215,7 +215,7 @@ export default function SeatingPage() {
                 </div>
                 <button
                   onClick={() => deleteTable(table.id)}
-                  className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center hover:bg-red-600"
+                  className="absolute -top-1 -right-1 w-4 h-4 bg-error text-white rounded-full text-[10px] flex items-center justify-center hover:opacity-80"
                 >
                   x
                 </button>
@@ -225,7 +225,7 @@ export default function SeatingPage() {
 
           {tables.length === 0 && (
             <div className="flex items-center justify-center h-64">
-              <p className="text-sm text-gray-400">
+              <p className="text-[15px] text-muted">
                 Add tables to start building your seating chart
               </p>
             </div>
@@ -235,7 +235,7 @@ export default function SeatingPage() {
 
       {/* Guest sidebar */}
       <div className="w-56 flex-shrink-0">
-        <h2 className="text-sm font-semibold text-gray-700 mb-2">
+        <h2 className="text-[15px] font-semibold text-muted mb-2">
           Unassigned ({unassignedGuests.length})
         </h2>
         <div className="space-y-1 max-h-[500px] overflow-y-auto">
@@ -248,17 +248,17 @@ export default function SeatingPage() {
                 setDraggingGuest(guest.id);
               }}
               onDragEnd={() => setDraggingGuest(null)}
-              className={`rounded-lg border px-3 py-1.5 text-sm cursor-grab active:cursor-grabbing ${
+              className={`rounded-[10px] border-border px-3 py-1.5 text-[15px] cursor-grab active:cursor-grabbing ${
                 draggingGuest === guest.id
-                  ? "border-rose-500 bg-rose-50"
-                  : "bg-white hover:bg-gray-50"
+                  ? "border-violet bg-lavender"
+                  : "bg-white hover:bg-lavender"
               }`}
             >
               {guest.name}
             </div>
           ))}
           {unassignedGuests.length === 0 && (
-            <p className="text-xs text-gray-400">All guests assigned!</p>
+            <p className="text-[12px] text-muted">All guests assigned!</p>
           )}
         </div>
       </div>

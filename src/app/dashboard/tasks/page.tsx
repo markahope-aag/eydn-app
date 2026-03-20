@@ -182,7 +182,7 @@ export default function TasksPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-gray-400 py-8">Loading tasks...</p>;
+    return <p className="text-[15px] text-muted py-8">Loading tasks...</p>;
   }
 
   const subTasks = selectedTask
@@ -191,8 +191,8 @@ export default function TasksPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1>Tasks</h1>
+      <p className="mt-1 text-[15px] text-muted">
         {completed}/{total} completed
       </p>
 
@@ -217,13 +217,13 @@ export default function TasksPage() {
           placeholder="Add a custom task..."
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="rounded-lg border px-3 py-2 text-sm flex-1"
+          className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
           required
         />
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="rounded-lg border px-3 py-2 text-sm"
+          className="rounded-[10px] border-border px-3 py-2 text-[15px]"
         >
           {ADD_CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -235,11 +235,11 @@ export default function TasksPage() {
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="rounded-lg border px-3 py-2 text-sm"
+          className="rounded-[10px] border-border px-3 py-2 text-[15px]"
         />
         <button
           type="submit"
-          className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition"
+          className="btn-primary"
         >
           Add
         </button>
@@ -255,7 +255,7 @@ export default function TasksPage() {
             onSelect={setSelectedTask}
           />
         ) : (
-          <p className="text-sm text-gray-400 text-center py-8">
+          <p className="text-[15px] text-muted text-center py-8">
             {tasks.length === 0
               ? "No tasks yet. Complete onboarding to generate your timeline, or add tasks above."
               : "No tasks match your filters."}

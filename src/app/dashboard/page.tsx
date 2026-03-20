@@ -19,14 +19,11 @@ export default async function DashboardPage() {
   if (!wedding) {
     return (
       <div className="max-w-lg">
-        <h1 className="text-2xl font-bold text-gray-900">Welcome!</h1>
-        <p className="mt-2 text-gray-600">
+        <h1>Welcome to eydn</h1>
+        <p className="mt-2 text-[15px] text-muted">
           You haven&apos;t set up your wedding yet. Let&apos;s get started.
         </p>
-        <a
-          href="/dashboard/onboarding"
-          className="mt-6 inline-block rounded-full bg-rose-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 transition"
-        >
+        <a href="/dashboard/onboarding" className="btn-primary mt-6 inline-flex">
           Set Up Your Wedding
         </a>
       </div>
@@ -63,27 +60,31 @@ export default async function DashboardPage() {
       )
     : null;
 
+  const taskPct = (taskCount ?? 0) > 0
+    ? Math.round(((completedTasks ?? 0) / (taskCount ?? 0)) * 100)
+    : 0;
+
   return (
     <div>
-      {/* Eydn welcome */}
+      {/* eydn welcome */}
       <div className="flex gap-3 items-start mb-8">
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center">
-          <span className="text-sm font-bold text-rose-600">E</span>
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-gradient flex items-center justify-center">
+          <span className="text-[13px] font-semibold text-white">e</span>
         </div>
-        <div className="bg-rose-50 rounded-2xl rounded-tl-sm px-4 py-3">
-          <p className="text-sm text-gray-700">
-            {completedTasks === 0
-              ? `Welcome, ${wedding.partner1_name}! I've set up your personalized planning timeline. Let's make your dream wedding happen!`
-              : `Looking great, ${wedding.partner1_name}! You've completed ${completedTasks ?? 0} of ${taskCount ?? 0} tasks. Keep up the amazing work!`}
+        <div className="bg-lavender rounded-[12px] rounded-tl-[4px] px-4 py-3">
+          <p className="text-[15px] text-plum">
+            {(completedTasks ?? 0) === 0
+              ? `Welcome, ${wedding.partner1_name}. I've set up your personalized planning timeline. Let's make your dream wedding happen.`
+              : `Looking great, ${wedding.partner1_name}. You've completed ${completedTasks ?? 0} of ${taskCount ?? 0} tasks. Keep it up.`}
           </p>
         </div>
       </div>
 
-      <h1 className="text-2xl font-bold text-gray-900">
+      <h1>
         {wedding.partner1_name} & {wedding.partner2_name}
       </h1>
       {wedding.date && (
-        <p className="mt-1 text-gray-500">
+        <p className="mt-1 text-[15px] text-muted">
           {new Date(wedding.date).toLocaleDateString("en-US", {
             weekday: "long",
             year: "numeric",
@@ -91,7 +92,7 @@ export default async function DashboardPage() {
             day: "numeric",
           })}
           {daysUntilWedding !== null && daysUntilWedding > 0 && (
-            <span className="ml-2 text-rose-600 font-medium">
+            <span className="ml-2 text-violet font-semibold">
               ({daysUntilWedding} days away)
             </span>
           )}
@@ -100,7 +101,7 @@ export default async function DashboardPage() {
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Guests" value={guestCount ?? 0} />
-        <StatCard label="Tasks" value={taskCount ?? 0} />
+        <StatCard label="Tasks" value={taskCount ?? 0} progress={taskPct} />
         <StatCard
           label="Completed"
           value={`${completedTasks ?? 0}/${taskCount ?? 0}`}
@@ -114,42 +115,29 @@ export default async function DashboardPage() {
       {/* Upcoming tasks */}
       {upcomingTasks && upcomingTasks.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-900">Upcoming Tasks</h2>
+          <h2>Upcoming tasks</h2>
           <div className="mt-3 space-y-2">
             {(upcomingTasks as { title: string; due_date: string | null; category: string | null; completed: boolean }[]).map((task, i) => {
               const isOverdue =
                 task.due_date && new Date(task.due_date) < new Date();
               return (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 rounded-xl border bg-white px-4 py-3"
-                >
-                  <span className="flex-1 text-sm text-gray-900">
+                <div key={i} className="card-list flex items-center gap-3 px-4 py-3">
+                  <span className="flex-1 text-[15px] text-plum">
                     {task.title}
                   </span>
                   {task.category && (
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-                      {task.category}
-                    </span>
+                    <span className="badge badge-booked">{task.category}</span>
                   )}
                   {task.due_date && (
-                    <span
-                      className={`text-xs ${
-                        isOverdue ? "text-red-500 font-medium" : "text-gray-400"
-                      }`}
-                    >
-                      {isOverdue ? "Overdue: " : ""}
-                      {task.due_date}
+                    <span className={`text-[12px] ${isOverdue ? "text-error font-semibold" : "text-muted"}`}>
+                      {isOverdue ? "Overdue: " : ""}{task.due_date}
                     </span>
                   )}
                 </div>
               );
             })}
           </div>
-          <a
-            href="/dashboard/tasks"
-            className="mt-3 inline-block text-sm text-rose-600 hover:text-rose-500 font-medium"
-          >
+          <a href="/dashboard/tasks" className="mt-3 inline-block text-[15px] text-violet hover:text-soft-violet font-semibold">
             View all tasks →
           </a>
         </div>
@@ -158,11 +146,16 @@ export default async function DashboardPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
+function StatCard({ label, value, progress }: { label: string; value: string | number; progress?: number }) {
   return (
-    <div className="rounded-2xl border bg-white p-6">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+    <div className="card-summary p-4">
+      <p className="text-[13px] font-semibold text-muted">{label}</p>
+      <p className="mt-1 text-[26px] font-semibold text-plum">{value}</p>
+      {progress !== undefined && (
+        <div className="progress-track mt-2">
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+      )}
     </div>
   );
 }

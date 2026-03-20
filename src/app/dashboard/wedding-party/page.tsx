@@ -109,19 +109,19 @@ export default function WeddingPartyPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-gray-400 py-8">Loading...</p>;
+    return <p className="text-[15px] text-muted py-8">Loading...</p>;
   }
 
   return (
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Wedding Party</h1>
-          <p className="mt-1 text-sm text-gray-500">{members.length} members</p>
+          <h1>Wedding Party</h1>
+          <p className="mt-1 text-[15px] text-muted">{members.length} members</p>
         </div>
         <button
           onClick={() => setShowAdd(!showAdd)}
-          className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition"
+          className="btn-primary"
         >
           Add Member
         </button>
@@ -134,14 +134,14 @@ export default function WeddingPartyPage() {
             placeholder="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="rounded-lg border px-3 py-2 text-sm flex-1"
+            className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
             required
             autoFocus
           />
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="rounded-lg border px-3 py-2 text-sm"
+            className="rounded-[10px] border-border px-3 py-2 text-[15px]"
           >
             {ROLES.map((r) => (
               <option key={r} value={r}>
@@ -151,7 +151,7 @@ export default function WeddingPartyPage() {
           </select>
           <button
             type="submit"
-            className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition"
+            className="btn-primary"
           >
             Add
           </button>
@@ -162,59 +162,59 @@ export default function WeddingPartyPage() {
         {members.map((member) => (
           <div
             key={member.id}
-            className="rounded-xl border bg-white overflow-hidden"
+            className="rounded-[16px] border-border bg-white overflow-hidden"
           >
             <div className="flex items-center gap-3 px-4 py-3">
               <div className="flex-1">
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-[15px] font-semibold text-plum">
                   {member.name}
                 </span>
-                <span className="ml-2 rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-600">
+                <span className="ml-2 rounded-full bg-lavender px-2 py-0.5 text-[12px] text-violet">
                   {member.role}
                 </span>
               </div>
               <button
                 onClick={() => setEditing(editing === member.id ? null : member.id)}
-                className="text-xs text-gray-500 hover:text-gray-700"
+                className="text-[12px] text-muted hover:text-plum"
               >
                 {editing === member.id ? "Close" : "Edit"}
               </button>
               <button
                 onClick={() => deleteMember(member.id)}
-                className="text-xs text-red-500 hover:text-red-400"
+                className="text-[12px] text-error hover:opacity-80"
               >
                 Remove
               </button>
             </div>
 
             {editing === member.id && (
-              <div className="border-t px-4 py-3 grid gap-3 sm:grid-cols-2 bg-gray-50">
+              <div className="border-t border-border px-4 py-3 grid gap-3 sm:grid-cols-2 bg-lavender">
                 <div>
-                  <label className="text-xs text-gray-500">Email</label>
+                  <label className="text-[12px] text-muted">Email</label>
                   <input
                     type="email"
                     defaultValue={member.email || ""}
                     onBlur={(e) =>
                       updateField(member.id, "email", e.target.value || null)
                     }
-                    className="mt-1 w-full rounded-lg border px-3 py-1.5 text-sm"
+                    className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                     placeholder="email@example.com"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500">Phone</label>
+                  <label className="text-[12px] text-muted">Phone</label>
                   <input
                     type="tel"
                     defaultValue={member.phone || ""}
                     onBlur={(e) =>
                       updateField(member.id, "phone", e.target.value || null)
                     }
-                    className="mt-1 w-full rounded-lg border px-3 py-1.5 text-sm"
+                    className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                     placeholder="(555) 123-4567"
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-xs text-gray-500">
+                  <label className="text-[12px] text-muted">
                     Day-of Job Assignment
                   </label>
                   <input
@@ -227,7 +227,7 @@ export default function WeddingPartyPage() {
                         e.target.value || null
                       )
                     }
-                    className="mt-1 w-full rounded-lg border px-3 py-1.5 text-sm"
+                    className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                     placeholder="e.g. Carry rings, hold bouquet during vows"
                   />
                 </div>
@@ -237,7 +237,7 @@ export default function WeddingPartyPage() {
         ))}
 
         {members.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-8">
+          <p className="text-[15px] text-muted text-center py-8">
             No wedding party members yet. Add someone to get started!
           </p>
         )}

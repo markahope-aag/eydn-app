@@ -194,7 +194,7 @@ export default function OnboardingPage() {
   }
 
   if (!resumeChecked) {
-    return <p className="text-sm text-gray-400 py-8">Loading...</p>;
+    return <p className="text-[15px] text-muted py-8">Loading...</p>;
   }
 
   return (
@@ -205,7 +205,7 @@ export default function OnboardingPage() {
           <div
             key={i}
             className={`h-1.5 flex-1 rounded-full transition-colors ${
-              i <= step ? "bg-rose-500" : "bg-gray-200"
+              i <= step ? "bg-violet" : "bg-lavender"
             }`}
           />
         ))}
@@ -217,27 +217,27 @@ export default function OnboardingPage() {
             <EdynMessage message="Hey! Let's get started with the basics so we can plan your perfect day. Let's start with yours and your partner's names." />
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-[15px] font-semibold text-muted">
                   Your Name
                 </label>
                 <input
                   type="text"
                   value={form.partner1_name}
                   onChange={(e) => update("partner1_name", e.target.value)}
-                  className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
                   placeholder="First name"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-[15px] font-semibold text-muted">
                   Partner&apos;s Name
                 </label>
                 <input
                   type="text"
                   value={form.partner2_name}
                   onChange={(e) => update("partner2_name", e.target.value)}
-                  className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
                   placeholder="First name"
                   required
                 />
@@ -252,12 +252,12 @@ export default function OnboardingPage() {
               message={`Great, excited to work with you ${form.partner1_name}! Let's get into it. What's your wedding date?`}
             />
             <div>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-[15px]">
                 <input
                   type="checkbox"
                   checked={form.has_date}
                   onChange={(e) => update("has_date", e.target.checked)}
-                  className="accent-rose-600"
+                  className="accent-violet"
                 />
                 We have a date picked
               </label>
@@ -266,7 +266,7 @@ export default function OnboardingPage() {
                   type="date"
                   value={form.date}
                   onChange={(e) => update("date", e.target.value)}
-                  className="mt-3 w-full rounded-lg border px-3 py-2 text-sm"
+                  className="mt-3 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
                 />
               )}
             </div>
@@ -277,12 +277,12 @@ export default function OnboardingPage() {
           <>
             <EdynMessage message="Awesome! And where's the big day happening?" />
             <div>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-[15px]">
                 <input
                   type="checkbox"
                   checked={form.has_venue}
                   onChange={(e) => update("has_venue", e.target.checked)}
-                  className="accent-rose-600"
+                  className="accent-violet"
                 />
                 We have a venue booked
               </label>
@@ -292,7 +292,7 @@ export default function OnboardingPage() {
                   value={form.venue}
                   onChange={(e) => update("venue", e.target.value)}
                   placeholder="e.g. The Grand Ballroom"
-                  className="mt-3 w-full rounded-lg border px-3 py-2 text-sm"
+                  className="mt-3 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
                 />
               )}
             </div>
@@ -303,14 +303,14 @@ export default function OnboardingPage() {
           <>
             <EdynMessage message="Got it. How many guests are you thinking of inviting? This helps us plan seating, catering, and everything else." />
             <div>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-[15px]">
                 <input
                   type="checkbox"
                   checked={form.has_guest_estimate}
                   onChange={(e) =>
                     update("has_guest_estimate", e.target.checked)
                   }
-                  className="accent-rose-600"
+                  className="accent-violet"
                 />
                 We have a rough estimate
               </label>
@@ -323,7 +323,7 @@ export default function OnboardingPage() {
                   }
                   placeholder="e.g. 150"
                   min="1"
-                  className="mt-3 w-full rounded-lg border px-3 py-2 text-sm"
+                  className="mt-3 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
                 />
               )}
             </div>
@@ -338,7 +338,7 @@ export default function OnboardingPage() {
               value={form.style_description}
               onChange={(e) => update("style_description", e.target.value)}
               placeholder="e.g. Rustic, elegant, outdoor"
-              className="w-full rounded-lg border px-3 py-2 text-sm"
+              className="w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
             />
           </>
         )}
@@ -350,10 +350,10 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => update("has_wedding_party", true)}
-                className={`flex-1 rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                className={`flex-1 rounded-[10px] border-border px-4 py-2 text-[15px] font-semibold transition ${
                   form.has_wedding_party === true
-                    ? "border-rose-500 bg-rose-50 text-rose-700"
-                    : "hover:bg-gray-50"
+                    ? "border-violet bg-lavender text-violet"
+                    : "hover:bg-lavender"
                 }`}
               >
                 Yes
@@ -361,10 +361,10 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => update("has_wedding_party", false)}
-                className={`flex-1 rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                className={`flex-1 rounded-[10px] border-border px-4 py-2 text-[15px] font-semibold transition ${
                   form.has_wedding_party === false
-                    ? "border-rose-500 bg-rose-50 text-rose-700"
-                    : "hover:bg-gray-50"
+                    ? "border-violet bg-lavender text-violet"
+                    : "hover:bg-lavender"
                 }`}
               >
                 Not yet
@@ -381,7 +381,7 @@ export default function OnboardingPage() {
                   }
                   placeholder="e.g. 8"
                   min="1"
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  className="w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
                 />
               </>
             )}
@@ -398,17 +398,17 @@ export default function OnboardingPage() {
               {VENDOR_CATEGORIES.map((vendor) => (
                 <label
                   key={vendor}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm cursor-pointer transition ${
+                  className={`flex items-center gap-2 rounded-[10px] border-border px-3 py-2 text-[15px] cursor-pointer transition ${
                     form.booked_vendors.includes(vendor)
-                      ? "border-rose-500 bg-rose-50"
-                      : "hover:bg-gray-50"
+                      ? "border-violet bg-lavender"
+                      : "hover:bg-lavender"
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={form.booked_vendors.includes(vendor)}
                     onChange={() => toggleVendor(vendor)}
-                    className="accent-rose-600"
+                    className="accent-violet"
                   />
                   {vendor}
                 </label>
@@ -421,18 +421,18 @@ export default function OnboardingPage() {
           <>
             <EdynMessage message="Perfect. Knowing this helps us suggest what to focus on next. And roughly, what's your wedding budget?" />
             <div>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-[15px]">
                 <input
                   type="checkbox"
                   checked={form.has_budget}
                   onChange={(e) => update("has_budget", e.target.checked)}
-                  className="accent-rose-600"
+                  className="accent-violet"
                 />
                 We have a budget in mind
               </label>
               {form.has_budget && (
                 <div className="mt-3 flex items-center gap-2">
-                  <span className="text-gray-400">$</span>
+                  <span className="text-muted">$</span>
                   <input
                     type="number"
                     value={form.budget}
@@ -440,7 +440,7 @@ export default function OnboardingPage() {
                     placeholder="e.g. 25000"
                     min="0"
                     step="500"
-                    className="w-full rounded-lg border px-3 py-2 text-sm"
+                    className="w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
                   />
                 </div>
               )}
@@ -455,10 +455,10 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => update("has_pre_wedding_events", true)}
-                className={`flex-1 rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                className={`flex-1 rounded-[10px] border-border px-4 py-2 text-[15px] font-semibold transition ${
                   form.has_pre_wedding_events === true
-                    ? "border-rose-500 bg-rose-50 text-rose-700"
-                    : "hover:bg-gray-50"
+                    ? "border-violet bg-lavender text-violet"
+                    : "hover:bg-lavender"
                 }`}
               >
                 Yes
@@ -466,10 +466,10 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => update("has_pre_wedding_events", false)}
-                className={`flex-1 rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                className={`flex-1 rounded-[10px] border-border px-4 py-2 text-[15px] font-semibold transition ${
                   form.has_pre_wedding_events === false
-                    ? "border-rose-500 bg-rose-50 text-rose-700"
-                    : "hover:bg-gray-50"
+                    ? "border-violet bg-lavender text-violet"
+                    : "hover:bg-lavender"
                 }`}
               >
                 Not yet
@@ -485,10 +485,10 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => update("has_honeymoon", true)}
-                className={`flex-1 rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                className={`flex-1 rounded-[10px] border-border px-4 py-2 text-[15px] font-semibold transition ${
                   form.has_honeymoon === true
-                    ? "border-rose-500 bg-rose-50 text-rose-700"
-                    : "hover:bg-gray-50"
+                    ? "border-violet bg-lavender text-violet"
+                    : "hover:bg-lavender"
                 }`}
               >
                 Yes
@@ -496,10 +496,10 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 onClick={() => update("has_honeymoon", false)}
-                className={`flex-1 rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                className={`flex-1 rounded-[10px] border-border px-4 py-2 text-[15px] font-semibold transition ${
                   form.has_honeymoon === false
-                    ? "border-rose-500 bg-rose-50 text-rose-700"
-                    : "hover:bg-gray-50"
+                    ? "border-violet bg-lavender text-violet"
+                    : "hover:bg-lavender"
                 }`}
               >
                 Not yet
@@ -522,7 +522,7 @@ export default function OnboardingPage() {
               onChange={(e) => update("anything_else", e.target.value)}
               placeholder="Share any other details, preferences, or concerns..."
               rows={4}
-              className="w-full rounded-lg border px-3 py-2 text-sm resize-none"
+              className="w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
             />
           </>
         )}
@@ -534,7 +534,7 @@ export default function OnboardingPage() {
           <button
             type="button"
             onClick={() => setStep((s) => s - 1)}
-            className="rounded-full border px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+            className="btn-ghost"
           >
             Back
           </button>
@@ -543,7 +543,7 @@ export default function OnboardingPage() {
           type="button"
           onClick={handleNext}
           disabled={!canProceed() || submitting}
-          className="rounded-full bg-rose-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 transition disabled:opacity-50 ml-auto"
+          className="btn-primary disabled:opacity-50 ml-auto"
         >
           {submitting
             ? "Setting up..."
@@ -553,7 +553,7 @@ export default function OnboardingPage() {
         </button>
       </div>
 
-      <p className="mt-4 text-center text-xs text-gray-400">
+      <p className="mt-4 text-center text-[12px] text-muted">
         Step {step + 1} of {STEPS.length}
       </p>
     </div>

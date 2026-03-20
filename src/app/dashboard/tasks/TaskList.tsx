@@ -76,26 +76,26 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect }: Props) {
         const collapsed = collapsedPhases.has(phase);
 
         return (
-          <div key={phase} className="rounded-xl border bg-white overflow-hidden">
+          <div key={phase} className="rounded-[16px] border-border bg-white overflow-hidden">
             <button
               onClick={() => togglePhase(phase)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition text-left"
+              className="w-full flex items-center justify-between px-4 py-3 bg-lavender hover:opacity-90 transition text-left"
             >
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">
+                <span className="text-[12px] text-muted">
                   {collapsed ? "+" : "-"}
                 </span>
-                <span className="text-sm font-semibold text-gray-900">
+                <span className="text-[15px] font-semibold text-plum">
                   {phase}
                 </span>
-                <span className="text-xs text-gray-400">
+                <span className="text-[12px] text-muted">
                   {completed}/{phaseTasks.length}
                 </span>
               </div>
               {/* Phase progress */}
-              <div className="w-24 h-1.5 rounded-full bg-gray-200">
+              <div className="progress-track w-24">
                 <div
-                  className="h-full rounded-full bg-rose-500 transition-all"
+                  className="progress-fill"
                   style={{
                     width: `${
                       phaseTasks.length > 0
@@ -108,7 +108,7 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect }: Props) {
             </button>
 
             {!collapsed && (
-              <div className="divide-y">
+              <div className="divide-y divide-border">
                 {phaseTasks.map((task) => {
                   const isOverdue =
                     task.due_date &&
@@ -118,35 +118,35 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect }: Props) {
                   return (
                     <div
                       key={task.id}
-                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition"
+                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-lavender transition"
                     >
                       <input
                         type="checkbox"
                         checked={task.completed}
                         onChange={() => onToggle(task.id)}
-                        className="h-4 w-4 rounded accent-rose-600 flex-shrink-0"
+                        className="h-4 w-4 rounded accent-violet flex-shrink-0"
                       />
                       <button
                         onClick={() => onSelect(task)}
-                        className={`flex-1 text-sm text-left ${
+                        className={`flex-1 text-[15px] text-left ${
                           task.completed
-                            ? "text-gray-400 line-through"
-                            : "text-gray-900"
+                            ? "text-muted line-through"
+                            : "text-plum"
                         }`}
                       >
                         {task.title}
                       </button>
                       {task.category && (
-                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                        <span className="badge">
                           {task.category}
                         </span>
                       )}
                       {task.due_date && (
                         <span
-                          className={`text-xs flex-shrink-0 ${
+                          className={`text-[12px] flex-shrink-0 ${
                             isOverdue
-                              ? "text-red-500 font-medium"
-                              : "text-gray-400"
+                              ? "text-error font-semibold"
+                              : "text-muted"
                           }`}
                         >
                           {task.due_date}
@@ -155,7 +155,7 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect }: Props) {
                       {!task.is_system_generated && (
                         <button
                           onClick={() => onDelete(task.id)}
-                          className="text-xs text-red-500 hover:text-red-400 flex-shrink-0"
+                          className="text-[12px] text-error hover:opacity-80 flex-shrink-0"
                         >
                           Delete
                         </button>

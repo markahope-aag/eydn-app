@@ -143,39 +143,39 @@ export default function BudgetPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-gray-400 py-8">Loading budget...</p>;
+    return <p className="text-[15px] text-muted py-8">Loading budget...</p>;
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Budget</h1>
+      <h1>Budget</h1>
 
       {/* Budget overview */}
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border bg-white p-5">
-          <p className="text-sm text-gray-500">Total Budget</p>
+        <div className="card p-5">
+          <p className="text-[15px] text-muted">Total Budget</p>
           <div className="mt-1 flex items-center gap-2">
-            <span className="text-lg text-gray-400">$</span>
+            <span className="text-lg text-muted">$</span>
             <input
               type="number"
               value={budget || ""}
               onChange={(e) => handleBudgetChange(Number(e.target.value))}
               placeholder="0"
-              className="text-2xl font-bold text-gray-900 w-full outline-none"
+              className="text-2xl font-semibold text-plum w-full outline-none"
             />
           </div>
         </div>
-        <div className="rounded-2xl border bg-white p-5">
-          <p className="text-sm text-gray-500">Spent</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">
+        <div className="card p-5">
+          <p className="text-[15px] text-muted">Spent</p>
+          <p className="mt-1 text-2xl font-semibold text-plum">
             ${totalSpent.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-2xl border bg-white p-5">
-          <p className="text-sm text-gray-500">Remaining</p>
+        <div className="card p-5">
+          <p className="text-[15px] text-muted">Remaining</p>
           <p
-            className={`mt-1 text-2xl font-bold ${
-              remaining < 0 ? "text-red-600" : "text-green-600"
+            className={`mt-1 text-2xl font-semibold ${
+              remaining < 0 ? "text-error" : "text-violet"
             }`}
           >
             ${remaining.toLocaleString()}
@@ -185,10 +185,10 @@ export default function BudgetPage() {
 
       {/* Progress bar */}
       {budget > 0 && (
-        <div className="mt-4 h-3 rounded-full bg-gray-200 overflow-hidden">
+        <div className="progress-track mt-4 h-3">
           <div
             className={`h-full rounded-full transition-all ${
-              totalSpent > budget ? "bg-red-500" : "bg-rose-500"
+              totalSpent > budget ? "bg-error" : "progress-fill"
             }`}
             style={{ width: `${Math.min((totalSpent / budget) * 100, 100)}%` }}
           />
@@ -202,7 +202,7 @@ export default function BudgetPage() {
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="rounded-lg border px-3 py-2 text-sm flex-1"
+          className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
           required
         />
         <input
@@ -210,7 +210,7 @@ export default function BudgetPage() {
           placeholder="Amount"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="rounded-lg border px-3 py-2 text-sm w-32"
+          className="rounded-[10px] border-border px-3 py-2 text-[15px] w-32"
           min="0"
           step="0.01"
           required
@@ -218,7 +218,7 @@ export default function BudgetPage() {
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="rounded-lg border px-3 py-2 text-sm"
+          className="rounded-[10px] border-border px-3 py-2 text-[15px]"
         >
           {categories.map((c) => (
             <option key={c} value={c}>
@@ -228,7 +228,7 @@ export default function BudgetPage() {
         </select>
         <button
           type="submit"
-          className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition"
+          className="btn-primary"
         >
           Add
         </button>
@@ -236,28 +236,28 @@ export default function BudgetPage() {
 
       {/* Expense list */}
       {expenses.length > 0 && (
-        <div className="mt-6 overflow-hidden rounded-xl border bg-white">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-gray-50">
+        <div className="mt-6 overflow-hidden rounded-[16px] border-border bg-white">
+          <table className="w-full text-[15px]">
+            <thead className="border-b border-border bg-lavender">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">
+                <th className="px-4 py-3 text-left font-semibold text-muted">
                   Paid
                 </th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">
+                <th className="px-4 py-3 text-left font-semibold text-muted">
                   Description
                 </th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">
+                <th className="px-4 py-3 text-left font-semibold text-muted">
                   Category
                 </th>
-                <th className="px-4 py-3 text-right font-medium text-gray-600">
+                <th className="px-4 py-3 text-right font-semibold text-muted">
                   Amount
                 </th>
-                <th className="px-4 py-3 text-right font-medium text-gray-600">
+                <th className="px-4 py-3 text-right font-semibold text-muted">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-border">
               {expenses.map((exp) => (
                 <tr key={exp.id}>
                   <td className="px-4 py-3">
@@ -265,18 +265,18 @@ export default function BudgetPage() {
                       type="checkbox"
                       checked={exp.paid}
                       onChange={() => togglePaid(exp.id)}
-                      className="accent-rose-600"
+                      className="accent-violet"
                     />
                   </td>
-                  <td className="px-4 py-3 text-gray-900">{exp.description}</td>
-                  <td className="px-4 py-3 text-gray-500">{exp.category}</td>
-                  <td className="px-4 py-3 text-right font-medium">
+                  <td className="px-4 py-3 text-plum">{exp.description}</td>
+                  <td className="px-4 py-3 text-muted">{exp.category}</td>
+                  <td className="px-4 py-3 text-right font-semibold">
                     ${exp.amount.toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => removeExpense(exp.id)}
-                      className="text-sm text-red-600 hover:text-red-500"
+                      className="text-[15px] text-error hover:opacity-80"
                     >
                       Remove
                     </button>

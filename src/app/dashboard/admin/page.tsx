@@ -122,14 +122,14 @@ export default function AdminPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-gray-400 py-8">Loading...</p>;
+    return <p className="text-[15px] text-muted py-8">Loading...</p>;
   }
 
   if (forbidden) {
     return (
       <div className="max-w-lg">
-        <h1 className="text-2xl font-bold text-gray-900">Access Denied</h1>
-        <p className="mt-2 text-sm text-gray-500">
+        <h1>Access Denied</h1>
+        <p className="mt-2 text-[15px] text-muted">
           You don&apos;t have admin access. If you&apos;re the app owner and this is
           your first time, you need to set yourself up as admin.
         </p>
@@ -144,7 +144,7 @@ export default function AdminPage() {
               toast.error(data.error || "Failed to set up admin");
             }
           }}
-          className="mt-4 rounded-full bg-rose-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 transition"
+          className="btn-primary mt-4"
         >
           Make Me Admin
         </button>
@@ -154,18 +154,18 @@ export default function AdminPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Platform Admin</h1>
+      <h1>Platform Admin</h1>
 
       {/* Tabs */}
-      <div className="mt-4 flex gap-1 border-b">
+      <div className="mt-4 flex gap-1 border-b border-border">
         {(["overview", "subscribers", "settings"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
+            className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${
               tab === t
-                ? "border-rose-600 text-rose-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-violet text-violet"
+                : "border-transparent text-muted hover:text-plum"
             }`}
           >
             {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -197,48 +197,48 @@ export default function AdminPage() {
       {/* Subscribers Tab */}
       {tab === "subscribers" && (
         <div className="mt-6">
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-[15px] text-muted mb-4">
             {users.length} registered {users.length === 1 ? "subscriber" : "subscribers"}
           </p>
           {users.length === 0 ? (
-            <p className="text-sm text-gray-400 py-8 text-center">
+            <p className="text-[15px] text-muted py-8 text-center">
               No subscribers yet.
             </p>
           ) : (
-            <div className="overflow-x-auto rounded-xl border bg-white">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-gray-50">
+            <div className="overflow-x-auto rounded-[16px] border-border bg-white">
+              <table className="w-full text-[15px]">
+                <thead className="border-b border-border bg-lavender">
                   <tr>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">Name</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">Email</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">Joined</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">Last Active</th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">Role</th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted">Name</th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted">Email</th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted">Status</th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted">Joined</th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted">Last Active</th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted">Role</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-border">
                   {users.map((user) => (
                     <tr key={user.user_id}>
-                      <td className="px-4 py-3 font-medium text-gray-900">
+                      <td className="px-4 py-3 font-semibold text-plum">
                         {user.name}
                       </td>
-                      <td className="px-4 py-3 text-gray-500">{user.email}</td>
+                      <td className="px-4 py-3 text-muted">{user.email}</td>
                       <td className="px-4 py-3">
                         {user.has_event ? (
-                          <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-600">
+                          <span className="badge badge-confirmed">
                             Active
                           </span>
                         ) : (
-                          <span className="rounded-full bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-600">
+                          <span className="badge badge-pending">
                             No event
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-gray-500">
+                      <td className="px-4 py-3 text-muted">
                         {new Date(user.joined).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-3 text-gray-500">
+                      <td className="px-4 py-3 text-muted">
                         {user.last_sign_in
                           ? new Date(user.last_sign_in).toLocaleDateString()
                           : "Never"}
@@ -247,10 +247,10 @@ export default function AdminPage() {
                         <select
                           value={user.role}
                           onChange={(e) => updateRole(user.user_id, e.target.value)}
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium border-0 ${
+                          className={`rounded-full px-2 py-0.5 text-[12px] font-semibold border-0 ${
                             user.role === "admin"
-                              ? "bg-rose-50 text-rose-600"
-                              : "bg-gray-100 text-gray-600"
+                              ? "bg-lavender text-violet"
+                              : "bg-lavender text-muted"
                           }`}
                         >
                           <option value="user">Subscriber</option>
@@ -270,18 +270,18 @@ export default function AdminPage() {
       {tab === "settings" && (
         <div className="mt-6 max-w-lg space-y-8">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">Registration</h2>
+            <h2 className="text-[15px] font-semibold text-plum">Registration</h2>
             <div className="mt-3 space-y-3">
               <label className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   checked={settings.registration.enabled}
                   onChange={() => toggleRegistration("enabled")}
-                  className="accent-rose-600"
+                  className="accent-violet"
                 />
                 <div>
-                  <p className="text-sm text-gray-900">Allow new signups</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-[15px] text-plum">Allow new signups</p>
+                  <p className="text-[12px] text-muted">
                     Disable to prevent new subscribers from registering
                   </p>
                 </div>
@@ -291,11 +291,11 @@ export default function AdminPage() {
                   type="checkbox"
                   checked={settings.registration.invite_only}
                   onChange={() => toggleRegistration("invite_only")}
-                  className="accent-rose-600"
+                  className="accent-violet"
                 />
                 <div>
-                  <p className="text-sm text-gray-900">Invite only</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-[15px] text-plum">Invite only</p>
+                  <p className="text-[12px] text-muted">
                     Only invited users can sign up
                   </p>
                 </div>
@@ -304,7 +304,7 @@ export default function AdminPage() {
           </div>
 
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">Feature Flags</h2>
+            <h2 className="text-[15px] font-semibold text-plum">Feature Flags</h2>
             <div className="mt-3 space-y-3">
               {(
                 Object.entries(settings.features) as [
@@ -317,9 +317,9 @@ export default function AdminPage() {
                     type="checkbox"
                     checked={enabled}
                     onChange={() => toggleFeature(key)}
-                    className="accent-rose-600"
+                    className="accent-violet"
                   />
-                  <span className="text-sm text-gray-900">
+                  <span className="text-[15px] text-plum">
                     {key
                       .replace(/_/g, " ")
                       .replace(/\b\w/g, (c) => c.toUpperCase())}
@@ -330,10 +330,10 @@ export default function AdminPage() {
           </div>
 
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">Limits</h2>
+            <h2 className="text-[15px] font-semibold text-plum">Limits</h2>
             <div className="mt-3 space-y-3">
               <div>
-                <label className="text-xs text-gray-500">Max guests per event</label>
+                <label className="text-[12px] text-muted">Max guests per event</label>
                 <input
                   type="number"
                   defaultValue={settings.limits.max_guests}
@@ -342,11 +342,11 @@ export default function AdminPage() {
                     setSettings((s) => ({ ...s, limits: updated }));
                     updateSetting("limits", updated);
                   }}
-                  className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">Max AI chat messages per hour</label>
+                <label className="text-[12px] text-muted">Max AI chat messages per hour</label>
                 <input
                   type="number"
                   defaultValue={settings.limits.max_chat_messages_per_hour}
@@ -355,11 +355,11 @@ export default function AdminPage() {
                     setSettings((s) => ({ ...s, limits: updated }));
                     updateSetting("limits", updated);
                   }}
-                  className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">Max file size (MB)</label>
+                <label className="text-[12px] text-muted">Max file size (MB)</label>
                 <input
                   type="number"
                   defaultValue={settings.limits.max_file_size_mb}
@@ -368,7 +368,7 @@ export default function AdminPage() {
                     setSettings((s) => ({ ...s, limits: updated }));
                     updateSetting("limits", updated);
                   }}
-                  className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
                 />
               </div>
             </div>
@@ -389,10 +389,10 @@ function StatCard({
   subtitle?: string;
 }) {
   return (
-    <div className="rounded-2xl border bg-white p-6">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
-      {subtitle && <p className="mt-0.5 text-xs text-gray-400">{subtitle}</p>}
+    <div className="card p-6">
+      <p className="text-[15px] text-muted">{label}</p>
+      <p className="mt-1 text-2xl font-semibold text-plum">{value}</p>
+      {subtitle && <p className="mt-0.5 text-[12px] text-muted">{subtitle}</p>}
     </div>
   );
 }

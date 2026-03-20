@@ -47,13 +47,13 @@ export default function SettingsPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-gray-400 py-8">Loading...</p>;
+    return <p className="text-[15px] text-muted py-8">Loading...</p>;
   }
 
   return (
     <div className="max-w-lg">
-      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1>Settings</h1>
+      <p className="mt-1 text-[15px] text-muted">
         Manage your notification preferences
       </p>
 
@@ -64,13 +64,13 @@ export default function SettingsPage() {
               type="checkbox"
               checked={emailReminders}
               onChange={(e) => setEmailReminders(e.target.checked)}
-              className="accent-rose-600"
+              className="accent-violet"
             />
             <div>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-[15px] font-semibold text-plum">
                 Email reminders
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-[12px] text-muted">
                 Receive email notifications for upcoming task deadlines
               </p>
             </div>
@@ -78,13 +78,13 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-[15px] font-semibold text-muted">
             Remind me before deadline
           </label>
           <select
             value={reminderDays}
             onChange={(e) => setReminderDays(Number(e.target.value))}
-            className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
           >
             <option value={3}>3 days before</option>
             <option value={7}>7 days before</option>
@@ -95,7 +95,7 @@ export default function SettingsPage() {
 
         <button
           onClick={saveSettings}
-          className="rounded-full bg-rose-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 transition"
+          className="btn-primary"
         >
           Save Settings
         </button>

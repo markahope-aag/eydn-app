@@ -76,7 +76,7 @@ export default function ChatPage() {
         }
       }
     } catch {
-      toast.error("Failed to get response from Eydn");
+      toast.error("Failed to get response from eydn");
       setMessages((prev) => prev.filter((m) => m.id !== assistantId));
     } finally {
       setStreaming(false);
@@ -84,15 +84,15 @@ export default function ChatPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-gray-400 py-8">Loading chat...</p>;
+    return <p className="text-[15px] text-muted py-8">Loading chat...</p>;
   }
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
-      <h1 className="text-2xl font-bold text-gray-900 flex-shrink-0">
-        Ask Eydn
+      <h1 className="flex-shrink-0">
+        Ask eydn
       </h1>
-      <p className="mt-1 text-sm text-gray-500 flex-shrink-0">
+      <p className="mt-1 text-[15px] text-muted flex-shrink-0">
         Your AI wedding planning assistant
       </p>
 
@@ -100,12 +100,12 @@ export default function ChatPage() {
       <div className="flex-1 overflow-y-auto mt-4 space-y-4 pb-4">
         {messages.length === 0 && (
           <div className="flex gap-3 items-start">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center">
-              <span className="text-sm font-bold text-rose-600">E</span>
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-lavender flex items-center justify-center">
+              <span className="text-[15px] font-semibold text-violet">E</span>
             </div>
-            <div className="bg-rose-50 rounded-2xl rounded-tl-sm px-4 py-3 max-w-lg">
-              <p className="text-sm text-gray-700">
-                Hi! I&apos;m Eydn, your wedding guide. Ask me anything about
+            <div className="bg-lavender rounded-[16px] rounded-tl-sm px-4 py-3 max-w-lg">
+              <p className="text-[15px] text-muted">
+                Hi! I&apos;m eydn, your wedding guide. Ask me anything about
                 your wedding planning — I know your timeline, budget, vendors,
                 and guests!
               </p>
@@ -122,27 +122,27 @@ export default function ChatPage() {
           >
             <div
               className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                msg.role === "user" ? "bg-gray-200" : "bg-rose-100"
+                msg.role === "user" ? "bg-lavender" : "bg-lavender"
               }`}
             >
               <span
-                className={`text-sm font-bold ${
-                  msg.role === "user" ? "text-gray-600" : "text-rose-600"
+                className={`text-[15px] font-semibold ${
+                  msg.role === "user" ? "text-muted" : "text-violet"
                 }`}
               >
                 {msg.role === "user" ? "Y" : "E"}
               </span>
             </div>
             <div
-              className={`rounded-2xl px-4 py-3 max-w-lg ${
+              className={`rounded-[16px] px-4 py-3 max-w-lg ${
                 msg.role === "user"
-                  ? "bg-gray-900 text-white rounded-tr-sm"
-                  : "bg-rose-50 text-gray-700 rounded-tl-sm"
+                  ? "bg-plum text-white rounded-tr-sm"
+                  : "bg-lavender text-muted rounded-tl-sm"
               }`}
             >
-              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              <p className="text-[15px] whitespace-pre-wrap">{msg.content}</p>
               {msg.role === "assistant" && msg.content === "" && streaming && (
-                <span className="text-sm text-gray-400 animate-pulse">
+                <span className="text-[15px] text-muted animate-pulse">
                   Thinking...
                 </span>
               )}
@@ -155,20 +155,20 @@ export default function ChatPage() {
       {/* Input */}
       <form
         onSubmit={sendMessage}
-        className="flex-shrink-0 flex gap-3 pt-4 border-t"
+        className="flex-shrink-0 flex gap-3 pt-4 border-t border-border"
       >
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask Eydn anything about your wedding..."
-          className="flex-1 rounded-lg border px-4 py-2.5 text-sm"
+          placeholder="Ask eydn anything about your wedding..."
+          className="flex-1 rounded-[10px] border-border px-4 py-2.5 text-[15px]"
           disabled={streaming}
         />
         <button
           type="submit"
           disabled={streaming || !input.trim()}
-          className="rounded-lg bg-rose-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 transition disabled:opacity-50"
+          className="btn-primary disabled:opacity-50"
         >
           Send
         </button>

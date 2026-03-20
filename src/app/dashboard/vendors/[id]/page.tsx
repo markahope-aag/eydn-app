@@ -20,12 +20,12 @@ type Vendor = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  searching: "bg-gray-100 text-gray-600",
+  searching: "bg-lavender text-muted",
   contacted: "bg-blue-50 text-blue-600",
-  quote_received: "bg-yellow-50 text-yellow-700",
-  booked: "bg-green-50 text-green-600",
-  deposit_paid: "bg-emerald-50 text-emerald-600",
-  paid_in_full: "bg-rose-50 text-rose-600",
+  quote_received: "badge-pending",
+  booked: "badge-confirmed",
+  deposit_paid: "badge-confirmed",
+  paid_in_full: "bg-lavender text-violet",
 };
 
 export default function VendorDetailPage({
@@ -72,16 +72,16 @@ export default function VendorDetailPage({
   }
 
   if (loading) {
-    return <p className="text-sm text-gray-400 py-8">Loading...</p>;
+    return <p className="text-[15px] text-muted py-8">Loading...</p>;
   }
 
   if (!vendor) {
     return (
       <div>
-        <p className="text-sm text-gray-500">Vendor not found.</p>
+        <p className="text-[15px] text-muted">Vendor not found.</p>
         <button
           onClick={() => router.push("/dashboard/vendors")}
-          className="mt-2 text-sm text-rose-600"
+          className="mt-2 text-[15px] text-violet"
         >
           Back to vendors
         </button>
@@ -95,17 +95,17 @@ export default function VendorDetailPage({
     <div className="max-w-2xl">
       <button
         onClick={() => router.push("/dashboard/vendors")}
-        className="text-sm text-gray-500 hover:text-gray-700 mb-4"
+        className="text-[15px] text-muted hover:text-plum mb-4"
       >
         &larr; All Vendors
       </button>
 
-      <h1 className="text-2xl font-bold text-gray-900">{vendor.name}</h1>
-      <p className="mt-1 text-sm text-gray-500">{vendor.category}</p>
+      <h1>{vendor.name}</h1>
+      <p className="mt-1 text-[15px] text-muted">{vendor.category}</p>
 
       {/* Status pipeline */}
       <div className="mt-6">
-        <label className="text-xs font-medium text-gray-500 uppercase">
+        <label className="text-[12px] font-semibold text-muted uppercase">
           Status
         </label>
         <div className="mt-2 flex gap-1">
@@ -113,10 +113,10 @@ export default function VendorDetailPage({
             <button
               key={s.value}
               onClick={() => updateField("status", s.value)}
-              className={`flex-1 py-1.5 text-xs font-medium rounded transition ${
+              className={`flex-1 py-1.5 text-[12px] font-semibold rounded-[10px] transition ${
                 i <= statusIdx
-                  ? STATUS_COLORS[vendor.status] || "bg-gray-100"
-                  : "bg-gray-50 text-gray-400"
+                  ? STATUS_COLORS[vendor.status] || "bg-lavender"
+                  : "bg-whisper text-muted"
               }`}
             >
               {s.label}
@@ -128,7 +128,7 @@ export default function VendorDetailPage({
       {/* Contact info */}
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <div>
-          <label className="text-xs font-medium text-gray-500">
+          <label className="text-[12px] font-semibold text-muted">
             Contact Name
           </label>
           <input
@@ -136,27 +136,27 @@ export default function VendorDetailPage({
             defaultValue={vendor.poc_name || ""}
             onBlur={(e) => updateField("poc_name", e.target.value || null)}
             placeholder="Name"
-            className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-500">Email</label>
+          <label className="text-[12px] font-semibold text-muted">Email</label>
           <input
             type="email"
             defaultValue={vendor.poc_email || ""}
             onBlur={(e) => updateField("poc_email", e.target.value || null)}
             placeholder="email@example.com"
-            className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-500">Phone</label>
+          <label className="text-[12px] font-semibold text-muted">Phone</label>
           <input
             type="tel"
             defaultValue={vendor.poc_phone || ""}
             onBlur={(e) => updateField("poc_phone", e.target.value || null)}
             placeholder="(555) 123-4567"
-            className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
           />
         </div>
       </div>
@@ -164,11 +164,11 @@ export default function VendorDetailPage({
       {/* Financials */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="text-xs font-medium text-gray-500">
+          <label className="text-[12px] font-semibold text-muted">
             Total Amount
           </label>
           <div className="mt-1 flex items-center gap-1">
-            <span className="text-gray-400">$</span>
+            <span className="text-muted">$</span>
             <input
               type="number"
               defaultValue={vendor.amount ?? ""}
@@ -181,16 +181,16 @@ export default function VendorDetailPage({
               placeholder="0"
               min="0"
               step="0.01"
-              className="w-full rounded-lg border px-3 py-2 text-sm"
+              className="w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
             />
           </div>
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-500">
+          <label className="text-[12px] font-semibold text-muted">
             Amount Paid
           </label>
           <div className="mt-1 flex items-center gap-1">
-            <span className="text-gray-400">$</span>
+            <span className="text-muted">$</span>
             <input
               type="number"
               defaultValue={vendor.amount_paid ?? ""}
@@ -203,7 +203,7 @@ export default function VendorDetailPage({
               placeholder="0"
               min="0"
               step="0.01"
-              className="w-full rounded-lg border px-3 py-2 text-sm"
+              className="w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
             />
           </div>
         </div>
@@ -211,20 +211,20 @@ export default function VendorDetailPage({
 
       {/* Notes */}
       <div className="mt-6">
-        <label className="text-xs font-medium text-gray-500">Notes</label>
+        <label className="text-[12px] font-semibold text-muted">Notes</label>
         <textarea
           defaultValue={vendor.notes || ""}
           onBlur={(e) => updateField("notes", e.target.value || null)}
           placeholder="Add notes about this vendor..."
           rows={4}
-          className="mt-1 w-full rounded-lg border px-3 py-2 text-sm resize-none"
+          className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
         />
       </div>
 
       {/* Email template */}
       <button
         onClick={() => setShowEmail(true)}
-        className="mt-6 rounded-lg border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 transition"
+        className="btn-ghost mt-6"
       >
         View Email Template
       </button>

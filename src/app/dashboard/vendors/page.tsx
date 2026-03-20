@@ -19,12 +19,12 @@ type Vendor = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  searching: "bg-gray-100 text-gray-600",
+  searching: "bg-lavender text-muted",
   contacted: "bg-blue-50 text-blue-600",
-  quote_received: "bg-yellow-50 text-yellow-700",
-  booked: "bg-green-50 text-green-600",
-  deposit_paid: "bg-emerald-50 text-emerald-600",
-  paid_in_full: "bg-rose-50 text-rose-600",
+  quote_received: "badge-pending",
+  booked: "badge-confirmed",
+  deposit_paid: "badge-confirmed",
+  paid_in_full: "bg-lavender text-violet",
 };
 
 export default function VendorsPage() {
@@ -130,21 +130,21 @@ export default function VendorsPage() {
   ).length;
 
   if (loading) {
-    return <p className="text-sm text-gray-400 py-8">Loading vendors...</p>;
+    return <p className="text-[15px] text-muted py-8">Loading vendors...</p>;
   }
 
   return (
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vendors</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1>Vendors</h1>
+          <p className="mt-1 text-[15px] text-muted">
             {bookedCount} booked / {vendors.length} total
           </p>
         </div>
         <button
           onClick={() => setShowAdd(!showAdd)}
-          className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition"
+          className="btn-primary"
         >
           Add Vendor
         </button>
@@ -157,14 +157,14 @@ export default function VendorsPage() {
             placeholder="Vendor name"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            className="rounded-lg border px-3 py-2 text-sm flex-1"
+            className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
             required
             autoFocus
           />
           <select
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
-            className="rounded-lg border px-3 py-2 text-sm"
+            className="rounded-[10px] border-border px-3 py-2 text-[15px]"
           >
             {VENDOR_CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -174,7 +174,7 @@ export default function VendorsPage() {
           </select>
           <button
             type="submit"
-            className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition"
+            className="btn-primary"
           >
             Add
           </button>
@@ -185,10 +185,10 @@ export default function VendorsPage() {
         {[...grouped.entries()].map(([category, catVendors]) => (
           <div key={category}>
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-semibold text-gray-700">{category}</h2>
+              <h2 className="text-[15px] font-semibold text-muted">{category}</h2>
               <button
                 onClick={() => setEmailCategory(category)}
-                className="text-xs text-rose-600 hover:text-rose-500"
+                className="text-[12px] text-violet hover:text-soft-violet"
               >
                 Email template
               </button>
@@ -197,18 +197,18 @@ export default function VendorsPage() {
               {catVendors.map((vendor) => (
                 <div
                   key={vendor.id}
-                  className="flex items-center gap-3 rounded-xl border bg-white px-4 py-3"
+                  className="flex items-center gap-3 rounded-[16px] border-border bg-white px-4 py-3"
                 >
                   <a
                     href={`/dashboard/vendors/${vendor.id}`}
-                    className="flex-1 text-sm font-medium text-gray-900 hover:text-rose-600"
+                    className="flex-1 text-[15px] font-semibold text-plum hover:text-violet"
                   >
                     {vendor.name}
                   </a>
                   <select
                     value={vendor.status}
                     onChange={(e) => updateStatus(vendor.id, e.target.value)}
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium border-0 ${
+                    className={`rounded-full px-2 py-0.5 text-[12px] font-semibold border-0 ${
                       STATUS_COLORS[vendor.status] || ""
                     }`}
                   >
@@ -219,13 +219,13 @@ export default function VendorsPage() {
                     ))}
                   </select>
                   {vendor.amount !== null && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-[12px] text-muted">
                       ${vendor.amount.toLocaleString()}
                     </span>
                   )}
                   <button
                     onClick={() => deleteVendor(vendor.id)}
-                    className="text-xs text-red-500 hover:text-red-400"
+                    className="text-[12px] text-error hover:opacity-80"
                   >
                     Delete
                   </button>
@@ -236,7 +236,7 @@ export default function VendorsPage() {
         ))}
 
         {vendors.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-8">
+          <p className="text-[15px] text-muted text-center py-8">
             No vendors yet. Add one to start tracking!
           </p>
         )}

@@ -26,7 +26,7 @@ export function TaskFilters({
       <select
         value={selectedPhase}
         onChange={(e) => onPhaseChange(e.target.value)}
-        className="rounded-lg border px-3 py-1.5 text-sm"
+        className="rounded-[10px] border-border px-3 py-1.5 text-[15px]"
       >
         <option value="">All Phases</option>
         {phases.map((p) => (
@@ -38,7 +38,7 @@ export function TaskFilters({
       <select
         value={selectedCategory}
         onChange={(e) => onCategoryChange(e.target.value)}
-        className="rounded-lg border px-3 py-1.5 text-sm"
+        className="rounded-[10px] border-border px-3 py-1.5 text-[15px]"
       >
         <option value="">All Categories</option>
         {categories.map((c) => (
@@ -50,7 +50,7 @@ export function TaskFilters({
       <select
         value={selectedStatus}
         onChange={(e) => onStatusChange(e.target.value)}
-        className="rounded-lg border px-3 py-1.5 text-sm"
+        className="rounded-[10px] border-border px-3 py-1.5 text-[15px]"
       >
         <option value="">All Status</option>
         <option value="pending">Pending</option>

@@ -131,13 +131,13 @@ export default function GuestsPage() {
   const pending = guests.filter((g) => g.rsvp_status === "pending").length;
 
   if (loading) {
-    return <p className="text-sm text-gray-400 py-8">Loading guests...</p>;
+    return <p className="text-[15px] text-muted py-8">Loading guests...</p>;
   }
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Guest List</h1>
+        <h1>Guest List</h1>
         <div className="flex gap-2">
           <input
             ref={fileInput}
@@ -148,7 +148,7 @@ export default function GuestsPage() {
           />
           <button
             onClick={() => fileInput.current?.click()}
-            className="rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+            className="btn-ghost text-[13px]"
           >
             Import CSV
           </button>
@@ -156,17 +156,17 @@ export default function GuestsPage() {
       </div>
 
       <div className="mt-4 flex gap-4">
-        <span className="text-sm text-gray-500">
-          Total: <strong>{guests.length}</strong>
+        <span className="text-[15px] text-muted">
+          Total: <strong className="font-semibold">{guests.length}</strong>
         </span>
-        <span className="text-sm text-green-600">
-          Accepted: <strong>{accepted}</strong>
+        <span className="badge badge-confirmed">
+          Accepted: <strong className="font-semibold">{accepted}</strong>
         </span>
-        <span className="text-sm text-red-600">
-          Declined: <strong>{declined}</strong>
+        <span className="badge badge-declined">
+          Declined: <strong className="font-semibold">{declined}</strong>
         </span>
-        <span className="text-sm text-yellow-600">
-          Pending: <strong>{pending}</strong>
+        <span className="badge badge-pending">
+          Pending: <strong className="font-semibold">{pending}</strong>
         </span>
       </div>
 
@@ -176,7 +176,7 @@ export default function GuestsPage() {
           placeholder="Guest name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="rounded-lg border px-3 py-2 text-sm flex-1"
+          className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
           required
         />
         <input
@@ -184,37 +184,37 @@ export default function GuestsPage() {
           placeholder="Email (optional)"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded-lg border px-3 py-2 text-sm flex-1"
+          className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
         />
         <button
           type="submit"
-          className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition"
+          className="btn-primary"
         >
           Add Guest
         </button>
       </form>
 
       {guests.length > 0 && (
-        <div className="mt-6 overflow-x-auto rounded-xl border bg-white">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-gray-50">
+        <div className="mt-6 overflow-x-auto rounded-[16px] border-border bg-white">
+          <table className="w-full text-[15px]">
+            <thead className="border-b border-border bg-lavender">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Name</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Email</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">RSVP</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Meal</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Plus One</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">Group</th>
-                <th className="px-4 py-3 text-right font-medium text-gray-600">Actions</th>
+                <th className="px-4 py-3 text-left font-semibold text-muted">Name</th>
+                <th className="px-4 py-3 text-left font-semibold text-muted">Email</th>
+                <th className="px-4 py-3 text-left font-semibold text-muted">RSVP</th>
+                <th className="px-4 py-3 text-left font-semibold text-muted">Meal</th>
+                <th className="px-4 py-3 text-left font-semibold text-muted">Plus One</th>
+                <th className="px-4 py-3 text-left font-semibold text-muted">Group</th>
+                <th className="px-4 py-3 text-right font-semibold text-muted">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-border">
               {guests.map((guest) => (
                 <tr key={guest.id}>
-                  <td className="px-4 py-3 font-medium text-gray-900">
+                  <td className="px-4 py-3 font-semibold text-plum">
                     {guest.name}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">
+                  <td className="px-4 py-3 text-muted">
                     {guest.email ?? "—"}
                   </td>
                   <td className="px-4 py-3">
@@ -223,7 +223,7 @@ export default function GuestsPage() {
                       onChange={(e) =>
                         updateGuest(guest.id, "rsvp_status", e.target.value)
                       }
-                      className="rounded border px-2 py-1 text-sm"
+                      className="rounded-[10px] border-border px-2 py-1 text-[15px]"
                     >
                       <option value="pending">Pending</option>
                       <option value="accepted">Accepted</option>
@@ -242,7 +242,7 @@ export default function GuestsPage() {
                         )
                       }
                       placeholder="—"
-                      className="w-24 rounded border px-2 py-1 text-sm"
+                      className="w-24 rounded-[10px] border-border px-2 py-1 text-[15px]"
                     />
                   </td>
                   <td className="px-4 py-3">
@@ -257,7 +257,7 @@ export default function GuestsPage() {
                         )
                       }
                       placeholder="—"
-                      className="w-24 rounded border px-2 py-1 text-sm"
+                      className="w-24 rounded-[10px] border-border px-2 py-1 text-[15px]"
                     />
                   </td>
                   <td className="px-4 py-3">
@@ -272,13 +272,13 @@ export default function GuestsPage() {
                         )
                       }
                       placeholder="—"
-                      className="w-24 rounded border px-2 py-1 text-sm"
+                      className="w-24 rounded-[10px] border-border px-2 py-1 text-[15px]"
                     />
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => removeGuest(guest.id)}
-                      className="text-sm text-red-600 hover:text-red-500"
+                      className="text-[15px] text-error hover:opacity-80"
                     >
                       Remove
                     </button>

@@ -1,26 +1,238 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand Colors */
+  --violet: #8B3FCC;
+  --soft-violet: #B06EE0;
+  --blush-pink: #F0609A;
+  --petal: #F7C8E0;
+  --lavender-mist: #F0E0FF;
+  --whisper: #FBF6FF;
+  --deep-plum: #1A1030;
+  --muted-plum: #5A4070;
+  --border: #E8D0F5;
+  --error: #A0204A;
+
+  /* Status */
+  --confirmed-bg: #D6F5E3;
+  --confirmed-text: #2E7D4F;
+  --pending-bg: #FFF3CC;
+  --pending-text: #8A5200;
+  --declined-bg: #FFE0EC;
+  --declined-text: #A0204A;
+  --booked-bg: #F0E0FF;
+  --booked-text: #6B2FA0;
+
+  --background: var(--whisper);
+  --foreground: var(--deep-plum);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-violet: var(--violet);
+  --color-soft-violet: var(--soft-violet);
+  --color-blush: var(--blush-pink);
+  --color-petal: var(--petal);
+  --color-lavender: var(--lavender-mist);
+  --color-whisper: var(--whisper);
+  --color-plum: var(--deep-plum);
+  --color-muted: var(--muted-plum);
+  --color-border: var(--border);
+  --color-error: var(--error);
+  --color-confirmed-bg: var(--confirmed-bg);
+  --color-confirmed-text: var(--confirmed-text);
+  --color-pending-bg: var(--pending-bg);
+  --color-pending-text: var(--pending-text);
+  --color-declined-bg: var(--declined-bg);
+  --color-declined-text: var(--declined-text);
+  --color-booked-bg: var(--booked-bg);
+  --color-booked-text: var(--booked-text);
+  --font-sans: "Nunito", Arial, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--whisper);
+  color: var(--deep-plum);
+  font-family: "Nunito", Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* Typography */
+h1 { font-size: 26px; font-weight: 600; line-height: 1.2; letter-spacing: -0.5px; color: var(--deep-plum); }
+h2 { font-size: 18px; font-weight: 600; line-height: 1.4; color: var(--deep-plum); }
+h3 { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--deep-plum); }
+
+/* Buttons */
+.btn-primary {
+  background: var(--violet);
+  color: #fff;
+  border-radius: 100px;
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms;
+}
+.btn-primary:hover { background: var(--soft-violet); }
+.btn-primary:disabled { opacity: 0.4; }
+
+.btn-secondary {
+  background: var(--lavender-mist);
+  color: var(--violet);
+  border-radius: 100px;
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms;
+}
+.btn-secondary:hover { background: var(--petal); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--violet);
+  border: 2px solid var(--violet);
+  border-radius: 100px;
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms;
+}
+.btn-ghost:hover { background: var(--lavender-mist); }
+
+.btn-destructive {
+  background: #FFE0EC;
+  color: var(--error);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms;
+}
+.btn-destructive:hover { background: var(--declined-bg); }
+
+.btn-sm {
+  height: 32px;
+  padding: 6px 16px;
+  font-size: 13px;
+}
+
+/* Cards */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  border: 0.5px solid var(--border);
+}
+
+.card-summary {
+  background: #fff;
+  border-radius: 16px;
+  border: 0.5px solid var(--border);
+  overflow: hidden;
+}
+.card-summary::before {
+  content: "";
+  display: block;
+  height: 5px;
+  border-radius: 16px 16px 0 0;
+  background: linear-gradient(135deg, var(--violet), var(--blush-pink));
+}
+
+.card-list {
+  background: #fff;
+  border-radius: 0 16px 16px 0;
+  border: 0.5px solid var(--border);
+  border-left: 3px solid var(--violet);
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+input[type="password"],
+textarea,
+select {
+  height: 40px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  font-size: 15px;
+  font-family: "Nunito", Arial, sans-serif;
+  color: var(--deep-plum);
+  outline: none;
+  transition: border-color 150ms;
+}
+textarea { height: auto; }
+input:focus, textarea:focus, select:focus {
+  border-color: var(--violet);
+  border-width: 1.5px;
+}
+input::placeholder, textarea::placeholder {
+  color: var(--muted-plum);
+  font-weight: 400;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 100px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.badge-confirmed { background: var(--confirmed-bg); color: var(--confirmed-text); }
+.badge-confirmed::before { background: var(--confirmed-text); }
+.badge-pending { background: var(--pending-bg); color: var(--pending-text); }
+.badge-pending::before { background: var(--pending-text); }
+.badge-declined { background: var(--declined-bg); color: var(--declined-text); }
+.badge-declined::before { background: var(--declined-text); }
+.badge-booked { background: var(--booked-bg); color: var(--booked-text); }
+.badge-booked::before { background: var(--booked-text); }
+.badge-overdue { background: var(--declined-bg); color: var(--declined-text); }
+.badge-overdue::before { background: var(--declined-text); }
+
+/* Progress bar */
+.progress-track {
+  height: 7px;
+  border-radius: 100px;
+  background: var(--lavender-mist);
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 100px;
+  background: var(--violet);
+  transition: width 300ms;
+}
+
+/* Gradient */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, var(--violet), var(--blush-pink));
 }

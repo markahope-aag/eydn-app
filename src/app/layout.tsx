@@ -6,23 +6,18 @@ import {
   Show,
   UserButton,
 } from "@clerk/nextjs";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito } from "next/font/google";
 import { Toaster } from "sonner";
 import Link from "next/link";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const nunito = Nunito({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "600"],
 });
 
 export const metadata: Metadata = {
-  title: "Eydn",
+  title: "eydn",
   description: "Your AI wedding planning guide",
 };
 
@@ -32,25 +27,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className={`${nunito.className} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-whisper text-plum">
         <ClerkProvider>
-          <header className="flex items-center justify-between border-b bg-white px-6 py-3">
-            <Link href="/" className="text-lg font-bold text-rose-600">
-              Eydn
+          <header className="flex items-center justify-between border-b border-border bg-white px-6 py-3">
+            <Link href="/" className="text-lg font-semibold bg-brand-gradient bg-clip-text text-transparent">
+              eydn
             </Link>
             <div className="flex items-center gap-3">
               <Show when="signed-out">
                 <SignInButton>
-                  <button className="rounded-full px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition">
+                  <button className="btn-ghost btn-sm">
                     Sign In
                   </button>
                 </SignInButton>
                 <SignUpButton>
-                  <button className="rounded-full bg-rose-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-rose-500 transition">
+                  <button className="btn-primary btn-sm">
                     Get Started
                   </button>
                 </SignUpButton>
@@ -58,7 +50,7 @@ export default function RootLayout({
               <Show when="signed-in">
                 <Link
                   href="/dashboard"
-                  className="text-sm font-medium text-gray-700 hover:text-rose-600 transition"
+                  className="text-[15px] font-semibold text-violet hover:text-soft-violet transition"
                 >
                   Dashboard
                 </Link>
