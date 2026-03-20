@@ -78,47 +78,64 @@ export async function POST(request: Request) {
     }));
 
   // Stream response
-  const claude = getClaudeClient();
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
+  }
 
-  const stream = await claude.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1024,
-    system: systemPrompt,
-    messages,
-    stream: true,
-  });
+  try {
+    const claude = getClaudeClient();
 
-  // Collect full response while streaming
-  let fullResponse = "";
+    const stream = await claude.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages,
+      stream: true,
+    });
 
-  const readableStream = new ReadableStream({
-    async start(controller) {
-      const encoder = new TextEncoder();
-      for await (const event of stream) {
-        if (
-          event.type === "content_block_delta" &&
-          event.delta.type === "text_delta"
-        ) {
-          fullResponse += event.delta.text;
-          controller.enqueue(encoder.encode(event.delta.text));
+    // Collect full response while streaming
+    let fullResponse = "";
+
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        try {
+          const encoder = new TextEncoder();
+          for await (const event of stream) {
+            if (
+              event.type === "content_block_delta" &&
+              event.delta.type === "text_delta"
+            ) {
+              fullResponse += event.delta.text;
+              controller.enqueue(encoder.encode(event.delta.text));
+            }
+          }
+
+          // Save assistant response
+          await supabase.from("chat_messages").insert({
+            wedding_id: wedding.id,
+            role: "assistant" as const,
+            content: fullResponse,
+          });
+
+          controller.close();
+        } catch (streamError) {
+          console.error("Stream error:", streamError);
+          controller.close();
         }
-      }
+      },
+    });
 
-      // Save assistant response
-      await supabase.from("chat_messages").insert({
-        wedding_id: wedding.id,
-        role: "assistant" as const,
-        content: fullResponse,
-      });
-
-      controller.close();
-    },
-  });
-
-  return new Response(readableStream, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Transfer-Encoding": "chunked",
-    },
-  });
+    return new Response(readableStream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+      },
+    });
+  } catch (error) {
+    console.error("Claude API error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to get response from eydn" },
+      { status: 500 }
+    );
+  }
 }
