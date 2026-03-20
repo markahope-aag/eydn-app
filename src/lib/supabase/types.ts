@@ -1,6 +1,190 @@
 export type Database = {
   public: {
     Tables: {
+      vendor_accounts: {
+        Row: {
+          id: string;
+          user_id: string;
+          business_name: string;
+          category: string;
+          description: string | null;
+          website: string | null;
+          phone: string | null;
+          email: string;
+          address: string | null;
+          city: string;
+          state: string;
+          zip: string | null;
+          logo_url: string | null;
+          price_range: "$" | "$$" | "$$$" | "$$$$" | null;
+          status: "pending" | "approved" | "suspended";
+          is_preferred: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          business_name: string;
+          category: string;
+          description?: string | null;
+          website?: string | null;
+          phone?: string | null;
+          email: string;
+          address?: string | null;
+          city: string;
+          state: string;
+          zip?: string | null;
+          logo_url?: string | null;
+          price_range?: "$" | "$$" | "$$$" | "$$$$" | null;
+          status?: "pending" | "approved" | "suspended";
+          is_preferred?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          business_name?: string;
+          category?: string;
+          description?: string | null;
+          website?: string | null;
+          phone?: string | null;
+          email?: string;
+          address?: string | null;
+          city?: string;
+          state?: string;
+          zip?: string | null;
+          logo_url?: string | null;
+          price_range?: "$" | "$$" | "$$$" | "$$$$" | null;
+          status?: "pending" | "approved" | "suspended";
+          is_preferred?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      placement_tiers: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          price_monthly: number;
+          price_quarterly: number;
+          price_annual: number;
+          features: string[];
+          sort_order: number;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          price_monthly: number;
+          price_quarterly: number;
+          price_annual: number;
+          features?: string[];
+          sort_order?: number;
+          active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          price_monthly?: number;
+          price_quarterly?: number;
+          price_annual?: number;
+          features?: string[];
+          sort_order?: number;
+          active?: boolean;
+        };
+        Relationships: [];
+      };
+      vendor_placements: {
+        Row: {
+          id: string;
+          vendor_account_id: string;
+          tier_id: string;
+          billing_period: "monthly" | "quarterly" | "annual";
+          amount_paid: number;
+          starts_at: string;
+          expires_at: string;
+          auto_renew: boolean;
+          stripe_subscription_id: string | null;
+          stripe_payment_intent_id: string | null;
+          status: "active" | "expired" | "cancelled" | "past_due";
+          geographic_target: Record<string, unknown> | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          vendor_account_id: string;
+          tier_id: string;
+          billing_period: "monthly" | "quarterly" | "annual";
+          amount_paid: number;
+          starts_at?: string;
+          expires_at: string;
+          auto_renew?: boolean;
+          stripe_subscription_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          status?: "active" | "expired" | "cancelled" | "past_due";
+          geographic_target?: Record<string, unknown> | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          status?: "active" | "expired" | "cancelled" | "past_due";
+          auto_renew?: boolean;
+          stripe_subscription_id?: string | null;
+          expires_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "vendor_placements_vendor_account_id_fkey";
+            columns: ["vendor_account_id"];
+            isOneToOne: false;
+            referencedRelation: "vendor_accounts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "vendor_placements_tier_id_fkey";
+            columns: ["tier_id"];
+            isOneToOne: false;
+            referencedRelation: "placement_tiers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      vendor_analytics: {
+        Row: {
+          id: string;
+          vendor_account_id: string;
+          event_type: "impression" | "click" | "lead" | "contact";
+          wedding_id: string | null;
+          metadata: Record<string, unknown> | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          vendor_account_id: string;
+          event_type: "impression" | "click" | "lead" | "contact";
+          wedding_id?: string | null;
+          metadata?: Record<string, unknown> | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "vendor_analytics_vendor_account_id_fkey";
+            columns: ["vendor_account_id"];
+            isOneToOne: false;
+            referencedRelation: "vendor_accounts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       weddings: {
         Row: {
           id: string;

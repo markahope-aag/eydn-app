@@ -13,6 +13,7 @@ const navItems = [
   { href: "/dashboard/seating", label: "Seating Chart" },
   { href: "/dashboard/day-of", label: "Day-of Planner" },
   { href: "/dashboard/chat", label: "Ask eydn" },
+  { href: "/dashboard/vendor-portal", label: "Vendor Portal" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
 
@@ -41,12 +42,20 @@ export default async function DashboardLayout({
             </Link>
           ))}
           {admin && (
-            <Link
-              href="/dashboard/admin"
-              className="rounded-[12px] px-3 py-2 text-[15px] font-semibold text-violet bg-lavender hover:bg-petal transition mt-2"
-            >
-              Admin
-            </Link>
+            <>
+              <Link
+                href="/dashboard/admin"
+                className="rounded-[12px] px-3 py-2 text-[15px] font-semibold text-violet bg-lavender hover:bg-petal transition mt-2"
+              >
+                Admin
+              </Link>
+              <Link
+                href="/dashboard/admin/placements"
+                className="rounded-[12px] px-3 py-2 text-[13px] font-normal text-violet hover:bg-lavender transition"
+              >
+                Placements
+              </Link>
+            </>
           )}
         </nav>
         <div className="mt-auto pt-6 border-t border-border flex items-center gap-3">
