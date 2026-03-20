@@ -154,7 +154,12 @@ export default function AdminPage() {
 
   return (
     <div>
-      <h1>Platform Admin</h1>
+      <div className="flex items-center justify-between">
+        <h1>Platform Admin</h1>
+        <a href="/dashboard/admin/vendors" className="btn-secondary">
+          Vendor Directory
+        </a>
+      </div>
 
       {/* Tabs */}
       <div className="mt-4 flex gap-1 border-b border-border">

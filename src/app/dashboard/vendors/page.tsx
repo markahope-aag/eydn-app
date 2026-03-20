@@ -36,6 +36,9 @@ export default function VendorsPage() {
   // Add form
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState<string>(VENDOR_CATEGORIES[0]);
+  const [newWebsite, setNewWebsite] = useState("");
+  const [newCity, setNewCity] = useState("");
+  const [newState, setNewState] = useState("");
 
   useEffect(() => {
     fetch("/api/vendors")
@@ -76,6 +79,25 @@ export default function VendorsPage() {
       if (!res.ok) throw new Error();
       const saved = await res.json();
       setVendors((prev) => prev.map((v) => (v.id === tempId ? saved : v)));
+
+      // Submit to directory for admin review (non-blocking)
+      if (newCity || newWebsite) {
+        fetch("/api/vendor-submissions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: vendor.name,
+            category: vendor.category,
+            website: newWebsite || null,
+            city: newCity || null,
+            state: newState || null,
+          }),
+        }).catch(() => {});
+      }
+
+      setNewWebsite("");
+      setNewCity("");
+      setNewState("");
       toast.success("Vendor added");
     } catch {
       setVendors((prev) => prev.filter((v) => v.id !== tempId));
@@ -142,41 +164,70 @@ export default function VendorsPage() {
             {bookedCount} booked / {vendors.length} total
           </p>
         </div>
-        <button
-          onClick={() => setShowAdd(!showAdd)}
-          className="btn-primary"
-        >
-          Add Vendor
-        </button>
+        <div className="flex gap-2">
+          <a href="/dashboard/vendors/directory" className="btn-secondary">
+            Browse Directory
+          </a>
+          <button
+            onClick={() => setShowAdd(!showAdd)}
+            className="btn-primary"
+          >
+            Add Your Own
+          </button>
+        </div>
       </div>
 
       {showAdd && (
-        <form onSubmit={addVendor} className="mt-4 flex gap-3">
-          <input
-            type="text"
-            placeholder="Vendor name"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
-            required
-            autoFocus
-          />
-          <select
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-            className="rounded-[10px] border-border px-3 py-2 text-[15px]"
-          >
-            {VENDOR_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="btn-primary"
-          >
-            Add
+        <form onSubmit={addVendor} className="mt-4 card p-4 space-y-3">
+          <p className="text-[13px] text-muted">
+            Add a vendor you've found. We'll also save their info to help other couples.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input
+              type="text"
+              placeholder="Vendor name"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="rounded-[10px] border-border px-3 py-2 text-[15px]"
+              required
+              autoFocus
+            />
+            <select
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              className="rounded-[10px] border-border px-3 py-2 text-[15px]"
+            >
+              {VENDOR_CATEGORIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="Website (optional)"
+              value={newWebsite}
+              onChange={(e) => setNewWebsite(e.target.value)}
+              className="rounded-[10px] border-border px-3 py-2 text-[15px]"
+            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="City (optional)"
+                value={newCity}
+                onChange={(e) => setNewCity(e.target.value)}
+                className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
+              />
+              <input
+                type="text"
+                placeholder="State"
+                value={newState}
+                onChange={(e) => setNewState(e.target.value)}
+                className="rounded-[10px] border-border px-3 py-2 text-[15px] w-20"
+                maxLength={2}
+              />
+            </div>
+          </div>
+          <button type="submit" className="btn-primary">
+            Add Vendor
           </button>
         </form>
       )}

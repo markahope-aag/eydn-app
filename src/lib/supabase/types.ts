@@ -279,6 +279,100 @@ export type Database = {
         };
         Relationships: [];
       };
+      vendor_submissions: {
+        Row: {
+          id: string;
+          submitted_by: string;
+          name: string;
+          category: string;
+          website: string | null;
+          phone: string | null;
+          email: string | null;
+          city: string | null;
+          state: string | null;
+          notes: string | null;
+          status: "pending" | "approved" | "rejected";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          submitted_by: string;
+          name: string;
+          category: string;
+          website?: string | null;
+          phone?: string | null;
+          email?: string | null;
+          city?: string | null;
+          state?: string | null;
+          notes?: string | null;
+          status?: "pending" | "approved" | "rejected";
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          status?: "pending" | "approved" | "rejected";
+        };
+        Relationships: [];
+      };
+      suggested_vendors: {
+        Row: {
+          id: string;
+          name: string;
+          category: string;
+          description: string | null;
+          website: string | null;
+          phone: string | null;
+          email: string | null;
+          address: string | null;
+          city: string;
+          state: string;
+          zip: string | null;
+          country: string;
+          price_range: "$" | "$$" | "$$$" | "$$$$" | null;
+          featured: boolean;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          category: string;
+          description?: string | null;
+          website?: string | null;
+          phone?: string | null;
+          email?: string | null;
+          address?: string | null;
+          city: string;
+          state: string;
+          zip?: string | null;
+          country?: string;
+          price_range?: "$" | "$$" | "$$$" | "$$$$" | null;
+          featured?: boolean;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          category?: string;
+          description?: string | null;
+          website?: string | null;
+          phone?: string | null;
+          email?: string | null;
+          address?: string | null;
+          city?: string;
+          state?: string;
+          zip?: string | null;
+          country?: string;
+          price_range?: "$" | "$$" | "$$$" | "$$$$" | null;
+          featured?: boolean;
+          active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       seating_tables: {
         Row: {
           id: string;
