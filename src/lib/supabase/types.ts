@@ -309,6 +309,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      ceremony_positions: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          person_type: "wedding_party" | "officiant" | "couple";
+          person_id: string | null;
+          person_name: string;
+          role: string | null;
+          side: "left" | "right" | "center" | null;
+          position_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          wedding_id: string;
+          person_type: "wedding_party" | "officiant" | "couple";
+          person_id?: string | null;
+          person_name: string;
+          role?: string | null;
+          side?: "left" | "right" | "center" | null;
+          position_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          person_type?: "wedding_party" | "officiant" | "couple";
+          person_id?: string | null;
+          person_name?: string;
+          role?: string | null;
+          side?: "left" | "right" | "center" | null;
+          position_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ceremony_positions_wedding_id_fkey";
+            columns: ["wedding_id"];
+            isOneToOne: false;
+            referencedRelation: "weddings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       related_tasks: {
         Row: {
           id: string;
