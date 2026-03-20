@@ -9,6 +9,8 @@ type Task = {
   category: string | null;
   due_date: string | null;
   completed: boolean;
+  status: "not_started" | "in_progress" | "done";
+  priority: "high" | "medium" | "low";
   edyn_message: string | null;
   timeline_phase: string | null;
   is_system_generated: boolean;
@@ -33,6 +35,24 @@ const PHASE_ORDER = [
   "1 Week Before",
   "After the Wedding",
 ];
+
+const STATUS_LABELS: Record<string, string> = {
+  not_started: "Not Started",
+  in_progress: "In Progress",
+  done: "Done",
+};
+
+const STATUS_CLASSES: Record<string, string> = {
+  not_started: "bg-whisper text-muted",
+  in_progress: "bg-lavender text-violet",
+  done: "bg-lavender text-plum",
+};
+
+const PRIORITY_DOT: Record<string, string> = {
+  high: "bg-error",
+  medium: "bg-[#D4A017]",
+  low: "bg-transparent",
+};
 
 export function TaskList({ tasks, onToggle, onDelete, onSelect }: Props) {
   const [collapsedPhases, setCollapsedPhases] = useState<Set<string>>(
@@ -72,7 +92,7 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect }: Props) {
     <div className="space-y-4">
       {sortedPhases.map((phase) => {
         const phaseTasks = grouped.get(phase)!;
-        const completed = phaseTasks.filter((t) => t.completed).length;
+        const completed = phaseTasks.filter((t) => t.status === "done").length;
         const collapsed = collapsedPhases.has(phase);
 
         return (
@@ -112,7 +132,7 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect }: Props) {
                 {phaseTasks.map((task) => {
                   const isOverdue =
                     task.due_date &&
-                    !task.completed &&
+                    task.status !== "done" &&
                     new Date(task.due_date) < new Date();
 
                   return (
@@ -120,22 +140,35 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect }: Props) {
                       key={task.id}
                       className="flex items-center gap-3 px-4 py-2.5 hover:bg-lavender transition"
                     >
-                      <input
-                        type="checkbox"
-                        checked={task.completed}
-                        onChange={() => onToggle(task.id)}
-                        className="h-4 w-4 rounded accent-violet flex-shrink-0"
+                      {/* Priority dot */}
+                      <span
+                        className={`w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]} ${
+                          task.priority === "low" ? "border border-border" : ""
+                        }`}
                       />
+
+                      {/* Status badge - click to cycle */}
+                      <button
+                        onClick={() => onToggle(task.id)}
+                        className={`rounded-full px-2 py-0.5 text-[12px] flex-shrink-0 ${STATUS_CLASSES[task.status]}`}
+                      >
+                        {STATUS_LABELS[task.status]}
+                      </button>
+
+                      {/* Task title */}
                       <button
                         onClick={() => onSelect(task)}
                         className={`flex-1 text-[15px] text-left ${
-                          task.completed
+                          task.status === "done"
                             ? "text-muted line-through"
+                            : task.status === "in_progress"
+                            ? "text-violet"
                             : "text-plum"
                         }`}
                       >
                         {task.title}
                       </button>
+
                       {task.category && (
                         <span className="badge">
                           {task.category}

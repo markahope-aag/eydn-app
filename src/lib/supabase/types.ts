@@ -117,6 +117,8 @@ export type Database = {
           description: string | null;
           due_date: string | null;
           completed: boolean;
+          status: "not_started" | "in_progress" | "done";
+          priority: "high" | "medium" | "low";
           category: string | null;
           edyn_message: string | null;
           sort_order: number | null;
@@ -133,6 +135,8 @@ export type Database = {
           description?: string | null;
           due_date?: string | null;
           completed?: boolean;
+          status?: "not_started" | "in_progress" | "done";
+          priority?: "high" | "medium" | "low";
           category?: string | null;
           edyn_message?: string | null;
           sort_order?: number | null;
@@ -149,6 +153,8 @@ export type Database = {
           description?: string | null;
           due_date?: string | null;
           completed?: boolean;
+          status?: "not_started" | "in_progress" | "done";
+          priority?: "high" | "medium" | "low";
           category?: string | null;
           edyn_message?: string | null;
           sort_order?: number | null;
@@ -278,6 +284,69 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      related_tasks: {
+        Row: {
+          id: string;
+          task_id: string;
+          related_task_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          task_id: string;
+          related_task_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "related_tasks_task_id_fkey";
+            columns: ["task_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "related_tasks_related_task_id_fkey";
+            columns: ["related_task_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      task_resources: {
+        Row: {
+          id: string;
+          task_id: string;
+          label: string;
+          url: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          task_id: string;
+          label: string;
+          url: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          label?: string;
+          url?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "task_resources_task_id_fkey";
+            columns: ["task_id"];
+            isOneToOne: false;
+            referencedRelation: "tasks";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       vendor_submissions: {
         Row: {

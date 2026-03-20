@@ -6,9 +6,11 @@ type Props = {
   selectedCategory: string;
   selectedPhase: string;
   selectedStatus: string;
+  selectedPriority: string;
   onCategoryChange: (v: string) => void;
   onPhaseChange: (v: string) => void;
   onStatusChange: (v: string) => void;
+  onPriorityChange: (v: string) => void;
 };
 
 export function TaskFilters({
@@ -17,9 +19,11 @@ export function TaskFilters({
   selectedCategory,
   selectedPhase,
   selectedStatus,
+  selectedPriority,
   onCategoryChange,
   onPhaseChange,
   onStatusChange,
+  onPriorityChange,
 }: Props) {
   return (
     <div className="flex flex-wrap gap-3">
@@ -53,9 +57,20 @@ export function TaskFilters({
         className="rounded-[10px] border-border px-3 py-1.5 text-[15px]"
       >
         <option value="">All Status</option>
-        <option value="pending">Pending</option>
-        <option value="completed">Completed</option>
+        <option value="not_started">Not Started</option>
+        <option value="in_progress">In Progress</option>
+        <option value="done">Done</option>
         <option value="overdue">Overdue</option>
+      </select>
+      <select
+        value={selectedPriority}
+        onChange={(e) => onPriorityChange(e.target.value)}
+        className="rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+      >
+        <option value="">All Priorities</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
       </select>
     </div>
   );

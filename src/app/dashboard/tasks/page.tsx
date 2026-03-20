@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { TaskList } from "./TaskList";
 import { TaskDetail } from "./TaskDetail";
 import { TaskFilters } from "./TaskFilters";
+import { TaskCalendar } from "./TaskCalendar";
 
 type Task = {
   id: string;
@@ -13,6 +14,8 @@ type Task = {
   category: string | null;
   due_date: string | null;
   completed: boolean;
+  status: "not_started" | "in_progress" | "done";
+  priority: "high" | "medium" | "low";
   edyn_message: string | null;
   timeline_phase: string | null;
   is_system_generated: boolean;
@@ -37,13 +40,16 @@ export default function TasksPage() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Other");
   const [dueDate, setDueDate] = useState("");
+  const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
   // Filters
   const [filterCategory, setFilterCategory] = useState("");
   const [filterPhase, setFilterPhase] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterPriority, setFilterPriority] = useState("");
 
   useEffect(() => {
     fetch("/api/tasks")
@@ -68,18 +74,20 @@ export default function TasksPage() {
     return tasks.filter((t) => {
       if (filterCategory && t.category !== filterCategory) return false;
       if (filterPhase && t.timeline_phase !== filterPhase) return false;
-      if (filterStatus === "completed" && !t.completed) return false;
-      if (filterStatus === "pending" && t.completed) return false;
+      if (filterPriority && t.priority !== filterPriority) return false;
+      if (filterStatus === "done" && t.status !== "done") return false;
+      if (filterStatus === "in_progress" && t.status !== "in_progress") return false;
+      if (filterStatus === "not_started" && t.status !== "not_started") return false;
       if (filterStatus === "overdue") {
-        if (t.completed) return false;
+        if (t.status === "done") return false;
         if (!t.due_date) return false;
         if (new Date(t.due_date) >= new Date()) return false;
       }
       return true;
     });
-  }, [tasks, filterCategory, filterPhase, filterStatus]);
+  }, [tasks, filterCategory, filterPhase, filterStatus, filterPriority]);
 
-  const completed = tasks.filter((t) => t.completed && !t.parent_task_id).length;
+  const completed = tasks.filter((t) => t.status === "done" && !t.parent_task_id).length;
   const total = tasks.filter((t) => !t.parent_task_id).length;
 
   async function addTask(e: React.FormEvent) {
@@ -94,6 +102,8 @@ export default function TasksPage() {
       category,
       due_date: dueDate || null,
       completed: false,
+      status: "not_started",
+      priority,
       edyn_message: null,
       timeline_phase: null,
       is_system_generated: false,
@@ -104,6 +114,7 @@ export default function TasksPage() {
     setTasks((prev) => [...prev, task]);
     setTitle("");
     setDueDate("");
+    setPriority("medium");
 
     try {
       const res = await fetch("/api/tasks", {
@@ -113,6 +124,7 @@ export default function TasksPage() {
           title: task.title,
           category: task.category,
           due_date: task.due_date,
+          priority: task.priority,
         }),
       });
       if (!res.ok) throw new Error();
@@ -125,29 +137,85 @@ export default function TasksPage() {
     }
   }
 
-  async function toggleTask(id: string) {
+  async function cycleStatus(id: string) {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
 
+    const nextStatus: Record<string, "not_started" | "in_progress" | "done"> = {
+      not_started: "in_progress",
+      in_progress: "done",
+      done: "not_started",
+    };
+    const newStatus = nextStatus[task.status];
+    const newCompleted = newStatus === "done";
+
     const prev = tasks;
-    const newCompleted = !task.completed;
     setTasks((t) =>
-      t.map((x) => (x.id === id ? { ...x, completed: newCompleted } : x))
+      t.map((x) =>
+        x.id === id ? { ...x, status: newStatus, completed: newCompleted } : x
+      )
     );
     if (selectedTask?.id === id) {
-      setSelectedTask({ ...selectedTask, completed: newCompleted });
+      setSelectedTask({ ...selectedTask, status: newStatus, completed: newCompleted });
     }
 
     try {
       const res = await fetch(`/api/tasks/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: newCompleted }),
+        body: JSON.stringify({ status: newStatus, completed: newCompleted }),
       });
       if (!res.ok) throw new Error();
     } catch {
       setTasks(prev);
       toast.error("Failed to update task");
+    }
+  }
+
+  async function updateStatus(id: string, status: "not_started" | "in_progress" | "done") {
+    const prev = tasks;
+    const newCompleted = status === "done";
+    setTasks((t) =>
+      t.map((x) =>
+        x.id === id ? { ...x, status, completed: newCompleted } : x
+      )
+    );
+    if (selectedTask?.id === id) {
+      setSelectedTask({ ...selectedTask, status, completed: newCompleted });
+    }
+
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, completed: newCompleted }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setTasks(prev);
+      toast.error("Failed to update task");
+    }
+  }
+
+  async function updatePriority(id: string, newPriority: "high" | "medium" | "low") {
+    const prev = tasks;
+    setTasks((t) =>
+      t.map((x) => (x.id === id ? { ...x, priority: newPriority } : x))
+    );
+    if (selectedTask?.id === id) {
+      setSelectedTask({ ...selectedTask, priority: newPriority });
+    }
+
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priority: newPriority }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setTasks(prev);
+      toast.error("Failed to update priority");
     }
   }
 
@@ -191,10 +259,28 @@ export default function TasksPage() {
 
   return (
     <div>
-      <h1>Tasks</h1>
-      <p className="mt-1 text-[15px] text-muted">
-        {completed}/{total} completed
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1>Tasks</h1>
+          <p className="mt-1 text-[15px] text-muted">
+            {completed}/{total} completed
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setViewMode("list")}
+            className={viewMode === "list" ? "btn-primary btn-sm" : "btn-ghost btn-sm"}
+          >
+            List
+          </button>
+          <button
+            onClick={() => setViewMode("calendar")}
+            className={viewMode === "calendar" ? "btn-primary btn-sm" : "btn-ghost btn-sm"}
+          >
+            Calendar
+          </button>
+        </div>
+      </div>
 
       {/* Filters */}
       <div className="mt-4">
@@ -204,20 +290,22 @@ export default function TasksPage() {
           selectedCategory={filterCategory}
           selectedPhase={filterPhase}
           selectedStatus={filterStatus}
+          selectedPriority={filterPriority}
           onCategoryChange={setFilterCategory}
           onPhaseChange={setFilterPhase}
           onStatusChange={setFilterStatus}
+          onPriorityChange={setFilterPriority}
         />
       </div>
 
       {/* Add task form */}
-      <form onSubmit={addTask} className="mt-4 flex gap-3">
+      <form onSubmit={addTask} className="mt-4 flex flex-wrap gap-3">
         <input
           type="text"
           placeholder="Add a custom task..."
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
+          className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1 min-w-[200px]"
           required
         />
         <select
@@ -230,6 +318,15 @@ export default function TasksPage() {
               {c}
             </option>
           ))}
+        </select>
+        <select
+          value={priority}
+          onChange={(e) => setPriority(e.target.value as "high" | "medium" | "low")}
+          className="rounded-[10px] border-border px-3 py-2 text-[15px]"
+        >
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
         </select>
         <input
           type="date"
@@ -245,21 +342,28 @@ export default function TasksPage() {
         </button>
       </form>
 
-      {/* Task list grouped by phase */}
+      {/* View */}
       <div className="mt-6">
-        {filteredTasks.length > 0 ? (
-          <TaskList
-            tasks={filteredTasks}
-            onToggle={toggleTask}
-            onDelete={deleteTask}
-            onSelect={setSelectedTask}
-          />
+        {viewMode === "list" ? (
+          filteredTasks.length > 0 ? (
+            <TaskList
+              tasks={filteredTasks}
+              onToggle={cycleStatus}
+              onDelete={deleteTask}
+              onSelect={setSelectedTask}
+            />
+          ) : (
+            <p className="text-[15px] text-muted text-center py-8">
+              {tasks.length === 0
+                ? "No tasks yet. Complete onboarding to generate your timeline, or add tasks above."
+                : "No tasks match your filters."}
+            </p>
+          )
         ) : (
-          <p className="text-[15px] text-muted text-center py-8">
-            {tasks.length === 0
-              ? "No tasks yet. Complete onboarding to generate your timeline, or add tasks above."
-              : "No tasks match your filters."}
-          </p>
+          <TaskCalendar
+            tasks={filteredTasks}
+            onSelectTask={setSelectedTask}
+          />
         )}
       </div>
 
@@ -268,9 +372,12 @@ export default function TasksPage() {
         <TaskDetail
           task={selectedTask}
           subTasks={subTasks}
+          allTasks={tasks}
           onClose={() => setSelectedTask(null)}
-          onToggle={toggleTask}
+          onToggle={cycleStatus}
           onUpdateNotes={updateNotes}
+          onUpdatePriority={updatePriority}
+          onUpdateStatus={updateStatus}
         />
       )}
     </div>
