@@ -15,16 +15,27 @@ type Stats = {
 
 type User = {
   user_id: string;
-  email: string;
   name: string;
+  email: string;
   role: string;
-  has_wedding: boolean;
-  wedding_name: string | null;
-  wedding_date: string | null;
+  has_event: boolean;
+  joined: number;
+  last_sign_in: number | null;
+};
+
+type Event = {
+  id: string;
+  user_id: string;
+  name: string;
+  date: string | null;
+  venue: string | null;
+  budget: number | null;
+  spent: number;
   guests: number;
   tasks: number;
+  completed_tasks: number;
   vendors: number;
-  joined: number;
+  created_at: string;
 };
 
 type AppSettings = {
@@ -48,13 +59,16 @@ const DEFAULT_SETTINGS: AppSettings = {
   limits: { max_guests: 500, max_chat_messages_per_hour: 30, max_file_size_mb: 10 },
 };
 
+type Tab = "overview" | "users" | "events" | "settings";
+
 export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
-  const [tab, setTab] = useState<"overview" | "users" | "settings">("overview");
+  const [tab, setTab] = useState<Tab>("overview");
 
   useEffect(() => {
     Promise.all([
@@ -66,11 +80,13 @@ export default function AdminPage() {
         return r.ok ? r.json() : null;
       }),
       fetch("/api/admin/users").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/admin/events").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : DEFAULT_SETTINGS)),
     ])
-      .then(([s, u, st]) => {
+      .then(([s, u, e, st]) => {
         if (s) setStats(s);
         setUsers(u || []);
+        setEvents(e || []);
         setSettings({ ...DEFAULT_SETTINGS, ...st });
       })
       .catch(() => toast.error("Failed to load admin data"))
@@ -160,7 +176,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="mt-4 flex gap-1 border-b">
-        {(["overview", "users", "settings"] as const).map((t) => (
+        {(["overview", "users", "events", "settings"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -178,7 +194,8 @@ export default function AdminPage() {
       {/* Overview Tab */}
       {tab === "overview" && stats && (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Total Weddings" value={stats.weddings} />
+          <StatCard label="Users" value={users.length} />
+          <StatCard label="Events" value={stats.weddings} />
           <StatCard label="Total Guests" value={stats.guests} />
           <StatCard label="Total Tasks" value={stats.tasks} />
           <StatCard
@@ -198,6 +215,9 @@ export default function AdminPage() {
       {/* Users Tab */}
       {tab === "users" && (
         <div className="mt-6">
+          <p className="text-sm text-gray-500 mb-4">
+            {users.length} registered {users.length === 1 ? "user" : "users"}
+          </p>
           {users.length === 0 ? (
             <p className="text-sm text-gray-400 py-8 text-center">
               No users yet.
@@ -207,30 +227,12 @@ export default function AdminPage() {
               <table className="w-full text-sm">
                 <thead className="border-b bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">
-                      User
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">
-                      Email
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">
-                      Wedding
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">
-                      Date
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">
-                      Guests
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">
-                      Tasks
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">
-                      Joined
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">
-                      Role
-                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-600">Name</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-600">Email</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-600">Event</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-600">Joined</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-600">Last Sign In</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-600">Role</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -239,26 +241,30 @@ export default function AdminPage() {
                       <td className="px-4 py-3 font-medium text-gray-900">
                         {user.name}
                       </td>
-                      <td className="px-4 py-3 text-gray-500">
-                        {user.email}
+                      <td className="px-4 py-3 text-gray-500">{user.email}</td>
+                      <td className="px-4 py-3">
+                        {user.has_event ? (
+                          <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs text-green-600">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                            No event
+                          </span>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-gray-500">
-                        {user.wedding_name || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-gray-500">
-                        {user.wedding_date || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-gray-500">{user.guests}</td>
-                      <td className="px-4 py-3 text-gray-500">{user.tasks}</td>
                       <td className="px-4 py-3 text-gray-500">
                         {new Date(user.joined).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {user.last_sign_in
+                          ? new Date(user.last_sign_in).toLocaleDateString()
+                          : "—"}
                       </td>
                       <td className="px-4 py-3">
                         <select
                           value={user.role}
-                          onChange={(e) =>
-                            updateRole(user.user_id, e.target.value)
-                          }
+                          onChange={(e) => updateRole(user.user_id, e.target.value)}
                           className={`rounded-full px-2 py-0.5 text-xs font-medium border-0 ${
                             user.role === "admin"
                               ? "bg-rose-50 text-rose-600"
@@ -278,10 +284,76 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* Events Tab */}
+      {tab === "events" && (
+        <div className="mt-6">
+          <p className="text-sm text-gray-500 mb-4">
+            {events.length} {events.length === 1 ? "event" : "events"}
+          </p>
+          {events.length === 0 ? (
+            <p className="text-sm text-gray-400 py-8 text-center">
+              No events yet.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {events.map((event) => (
+                <div
+                  key={event.id}
+                  className="rounded-xl border bg-white p-4"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        {event.name}
+                      </h3>
+                      <div className="mt-1 flex gap-3 text-xs text-gray-500">
+                        {event.date && <span>Date: {event.date}</span>}
+                        {event.venue && <span>Venue: {event.venue}</span>}
+                        <span>Created: {new Date(event.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    {event.budget && (
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">Budget</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          ${event.spent.toLocaleString()} / ${event.budget.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3 flex gap-4">
+                    <MiniStat label="Guests" value={event.guests} />
+                    <MiniStat
+                      label="Tasks"
+                      value={`${event.completed_tasks}/${event.tasks}`}
+                    />
+                    <MiniStat label="Vendors" value={event.vendors} />
+                    {event.tasks > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 h-1.5 rounded-full bg-gray-200">
+                          <div
+                            className="h-full rounded-full bg-rose-500"
+                            style={{
+                              width: `${Math.round((event.completed_tasks / event.tasks) * 100)}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-400">
+                          {Math.round((event.completed_tasks / event.tasks) * 100)}%
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Settings Tab */}
       {tab === "settings" && (
         <div className="mt-6 max-w-lg space-y-8">
-          {/* Registration */}
           <div>
             <h2 className="text-sm font-semibold text-gray-900">Registration</h2>
             <div className="mt-3 space-y-3">
@@ -316,11 +388,8 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Features */}
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">
-              Feature Flags
-            </h2>
+            <h2 className="text-sm font-semibold text-gray-900">Feature Flags</h2>
             <div className="mt-3 space-y-3">
               {(
                 Object.entries(settings.features) as [
@@ -345,22 +414,16 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Limits */}
           <div>
             <h2 className="text-sm font-semibold text-gray-900">Limits</h2>
             <div className="mt-3 space-y-3">
               <div>
-                <label className="text-xs text-gray-500">
-                  Max guests per wedding
-                </label>
+                <label className="text-xs text-gray-500">Max guests per event</label>
                 <input
                   type="number"
                   defaultValue={settings.limits.max_guests}
                   onBlur={(e) => {
-                    const updated = {
-                      ...settings.limits,
-                      max_guests: Number(e.target.value),
-                    };
+                    const updated = { ...settings.limits, max_guests: Number(e.target.value) };
                     setSettings((s) => ({ ...s, limits: updated }));
                     updateSetting("limits", updated);
                   }}
@@ -368,17 +431,12 @@ export default function AdminPage() {
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">
-                  Max chat messages per hour
-                </label>
+                <label className="text-xs text-gray-500">Max chat messages per hour</label>
                 <input
                   type="number"
                   defaultValue={settings.limits.max_chat_messages_per_hour}
                   onBlur={(e) => {
-                    const updated = {
-                      ...settings.limits,
-                      max_chat_messages_per_hour: Number(e.target.value),
-                    };
+                    const updated = { ...settings.limits, max_chat_messages_per_hour: Number(e.target.value) };
                     setSettings((s) => ({ ...s, limits: updated }));
                     updateSetting("limits", updated);
                   }}
@@ -386,17 +444,12 @@ export default function AdminPage() {
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">
-                  Max file size (MB)
-                </label>
+                <label className="text-xs text-gray-500">Max file size (MB)</label>
                 <input
                   type="number"
                   defaultValue={settings.limits.max_file_size_mb}
                   onBlur={(e) => {
-                    const updated = {
-                      ...settings.limits,
-                      max_file_size_mb: Number(e.target.value),
-                    };
+                    const updated = { ...settings.limits, max_file_size_mb: Number(e.target.value) };
                     setSettings((s) => ({ ...s, limits: updated }));
                     updateSetting("limits", updated);
                   }}
@@ -416,6 +469,15 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
     <div className="rounded-2xl border bg-white p-6">
       <p className="text-sm text-gray-500">{label}</p>
       <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div>
+      <p className="text-[10px] text-gray-400 uppercase">{label}</p>
+      <p className="text-sm font-medium text-gray-900">{value}</p>
     </div>
   );
 }

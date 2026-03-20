@@ -7,18 +7,8 @@ export async function GET() {
   if ("error" in result) return result.error;
   const { supabase } = result;
 
-  // Get all users from Clerk
   const client = await clerkClient();
   const clerkUsers = await client.users.getUserList({ limit: 100 });
-
-  // Get all weddings
-  const { data: weddings } = await supabase
-    .from("weddings")
-    .select("id, user_id, partner1_name, partner2_name, date, budget, created_at");
-
-  const weddingMap = new Map(
-    (weddings || []).map((w: { id: string; user_id: string; partner1_name: string; partner2_name: string; date: string | null; budget: number | null; created_at: string }) => [w.user_id, w])
-  );
 
   // Get roles
   const { data: roles } = await supabase
@@ -29,38 +19,24 @@ export async function GET() {
     (roles || []).map((r: { user_id: string; role: string }) => [r.user_id, r.role])
   );
 
-  // Build combined user list
-  const users = await Promise.all(
-    clerkUsers.data.map(async (u) => {
-      const wedding = weddingMap.get(u.id) as { id: string; partner1_name: string; partner2_name: string; date: string | null; budget: number | null; created_at: string } | undefined;
-      let guests = 0, tasks = 0, vendors = 0;
+  // Check which users have weddings
+  const { data: weddings } = await supabase
+    .from("weddings")
+    .select("user_id");
 
-      if (wedding) {
-        const [{ count: g }, { count: t }, { count: v }] = await Promise.all([
-          supabase.from("guests").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id),
-          supabase.from("tasks").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id),
-          supabase.from("vendors").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id),
-        ]);
-        guests = g ?? 0;
-        tasks = t ?? 0;
-        vendors = v ?? 0;
-      }
-
-      return {
-        user_id: u.id,
-        email: u.emailAddresses[0]?.emailAddress || "—",
-        name: [u.firstName, u.lastName].filter(Boolean).join(" ") || "—",
-        role: roleMap.get(u.id) || "user",
-        has_wedding: !!wedding,
-        wedding_name: wedding ? `${wedding.partner1_name} & ${wedding.partner2_name}` : null,
-        wedding_date: wedding?.date || null,
-        guests,
-        tasks,
-        vendors,
-        joined: u.createdAt,
-      };
-    })
+  const usersWithWeddings = new Set(
+    (weddings || []).map((w: { user_id: string }) => w.user_id)
   );
+
+  const users = clerkUsers.data.map((u) => ({
+    user_id: u.id,
+    name: [u.firstName, u.lastName].filter(Boolean).join(" ") || "—",
+    email: u.emailAddresses[0]?.emailAddress || "—",
+    role: roleMap.get(u.id) || "user",
+    has_event: usersWithWeddings.has(u.id),
+    joined: u.createdAt,
+    last_sign_in: u.lastSignInAt,
+  }));
 
   return NextResponse.json(users);
 }
