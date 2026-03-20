@@ -14,6 +14,7 @@ const navItems = [
   { href: "/dashboard/day-of", label: "Day-of Planner" },
   { href: "/dashboard/chat", label: "Ask eydn" },
   { href: "/dashboard/vendor-portal", label: "Vendor Portal" },
+  { href: "/dashboard/website", label: "Wedding Website" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
 

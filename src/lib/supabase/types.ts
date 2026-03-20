@@ -228,6 +228,15 @@ export type Database = {
           has_pre_wedding_events: boolean | null;
           has_honeymoon: boolean | null;
           trial_started_at: string | null;
+          website_slug: string | null;
+          website_enabled: boolean;
+          website_headline: string | null;
+          website_story: string | null;
+          website_cover_url: string | null;
+          website_schedule: Record<string, unknown>[];
+          website_travel_info: string | null;
+          website_accommodations: string | null;
+          website_faq: Record<string, unknown>[];
           created_at: string;
           updated_at: string;
         };
@@ -520,6 +529,24 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      registry_links: {
+        Row: { id: string; wedding_id: string; name: string; url: string; sort_order: number; created_at: string };
+        Insert: { id?: string; wedding_id: string; name: string; url: string; sort_order?: number; created_at?: string };
+        Update: { id?: string; name?: string; url?: string; sort_order?: number };
+        Relationships: [{ foreignKeyName: "registry_links_wedding_id_fkey"; columns: ["wedding_id"]; isOneToOne: false; referencedRelation: "weddings"; referencedColumns: ["id"] }];
+      };
+      wedding_photos: {
+        Row: { id: string; wedding_id: string; uploaded_by: string; uploader_name: string | null; file_url: string; caption: string | null; approved: boolean; created_at: string };
+        Insert: { id?: string; wedding_id: string; uploaded_by: string; uploader_name?: string | null; file_url: string; caption?: string | null; approved?: boolean; created_at?: string };
+        Update: { id?: string; approved?: boolean; caption?: string | null };
+        Relationships: [{ foreignKeyName: "wedding_photos_wedding_id_fkey"; columns: ["wedding_id"]; isOneToOne: false; referencedRelation: "weddings"; referencedColumns: ["id"] }];
+      };
+      rsvp_tokens: {
+        Row: { id: string; guest_id: string; wedding_id: string; token: string; responded: boolean; responded_at: string | null; created_at: string };
+        Insert: { id?: string; guest_id: string; wedding_id: string; token?: string; responded?: boolean; responded_at?: string | null; created_at?: string };
+        Update: { id?: string; responded?: boolean; responded_at?: string | null };
+        Relationships: [{ foreignKeyName: "rsvp_tokens_guest_id_fkey"; columns: ["guest_id"]; isOneToOne: true; referencedRelation: "guests"; referencedColumns: ["id"] }, { foreignKeyName: "rsvp_tokens_wedding_id_fkey"; columns: ["wedding_id"]; isOneToOne: false; referencedRelation: "weddings"; referencedColumns: ["id"] }];
       };
       ceremony_positions: {
         Row: {
