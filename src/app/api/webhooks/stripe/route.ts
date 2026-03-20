@@ -32,6 +32,20 @@ export async function POST(request: Request) {
       const session = event.data.object as Stripe.Checkout.Session;
       const meta = session.metadata;
 
+      // Handle subscriber one-time purchase
+      if (meta?.type === "subscriber_purchase" && meta?.user_id) {
+        await supabase.from("subscriber_purchases").insert({
+          user_id: meta.user_id,
+          wedding_id: meta.wedding_id || null,
+          amount: session.amount_total ? session.amount_total / 100 : 79,
+          stripe_payment_intent_id: session.payment_intent as string,
+          stripe_session_id: session.id,
+          status: "active",
+        });
+        break;
+      }
+
+      // Handle vendor placement purchase
       if (!meta?.vendor_account_id || !meta?.tier_id) break;
 
       // Calculate expiration based on billing period

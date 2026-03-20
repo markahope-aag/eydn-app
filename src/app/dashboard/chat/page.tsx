@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { Paywall } from "@/components/Paywall";
 
 type Message = {
   id: string;
@@ -88,6 +89,7 @@ export default function ChatPage() {
   }
 
   return (
+    <Paywall feature="Ask eydn">
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <h1 className="flex-shrink-0">
         Ask eydn
@@ -174,5 +176,6 @@ export default function ChatPage() {
         </button>
       </form>
     </div>
+    </Paywall>
   );
 }

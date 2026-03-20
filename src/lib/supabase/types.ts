@@ -185,6 +185,33 @@ export type Database = {
           },
         ];
       };
+      subscriber_purchases: {
+        Row: {
+          id: string;
+          user_id: string;
+          wedding_id: string | null;
+          amount: number;
+          stripe_payment_intent_id: string | null;
+          stripe_session_id: string | null;
+          status: "active" | "refunded";
+          purchased_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          wedding_id?: string | null;
+          amount: number;
+          stripe_payment_intent_id?: string | null;
+          stripe_session_id?: string | null;
+          status?: "active" | "refunded";
+          purchased_at?: string;
+        };
+        Update: {
+          id?: string;
+          status?: "active" | "refunded";
+        };
+        Relationships: [];
+      };
       weddings: {
         Row: {
           id: string;
@@ -200,6 +227,7 @@ export type Database = {
           wedding_party_count: number | null;
           has_pre_wedding_events: boolean | null;
           has_honeymoon: boolean | null;
+          trial_started_at: string | null;
           created_at: string;
           updated_at: string;
         };
