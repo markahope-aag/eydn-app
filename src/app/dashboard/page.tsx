@@ -84,19 +84,26 @@ export default async function DashboardPage() {
         {wedding.partner1_name} & {wedding.partner2_name}
       </h1>
       {wedding.date && (
-        <p className="mt-1 text-[15px] text-muted">
-          {new Date(wedding.date).toLocaleDateString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
+        <div className="mt-4">
+          <p className="text-[15px] text-muted">
+            {new Date(wedding.date).toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
           {daysUntilWedding !== null && daysUntilWedding > 0 && (
-            <span className="ml-2 text-violet font-semibold">
-              ({daysUntilWedding} days away)
-            </span>
+            <div className="mt-3 inline-flex items-baseline gap-2 bg-brand-gradient bg-clip-text text-transparent">
+              <span className="text-[48px] font-semibold leading-none" style={{ letterSpacing: "-1px" }}>
+                {daysUntilWedding}
+              </span>
+              <span className="text-[18px] font-semibold">
+                days to go
+              </span>
+            </div>
           )}
-        </p>
+        </div>
       )}
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
