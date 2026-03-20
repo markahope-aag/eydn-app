@@ -539,11 +539,23 @@ export default function OnboardingPage() {
             Back
           </button>
         )}
+        {currentStep !== "names" && !isLast && (
+          <button
+            type="button"
+            onClick={async () => {
+              await saveProgress();
+              setStep((s) => s + 1);
+            }}
+            className="text-[15px] text-muted hover:text-plum transition ml-auto mr-3"
+          >
+            Skip for now
+          </button>
+        )}
         <button
           type="button"
           onClick={handleNext}
           disabled={!canProceed() || submitting}
-          className="btn-primary disabled:opacity-50 ml-auto"
+          className={`btn-primary disabled:opacity-50 ${currentStep === "names" || isLast ? "ml-auto" : ""}`}
         >
           {submitting
             ? "Setting up..."
