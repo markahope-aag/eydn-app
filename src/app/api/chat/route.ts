@@ -56,10 +56,10 @@ export async function POST(request: Request) {
       supabase.from("tasks").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).eq("completed", true),
       supabase.from("vendors").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id),
       supabase.from("guests").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id),
-      supabase.from("expenses").select("amount").eq("wedding_id", wedding.id),
+      supabase.from("expenses").select("amount_paid").eq("wedding_id", wedding.id),
     ]);
 
-  const budgetSpent = (expenses || []).reduce((sum: number, e: { amount: number }) => sum + (e.amount || 0), 0);
+  const budgetSpent = (expenses || []).reduce((sum: number, e: { amount_paid: number }) => sum + (e.amount_paid || 0), 0);
 
   const systemPrompt = buildEdynSystemPrompt({
     wedding,

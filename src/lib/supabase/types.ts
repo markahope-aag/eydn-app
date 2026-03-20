@@ -178,7 +178,9 @@ export type Database = {
           id: string;
           wedding_id: string;
           description: string;
-          amount: number;
+          estimated: number;
+          amount_paid: number;
+          final_cost: number | null;
           category: string;
           paid: boolean;
           vendor_id: string | null;
@@ -188,7 +190,9 @@ export type Database = {
           id?: string;
           wedding_id: string;
           description: string;
-          amount: number;
+          estimated: number;
+          amount_paid?: number;
+          final_cost?: number | null;
           category: string;
           paid?: boolean;
           vendor_id?: string | null;
@@ -198,7 +202,9 @@ export type Database = {
           id?: string;
           wedding_id?: string;
           description?: string;
-          amount?: number;
+          estimated?: number;
+          amount_paid?: number;
+          final_cost?: number | null;
           category?: string;
           paid?: boolean;
           vendor_id?: string | null;

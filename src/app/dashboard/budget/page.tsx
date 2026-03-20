@@ -7,29 +7,43 @@ import { BUDGET_CATEGORIES } from "@/lib/budget/budget-template";
 type Expense = {
   id: string;
   description: string;
-  amount: number;
+  estimated: number;
+  amount_paid: number;
+  final_cost: number | null;
   category: string;
   paid: boolean;
+  vendor_id: string | null;
+  vendor_name: string | null;
+};
+
+type Vendor = {
+  id: string;
+  name: string;
+  category: string;
+  amount: number | null;
+  amount_paid: number | null;
 };
 
 export default function BudgetPage() {
   const [budget, setBudget] = useState(0);
   const [weddingId, setWeddingId] = useState<string | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Miscellaneous");
   const [loading, setLoading] = useState(true);
   const budgetTimer = useRef<ReturnType<typeof setTimeout>>(null);
-  const amountTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const fieldTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/expenses").then((r) => (r.ok ? r.json() : Promise.reject())),
-      fetch("/api/weddings").then((r) => (r.ok ? r.json() : Promise.reject())),
+      fetch("/api/expenses").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/weddings").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/vendors").then((r) => (r.ok ? r.json() : [])),
     ])
-      .then(([expData, weddingData]) => {
+      .then(([expData, weddingData, vendorData]) => {
         setExpenses(expData);
+        setVendors(vendorData);
         if (weddingData) {
           setBudget(weddingData.budget ?? 0);
           setWeddingId(weddingData.id);
@@ -57,33 +71,36 @@ export default function BudgetPage() {
     }, 800);
   }
 
-  function handleAmountChange(id: string, value: number) {
+  function handleFieldChange(id: string, field: string, value: number | null) {
     setExpenses((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, amount: value } : e))
+      prev.map((e) => (e.id === id ? { ...e, [field]: value } : e))
     );
 
-    const existing = amountTimers.current.get(id);
+    const timerKey = `${id}-${field}`;
+    const existing = fieldTimers.current.get(timerKey);
     if (existing) clearTimeout(existing);
 
-    amountTimers.current.set(
-      id,
+    fieldTimers.current.set(
+      timerKey,
       setTimeout(async () => {
         try {
           const res = await fetch(`/api/expenses/${id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ amount: value }),
+            body: JSON.stringify({ [field]: value }),
           });
           if (!res.ok) throw new Error();
         } catch {
-          toast.error("Failed to save amount");
+          toast.error("Failed to save");
         }
       }, 800)
     );
   }
 
-  const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const remaining = budget - totalSpent;
+  const totalEstimated = expenses.reduce((sum, e) => sum + (e.estimated || 0), 0);
+  const totalPaid = expenses.reduce((sum, e) => sum + (e.amount_paid || 0), 0);
+  const totalFinal = expenses.reduce((sum, e) => sum + (e.final_cost ?? e.estimated ?? 0), 0);
+  const remaining = budget - totalFinal;
 
   async function addExpense(e: React.FormEvent) {
     e.preventDefault();
@@ -93,14 +110,17 @@ export default function BudgetPage() {
     const expense: Expense = {
       id: tempId,
       description: description.trim(),
-      amount: amount ? parseFloat(amount) : 0,
+      estimated: 0,
+      amount_paid: 0,
+      final_cost: null,
       category,
       paid: false,
+      vendor_id: null,
+      vendor_name: null,
     };
 
     setExpenses((prev) => [...prev, expense]);
     setDescription("");
-    setAmount("");
 
     try {
       const res = await fetch("/api/expenses", {
@@ -108,7 +128,7 @@ export default function BudgetPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           description: expense.description,
-          amount: expense.amount,
+          estimated: 0,
           category: expense.category,
         }),
       });
@@ -135,25 +155,40 @@ export default function BudgetPage() {
     }
   }
 
-  async function togglePaid(id: string) {
-    const expense = expenses.find((e) => e.id === id);
-    if (!expense) return;
+  async function linkVendor(expenseId: string, vendorId: string) {
+    const vendor = vendors.find((v) => v.id === vendorId);
+    if (!vendor) return;
 
     const prev = expenses;
     setExpenses((e) =>
-      e.map((x) => (x.id === id ? { ...x, paid: !x.paid } : x))
+      e.map((x) =>
+        x.id === expenseId
+          ? {
+              ...x,
+              vendor_id: vendorId,
+              vendor_name: vendor.name,
+              estimated: vendor.amount ?? x.estimated,
+              amount_paid: vendor.amount_paid ?? x.amount_paid,
+            }
+          : x
+      )
     );
 
     try {
-      const res = await fetch(`/api/expenses/${id}`, {
+      const res = await fetch(`/api/expenses/${expenseId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paid: !expense.paid }),
+        body: JSON.stringify({
+          vendor_id: vendorId,
+          estimated: vendor.amount ?? undefined,
+          amount_paid: vendor.amount_paid ?? undefined,
+        }),
       });
       if (!res.ok) throw new Error();
+      toast.success(`Linked to ${vendor.name}`);
     } catch {
       setExpenses(prev);
-      toast.error("Failed to update");
+      toast.error("Failed to link vendor");
     }
   }
 
@@ -164,7 +199,6 @@ export default function BudgetPage() {
     grouped.get(exp.category)!.push(exp);
   }
 
-  // Sort by template order, then custom categories at end
   const sortedCategories = [...grouped.keys()].sort((a, b) => {
     const ai = BUDGET_CATEGORIES.indexOf(a);
     const bi = BUDGET_CATEGORIES.indexOf(b);
@@ -185,11 +219,11 @@ export default function BudgetPage() {
       <h1>Budget</h1>
 
       {/* Budget overview */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="card-summary p-5">
           <p className="text-[13px] font-semibold text-muted">Total Budget</p>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="text-lg text-muted">$</span>
+          <div className="mt-1 flex items-center gap-1">
+            <span className="text-muted">$</span>
             <input
               type="number"
               value={budget || ""}
@@ -200,10 +234,12 @@ export default function BudgetPage() {
           </div>
         </div>
         <div className="card-summary p-5">
-          <p className="text-[13px] font-semibold text-muted">Estimated Total</p>
-          <p className="mt-1 text-[26px] font-semibold text-plum">
-            ${totalSpent.toLocaleString()}
-          </p>
+          <p className="text-[13px] font-semibold text-muted">Estimated</p>
+          <p className="mt-1 text-[26px] font-semibold text-plum">${totalEstimated.toLocaleString()}</p>
+        </div>
+        <div className="card-summary p-5">
+          <p className="text-[13px] font-semibold text-muted">Paid</p>
+          <p className="mt-1 text-[26px] font-semibold text-violet">${totalPaid.toLocaleString()}</p>
         </div>
         <div className="card-summary p-5">
           <p className="text-[13px] font-semibold text-muted">Remaining</p>
@@ -217,8 +253,8 @@ export default function BudgetPage() {
       {budget > 0 && (
         <div className="progress-track mt-4">
           <div
-            className={`progress-fill ${totalSpent > budget ? "!bg-error" : ""}`}
-            style={{ width: `${Math.min((totalSpent / budget) * 100, 100)}%` }}
+            className={`progress-fill ${totalPaid > budget ? "!bg-error" : ""}`}
+            style={{ width: `${Math.min((totalPaid / budget) * 100, 100)}%` }}
           />
         </div>
       )}
@@ -232,15 +268,6 @@ export default function BudgetPage() {
           onChange={(e) => setDescription(e.target.value)}
           className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
           required
-        />
-        <input
-          type="number"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="rounded-[10px] border-border px-3 py-2 text-[15px] w-32"
-          min="0"
-          step="0.01"
         />
         <select
           value={category}
@@ -258,8 +285,8 @@ export default function BudgetPage() {
       <div className="mt-6 space-y-6">
         {sortedCategories.map((cat) => {
           const items = grouped.get(cat)!;
-          const subtotal = items.reduce((sum, e) => sum + e.amount, 0);
-          const paidTotal = items.filter((e) => e.paid).reduce((sum, e) => sum + e.amount, 0);
+          const catEstimated = items.reduce((sum, e) => sum + (e.estimated || 0), 0);
+          const catPaid = items.reduce((sum, e) => sum + (e.amount_paid || 0), 0);
 
           return (
             <div key={cat} className="card overflow-hidden">
@@ -268,45 +295,86 @@ export default function BudgetPage() {
                 <h2 className="text-[15px] font-semibold text-plum">{cat}</h2>
                 <div className="flex gap-4 text-[13px]">
                   <span className="text-muted">
-                    Estimated: <span className="font-semibold text-plum">${subtotal.toLocaleString()}</span>
+                    Est: <span className="font-semibold text-plum">${catEstimated.toLocaleString()}</span>
                   </span>
-                  {paidTotal > 0 && (
-                    <span className="text-muted">
-                      Paid: <span className="font-semibold text-violet">${paidTotal.toLocaleString()}</span>
-                    </span>
-                  )}
+                  <span className="text-muted">
+                    Paid: <span className="font-semibold text-violet">${catPaid.toLocaleString()}</span>
+                  </span>
                 </div>
+              </div>
+
+              {/* Column headers */}
+              <div className="grid grid-cols-[1fr_100px_100px_100px_60px] gap-2 px-4 py-2 border-b border-border text-[12px] font-semibold text-muted">
+                <span>Item</span>
+                <span className="text-right">Estimated</span>
+                <span className="text-right">Paid</span>
+                <span className="text-right">Final Cost</span>
+                <span></span>
               </div>
 
               {/* Line items */}
               <div className="divide-y divide-border">
                 {items.map((exp) => (
-                  <div key={exp.id} className="flex items-center gap-3 px-4 py-2.5">
-                    <input
-                      type="checkbox"
-                      checked={exp.paid}
-                      onChange={() => togglePaid(exp.id)}
-                      className="accent-violet flex-shrink-0"
-                      title="Mark as paid"
-                    />
-                    <span className={`flex-1 text-[15px] ${exp.paid ? "text-muted line-through" : "text-plum"}`}>
-                      {exp.description}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-[13px] text-muted">$</span>
+                  <div key={exp.id} className="grid grid-cols-[1fr_100px_100px_100px_60px] gap-2 px-4 py-2 items-center">
+                    <div>
+                      <span className="text-[15px] text-plum">{exp.description}</span>
+                      {exp.vendor_name && (
+                        <span className="ml-2 badge badge-booked">{exp.vendor_name}</span>
+                      )}
+                      {!exp.vendor_id && vendors.length > 0 && (
+                        <select
+                          defaultValue=""
+                          onChange={(e) => {
+                            if (e.target.value) linkVendor(exp.id, e.target.value);
+                          }}
+                          className="ml-2 text-[12px] text-muted border-0 bg-transparent cursor-pointer"
+                        >
+                          <option value="">Link vendor...</option>
+                          {vendors.map((v) => (
+                            <option key={v.id} value={v.id}>{v.name}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-end gap-0.5">
+                      <span className="text-[12px] text-muted">$</span>
                       <input
                         type="number"
-                        value={exp.amount || ""}
-                        onChange={(e) => handleAmountChange(exp.id, Number(e.target.value) || 0)}
+                        value={exp.estimated || ""}
+                        onChange={(e) => handleFieldChange(exp.id, "estimated", Number(e.target.value) || 0)}
                         placeholder="0"
                         min="0"
                         step="0.01"
-                        className="w-24 text-right text-[15px] font-semibold text-plum bg-transparent border-0 outline-none"
+                        className="w-20 text-right text-[15px] font-semibold text-plum bg-transparent border-0 outline-none"
+                      />
+                    </div>
+                    <div className="flex items-center justify-end gap-0.5">
+                      <span className="text-[12px] text-muted">$</span>
+                      <input
+                        type="number"
+                        value={exp.amount_paid || ""}
+                        onChange={(e) => handleFieldChange(exp.id, "amount_paid", Number(e.target.value) || 0)}
+                        placeholder="0"
+                        min="0"
+                        step="0.01"
+                        className="w-20 text-right text-[15px] font-semibold text-violet bg-transparent border-0 outline-none"
+                      />
+                    </div>
+                    <div className="flex items-center justify-end gap-0.5">
+                      <span className="text-[12px] text-muted">$</span>
+                      <input
+                        type="number"
+                        value={exp.final_cost ?? ""}
+                        onChange={(e) => handleFieldChange(exp.id, "final_cost", e.target.value ? Number(e.target.value) : null)}
+                        placeholder="—"
+                        min="0"
+                        step="0.01"
+                        className="w-20 text-right text-[15px] font-semibold text-plum bg-transparent border-0 outline-none"
                       />
                     </div>
                     <button
                       onClick={() => removeExpense(exp.id)}
-                      className="text-[12px] text-error hover:opacity-80 flex-shrink-0"
+                      className="text-[12px] text-error hover:opacity-80 text-right"
                     >
                       Remove
                     </button>

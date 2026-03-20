@@ -123,7 +123,7 @@ export async function POST(request: Request) {
       .map((item) => ({
         wedding_id: weddingId,
         description: item.description,
-        amount: 0,
+        estimated: 0,
         category: item.category,
         paid: false,
       }));

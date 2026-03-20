@@ -19,7 +19,8 @@ export async function GET() {
     return NextResponse.json({ error: "Wedding not found" }, { status: 404 });
   }
 
-  const { data, error } = await supabase
+  // Fetch expenses + linked vendor names
+  const { data: expensesData, error } = await supabase
     .from("expenses")
     .select("*")
     .eq("wedding_id", wedding.id)
@@ -28,6 +29,26 @@ export async function GET() {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  type ExpenseRow = { vendor_id: string | null; [key: string]: unknown };
+  const rows = (expensesData || []) as ExpenseRow[];
+
+  // Get vendor names for linked expenses
+  const vendorIds = [...new Set(rows.map((e) => e.vendor_id).filter(Boolean))];
+  let vendorMap = new Map<string, string>();
+  if (vendorIds.length > 0) {
+    const { data: vendors } = await supabase
+      .from("vendors")
+      .select("id, name")
+      .in("id", vendorIds as string[]);
+    type VendorRow = { id: string; name: string };
+    vendorMap = new Map(((vendors || []) as VendorRow[]).map((v) => [v.id, v.name]));
+  }
+
+  const data = rows.map((e) => ({
+    ...e,
+    vendor_name: e.vendor_id ? vendorMap.get(e.vendor_id) || null : null,
+  }));
 
   return NextResponse.json(data);
 }
@@ -55,7 +76,9 @@ export async function POST(request: Request) {
     .insert({
       wedding_id: wedding.id,
       description: body.description,
-      amount: body.amount,
+      estimated: body.estimated ?? body.amount ?? 0,
+      amount_paid: body.amount_paid ?? 0,
+      final_cost: body.final_cost ?? null,
       category: body.category,
       paid: body.paid || false,
       vendor_id: body.vendor_id || null,
