@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { generateTasks } from "@/lib/tasks/seed-tasks";
+import { BUDGET_TEMPLATE } from "@/lib/budget/budget-template";
 
 export async function POST(request: Request) {
   const { userId } = await auth();
@@ -104,6 +105,30 @@ export async function POST(request: Request) {
       const batch = tasks.slice(i, i + batchSize);
       await supabase.from("tasks").insert(batch);
     }
+  }
+
+  // Seed budget line items (skip if expenses already exist)
+  const { count: existingExpenses } = await supabase
+    .from("expenses")
+    .select("*", { count: "exact", head: true })
+    .eq("wedding_id", weddingId);
+
+  if (!existingExpenses || existingExpenses === 0) {
+    const budgetItems = BUDGET_TEMPLATE
+      .filter((item) => {
+        // Skip honeymoon items if no honeymoon planned
+        if (item.category === "Honeymoon" && !body.has_honeymoon) return false;
+        return true;
+      })
+      .map((item) => ({
+        wedding_id: weddingId,
+        description: item.description,
+        amount: 0,
+        category: item.category,
+        paid: false,
+      }));
+
+    await supabase.from("expenses").insert(budgetItems);
   }
 
   return NextResponse.json({ success: true, wedding_id: weddingId }, { status: 201 });
