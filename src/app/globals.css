@@ -162,6 +162,13 @@ h3 { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--deep-plum
   border-left: 3px solid var(--violet);
 }
 
+/* Labels above inputs: 13px / 600 / Deep Plum per design guide */
+label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--deep-plum);
+}
+
 /* Inputs */
 input[type="text"],
 input[type="email"],
@@ -187,9 +194,13 @@ input:focus, textarea:focus, select:focus {
   border-color: var(--violet);
   border-width: 1.5px;
 }
-input::placeholder, textarea::placeholder {
+input::placeholder, textarea::placeholder, select:invalid {
   color: var(--muted-plum);
   font-weight: 400;
+}
+/* Ensure typed text in inputs is always Deep Plum */
+input, textarea, select, select option {
+  color: var(--deep-plum);
 }
 
 /* Badges */
