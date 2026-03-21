@@ -1,6 +1,8 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { calculatePhase, getEmailsDue } from "@/lib/lifecycle";
 import { logCronExecution } from "@/lib/cron-logger";
+import { sendEmail, getLifecycleEmail } from "@/lib/email";
+import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 /**
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
     // Fetch all weddings that have a date set
     const { data: weddings, error: weddingsError } = await supabase
       .from("weddings")
-      .select("id, date, phase, memory_plan_active, partner1_name, partner2_name")
+      .select("id, user_id, date, phase, memory_plan_active, partner1_name, partner2_name")
       .not("date", "is", null);
 
     if (weddingsError) {
@@ -97,6 +99,25 @@ export async function POST(request: Request) {
               `Email record failed for ${wedding.id}/${emailType}: ${emailError.message}`
             );
             continue;
+          }
+
+          // Send the actual email via Resend
+          try {
+            const partnerNames = `${wedding.partner1_name} & ${wedding.partner2_name}`;
+            const emailContent = getLifecycleEmail(emailType, {
+              partnerNames,
+              weddingDate: wedding.date!,
+            });
+            if (emailContent && wedding.user_id) {
+              const clerk = await clerkClient();
+              const user = await clerk.users.getUser(wedding.user_id);
+              const userEmail = user.emailAddresses[0]?.emailAddress;
+              if (userEmail) {
+                await sendEmail({ to: userEmail, ...emailContent });
+              }
+            }
+          } catch (sendErr) {
+            console.warn(`[LIFECYCLE] Email send failed for ${wedding.id}/${emailType}:`, sendErr);
           }
 
           results.emailsRecorded.push({

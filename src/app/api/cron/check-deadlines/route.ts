@@ -1,4 +1,5 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { logCronExecution } from "@/lib/cron-logger";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -52,6 +53,13 @@ export async function GET(request: Request) {
   if (newNotifications.length > 0) {
     await supabase.from("notifications").insert(newNotifications);
   }
+
+  await logCronExecution({
+    jobName: "check-deadlines",
+    status: "success",
+    durationMs: Date.now() - new Date().getTime(),
+    details: { notificationsCreated: newNotifications.length, tasksChecked: tasks.length },
+  });
 
   return NextResponse.json({ notifications_created: newNotifications.length });
 }
