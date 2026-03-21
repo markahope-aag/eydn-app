@@ -1,0 +1,198 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Mock Clerk
+vi.mock("@clerk/nextjs/server", () => ({
+  auth: vi.fn(),
+}));
+
+// Mock Supabase
+vi.mock("@/lib/supabase/server", () => ({
+  createSupabaseAdmin: vi.fn(),
+}));
+
+// Mock next/server
+vi.mock("next/server", () => ({
+  NextResponse: {
+    json: vi.fn((body: unknown, init?: { status?: number }) => ({
+      body,
+      status: init?.status ?? 200,
+    })),
+  },
+}));
+
+import { auth } from "@clerk/nextjs/server";
+import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { getSubscriptionStatus, requirePremium } from "./subscription";
+
+const mockAuth = vi.mocked(auth);
+const mockCreateSupabaseAdmin = vi.mocked(createSupabaseAdmin);
+
+function buildMockSupabase(overrides?: {
+  purchaseData?: unknown;
+  purchaseError?: unknown;
+  weddingData?: unknown;
+  weddingError?: unknown;
+}) {
+  const purchaseResult = { data: overrides?.purchaseData ?? null, error: overrides?.purchaseError ?? null };
+  const weddingResult = { data: overrides?.weddingData ?? null, error: overrides?.weddingError ?? null };
+
+  // subscriber_purchases chain: .from().select().eq().eq().limit().single()
+  function buildPurchaseChain() {
+    const single = vi.fn(() => purchaseResult);
+    const limit = vi.fn(() => ({ single }));
+    const eq2 = vi.fn(() => ({ limit }));
+    const eq1 = vi.fn(() => ({ eq: eq2 }));
+    const select = vi.fn(() => ({ eq: eq1 }));
+    return { select };
+  }
+
+  // weddings chain: .from().select().eq().single()
+  function buildWeddingChain() {
+    const single = vi.fn(() => weddingResult);
+    const eq1 = vi.fn(() => ({ single }));
+    const select = vi.fn(() => ({ eq: eq1 }));
+    return { select };
+  }
+
+  const mockFrom = vi.fn((table: string) => {
+    if (table === "subscriber_purchases") return buildPurchaseChain();
+    return buildWeddingChain();
+  });
+
+  return { from: mockFrom } as any as ReturnType<typeof createSupabaseAdmin>;
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+describe("getSubscriptionStatus", () => {
+  it("returns no access when userId is null (not authenticated)", async () => {
+    mockAuth.mockResolvedValue({ userId: null } as Awaited<ReturnType<typeof auth>>);
+
+    const status = await getSubscriptionStatus();
+
+    expect(status).toEqual({
+      hasAccess: false,
+      isPaid: false,
+      isTrialing: false,
+      trialDaysLeft: 0,
+      trialExpired: true,
+    });
+  });
+
+  it("returns hasAccess=true, isPaid=true when active purchase exists", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+    const mockSupabase = buildMockSupabase({ purchaseData: { id: "purchase_1" } });
+    mockCreateSupabaseAdmin.mockReturnValue(mockSupabase);
+
+    const status = await getSubscriptionStatus();
+
+    expect(status).toEqual({
+      hasAccess: true,
+      isPaid: true,
+      isTrialing: false,
+      trialDaysLeft: 0,
+      trialExpired: false,
+    });
+  });
+
+  it("returns hasAccess=true, isTrialing=true when no wedding exists (new user)", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+    const mockSupabase = buildMockSupabase({
+      purchaseData: null,
+      weddingData: null,
+    });
+    mockCreateSupabaseAdmin.mockReturnValue(mockSupabase);
+
+    const status = await getSubscriptionStatus();
+
+    expect(status).toEqual({
+      hasAccess: true,
+      isPaid: false,
+      isTrialing: true,
+      trialDaysLeft: 14,
+      trialExpired: false,
+    });
+  });
+
+  it("returns hasAccess=true, isTrialing=true when within trial period", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+
+    // Trial started 5 days ago => 9 days left
+    const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+    const mockSupabase = buildMockSupabase({
+      purchaseData: null,
+      weddingData: { trial_started_at: fiveDaysAgo, created_at: fiveDaysAgo },
+    });
+    mockCreateSupabaseAdmin.mockReturnValue(mockSupabase);
+
+    const status = await getSubscriptionStatus();
+
+    expect(status.hasAccess).toBe(true);
+    expect(status.isPaid).toBe(false);
+    expect(status.isTrialing).toBe(true);
+    expect(status.trialDaysLeft).toBeGreaterThan(0);
+    expect(status.trialDaysLeft).toBeLessThanOrEqual(14);
+    expect(status.trialExpired).toBe(false);
+  });
+
+  it("returns hasAccess=false, trialExpired=true when trial has expired", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+
+    // Trial started 30 days ago => well past 14-day trial
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const mockSupabase = buildMockSupabase({
+      purchaseData: null,
+      weddingData: { trial_started_at: thirtyDaysAgo, created_at: thirtyDaysAgo },
+    });
+    mockCreateSupabaseAdmin.mockReturnValue(mockSupabase);
+
+    const status = await getSubscriptionStatus();
+
+    expect(status).toEqual({
+      hasAccess: false,
+      isPaid: false,
+      isTrialing: false,
+      trialDaysLeft: 0,
+      trialExpired: true,
+    });
+  });
+
+  it("falls back to created_at when trial_started_at is null", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    const mockSupabase = buildMockSupabase({
+      purchaseData: null,
+      weddingData: { trial_started_at: null, created_at: twoDaysAgo },
+    });
+    mockCreateSupabaseAdmin.mockReturnValue(mockSupabase);
+
+    const status = await getSubscriptionStatus();
+
+    expect(status.hasAccess).toBe(true);
+    expect(status.isTrialing).toBe(true);
+    expect(status.trialDaysLeft).toBeGreaterThan(0);
+  });
+});
+
+describe("requirePremium", () => {
+  it("returns null when user has access", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+    const mockSupabase = buildMockSupabase({ purchaseData: { id: "purchase_1" } });
+    mockCreateSupabaseAdmin.mockReturnValue(mockSupabase);
+
+    const result = await requirePremium();
+    expect(result).toBeNull();
+  });
+
+  it("returns a 403 response when user has no access", async () => {
+    mockAuth.mockResolvedValue({ userId: null } as Awaited<ReturnType<typeof auth>>);
+
+    const result = await requirePremium();
+    expect(result).not.toBeNull();
+    expect((result as { status: number }).status).toBe(403);
+  });
+});

@@ -11,6 +11,7 @@ export async function GET() {
     .from("wedding_party")
     .select()
     .eq("wedding_id", wedding.id)
+    .is("deleted_at", null)
     .order("sort_order", { ascending: true });
 
   if (error) {

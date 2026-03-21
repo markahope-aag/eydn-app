@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields, pickFields, isValidEmail } from "@/lib/validation";
+import { logActivity } from "@/lib/audit";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -11,6 +12,7 @@ export async function GET() {
     .from("guests")
     .select("*")
     .eq("wedding_id", wedding.id)
+    .is("deleted_at", null)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -23,7 +25,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
-  const { wedding, supabase } = result;
+  const { wedding, supabase, userId } = result;
 
   const parsed = await safeParseJSON(request);
   if (isParseError(parsed)) return parsed;
@@ -52,6 +54,8 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  logActivity(supabase, { weddingId: wedding.id, userId, action: "create", entityType: "guests", entityId: (data as Record<string, unknown>).id as string, entityName: (data as Record<string, unknown>).name as string });
 
   return NextResponse.json(data, { status: 201 });
 }

@@ -1,6 +1,32 @@
 export type Database = {
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          user_id: string;
+          action: "create" | "update" | "delete" | "restore";
+          entity_type: string;
+          entity_id: string;
+          entity_name: string | null;
+          details: Record<string, unknown> | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          wedding_id: string;
+          user_id: string;
+          action: "create" | "update" | "delete" | "restore";
+          entity_type: string;
+          entity_id: string;
+          entity_name?: string | null;
+          details?: Record<string, unknown> | null;
+          created_at?: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
       mood_board_items: {
         Row: {
           id: string;

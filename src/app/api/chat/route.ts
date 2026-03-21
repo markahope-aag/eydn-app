@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { requirePremium } from "@/lib/subscription";
+import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 import { getClaudeClient } from "@/lib/ai/claude-client";
 import { buildEdynSystemPrompt } from "@/lib/ai/edyn-system-prompt";
 import type { Database } from "@/lib/supabase/types";
@@ -23,6 +24,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const ip = getClientIP(request);
+  const rl = checkRateLimit(`chat:${ip}`, RATE_LIMITS.chat);
+  if (rl.limited) {
+    return NextResponse.json({ error: "Too many requests. Please wait before sending another message." }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+  }
+
   const paywall = await requirePremium();
   if (paywall) return paywall;
 

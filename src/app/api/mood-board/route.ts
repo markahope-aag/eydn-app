@@ -11,6 +11,7 @@ export async function GET() {
     .from("mood_board_items")
     .select("*")
     .eq("wedding_id", wedding.id)
+    .is("deleted_at", null)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 

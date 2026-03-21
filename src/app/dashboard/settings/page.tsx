@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
@@ -14,6 +14,56 @@ type Collaborator = {
   created_at: string;
 };
 
+type TrashItem = {
+  type: string;
+  id: string;
+  name: string;
+  deletedAt: string;
+};
+
+type ActivityEntry = {
+  id: string;
+  action: "create" | "update" | "delete" | "restore";
+  entity_type: string;
+  entity_id: string;
+  entity_name: string | null;
+  details: Record<string, unknown> | null;
+  created_at: string;
+  user_id: string;
+};
+
+function actionIcon(action: string) {
+  switch (action) {
+    case "create":
+      return "+";
+    case "update":
+      return "~";
+    case "delete":
+      return "x";
+    case "restore":
+      return "<-";
+    default:
+      return "?";
+  }
+}
+
+function actionColor(action: string) {
+  switch (action) {
+    case "create":
+      return "bg-confirmed-bg text-confirmed-text";
+    case "delete":
+      return "bg-red-100 text-red-700";
+    case "restore":
+      return "bg-blue-100 text-blue-700";
+    default:
+      return "bg-pending-bg text-pending-text";
+  }
+}
+
+function formatEntityType(type: string) {
+  return type.replace(/_/g, " ");
+}
+
 export default function SettingsPage() {
   const [emailReminders, setEmailReminders] = useState(true);
   const [reminderDays, setReminderDays] = useState(7);
@@ -26,6 +76,27 @@ export default function SettingsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"partner" | "coordinator">("partner");
   const [inviting, setInviting] = useState(false);
+
+  // Trash
+  const [trashItems, setTrashItems] = useState<TrashItem[]>([]);
+  const [trashLoading, setTrashLoading] = useState(true);
+  const [restoringIds, setRestoringIds] = useState<Set<string>>(new Set());
+
+  // Activity log
+  const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
+  const [activityLoading, setActivityLoading] = useState(true);
+
+  // Export
+  const [exporting, setExporting] = useState(false);
+
+  const fetchTrash = useCallback(() => {
+    setTrashLoading(true);
+    fetch("/api/trash")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setTrashItems(data))
+      .catch(() => setTrashItems([]))
+      .finally(() => setTrashLoading(false));
+  }, []);
 
   useEffect(() => {
     fetch("/api/weddings")
@@ -54,7 +125,17 @@ export default function SettingsPage() {
         }
       })
       .catch(() => {});
-  }, []);
+
+    // Fetch trash
+    fetchTrash();
+
+    // Fetch activity log
+    fetch("/api/activity")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setActivityLog(data))
+      .catch(() => setActivityLog([]))
+      .finally(() => setActivityLoading(false));
+  }, [fetchTrash]);
 
   async function saveSettings() {
     if (!weddingId) return;
@@ -110,6 +191,53 @@ export default function SettingsPage() {
     } catch {
       setCollaborators(prev);
       toast.error("Failed to remove collaborator");
+    }
+  }
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/export");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `wedding-data-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Data exported successfully");
+    } catch {
+      toast.error("Failed to export data");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleRestore(item: TrashItem) {
+    setRestoringIds((prev) => new Set(prev).add(item.id));
+    try {
+      const res = await fetch("/api/trash/restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entityType: item.type, entityId: item.id }),
+      });
+      if (!res.ok) throw new Error();
+      setTrashItems((prev) => prev.filter((t) => t.id !== item.id));
+      toast.success(`Restored ${formatEntityType(item.type)}: ${item.name}`);
+    } catch {
+      toast.error("Failed to restore item");
+    } finally {
+      setRestoringIds((prev) => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
     }
   }
 
@@ -281,6 +409,122 @@ export default function SettingsPage() {
           </p>
         </div>
       )}
+
+      {/* Your Data */}
+      <div className="mt-10">
+        <h2 className="text-[18px] font-semibold text-plum">Your Data</h2>
+        <p className="mt-1 text-[12px] text-muted">
+          Download a complete backup of all your wedding planning data
+        </p>
+        <button
+          onClick={handleExport}
+          disabled={exporting}
+          className="mt-3 btn-primary disabled:opacity-50"
+        >
+          {exporting ? "Preparing download..." : "Download My Data"}
+        </button>
+      </div>
+
+      {/* Recently Deleted */}
+      <div className="mt-10">
+        <h2 className="text-[18px] font-semibold text-plum">Recently Deleted</h2>
+        <p className="mt-1 text-[12px] text-muted">
+          Items are permanently removed after 30 days
+        </p>
+
+        {trashLoading ? (
+          <div className="mt-4">
+            <SkeletonList count={2} />
+          </div>
+        ) : trashItems.length === 0 ? (
+          <p className="mt-4 text-[13px] text-muted">
+            No recently deleted items.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-2">
+            {trashItems.map((item) => (
+              <div
+                key={`${item.type}-${item.id}`}
+                className="flex items-center justify-between rounded-[10px] border border-border bg-white px-4 py-3"
+              >
+                <div>
+                  <p className="text-[15px] font-semibold text-plum">
+                    {item.name}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[12px] text-muted capitalize">
+                      {formatEntityType(item.type)}
+                    </span>
+                    <span className="text-[12px] text-muted">
+                      Deleted{" "}
+                      {new Date(item.deletedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleRestore(item)}
+                  disabled={restoringIds.has(item.id)}
+                  className="text-[12px] text-violet hover:text-plum transition font-semibold disabled:opacity-50"
+                >
+                  {restoringIds.has(item.id) ? "Restoring..." : "Restore"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Activity Log */}
+      <div className="mt-10 mb-10">
+        <h2 className="text-[18px] font-semibold text-plum">Activity Log</h2>
+        <p className="mt-1 text-[12px] text-muted">
+          Recent changes to your wedding data
+        </p>
+
+        {activityLoading ? (
+          <div className="mt-4">
+            <SkeletonList count={3} />
+          </div>
+        ) : activityLog.length === 0 ? (
+          <p className="mt-4 text-[13px] text-muted">
+            No activity recorded yet.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-2">
+            {activityLog.slice(0, 20).map((entry) => (
+              <div
+                key={entry.id}
+                className="flex items-start gap-3 rounded-[10px] border border-border bg-white px-4 py-3"
+              >
+                <span
+                  className={`mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold shrink-0 ${actionColor(entry.action)}`}
+                >
+                  {actionIcon(entry.action)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] text-plum">
+                    <span className="capitalize font-semibold">
+                      {entry.action}d
+                    </span>{" "}
+                    {formatEntityType(entry.entity_type)}
+                    {entry.entity_name ? (
+                      <>
+                        {" "}
+                        <span className="font-semibold">
+                          {entry.entity_name}
+                        </span>
+                      </>
+                    ) : null}
+                  </p>
+                  <p className="text-[12px] text-muted mt-0.5">
+                    {new Date(entry.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

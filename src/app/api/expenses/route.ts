@@ -12,6 +12,7 @@ export async function GET() {
     .from("expenses")
     .select("*")
     .eq("wedding_id", wedding.id)
+    .is("deleted_at", null)
     .order("created_at", { ascending: true });
 
   if (error) {

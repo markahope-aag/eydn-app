@@ -9,7 +9,10 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "audit": "npm audit --omit=dev",
+    "audit:fix": "npm audit fix",
+    "security-check": "npm audit --omit=dev && npx tsc --noEmit && npx eslint src/"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
@@ -34,6 +37,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.0",
     "jsdom": "^29.0.0",

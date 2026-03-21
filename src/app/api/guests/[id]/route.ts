@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { pickFields } from "@/lib/validation";
+import { softDelete, logActivity } from "@/lib/audit";
 
 const ALLOWED_FIELDS = [
   "name", "email", "rsvp_status", "meal_preference", "role",
@@ -15,7 +16,7 @@ export async function PATCH(
 ) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
-  const { wedding, supabase } = result;
+  const { wedding, supabase, userId } = result;
 
   const { id } = await ctx.params;
   const body = await request.json();
@@ -37,6 +38,8 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  logActivity(supabase, { weddingId: wedding.id, userId, action: "update", entityType: "guests", entityId: id, entityName: (data as Record<string, unknown>).name as string });
+
   return NextResponse.json(data);
 }
 
@@ -46,19 +49,17 @@ export async function DELETE(
 ) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
-  const { wedding, supabase } = result;
+  const { wedding, supabase, userId } = result;
 
   const { id } = await ctx.params;
 
-  const { error } = await supabase
-    .from("guests")
-    .delete()
-    .eq("id", id)
-    .eq("wedding_id", wedding.id);
+  const { error } = await softDelete(supabase, "guests", id, wedding.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  logActivity(supabase, { weddingId: wedding.id, userId, action: "delete", entityType: "guests", entityId: id });
 
   return NextResponse.json({ success: true });
 }

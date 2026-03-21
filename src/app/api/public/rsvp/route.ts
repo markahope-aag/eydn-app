@@ -1,10 +1,19 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
+import { logRequest } from "@/lib/api-logger";
 import type { Database } from "@/lib/supabase/types";
 
 type RsvpTokenRow = Database["public"]["Tables"]["rsvp_tokens"]["Row"];
 
 export async function POST(request: Request) {
+  const start = Date.now();
+  const ip = getClientIP(request);
+  const rl = checkRateLimit(`rsvp:${ip}`, RATE_LIMITS.public);
+  if (rl.limited) {
+    logRequest("POST", "/api/public/rsvp", 429, Date.now() - start, { ip });
+    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+  }
   const supabase = createSupabaseAdmin();
   const body = await request.json();
 

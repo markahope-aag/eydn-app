@@ -1,8 +1,14 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const ip = getClientIP(request);
+  const rl = checkRateLimit(`photos:${ip}`, RATE_LIMITS.public);
+  if (rl.limited) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+  }
   const supabase = createSupabaseAdmin();
 
   const formData = await request.formData();
