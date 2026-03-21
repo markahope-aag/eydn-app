@@ -50,6 +50,8 @@ export default function HomePage() {
           <span>AI-powered planning</span>
           <span className="w-1 h-1 rounded-full bg-border" />
           <span>Beautiful wedding websites</span>
+          <span className="w-1 h-1 rounded-full bg-border" />
+          <span>Bank-grade data protection</span>
         </div>
       </section>
 
@@ -136,6 +138,35 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Trust & Security Banner */}
+      <section className="py-16 bg-white border-t border-border">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center">
+            <p className="text-[13px] font-semibold text-violet uppercase tracking-wide">Trust &amp; Security</p>
+            <h2 className="mt-2 text-[28px] font-semibold text-plum" style={{ letterSpacing: "-0.5px" }}>
+              We protect what matters most
+            </h2>
+            <p className="mt-3 text-[15px] text-muted max-w-2xl mx-auto">
+              Your wedding plans are irreplaceable. We&apos;ve built eydn with multiple layers of data protection so you never have to worry about losing a single detail.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { icon: "\u{1F504}", title: "Daily Backups", desc: "Automated encrypted backups every night to redundant off-site servers" },
+              { icon: "\u{267B}\uFE0F", title: "30-Day Recovery", desc: "Accidentally delete something? Restore any guest, task, or vendor instantly" },
+              { icon: "\u{1F4E5}", title: "Data Export", desc: "Download everything in one click. Your data belongs to you, always" },
+              { icon: "\u{1F6E1}\uFE0F", title: "Audit Trail", desc: "Every change is logged. See who changed what, when, with full history" },
+            ].map((item) => (
+              <div key={item.title} className="text-center">
+                <span className="text-[32px]">{item.icon}</span>
+                <h3 className="mt-2 text-[15px] font-semibold text-plum">{item.title}</h3>
+                <p className="mt-1 text-[13px] text-muted leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Pricing */}
       <section id="pricing" className="py-20 bg-white">
         <div className="max-w-3xl mx-auto px-6 text-center">
@@ -178,6 +209,30 @@ export default function HomePage() {
               </Link>
             </Show>
             <p className="mt-3 text-[12px] text-muted">No credit card required for the trial.</p>
+          </div>
+
+          {/* Memory Plan */}
+          <div className="mt-8 border border-border rounded-2xl p-8 max-w-md mx-auto text-left">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[15px] font-semibold text-plum">Memory Plan</p>
+              <div className="text-right">
+                <span className="text-[28px] font-semibold text-plum">$29</span>
+                <span className="text-[14px] text-muted">/year</span>
+              </div>
+            </div>
+            <p className="mt-2 text-[14px] text-muted leading-relaxed">
+              Keep your wedding website live and your data accessible after the wedding.
+            </p>
+            <div className="mt-5 space-y-2.5">
+              {memoryPlanFeatures.map((f) => (
+                <div key={f} className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-lavender flex items-center justify-center flex-shrink-0">
+                    <span className="text-violet text-[11px]">&#10003;</span>
+                  </div>
+                  <span className="text-[14px] text-plum">{f}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -300,6 +355,11 @@ const features = [
     title: "Photo gallery",
     description: "Guests upload their photos to a shared album right from your wedding website. No app download needed.",
   },
+  {
+    icon: "\u{1F512}",
+    title: "Your data, protected",
+    description: "Daily encrypted backups, soft-delete recovery, full data export, and audit logging. Your wedding plans are never at risk.",
+  },
 ];
 
 const steps = [
@@ -357,6 +417,28 @@ const deepDives = [
     icon: "\u{1F4B0}",
     cardText: "36 pre-built line items across 13 categories",
   },
+  {
+    label: "Data Security",
+    title: "Your plans deserve protection",
+    description: "Your wedding is one of the most important events of your life. We treat your data with the same care you put into planning it. Daily backups, recovery tools, and full data ownership — built into every account.",
+    bullets: [
+      "Daily encrypted backups to redundant off-site servers",
+      "Soft-delete recovery — restore anything within 30 days",
+      "Download all your data anytime with one click",
+      "Full audit trail of every change made to your wedding",
+      "Point-in-time database recovery (7-day window)",
+      "Enterprise-grade security headers and rate limiting",
+    ],
+    icon: "\u{1F6E1}\uFE0F",
+    cardText: "Daily backups. 30-day recovery. Your data, always.",
+  },
+];
+
+const memoryPlanFeatures = [
+  "Wedding website stays online",
+  "Full data access and export",
+  "Edit guest list and photos",
+  "Priority support",
 ];
 
 const pricingFeatures = [
@@ -372,4 +454,6 @@ const pricingFeatures = [
   "Email templates for vendor outreach",
   "Wedding party management",
   "Smart deadline notifications",
+  "Daily backups with 30-day recovery",
+  "Download all your data anytime",
 ];

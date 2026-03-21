@@ -45,6 +45,21 @@ export async function POST(request: Request) {
         break;
       }
 
+      // Handle Memory Plan subscription
+      if (meta?.type === "memory_plan" && meta?.wedding_id) {
+        const expiresAt = new Date();
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+        await supabase
+          .from("weddings")
+          .update({
+            memory_plan_active: true,
+            memory_plan_expires_at: expiresAt.toISOString(),
+          })
+          .eq("id", meta.wedding_id);
+        break;
+      }
+
       // Handle vendor placement purchase
       if (!meta?.vendor_account_id || !meta?.tier_id) break;
 
@@ -134,6 +149,17 @@ export async function POST(request: Request) {
           auto_renew: false,
         })
         .eq("stripe_subscription_id", subscription.id);
+
+      // Handle Memory Plan cancellation
+      const cancelMeta = subscription.metadata;
+      if (cancelMeta?.type === "memory_plan" && cancelMeta?.wedding_id) {
+        await supabase
+          .from("weddings")
+          .update({
+            memory_plan_active: false,
+          })
+          .eq("id", cancelMeta.wedding_id);
+      }
 
       break;
     }

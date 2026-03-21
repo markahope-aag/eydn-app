@@ -1,6 +1,44 @@
 export type Database = {
   public: {
     Tables: {
+      cron_log: {
+        Row: {
+          id: string;
+          job_name: string;
+          status: "success" | "error";
+          duration_ms: number | null;
+          details: Record<string, unknown> | null;
+          error_message: string | null;
+          started_at: string;
+        };
+        Insert: {
+          id?: string;
+          job_name: string;
+          status: "success" | "error";
+          duration_ms?: number | null;
+          details?: Record<string, unknown> | null;
+          error_message?: string | null;
+          started_at?: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      lifecycle_emails: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          email_type: string;
+          sent_at: string;
+        };
+        Insert: {
+          id?: string;
+          wedding_id: string;
+          email_type: string;
+          sent_at?: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
       activity_log: {
         Row: {
           id: string;
@@ -335,6 +373,9 @@ export type Database = {
           website_accommodations: string | null;
           website_faq: Record<string, unknown>[];
           website_couple_photo_url: string | null;
+          phase: "active" | "post_wedding" | "archived" | "sunset";
+          memory_plan_active: boolean;
+          memory_plan_expires_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -352,6 +393,9 @@ export type Database = {
           wedding_party_count?: number | null;
           has_pre_wedding_events?: boolean | null;
           has_honeymoon?: boolean | null;
+          phase?: "active" | "post_wedding" | "archived" | "sunset";
+          memory_plan_active?: boolean;
+          memory_plan_expires_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -369,6 +413,9 @@ export type Database = {
           wedding_party_count?: number | null;
           has_pre_wedding_events?: boolean | null;
           has_honeymoon?: boolean | null;
+          phase?: "active" | "post_wedding" | "archived" | "sunset";
+          memory_plan_active?: boolean;
+          memory_plan_expires_at?: string | null;
           updated_at?: string;
         };
         Relationships: [];

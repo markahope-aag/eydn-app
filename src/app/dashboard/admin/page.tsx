@@ -44,7 +44,66 @@ const DEFAULT_SETTINGS: AppSettings = {
   limits: { max_guests: 500, max_chat_messages_per_hour: 30, max_file_size_mb: 10 },
 };
 
-type Tab = "overview" | "subscribers" | "settings";
+type CronJobInfo = {
+  name: string;
+  schedule: string;
+  description: string;
+  stats: {
+    lastRun: string | null;
+    lastStatus: string | null;
+    lastDuration: number | null;
+    successCount: number;
+    errorCount: number;
+  };
+};
+
+type CronExecution = {
+  id: string;
+  job_name: string;
+  status: "success" | "error";
+  duration_ms: number | null;
+  details: Record<string, unknown> | null;
+  error_message: string | null;
+  started_at: string;
+};
+
+type CronData = {
+  jobs: CronJobInfo[];
+  recentExecutions: CronExecution[];
+};
+
+type BackupInfo = {
+  dataStats: Record<string, number>;
+  softDeleted: Record<string, number>;
+  security: {
+    rlsEnabled: boolean;
+    protectedTables: string[];
+    rateLimiting: boolean;
+    securityHeaders: boolean;
+    inputValidation: boolean;
+    softDeletes: boolean;
+    auditLogging: boolean;
+    activityLogEntries: number;
+  };
+  backup: {
+    sftpConfigured: boolean;
+    sftpHost: string | null;
+    sftpPath: string;
+    cronSchedule: string;
+    supabasePlan: string;
+    supabasePITR: boolean;
+    supabaseRetention: string;
+  };
+  recentActivity: Array<{
+    action: string;
+    entity_type: string;
+    entity_name: string | null;
+    user_id: string;
+    created_at: string;
+  }>;
+};
+
+type Tab = "overview" | "subscribers" | "settings" | "data-security" | "cron-jobs";
 
 export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -53,6 +112,11 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
+  const [backupInfo, setBackupInfo] = useState<BackupInfo | null>(null);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [triggeringBackup, setTriggeringBackup] = useState(false);
+  const [cronData, setCronData] = useState<CronData | null>(null);
+  const [cronLoading, setCronLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -163,7 +227,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="mt-4 flex gap-1 border-b border-border">
-        {(["overview", "subscribers", "settings"] as Tab[]).map((t) => (
+        {(["overview", "subscribers", "settings", "data-security", "cron-jobs"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -173,7 +237,7 @@ export default function AdminPage() {
                 : "border-transparent text-muted hover:text-plum"
             }`}
           >
-            {t.charAt(0).toUpperCase() + t.slice(1)}
+            {t === "data-security" ? "Data & Security" : t === "cron-jobs" ? "Cron Jobs" : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
@@ -269,6 +333,55 @@ export default function AdminPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Data & Security Tab */}
+      {tab === "data-security" && (
+        <DataSecurityTab
+          backupInfo={backupInfo}
+          backupLoading={backupLoading}
+          triggeringBackup={triggeringBackup}
+          onLoad={() => {
+            if (backupInfo) return;
+            setBackupLoading(true);
+            fetch("/api/admin/backups")
+              .then((r) => (r.ok ? r.json() : null))
+              .then((data) => { if (data) setBackupInfo(data); })
+              .catch(() => toast.error("Failed to load backup info"))
+              .finally(() => setBackupLoading(false));
+          }}
+          onTriggerBackup={() => {
+            setTriggeringBackup(true);
+            fetch("/api/admin/backups", { method: "POST" })
+              .then((r) => r.json())
+              .then((data) => {
+                if (data.success) {
+                  toast.success(`Backup complete: ${data.weddings} weddings, ${Math.round(data.bytes / 1024)}KB${data.sftp ? " (uploaded via SFTP)" : ""}`);
+                } else {
+                  toast.error(data.error || "Backup failed");
+                }
+              })
+              .catch(() => toast.error("Backup request failed"))
+              .finally(() => setTriggeringBackup(false));
+          }}
+        />
+      )}
+
+      {/* Cron Jobs Tab */}
+      {tab === "cron-jobs" && (
+        <CronJobsTab
+          cronData={cronData}
+          cronLoading={cronLoading}
+          onLoad={() => {
+            if (cronData) return;
+            setCronLoading(true);
+            fetch("/api/admin/cron")
+              .then((r) => (r.ok ? r.json() : null))
+              .then((data) => { if (data) setCronData(data); })
+              .catch(() => toast.error("Failed to load cron data"))
+              .finally(() => setCronLoading(false));
+          }}
+        />
       )}
 
       {/* Settings Tab */}
@@ -380,6 +493,296 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function CronJobsTab({
+  cronData,
+  cronLoading,
+  onLoad,
+}: {
+  cronData: CronData | null;
+  cronLoading: boolean;
+  onLoad: () => void;
+}) {
+  useEffect(() => { onLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (cronLoading) {
+    return <p className="text-[15px] text-muted py-8">Loading cron job data...</p>;
+  }
+
+  if (!cronData) {
+    return <p className="text-[15px] text-muted py-8">Unable to load cron data.</p>;
+  }
+
+  const now = new Date();
+  function timeAgo(dateStr: string) {
+    const diff = now.getTime() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  }
+
+  return (
+    <div className="mt-6 space-y-8">
+      {/* Job Status Cards */}
+      <div>
+        <h2 className="text-[18px] font-semibold text-plum">Scheduled Jobs</h2>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          {cronData.jobs.map((job) => (
+            <div key={job.name} className="card p-5">
+              <div className="flex items-center justify-between">
+                <p className="text-[16px] font-semibold text-plum capitalize">{job.name}</p>
+                <span className={`w-3 h-3 rounded-full ${
+                  job.stats.lastStatus === "success" ? "bg-green-500" :
+                  job.stats.lastStatus === "error" ? "bg-red-500" :
+                  "bg-gray-300"
+                }`} />
+              </div>
+              <p className="mt-1 text-[13px] text-muted">{job.description}</p>
+              <div className="mt-3 space-y-1 text-[13px]">
+                <div className="flex justify-between">
+                  <span className="text-muted">Schedule</span>
+                  <span className="font-mono text-plum">{job.schedule}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted">Last run</span>
+                  <span className="text-plum">
+                    {job.stats.lastRun ? timeAgo(job.stats.lastRun) : "Never"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted">Last duration</span>
+                  <span className="text-plum">
+                    {job.stats.lastDuration ? `${(job.stats.lastDuration / 1000).toFixed(1)}s` : "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted">Success / Error</span>
+                  <span>
+                    <span className="text-green-600 font-semibold">{job.stats.successCount}</span>
+                    {" / "}
+                    <span className={`font-semibold ${job.stats.errorCount > 0 ? "text-red-600" : "text-muted"}`}>{job.stats.errorCount}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Execution History */}
+      <div>
+        <h2 className="text-[18px] font-semibold text-plum">Execution History</h2>
+        {cronData.recentExecutions.length > 0 ? (
+          <div className="mt-4 overflow-x-auto rounded-[16px] border border-border bg-white">
+            <table className="w-full text-[14px]">
+              <thead className="border-b border-border bg-lavender">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Job</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Status</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Duration</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Time</th>
+                  <th className="px-4 py-3 text-left font-semibold text-muted">Details</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {cronData.recentExecutions.map((exec) => (
+                  <tr key={exec.id}>
+                    <td className="px-4 py-3 font-semibold text-plum capitalize">{exec.job_name}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-[12px] font-semibold px-2 py-0.5 rounded-full ${
+                        exec.status === "success"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}>
+                        {exec.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted">
+                      {exec.duration_ms ? `${(exec.duration_ms / 1000).toFixed(1)}s` : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-muted">
+                      {new Date(exec.started_at).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-muted text-[12px] max-w-[200px] truncate">
+                      {exec.error_message || (exec.details ? JSON.stringify(exec.details).slice(0, 80) : "-")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="mt-4 text-[15px] text-muted">No cron executions recorded yet. Jobs will appear here after their first run.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DataSecurityTab({
+  backupInfo,
+  backupLoading,
+  triggeringBackup,
+  onLoad,
+  onTriggerBackup,
+}: {
+  backupInfo: BackupInfo | null;
+  backupLoading: boolean;
+  triggeringBackup: boolean;
+  onLoad: () => void;
+  onTriggerBackup: () => void;
+}) {
+  useEffect(() => { onLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (backupLoading) {
+    return <p className="text-[15px] text-muted py-8">Loading data &amp; security info...</p>;
+  }
+
+  if (!backupInfo) {
+    return <p className="text-[15px] text-muted py-8">Unable to load backup information.</p>;
+  }
+
+  const { dataStats, softDeleted, security, backup, recentActivity } = backupInfo;
+  const actionColors: Record<string, string> = {
+    create: "bg-[#D6F5E3] text-[#2E7D4F]",
+    update: "bg-[#FFF3CC] text-[#8A5200]",
+    delete: "bg-red-100 text-red-700",
+    restore: "bg-blue-100 text-blue-700",
+  };
+
+  return (
+    <div className="mt-6 space-y-8">
+      {/* Backup Status */}
+      <div>
+        <div className="flex items-center justify-between">
+          <h2 className="text-[18px] font-semibold text-plum">Backup System</h2>
+          <button
+            onClick={onTriggerBackup}
+            disabled={triggeringBackup}
+            className="btn-primary btn-sm disabled:opacity-50"
+          >
+            {triggeringBackup ? "Running Backup..." : "Run Manual Backup"}
+          </button>
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="card p-4">
+            <p className="text-[12px] font-semibold text-muted uppercase tracking-wide">Supabase</p>
+            <p className="mt-1 text-[15px] font-semibold text-plum">{backup.supabasePlan} Plan</p>
+            <p className="text-[13px] text-muted">PITR: {backup.supabasePITR ? "Enabled" : "Disabled"}</p>
+            <p className="text-[13px] text-muted">Retention: {backup.supabaseRetention}</p>
+          </div>
+          <div className="card p-4">
+            <p className="text-[12px] font-semibold text-muted uppercase tracking-wide">Off-Platform (SFTP)</p>
+            <div className="mt-1 flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${backup.sftpConfigured ? "bg-green-500" : "bg-red-500"}`} />
+              <p className="text-[15px] font-semibold text-plum">
+                {backup.sftpConfigured ? "Connected" : "Not Configured"}
+              </p>
+            </div>
+            {backup.sftpConfigured && (
+              <>
+                <p className="text-[13px] text-muted">Host: {backup.sftpHost}</p>
+                <p className="text-[13px] text-muted">Path: {backup.sftpPath}</p>
+              </>
+            )}
+            {!backup.sftpConfigured && (
+              <p className="text-[12px] text-muted mt-1">
+                Set BACKUP_SFTP_HOST, BACKUP_SFTP_USER, BACKUP_SFTP_PASSWORD env vars
+              </p>
+            )}
+          </div>
+          <div className="card p-4">
+            <p className="text-[12px] font-semibold text-muted uppercase tracking-wide">Schedule</p>
+            <p className="mt-1 text-[15px] font-semibold text-plum">{backup.cronSchedule}</p>
+            <p className="text-[13px] text-muted">Full data export to Hetzner</p>
+            <p className="text-[13px] text-muted">All weddings included</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Data Overview */}
+      <div>
+        <h2 className="text-[18px] font-semibold text-plum">Data Overview</h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {Object.entries(dataStats).map(([key, count]) => (
+            <div key={key} className="card p-4 flex items-center justify-between">
+              <p className="text-[14px] text-muted capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</p>
+              <p className="text-[18px] font-semibold text-plum">{count.toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Soft Deletes / Trash */}
+      <div>
+        <h2 className="text-[18px] font-semibold text-plum">Trash (Soft-Deleted Records)</h2>
+        <p className="mt-1 text-[13px] text-muted">
+          Deleted records are kept for 30 days. Users can restore from Settings &rarr; Recently Deleted.
+        </p>
+        <div className="mt-3 flex gap-4">
+          {Object.entries(softDeleted).map(([key, count]) => (
+            <div key={key} className="card p-3 flex items-center gap-3">
+              <p className="text-[14px] text-muted capitalize">{key}</p>
+              <span className={`text-[15px] font-semibold ${(count as number) > 0 ? "text-error" : "text-plum"}`}>
+                {(count as number).toLocaleString()}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Security Posture */}
+      <div>
+        <h2 className="text-[18px] font-semibold text-plum">Security Posture</h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {[
+            { label: "Row Level Security (RLS)", enabled: security.rlsEnabled, detail: `${security.protectedTables.length} tables protected` },
+            { label: "Rate Limiting", enabled: security.rateLimiting, detail: "Public APIs: 20/min, Chat: 10/min" },
+            { label: "Security Headers", enabled: security.securityHeaders, detail: "HSTS, X-Frame-Options, CSP" },
+            { label: "Input Validation", enabled: security.inputValidation, detail: "All POST/PATCH routes validated" },
+            { label: "Soft Deletes", enabled: security.softDeletes, detail: "7 tables, 30-day retention" },
+            { label: "Audit Logging", enabled: security.auditLogging, detail: `${security.activityLogEntries.toLocaleString()} entries recorded` },
+          ].map((item) => (
+            <div key={item.label} className="card p-4 flex items-start gap-3">
+              <span className={`mt-0.5 w-3 h-3 rounded-full flex-shrink-0 ${item.enabled ? "bg-green-500" : "bg-red-500"}`} />
+              <div>
+                <p className="text-[15px] font-semibold text-plum">{item.label}</p>
+                <p className="text-[12px] text-muted">{item.detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div>
+        <h2 className="text-[18px] font-semibold text-plum">Recent Activity</h2>
+        {recentActivity.length > 0 ? (
+          <div className="mt-3 space-y-1">
+            {recentActivity.map((entry, i) => (
+              <div key={i} className="card-list flex items-center gap-3 px-4 py-2">
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${actionColors[entry.action] || "bg-lavender text-violet"}`}>
+                  {entry.action}
+                </span>
+                <span className="text-[14px] text-plum flex-1">
+                  {entry.entity_type}{entry.entity_name ? `: ${entry.entity_name}` : ""}
+                </span>
+                <span className="text-[12px] text-muted">
+                  {new Date(entry.created_at).toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-[15px] text-muted">No activity recorded yet.</p>
+        )}
+      </div>
     </div>
   );
 }
