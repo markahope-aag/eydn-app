@@ -52,10 +52,8 @@ export async function POST(
   return NextResponse.json(data, { status: 201 });
 }
 
-export async function DELETE(
-  request: Request,
-  ctx: RouteContext<"/api/tasks/[id]/resources">
-) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function DELETE(request: Request, _ctx: RouteContext<"/api/tasks/[id]/resources">) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
   const { supabase } = result;

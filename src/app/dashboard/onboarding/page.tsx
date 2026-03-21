@@ -75,7 +75,7 @@ const STEPS = [
   "anything_else",
 ] as const;
 
-type Step = (typeof STEPS)[number];
+
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -95,12 +95,17 @@ export default function OnboardingPage() {
         return null;
       })
       .then((data) => {
-        if (data?.responses && !data.completed) {
+        if (data?.responses) {
           const saved = data.responses as Partial<FormData>;
           setForm((prev) => ({ ...prev, ...saved }));
-          // Find the last filled step
-          const lastStep = (saved as Record<string, unknown>).last_step;
-          if (typeof lastStep === "number") setStep(lastStep);
+          if (data.completed) {
+            // Re-editing: start at step 0 so user can review from the beginning
+            setStep(0);
+          } else {
+            // Resuming incomplete: jump to last filled step
+            const lastStep = (saved as Record<string, unknown>).last_step;
+            if (typeof lastStep === "number") setStep(lastStep);
+          }
         }
       })
       .finally(() => setResumeChecked(true));

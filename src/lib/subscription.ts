@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
 
 const TRIAL_DAYS = 14;
 const PRICE = 79;
@@ -18,6 +19,19 @@ export type SubscriptionStatus = {
  * Check if the current user has access to premium features.
  * Premium features: AI chat, PDF export, file attachments.
  */
+/**
+ * Guard for premium API routes. Returns null if the user has access,
+ * or a 403 NextResponse if they don't.
+ */
+export async function requirePremium(): Promise<NextResponse | null> {
+  const status = await getSubscriptionStatus();
+  if (status.hasAccess) return null;
+  return NextResponse.json(
+    { error: "Premium feature — upgrade to continue", trialExpired: status.trialExpired },
+    { status: 403 }
+  );
+}
+
 export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   const { userId } = await auth();
   if (!userId) {

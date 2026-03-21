@@ -71,8 +71,9 @@ export default function DayOfPage() {
 
   useEffect(() => {
     fetch("/api/day-of")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
+        if (!data?.content) return;
         const content = data.content as DayOfPlan;
         // Migrate old string[] packing checklist to PackingItem[]
         if (content.packingChecklist && content.packingChecklist.length > 0) {
@@ -86,7 +87,7 @@ export default function DayOfPage() {
         setPlan(content);
         setCeremonyTime(content.ceremonyTime || "");
       })
-      .catch(() => toast.error("Failed to load day-of plan"))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -160,88 +161,226 @@ export default function DayOfPage() {
   async function exportPDF() {
     if (!plan) return;
 
-    // Dynamic import to avoid SSR issues
-    const { pdf, Document, Page: PdfPage, Text, View, StyleSheet } = await import("@react-pdf/renderer");
+    const { pdf, Document, Page: PdfPage, Text, View, StyleSheet, Svg, Rect, Defs, LinearGradient, Stop, Circle } = await import("@react-pdf/renderer");
 
-    const styles = StyleSheet.create({
-      page: { padding: 40, fontFamily: "Helvetica", fontSize: 10 },
-      title: { fontSize: 22, fontFamily: "Helvetica-Bold", marginBottom: 4, color: "#1A1030" },
-      subtitle: { fontSize: 10, color: "#5A4070", marginBottom: 20 },
-      sectionTitle: { fontSize: 14, fontFamily: "Helvetica-Bold", color: "#8B3FCC", marginTop: 16, marginBottom: 8 },
-      row: { flexDirection: "row", paddingVertical: 4, borderBottomWidth: 0.5, borderBottomColor: "#E8D0F5" },
-      timeCol: { width: 80, fontFamily: "Helvetica-Bold", color: "#8B3FCC" },
-      eventCol: { flex: 1, color: "#1A1030" },
-      notesCol: { width: 140, color: "#5A4070", fontSize: 9 },
-      tableHeader: { flexDirection: "row", paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: "#8B3FCC" },
-      headerText: { fontFamily: "Helvetica-Bold", color: "#5A4070", fontSize: 9 },
-      cell: { color: "#1A1030" },
-      checkItem: { flexDirection: "row", paddingVertical: 3, gap: 8 },
-      checkbox: { width: 10, height: 10, borderWidth: 1, borderColor: "#8B3FCC", borderRadius: 2 },
+    // eydn brand colors
+    const brand = {
+      violet: "#8B3FCC",
+      softViolet: "#B06EE0",
+      blush: "#F0609A",
+      petal: "#F7C8E0",
+      lavender: "#F0E0FF",
+      whisper: "#FBF6FF",
+      plum: "#1A1030",
+      muted: "#5A4070",
+      border: "#E8D0F5",
+      white: "#FFFFFF",
+    };
+
+    const s = StyleSheet.create({
+      page: { fontFamily: "Helvetica", fontSize: 10, color: brand.plum, backgroundColor: brand.white },
+      // Header banner
+      headerBanner: { height: 100, position: "relative", overflow: "hidden" },
+      headerContent: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, paddingHorizontal: 44, justifyContent: "center" },
+      logoText: { fontSize: 28, fontFamily: "Helvetica-Bold", color: brand.white, letterSpacing: 2 },
+      tagline: { fontSize: 9, color: brand.white, opacity: 0.85, marginTop: 2, letterSpacing: 0.5 },
+      // Body
+      body: { paddingHorizontal: 44, paddingTop: 28, paddingBottom: 40 },
+      pageTitle: { fontSize: 20, fontFamily: "Helvetica-Bold", color: brand.plum, marginBottom: 2 },
+      pageSubtitle: { fontSize: 10, color: brand.muted, marginBottom: 24 },
+      // Section
+      sectionHeader: { flexDirection: "row", alignItems: "center", marginTop: 24, marginBottom: 10, gap: 8 },
+      sectionDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: brand.violet },
+      sectionTitle: { fontSize: 13, fontFamily: "Helvetica-Bold", color: brand.violet, textTransform: "uppercase" as const, letterSpacing: 1.5 },
+      sectionDivider: { height: 1, backgroundColor: brand.border, marginBottom: 10 },
+      // Timeline
+      timelineRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 2 },
+      timelineDotCol: { width: 20, alignItems: "center", paddingTop: 5 },
+      timelineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: brand.petal },
+      timelineTimeCol: { width: 75, paddingVertical: 6, paddingRight: 8 },
+      timelineTime: { fontSize: 10, fontFamily: "Helvetica-Bold", color: brand.violet },
+      timelineEventCol: { flex: 1, paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: brand.border },
+      timelineEvent: { fontSize: 10, color: brand.plum },
+      timelineNotes: { fontSize: 8, color: brand.muted, marginTop: 2 },
+      // Table
+      tableContainer: { borderRadius: 6, borderWidth: 0.5, borderColor: brand.border, overflow: "hidden" },
+      tableHeaderRow: { flexDirection: "row", backgroundColor: brand.lavender, paddingVertical: 6, paddingHorizontal: 10 },
+      tableHeaderCell: { fontSize: 8, fontFamily: "Helvetica-Bold", color: brand.muted, textTransform: "uppercase" as const, letterSpacing: 0.8 },
+      tableRow: { flexDirection: "row", paddingVertical: 6, paddingHorizontal: 10, borderBottomWidth: 0.5, borderBottomColor: brand.border },
+      tableRowAlt: { flexDirection: "row", paddingVertical: 6, paddingHorizontal: 10, borderBottomWidth: 0.5, borderBottomColor: brand.border, backgroundColor: brand.whisper },
+      tableCell: { fontSize: 10, color: brand.plum },
+      tableCellBold: { fontSize: 10, fontFamily: "Helvetica-Bold", color: brand.plum },
+      tableCellMuted: { fontSize: 10, color: brand.muted },
+      // Packing
+      checkRow: { flexDirection: "row", alignItems: "center", paddingVertical: 4, gap: 10 },
+      checkbox: { width: 12, height: 12, borderRadius: 2, borderWidth: 1.5, borderColor: brand.violet },
+      checkLabel: { fontSize: 10, color: brand.plum, flex: 1 },
+      checkNotes: { fontSize: 8, color: brand.muted },
+      // Footer
+      footer: { position: "absolute", bottom: 0, left: 0, right: 0, paddingHorizontal: 44, paddingVertical: 14, flexDirection: "row", justifyContent: "space-between", borderTopWidth: 0.5, borderTopColor: brand.border },
+      footerText: { fontSize: 7, color: brand.muted },
+      footerBrand: { fontSize: 7, fontFamily: "Helvetica-Bold", color: brand.violet },
+      // Eydn message
+      edynRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 20, marginTop: 4 },
+      edynBubble: { backgroundColor: brand.lavender, borderRadius: 10, borderTopLeftRadius: 2, paddingHorizontal: 14, paddingVertical: 10, flex: 1 },
+      edynText: { fontSize: 9, color: brand.muted, lineHeight: 1.5 },
     });
+
+    const GradientBanner = () => (
+      <View style={s.headerBanner}>
+        <Svg width="595" height="100" viewBox="0 0 595 100">
+          <Defs>
+            <LinearGradient id="grad" x1="0" y1="0" x2="595" y2="100">
+              <Stop offset="0%" stopColor={brand.violet} />
+              <Stop offset="100%" stopColor={brand.blush} />
+            </LinearGradient>
+          </Defs>
+          <Rect x="0" y="0" width="595" height="100" fill="url(#grad)" />
+          <Circle cx="520" cy="-20" r="80" fill={brand.softViolet} opacity="0.2" />
+          <Circle cx="60" cy="90" r="50" fill={brand.blush} opacity="0.15" />
+        </Svg>
+        <View style={s.headerContent}>
+          <Text style={s.logoText}>eydn</Text>
+          <Text style={s.tagline}>Your AI Wedding Planning Guide</Text>
+        </View>
+      </View>
+    );
+
+    const SectionHeader = ({ title }: { title: string }) => (
+      <>
+        <View style={s.sectionHeader}>
+          <View style={s.sectionDot} />
+          <Text style={s.sectionTitle}>{title}</Text>
+        </View>
+        <View style={s.sectionDivider} />
+      </>
+    );
 
     const PdfDoc = (
       <Document>
-        <PdfPage size="A4" style={styles.page}>
-          <Text style={styles.title}>Day-of Plan</Text>
-          <Text style={styles.subtitle}>eydn wedding planner</Text>
+        {/* PAGE 1 — Timeline */}
+        <PdfPage size="A4" style={s.page}>
+          <GradientBanner />
+          <View style={s.body}>
+            <Text style={s.pageTitle}>Your Day-of Plan</Text>
+            <Text style={s.pageSubtitle}>
+              {plan.ceremonyTime ? `Ceremony at ${plan.ceremonyTime}` : "Everything you need for the big day"}
+            </Text>
 
-          <Text style={styles.sectionTitle}>Timeline</Text>
-          {plan.timeline.map((item, i) => (
-            <View key={i} style={styles.row}>
-              <Text style={styles.timeCol}>{item.time}</Text>
-              <Text style={styles.eventCol}>{item.event}</Text>
-              <Text style={styles.notesCol}>{item.notes}</Text>
-            </View>
-          ))}
-
-          {plan.vendorContacts.length > 0 && (
-            <>
-              <Text style={styles.sectionTitle}>Vendor Contacts</Text>
-              <View style={styles.tableHeader}>
-                <Text style={[styles.headerText, { width: 120 }]}>Vendor</Text>
-                <Text style={[styles.headerText, { width: 100 }]}>Category</Text>
-                <Text style={[styles.headerText, { flex: 1 }]}>Contact</Text>
-                <Text style={[styles.headerText, { width: 100 }]}>Phone</Text>
+            {/* Eydn message */}
+            <View style={s.edynRow}>
+              <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: brand.violet, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: brand.white }}>e</Text>
               </View>
-              {plan.vendorContacts.map((v, i) => (
-                <View key={i} style={styles.row}>
-                  <Text style={[styles.cell, { width: 120, fontFamily: "Helvetica-Bold" }]}>{v.vendor}</Text>
-                  <Text style={[styles.cell, { width: 100 }]}>{v.category}</Text>
-                  <Text style={[styles.cell, { flex: 1 }]}>{v.contact || "—"}</Text>
-                  <Text style={[styles.cell, { width: 100 }]}>{v.phone || "—"}</Text>
+              <View style={s.edynBubble}>
+                <Text style={s.edynText}>
+                  You&apos;ve got this! Here&apos;s your complete day-of timeline. Share this with your wedding party and coordinator so everyone knows the plan.
+                </Text>
+              </View>
+            </View>
+
+            <SectionHeader title="Timeline" />
+            {plan.timeline.map((item, i) => (
+              <View key={i} style={s.timelineRow}>
+                <View style={s.timelineDotCol}>
+                  <View style={[s.timelineDot, i === 0 ? { backgroundColor: brand.violet } : {}]} />
+                </View>
+                <View style={s.timelineTimeCol}>
+                  <Text style={s.timelineTime}>{item.time}</Text>
+                </View>
+                <View style={s.timelineEventCol}>
+                  <Text style={s.timelineEvent}>{item.event}</Text>
+                  {item.notes ? <Text style={s.timelineNotes}>{item.notes}</Text> : null}
+                </View>
+              </View>
+            ))}
+          </View>
+          <View style={s.footer} fixed>
+            <Text style={s.footerText}>Generated by eydn</Text>
+            <Text style={s.footerBrand}>eydn.app</Text>
+          </View>
+        </PdfPage>
+
+        {/* PAGE 2 — Vendors, Party, Packing */}
+        <PdfPage size="A4" style={s.page}>
+          <View style={{ height: 6, backgroundColor: brand.violet }} />
+          <View style={s.body}>
+            {/* Vendor Contacts */}
+            {plan.vendorContacts.length > 0 && (
+              <>
+                <SectionHeader title="Vendor Contacts" />
+                <View style={s.tableContainer}>
+                  <View style={s.tableHeaderRow}>
+                    <Text style={[s.tableHeaderCell, { width: 130 }]}>Vendor</Text>
+                    <Text style={[s.tableHeaderCell, { width: 100 }]}>Category</Text>
+                    <Text style={[s.tableHeaderCell, { flex: 1 }]}>Contact</Text>
+                    <Text style={[s.tableHeaderCell, { width: 100 }]}>Phone</Text>
+                  </View>
+                  {plan.vendorContacts.map((v, i) => (
+                    <View key={i} style={i % 2 === 1 ? s.tableRowAlt : s.tableRow}>
+                      <Text style={[s.tableCellBold, { width: 130 }]}>{v.vendor}</Text>
+                      <Text style={[s.tableCellMuted, { width: 100 }]}>{v.category}</Text>
+                      <Text style={[s.tableCell, { flex: 1 }]}>{v.contact || "\u2014"}</Text>
+                      <Text style={[s.tableCell, { width: 100 }]}>{v.phone || "\u2014"}</Text>
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+
+            {/* Wedding Party Jobs */}
+            {plan.partyAssignments.length > 0 && (
+              <>
+                <SectionHeader title="Wedding Party Jobs" />
+                <View style={s.tableContainer}>
+                  <View style={s.tableHeaderRow}>
+                    <Text style={[s.tableHeaderCell, { width: 130 }]}>Name</Text>
+                    <Text style={[s.tableHeaderCell, { width: 100 }]}>Role</Text>
+                    <Text style={[s.tableHeaderCell, { flex: 1 }]}>Assignment</Text>
+                    <Text style={[s.tableHeaderCell, { width: 100 }]}>Phone</Text>
+                  </View>
+                  {plan.partyAssignments.map((p, i) => (
+                    <View key={i} style={i % 2 === 1 ? s.tableRowAlt : s.tableRow}>
+                      <Text style={[s.tableCellBold, { width: 130 }]}>{p.name}</Text>
+                      <Text style={[s.tableCellMuted, { width: 100 }]}>{p.role}</Text>
+                      <Text style={[s.tableCell, { flex: 1 }]}>{p.job || "\u2014"}</Text>
+                      <Text style={[s.tableCell, { width: 100 }]}>{p.phone || "\u2014"}</Text>
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+
+            {/* Packing Checklist */}
+            <SectionHeader title="Packing Checklist" />
+            <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+              {plan.packingChecklist.map((p, i) => (
+                <View key={i} style={[s.checkRow, { width: "50%" }]}>
+                  <View style={s.checkbox} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.checkLabel}>{p.item}</Text>
+                    {p.notes ? <Text style={s.checkNotes}>{p.notes}</Text> : null}
+                  </View>
                 </View>
               ))}
-            </>
-          )}
-
-          {plan.partyAssignments.length > 0 && (
-            <>
-              <Text style={styles.sectionTitle}>Wedding Party Jobs</Text>
-              <View style={styles.tableHeader}>
-                <Text style={[styles.headerText, { width: 120 }]}>Name</Text>
-                <Text style={[styles.headerText, { width: 100 }]}>Role</Text>
-                <Text style={[styles.headerText, { flex: 1 }]}>Job</Text>
-                <Text style={[styles.headerText, { width: 100 }]}>Phone</Text>
-              </View>
-              {plan.partyAssignments.map((p, i) => (
-                <View key={i} style={styles.row}>
-                  <Text style={[styles.cell, { width: 120, fontFamily: "Helvetica-Bold" }]}>{p.name}</Text>
-                  <Text style={[styles.cell, { width: 100 }]}>{p.role}</Text>
-                  <Text style={[styles.cell, { flex: 1 }]}>{p.job || "—"}</Text>
-                  <Text style={[styles.cell, { width: 100 }]}>{p.phone || "—"}</Text>
-                </View>
-              ))}
-            </>
-          )}
-
-          <Text style={styles.sectionTitle}>Packing Checklist</Text>
-          {plan.packingChecklist.map((p, i) => (
-            <View key={i} style={styles.checkItem}>
-              <View style={styles.checkbox} />
-              <Text style={styles.cell}>{p.item}</Text>
-              {p.notes && <Text style={[styles.notesCol, { fontSize: 8 }]}>({p.notes})</Text>}
             </View>
-          ))}
+
+            {/* Eydn closing message */}
+            <View style={[s.edynRow, { marginTop: 28 }]}>
+              <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: brand.violet, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: brand.white }}>e</Text>
+              </View>
+              <View style={s.edynBubble}>
+                <Text style={s.edynText}>
+                  Take a deep breath &mdash; you&apos;ve planned an incredible day. Trust the plan, lean on your people, and enjoy every single moment. You deserve it!
+                </Text>
+              </View>
+            </View>
+          </View>
+          <View style={s.footer} fixed>
+            <Text style={s.footerText}>Generated by eydn</Text>
+            <Text style={s.footerBrand}>eydn.app</Text>
+          </View>
         </PdfPage>
       </Document>
     );
@@ -262,11 +401,73 @@ export default function DayOfPage() {
 
   if (!plan) {
     return (
-      <div>
+      <div className="max-w-3xl">
         <h1>Day-of Planner</h1>
         <p className="mt-2 text-[15px] text-muted">
-          Your day-of plan will be auto-generated 2 weeks before the wedding.
+          Generate your day-of timeline, vendor contact sheet, and packing checklist.
         </p>
+        <div className="mt-6 card p-4 space-y-4">
+          <div className="flex items-center gap-3">
+            <label className="text-[13px] font-semibold text-plum whitespace-nowrap">Ceremony time:</label>
+            <input
+              type="text"
+              value={ceremonyTime}
+              onChange={(e) => setCeremonyTime(e.target.value)}
+              placeholder="e.g. 4:30 PM"
+              className="rounded-[10px] border-border px-3 py-1.5 text-[15px] w-32"
+            />
+          </div>
+          <button
+            onClick={async () => {
+              // Validate ceremony time if provided
+              let customTimeline: TimelineItem[] | null = null;
+              if (ceremonyTime.trim()) {
+                customTimeline = generateTimelineFromCeremony(ceremonyTime);
+                if (customTimeline.length === 0) {
+                  toast.error("Enter a valid time like 4:30 PM");
+                  return;
+                }
+              }
+              // Fetch/generate the plan from the API
+              try {
+                const res = await fetch("/api/day-of");
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                const content = data.content as DayOfPlan;
+                if (content.packingChecklist && content.packingChecklist.length > 0) {
+                  const first = content.packingChecklist[0];
+                  if (typeof first === "string") {
+                    content.packingChecklist = (content.packingChecklist as unknown as string[]).map(
+                      (item) => ({ item, notes: "" })
+                    );
+                  }
+                }
+                // Apply custom ceremony time if provided
+                if (customTimeline && ceremonyTime.trim()) {
+                  content.ceremonyTime = ceremonyTime;
+                  content.timeline = customTimeline;
+                  // Save updated plan
+                  await fetch("/api/day-of", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ content }),
+                  });
+                }
+                setPlan(content);
+                setCeremonyTime(content.ceremonyTime || ceremonyTime);
+                toast.success("Day-of plan generated!");
+              } catch {
+                toast.error("Failed to generate plan");
+              }
+            }}
+            className="btn-primary"
+          >
+            Generate Timeline
+          </button>
+          <p className="text-[12px] text-muted">
+            We&apos;ll pull in your vendors and wedding party info automatically.
+          </p>
+        </div>
       </div>
     );
   }

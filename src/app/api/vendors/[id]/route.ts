@@ -1,5 +1,11 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { pickFields } from "@/lib/validation";
+
+const ALLOWED_FIELDS = [
+  "name", "category", "status", "poc_name", "poc_email", "poc_phone",
+  "notes", "amount", "amount_paid",
+];
 
 export async function PATCH(
   request: Request,
@@ -11,10 +17,15 @@ export async function PATCH(
 
   const { id } = await ctx.params;
   const body = await request.json();
+  const updates = pickFields(body, ALLOWED_FIELDS);
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+  }
 
   const { data, error } = await supabase
     .from("vendors")
-    .update({ ...body, updated_at: new Date().toISOString() })
+    .update({ ...updates, updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("wedding_id", wedding.id)
     .select()

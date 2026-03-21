@@ -15,6 +15,7 @@ export async function GET() {
     accommodations: wedding.website_accommodations,
     faq: wedding.website_faq,
     cover_url: wedding.website_cover_url,
+    couple_photo_url: wedding.website_couple_photo_url,
     enabled: wedding.website_enabled,
   });
 }
@@ -52,6 +53,7 @@ export async function PATCH(request: Request) {
   if (body.accommodations !== undefined) updates.website_accommodations = body.accommodations;
   if (body.faq !== undefined) updates.website_faq = body.faq;
   if (body.cover_url !== undefined) updates.website_cover_url = body.cover_url;
+  if (body.couple_photo_url !== undefined) updates.website_couple_photo_url = body.couple_photo_url;
   if (body.enabled !== undefined) updates.website_enabled = body.enabled;
 
   const { error } = await supabase

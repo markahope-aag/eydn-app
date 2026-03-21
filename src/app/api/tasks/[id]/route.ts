@@ -1,6 +1,11 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import type { Database } from "@/lib/supabase/types";
+import { pickFields } from "@/lib/validation";
+
+const ALLOWED_FIELDS = [
+  "title", "description", "due_date", "completed", "status",
+  "priority", "category", "notes", "sort_order",
+];
 
 export async function PATCH(
   request: Request,
@@ -11,11 +16,16 @@ export async function PATCH(
   const { wedding, supabase } = result;
 
   const { id } = await ctx.params;
-  const body: Database["public"]["Tables"]["tasks"]["Update"] = await request.json();
+  const body = await request.json();
+  const updates = pickFields(body, ALLOWED_FIELDS);
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+  }
 
   const { data, error } = await supabase
     .from("tasks")
-    .update(body)
+    .update(updates)
     .eq("id", id)
     .eq("wedding_id", wedding.id)
     .select()

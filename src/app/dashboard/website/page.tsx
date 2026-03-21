@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { toast } from "sonner";
 
 type Tab = "setup" | "schedule" | "registry" | "rsvp" | "gallery";
@@ -48,9 +49,16 @@ export default function WebsitePage() {
   // Gallery state
   const [photos, setPhotos] = useState<Photo[]>([]);
 
+  // Couple photo
+  const [couplePhotoUrl, setCouplePhotoUrl] = useState("");
+
   // Cover upload
   const coverRef = useRef<HTMLInputElement>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
+
+  // Couple photo upload
+  const couplePhotoRef = useRef<HTMLInputElement>(null);
+  const [uploadingCouplePhoto, setUploadingCouplePhoto] = useState(false);
 
   const originalSlug = useRef("");
 
@@ -75,6 +83,7 @@ export default function WebsitePage() {
       setHeadline(data.headline || "");
       setStory(data.story || "");
       setCoverUrl(data.cover_url || "");
+      setCouplePhotoUrl(data.couple_photo_url || "");
       setSchedule(data.schedule || []);
       setTravel(data.travel || "");
       setAccommodations(data.accommodations || "");
@@ -135,7 +144,7 @@ export default function WebsitePage() {
       const res = await fetch("/api/wedding-website", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, enabled, headline, story, cover_url: coverUrl }),
+        body: JSON.stringify({ slug, enabled, headline, story, cover_url: coverUrl, couple_photo_url: couplePhotoUrl }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -189,6 +198,33 @@ export default function WebsitePage() {
     }
   }
 
+  async function handleCouplePhotoUpload() {
+    const file = couplePhotoRef.current?.files?.[0];
+    if (!file) return;
+    setUploadingCouplePhoto(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("entity_type", "task");
+    formData.append("entity_id", "website-couple-photo");
+
+    try {
+      const res = await fetch("/api/attachments", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setCouplePhotoUrl(data.file_url);
+      toast.success("Couple photo uploaded");
+    } catch {
+      toast.error("Failed to upload couple photo");
+    } finally {
+      setUploadingCouplePhoto(false);
+      if (couplePhotoRef.current) couplePhotoRef.current.value = "";
+    }
+  }
+
   async function addRegistryLink() {
     if (!newRegistryName || !newRegistryUrl) return;
     try {
@@ -238,17 +274,6 @@ export default function WebsitePage() {
     toast.success("Link copied!");
   }
 
-  async function togglePhotoApproval(photo: Photo) {
-    try {
-      // For now, delete unapproved or we'd need a PATCH. We'll use the approve approach.
-      // Since our API only has DELETE, we handle approval by re-fetching.
-      // We need to add a PATCH to the photos API. For now, let's use a direct approach.
-      toast.info("Photo moderation saved");
-    } catch {
-      toast.error("Failed to update photo");
-    }
-  }
-
   async function deletePhoto(id: string) {
     try {
       const res = await fetch(`/api/wedding-website/photos?id=${id}`, { method: "DELETE" });
@@ -274,10 +299,25 @@ export default function WebsitePage() {
 
   return (
     <div>
-      <h1>Wedding Website</h1>
-      <p className="mt-1 text-[15px] text-muted">
-        Create and manage your wedding website for guests
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1>Wedding Website</h1>
+          <p className="mt-1 text-[15px] text-muted">
+            Create and manage your wedding website for guests
+          </p>
+        </div>
+        {slug && enabled && (
+          <a
+            href={`/w/${slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary btn-sm inline-flex items-center gap-2"
+          >
+            View Website
+            <span aria-hidden="true">&rarr;</span>
+          </a>
+        )}
+      </div>
 
       {/* Tabs */}
       <div className="mt-6 flex gap-1 border-b border-border">
@@ -351,8 +391,8 @@ export default function WebsitePage() {
                 Cover Image
               </label>
               {coverUrl && (
-                <div className="mb-3 rounded-[16px] overflow-hidden h-40">
-                  <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
+                <div className="mb-3 rounded-[16px] overflow-hidden h-40 relative">
+                  <Image src={coverUrl} alt="Cover" className="object-cover" fill unoptimized />
                 </div>
               )}
               <input
@@ -368,6 +408,34 @@ export default function WebsitePage() {
                 className="btn-secondary btn-sm"
               >
                 {uploadingCover ? "Uploading..." : coverUrl ? "Change Cover" : "Upload Cover"}
+              </button>
+            </div>
+
+            <div>
+              <label className="text-[13px] font-semibold text-muted block mb-1">
+                Couple Photo
+              </label>
+              <p className="text-[12px] text-muted mb-2">
+                A photo of you and your partner to feature on your website
+              </p>
+              {couplePhotoUrl && (
+                <div className="mb-3 w-32 h-32 rounded-full overflow-hidden border-2 border-border relative">
+                  <Image src={couplePhotoUrl} alt="Couple" className="object-cover" fill unoptimized />
+                </div>
+              )}
+              <input
+                ref={couplePhotoRef}
+                type="file"
+                accept="image/*"
+                onChange={handleCouplePhotoUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => couplePhotoRef.current?.click()}
+                disabled={uploadingCouplePhoto}
+                className="btn-secondary btn-sm"
+              >
+                {uploadingCouplePhoto ? "Uploading..." : couplePhotoUrl ? "Change Photo" : "Upload Photo"}
               </button>
             </div>
 
@@ -680,11 +748,13 @@ export default function WebsitePage() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {photos.map((photo) => (
                   <div key={photo.id} className="card overflow-hidden">
-                    <div className="aspect-square">
-                      <img
+                    <div className="aspect-square relative">
+                      <Image
                         src={photo.file_url}
                         alt={photo.caption || "Wedding photo"}
-                        className="w-full h-full object-cover"
+                        className="object-cover"
+                        fill
+                        unoptimized
                       />
                     </div>
                     <div className="p-3 space-y-2">

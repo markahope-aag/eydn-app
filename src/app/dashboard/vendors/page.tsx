@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { VENDOR_CATEGORIES, VENDOR_STATUSES } from "@/lib/vendors/categories";
 import { EmailTemplate } from "./EmailTemplate";
@@ -165,9 +166,9 @@ export default function VendorsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <a href="/dashboard/vendors/directory" className="btn-secondary">
+          <Link href="/dashboard/vendors/directory" className="btn-secondary">
             Browse Directory
-          </a>
+          </Link>
           <button
             onClick={() => setShowAdd(!showAdd)}
             className="btn-primary"
@@ -180,7 +181,7 @@ export default function VendorsPage() {
       {showAdd && (
         <form onSubmit={addVendor} className="mt-4 card p-4 space-y-3">
           <p className="text-[13px] text-muted">
-            Add a vendor you've found. We'll also save their info to help other couples.
+            Add a vendor you&apos;ve found. We&apos;ll also save their info to help other couples.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <input

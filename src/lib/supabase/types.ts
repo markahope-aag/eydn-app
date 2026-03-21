@@ -1,6 +1,77 @@
 export type Database = {
   public: {
     Tables: {
+      mood_board_items: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          image_url: string;
+          caption: string | null;
+          category: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          wedding_id: string;
+          image_url: string;
+          caption?: string | null;
+          category?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          caption?: string | null;
+          category?: string;
+          sort_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mood_board_items_wedding_id_fkey";
+            columns: ["wedding_id"];
+            isOneToOne: false;
+            referencedRelation: "weddings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      wedding_collaborators: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          email: string;
+          role: "partner" | "coordinator";
+          invite_status: "pending" | "accepted";
+          invited_by: string;
+          user_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          wedding_id: string;
+          email: string;
+          role: "partner" | "coordinator";
+          invite_status?: "pending" | "accepted";
+          invited_by: string;
+          user_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          invite_status?: "pending" | "accepted";
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "wedding_collaborators_wedding_id_fkey";
+            columns: ["wedding_id"];
+            isOneToOne: false;
+            referencedRelation: "weddings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       vendor_accounts: {
         Row: {
           id: string;
@@ -237,6 +308,7 @@ export type Database = {
           website_travel_info: string | null;
           website_accommodations: string | null;
           website_faq: Record<string, unknown>[];
+          website_couple_photo_url: string | null;
           created_at: string;
           updated_at: string;
         };

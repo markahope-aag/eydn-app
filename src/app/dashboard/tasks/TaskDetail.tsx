@@ -4,6 +4,34 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { EdynMessage } from "@/components/EdynMessage";
 import { FileUpload } from "@/components/FileUpload";
+import { VENDOR_EMAIL_TEMPLATES } from "@/lib/vendors/email-templates";
+
+// Map task categories to email template vendor categories
+const TASK_TO_EMAIL_CATEGORY: Record<string, string> = {
+  "Photography": "Photographer",
+  "Catering": "Caterer",
+  "Music": "DJ or Band",
+  "Entertainment": "DJ or Band",
+  "Flowers": "Florist",
+  "Florals": "Florist",
+  "Video": "Videographer",
+  "Videography": "Videographer",
+  "Vendors": "Follow-Up",
+};
+
+function getEmailTemplate(taskCategory: string | null, taskTitle: string) {
+  if (!taskCategory) return null;
+  // Direct category match
+  const mapped = TASK_TO_EMAIL_CATEGORY[taskCategory];
+  if (mapped) return VENDOR_EMAIL_TEMPLATES.find((t) => t.category === mapped) || null;
+  // Title-based match for "Book X" tasks
+  const titleLower = taskTitle.toLowerCase();
+  for (const tmpl of VENDOR_EMAIL_TEMPLATES) {
+    if (tmpl.category === "Follow-Up") continue;
+    if (titleLower.includes(tmpl.category.toLowerCase())) return tmpl;
+  }
+  return null;
+}
 
 type Task = {
   id: string;
@@ -79,6 +107,9 @@ export function TaskDetail({
   const [relatedTasks, setRelatedTasks] = useState<RelatedTask[]>([]);
   const [newResourceLabel, setNewResourceLabel] = useState("");
   const [newResourceUrl, setNewResourceUrl] = useState("");
+  const [showEmailTemplate, setShowEmailTemplate] = useState(false);
+  const emailTemplate = getEmailTemplate(task.category, task.title);
+  const followUpTemplate = VENDOR_EMAIL_TEMPLATES.find((t) => t.category === "Follow-Up");
   const [relatedTaskId, setRelatedTaskId] = useState("");
 
   const isOverdue =
@@ -89,6 +120,7 @@ export function TaskDetail({
     fetchResources();
     fetchAttachments();
     fetchRelatedTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [task.id]);
 
   async function fetchResources() {
@@ -286,6 +318,84 @@ export function TaskDetail({
           {task.edyn_message && (
             <div className="mt-4">
               <EdynMessage message={task.edyn_message} />
+            </div>
+          )}
+
+          {/* Email template callout */}
+          {emailTemplate && !showEmailTemplate && (
+            <div className="mt-4 bg-lavender/40 border border-violet/20 rounded-[12px] px-4 py-3 flex items-center justify-between">
+              <div>
+                <p className="text-[13px] font-semibold text-violet">Vendor Email Template</p>
+                <p className="text-[12px] text-muted">
+                  Use our pre-written {emailTemplate.category.toLowerCase()} outreach email to save time
+                </p>
+              </div>
+              <button
+                onClick={() => setShowEmailTemplate(true)}
+                className="btn-secondary btn-sm flex-shrink-0"
+              >
+                View Template
+              </button>
+            </div>
+          )}
+
+          {showEmailTemplate && emailTemplate && (
+            <div className="mt-4 border border-border rounded-[12px] overflow-hidden">
+              <div className="bg-lavender/30 px-4 py-2 flex items-center justify-between">
+                <p className="text-[13px] font-semibold text-violet">{emailTemplate.category} Email Template</p>
+                <button onClick={() => setShowEmailTemplate(false)} className="text-[12px] text-muted hover:text-plum">
+                  Hide
+                </button>
+              </div>
+              <div className="px-4 py-3 space-y-3">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold text-muted uppercase">Subject</label>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(emailTemplate.subject); toast.success("Subject copied!"); }}
+                      className="text-[11px] text-violet hover:text-soft-violet"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <p className="mt-0.5 text-[14px] text-plum">{emailTemplate.subject}</p>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold text-muted uppercase">Body</label>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(emailTemplate.body); toast.success("Body copied!"); }}
+                      className="text-[11px] text-violet hover:text-soft-violet"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <pre className="mt-0.5 whitespace-pre-wrap text-[13px] text-muted bg-whisper rounded-[10px] p-3 font-sans leading-relaxed">
+                    {emailTemplate.body}
+                  </pre>
+                </div>
+                {followUpTemplate && (
+                  <details className="group">
+                    <summary className="text-[13px] text-violet font-semibold cursor-pointer hover:text-soft-violet">
+                      Follow-up template
+                    </summary>
+                    <div className="mt-2 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[14px] text-plum">{followUpTemplate.subject}</p>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(followUpTemplate.subject + "\n\n" + followUpTemplate.body); toast.success("Follow-up copied!"); }}
+                          className="text-[11px] text-violet hover:text-soft-violet"
+                        >
+                          Copy all
+                        </button>
+                      </div>
+                      <pre className="whitespace-pre-wrap text-[13px] text-muted bg-whisper rounded-[10px] p-3 font-sans leading-relaxed">
+                        {followUpTemplate.body}
+                      </pre>
+                    </div>
+                  </details>
+                )}
+              </div>
             </div>
           )}
 

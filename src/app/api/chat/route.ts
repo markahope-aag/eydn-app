@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { requirePremium } from "@/lib/subscription";
 import { getClaudeClient } from "@/lib/ai/claude-client";
 import { buildEdynSystemPrompt } from "@/lib/ai/edyn-system-prompt";
 import type { Database } from "@/lib/supabase/types";
@@ -22,6 +23,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const paywall = await requirePremium();
+  if (paywall) return paywall;
+
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
   const { wedding: weddingData, supabase } = result;

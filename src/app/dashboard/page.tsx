@@ -54,9 +54,10 @@ export default async function DashboardPage() {
         .limit(5),
     ]);
 
+  const now = new Date();
   const daysUntilWedding = wedding.date
     ? Math.ceil(
-        (new Date(wedding.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        (new Date(wedding.date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
       )
     : null;
 
@@ -94,7 +95,15 @@ export default async function DashboardPage() {
             })}
           </p>
           {daysUntilWedding !== null && daysUntilWedding > 0 && (
-            <div className="mt-3 inline-flex items-baseline gap-2 bg-brand-gradient bg-clip-text text-transparent">
+            <div
+              className="mt-3 inline-flex items-baseline gap-2"
+              style={{
+                background: "linear-gradient(135deg, var(--violet), var(--blush-pink))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
               <span className="text-[48px] font-semibold leading-none" style={{ letterSpacing: "-1px" }}>
                 {daysUntilWedding}
               </span>

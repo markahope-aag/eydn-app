@@ -1,25 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
+import { getWeddingForUser } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const supabase = createSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("weddings")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 404 });
-  }
-
-  return NextResponse.json(data);
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  return NextResponse.json(result.wedding);
 }
 
 export async function POST(request: Request) {

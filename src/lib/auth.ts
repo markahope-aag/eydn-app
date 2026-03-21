@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { Database } from "@/lib/supabase/types";
@@ -10,6 +10,7 @@ type AuthSuccess = {
   wedding: Wedding;
   supabase: SupabaseClient<Database>;
   userId: string;
+  role: "owner" | "partner" | "coordinator";
 };
 
 type AuthError = {
@@ -23,15 +24,83 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
   }
 
   const supabase = createSupabaseAdmin();
-  const { data, error } = await supabase
+
+  // 1. Try direct ownership
+  const { data: owned } = await supabase
     .from("weddings")
     .select()
     .eq("user_id", userId)
     .single();
 
-  if (error || !data) {
-    return { error: NextResponse.json({ error: "Wedding not found" }, { status: 404 }) };
+  if (owned) {
+    return { wedding: owned as Wedding, supabase, userId, role: "owner" };
   }
 
-  return { wedding: data as Wedding, supabase, userId };
+  // 2. Try accepted collaborator lookup
+  const { data: collab } = await supabase
+    .from("wedding_collaborators")
+    .select("wedding_id, role")
+    .eq("user_id", userId)
+    .eq("invite_status", "accepted")
+    .single();
+
+  if (collab) {
+    const { data: wedding } = await supabase
+      .from("weddings")
+      .select()
+      .eq("id", collab.wedding_id)
+      .single();
+
+    if (wedding) {
+      return {
+        wedding: wedding as Wedding,
+        supabase,
+        userId,
+        role: collab.role as "partner" | "coordinator",
+      };
+    }
+  }
+
+  // 3. Check for pending invite by email (auto-accept on first sign-in)
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    const email = user.emailAddresses[0]?.emailAddress;
+
+    if (email) {
+      const { data: pending } = await supabase
+        .from("wedding_collaborators")
+        .select("id, wedding_id, role")
+        .eq("email", email.toLowerCase())
+        .eq("invite_status", "pending")
+        .single();
+
+      if (pending) {
+        // Auto-accept: fill in user_id and mark accepted
+        await supabase
+          .from("wedding_collaborators")
+          .update({ user_id: userId, invite_status: "accepted" })
+          .eq("id", pending.id);
+
+        const { data: wedding } = await supabase
+          .from("weddings")
+          .select()
+          .eq("id", pending.wedding_id)
+          .single();
+
+        if (wedding) {
+          return {
+            wedding: wedding as Wedding,
+            supabase,
+            userId,
+            role: pending.role as "partner" | "coordinator",
+          };
+        }
+      }
+    }
+  } catch {
+    // Clerk lookup failed — fall through to 404
+  }
+
+  return { error: NextResponse.json({ error: "Wedding not found" }, { status: 404 }) };
 }

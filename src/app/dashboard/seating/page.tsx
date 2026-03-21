@@ -204,6 +204,23 @@ export default function SeatingPage() {
     }
   }
 
+  const [editingTable, setEditingTable] = useState<string | null>(null);
+
+  async function updateTable(id: string, updates: Partial<Table>) {
+    setTables((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
+    );
+    try {
+      await fetch(`/api/seating/tables/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+    } catch {
+      toast.error("Failed to update table");
+    }
+  }
+
   const assignedGuestIds = new Set(assignments.map((a) => a.guest_id));
   const unassignedGuests = guests.filter((g) => !assignedGuestIds.has(g.id) && g.rsvp_status !== "declined");
 
@@ -272,10 +289,17 @@ export default function SeatingPage() {
                       if (guestId && !isFull) assignGuest(guestId, table.id);
                     }}
                   >
-                    <div className={`w-36 border-2 bg-white shadow-sm p-3 ${table.shape === "round" ? "rounded-full" : "rounded-[16px]"} ${isFull ? "border-violet" : "border-border"}`}>
+                    <div className={`${table.shape === "round" ? "w-36 rounded-full" : "w-44 rounded-[16px]"} border-2 bg-white shadow-sm p-3 ${isFull ? "border-violet" : "border-border"}`}>
                       <div className="text-center">
-                        <p className="text-[12px] font-semibold text-plum">{table.name || `Table ${table.table_number}`}</p>
-                        <p className="text-[10px] text-muted">{tableGuests.length}/{table.capacity}</p>
+                        <p
+                          className="text-[12px] font-semibold text-plum cursor-pointer hover:text-violet"
+                          onClick={(e) => { e.stopPropagation(); setEditingTable(editingTable === table.id ? null : table.id); }}
+                        >
+                          {table.name || `Table ${table.table_number}`}
+                        </p>
+                        <p className="text-[10px] text-muted">
+                          {tableGuests.length}/{table.capacity} &middot; {table.shape}
+                        </p>
                       </div>
                       <div className="mt-1 space-y-0.5">
                         {tableGuests.map((g) => (
@@ -286,6 +310,68 @@ export default function SeatingPage() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Edit popover */}
+                    {editingTable === table.id && (
+                      <div
+                        className="absolute top-full left-0 mt-1 z-10 bg-white border border-border rounded-[12px] shadow-lg p-3 space-y-3 w-52"
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                      >
+                        <div>
+                          <label className="text-[11px] font-semibold text-muted">Table Name</label>
+                          <input
+                            type="text"
+                            value={table.name || ""}
+                            onChange={(e) => updateTable(table.id, { name: e.target.value })}
+                            className="mt-0.5 w-full rounded-[8px] border-border px-2 py-1 text-[13px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-muted">Shape</label>
+                          <div className="flex gap-1 mt-0.5">
+                            <button
+                              onClick={() => updateTable(table.id, { shape: "round" })}
+                              className={`flex-1 px-2 py-1 text-[12px] font-semibold rounded-[8px] transition ${table.shape === "round" ? "bg-violet text-white" : "bg-lavender text-violet"}`}
+                            >
+                              Round
+                            </button>
+                            <button
+                              onClick={() => updateTable(table.id, { shape: "rectangle" })}
+                              className={`flex-1 px-2 py-1 text-[12px] font-semibold rounded-[8px] transition ${table.shape === "rectangle" ? "bg-violet text-white" : "bg-lavender text-violet"}`}
+                            >
+                              Rectangle
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-muted">Seats</label>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <button
+                              onClick={() => updateTable(table.id, { capacity: Math.max(1, table.capacity - 1) })}
+                              disabled={table.capacity <= 1}
+                              className="w-7 h-7 rounded-full bg-lavender text-violet font-semibold text-[14px] flex items-center justify-center hover:bg-violet hover:text-white transition disabled:opacity-40"
+                            >
+                              -
+                            </button>
+                            <span className="text-[15px] font-semibold text-plum w-6 text-center">{table.capacity}</span>
+                            <button
+                              onClick={() => updateTable(table.id, { capacity: table.capacity + 1 })}
+                              className="w-7 h-7 rounded-full bg-lavender text-violet font-semibold text-[14px] flex items-center justify-center hover:bg-violet hover:text-white transition"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setEditingTable(null)}
+                          className="w-full text-[12px] text-muted hover:text-plum transition text-center"
+                        >
+                          Done
+                        </button>
+                      </div>
+                    )}
+
                     <button
                       onClick={(e) => { e.stopPropagation(); deleteTable(table.id); }}
                       className="absolute -top-1 -right-1 w-4 h-4 bg-error text-white rounded-full text-[10px] flex items-center justify-center hover:opacity-80"

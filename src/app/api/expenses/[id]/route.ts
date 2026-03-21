@@ -1,33 +1,31 @@
-import { auth } from "@clerk/nextjs/server";
-import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { pickFields } from "@/lib/validation";
+
+const ALLOWED_FIELDS = [
+  "description", "estimated", "amount_paid", "final_cost",
+  "category", "paid", "vendor_id",
+];
 
 export async function PATCH(
   request: Request,
   ctx: RouteContext<"/api/expenses/[id]">
 ) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const supabase = createSupabaseAdmin();
-  const { data: wedding } = await supabase
-    .from("weddings")
-    .select("id")
-    .eq("user_id", userId)
-    .single();
-
-  if (!wedding) {
-    return NextResponse.json({ error: "Wedding not found" }, { status: 404 });
-  }
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  const { wedding, supabase } = result;
 
   const { id } = await ctx.params;
   const body = await request.json();
+  const updates = pickFields(body, ALLOWED_FIELDS);
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+  }
 
   const { data, error } = await supabase
     .from("expenses")
-    .update(body)
+    .update(updates)
     .eq("id", id)
     .eq("wedding_id", wedding.id)
     .select()
@@ -44,21 +42,9 @@ export async function DELETE(
   _request: Request,
   ctx: RouteContext<"/api/expenses/[id]">
 ) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const supabase = createSupabaseAdmin();
-  const { data: wedding } = await supabase
-    .from("weddings")
-    .select("id")
-    .eq("user_id", userId)
-    .single();
-
-  if (!wedding) {
-    return NextResponse.json({ error: "Wedding not found" }, { status: 404 });
-  }
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  const { wedding, supabase } = result;
 
   const { id } = await ctx.params;
 

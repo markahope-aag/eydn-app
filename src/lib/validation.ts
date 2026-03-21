@@ -1,0 +1,72 @@
+/**
+ * Shared input validation utilities for API routes.
+ */
+
+/** Pick only allowed keys from an object, dropping anything unexpected. */
+export function pickFields<T extends Record<string, unknown>>(
+  body: T,
+  allowed: string[]
+): Partial<T> {
+  const result: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (key in body) {
+      result[key] = body[key];
+    }
+  }
+  return result as Partial<T>;
+}
+
+/** Validate that a value is one of an allowed set. */
+export function isOneOf<T extends string>(value: unknown, allowed: readonly T[]): value is T {
+  return typeof value === "string" && (allowed as readonly string[]).includes(value);
+}
+
+/** Validate a string field: non-empty, within max length. */
+export function isValidString(value: unknown, maxLength = 500): value is string {
+  return typeof value === "string" && value.length <= maxLength;
+}
+
+/** Validate an optional string (null/undefined ok, string must be within max length). */
+export function isValidOptionalString(value: unknown, maxLength = 2000): boolean {
+  return value === null || value === undefined || (typeof value === "string" && value.length <= maxLength);
+}
+
+/** Basic email format check. */
+export function isValidEmail(value: unknown): boolean {
+  return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 320;
+}
+
+/** Basic URL format check. */
+export function isValidUrl(value: unknown): boolean {
+  if (typeof value !== "string" || value.length > 2048) return false;
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Validate a number is finite and optionally within a range. */
+export function isValidNumber(value: unknown, min?: number, max?: number): value is number {
+  if (typeof value !== "number" || !isFinite(value)) return false;
+  if (min !== undefined && value < min) return false;
+  if (max !== undefined && value > max) return false;
+  return true;
+}
+
+/** Validate a date string (YYYY-MM-DD). */
+export function isValidDate(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !isNaN(Date.parse(value));
+}
+
+/** Validate a boolean. */
+export function isValidBoolean(value: unknown): value is boolean {
+  return typeof value === "boolean";
+}
+
+/** Return a 400 error response for validation failures. */
+export function validationError(message: string) {
+  return { error: message };
+}

@@ -51,6 +51,17 @@ export default function GuestsPage() {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [newRole, setNewRole] = useState("friend");
+  const [newPhone, setNewPhone] = useState("");
+  const [newMeal, setNewMeal] = useState("");
+  const [newPlusOne, setNewPlusOne] = useState("");
+  const [newGroup, setNewGroup] = useState("");
+  const [newAddr1, setNewAddr1] = useState("");
+  const [newAddr2, setNewAddr2] = useState("");
+  const [newCity, setNewCity] = useState("");
+  const [newState, setNewState] = useState("");
+  const [newZip, setNewZip] = useState("");
+  const [showAddFields, setShowAddFields] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState("");
@@ -75,28 +86,54 @@ export default function GuestsPage() {
       name: name.trim(),
       email: email.trim() || null,
       rsvp_status: "not_invited",
-      meal_preference: null,
-      role: "friend",
-      plus_one: false,
-      plus_one_name: null,
-      address_line1: null,
-      address_line2: null,
-      city: null,
-      state: null,
-      zip: null,
-      phone: null,
-      group_name: null,
+      meal_preference: newMeal.trim() || null,
+      role: newRole || "friend",
+      plus_one: !!newPlusOne.trim(),
+      plus_one_name: newPlusOne.trim() || null,
+      address_line1: newAddr1.trim() || null,
+      address_line2: newAddr2.trim() || null,
+      city: newCity.trim() || null,
+      state: newState.trim() || null,
+      zip: newZip.trim() || null,
+      phone: newPhone.trim() || null,
+      group_name: newGroup.trim() || null,
     };
 
     setGuests((prev) => [...prev, newGuest]);
     setName("");
     setEmail("");
+    setNewRole("friend");
+    setNewPhone("");
+    setNewMeal("");
+    setNewPlusOne("");
+    setNewGroup("");
+    setNewAddr1("");
+    setNewAddr2("");
+    setNewCity("");
+    setNewState("");
+    setNewZip("");
+    setShowAddFields(false);
 
     try {
       const res = await fetch("/api/guests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newGuest.name, email: newGuest.email, rsvp_status: "not_invited", role: "friend" }),
+        body: JSON.stringify({
+          name: newGuest.name,
+          email: newGuest.email,
+          rsvp_status: "not_invited",
+          role: newGuest.role,
+          meal_preference: newGuest.meal_preference,
+          plus_one: newGuest.plus_one,
+          plus_one_name: newGuest.plus_one_name,
+          phone: newGuest.phone,
+          group_name: newGuest.group_name,
+          address_line1: newGuest.address_line1,
+          address_line2: newGuest.address_line2,
+          city: newGuest.city,
+          state: newGuest.state,
+          zip: newGuest.zip,
+        }),
       });
       if (!res.ok) throw new Error();
       const saved = await res.json();
@@ -167,6 +204,142 @@ export default function GuestsPage() {
     if (fileInput.current) fileInput.current.value = "";
   }
 
+  const EXPORT_HEADERS = ["Name", "Email", "RSVP Status", "Role", "Meal Preference", "Plus One Name", "Phone", "Group", "Address Line 1", "Address Line 2", "City", "State", "ZIP"];
+
+  function getExportRows() {
+    return guests.map((g) => [
+      g.name,
+      g.email || "",
+      STATUS_LABELS[g.rsvp_status] || g.rsvp_status,
+      g.role ? (ROLE_LABELS[g.role] || g.role) : "",
+      g.meal_preference || "",
+      g.plus_one_name || "",
+      g.phone || "",
+      g.group_name || "",
+      g.address_line1 || "",
+      g.address_line2 || "",
+      g.city || "",
+      g.state || "",
+      g.zip || "",
+    ]);
+  }
+
+  function exportCSV() {
+    if (guests.length === 0) return;
+    const csv = [EXPORT_HEADERS, ...getExportRows()]
+      .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "guest-list.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Guest list exported as CSV");
+  }
+
+  async function exportXLSX() {
+    if (guests.length === 0) return;
+    const XLSX = (await import("xlsx")).default;
+    const ws = XLSX.utils.aoa_to_sheet([EXPORT_HEADERS, ...getExportRows()]);
+    // Auto-size columns
+    ws["!cols"] = EXPORT_HEADERS.map((h, i) => ({
+      wch: Math.max(h.length, ...getExportRows().map((r) => String(r[i]).length)) + 2,
+    }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Guest List");
+    XLSX.writeFile(wb, "guest-list.xlsx");
+    toast.success("Guest list exported as Excel");
+  }
+
+  async function exportPDF() {
+    if (guests.length === 0) return;
+    const { pdf, Document, Page: PdfPage, Text, View, StyleSheet } = await import("@react-pdf/renderer");
+
+    const brand = { violet: "#8B3FCC", plum: "#1A1030", muted: "#5A4070", lavender: "#F0E0FF", border: "#E8D0F5", blush: "#F0609A" };
+
+    const s = StyleSheet.create({
+      page: { fontFamily: "Helvetica", fontSize: 9, color: brand.plum, padding: 36 },
+      header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+      title: { fontSize: 18, fontFamily: "Helvetica-Bold", color: brand.plum },
+      subtitle: { fontSize: 9, color: brand.muted },
+      statsRow: { flexDirection: "row", gap: 16, marginBottom: 16 },
+      stat: { fontSize: 9, color: brand.muted },
+      statBold: { fontFamily: "Helvetica-Bold", color: brand.plum },
+      table: { borderWidth: 0.5, borderColor: brand.border, borderRadius: 4, overflow: "hidden" },
+      headerRow: { flexDirection: "row", backgroundColor: brand.lavender, paddingVertical: 5, paddingHorizontal: 6 },
+      headerCell: { fontSize: 7, fontFamily: "Helvetica-Bold", color: brand.muted, textTransform: "uppercase" as const, letterSpacing: 0.5 },
+      row: { flexDirection: "row", paddingVertical: 4, paddingHorizontal: 6, borderBottomWidth: 0.5, borderBottomColor: brand.border },
+      rowAlt: { flexDirection: "row", paddingVertical: 4, paddingHorizontal: 6, borderBottomWidth: 0.5, borderBottomColor: brand.border, backgroundColor: "#FDFAFF" },
+      cell: { fontSize: 8, color: brand.plum },
+      cellBold: { fontSize: 8, fontFamily: "Helvetica-Bold", color: brand.plum },
+      footer: { position: "absolute", bottom: 24, left: 36, right: 36, flexDirection: "row", justifyContent: "space-between" },
+      footerText: { fontSize: 7, color: brand.muted },
+      footerBrand: { fontSize: 7, fontFamily: "Helvetica-Bold", color: brand.violet },
+    });
+
+    // Columns: Name, Email, RSVP, Role, Meal, Phone, Group
+    const cols = [
+      { label: "Name", width: 80 },
+      { label: "Email", width: 100 },
+      { label: "RSVP", width: 55 },
+      { label: "Role", width: 55 },
+      { label: "Meal", width: 60 },
+      { label: "Phone", width: 70 },
+      { label: "Group", width: 60 },
+    ];
+
+    const PdfDoc = (
+      <Document>
+        <PdfPage size="A4" orientation="landscape" style={s.page}>
+          <View style={s.header}>
+            <Text style={s.title}>Guest List</Text>
+            <Text style={s.subtitle}>eydn wedding planner</Text>
+          </View>
+          <View style={s.statsRow}>
+            <Text style={s.stat}>Total: <Text style={s.statBold}>{guests.length}</Text></Text>
+            <Text style={s.stat}>Accepted: <Text style={s.statBold}>{guests.filter((g) => g.rsvp_status === "accepted").length}</Text></Text>
+            <Text style={s.stat}>Declined: <Text style={s.statBold}>{guests.filter((g) => g.rsvp_status === "declined").length}</Text></Text>
+          </View>
+          <View style={s.table}>
+            <View style={s.headerRow}>
+              {cols.map((c) => (
+                <Text key={c.label} style={[s.headerCell, { width: c.width }]}>{c.label}</Text>
+              ))}
+            </View>
+            {guests.map((g, i) => (
+              <View key={g.id} style={i % 2 === 1 ? s.rowAlt : s.row}>
+                <Text style={[s.cellBold, { width: cols[0].width }]}>{g.name}</Text>
+                <Text style={[s.cell, { width: cols[1].width }]}>{g.email || "\u2014"}</Text>
+                <Text style={[s.cell, { width: cols[2].width }]}>{STATUS_LABELS[g.rsvp_status]}</Text>
+                <Text style={[s.cell, { width: cols[3].width }]}>{g.role ? (ROLE_LABELS[g.role] || g.role) : "\u2014"}</Text>
+                <Text style={[s.cell, { width: cols[4].width }]}>{g.meal_preference || "\u2014"}</Text>
+                <Text style={[s.cell, { width: cols[5].width }]}>{g.phone || "\u2014"}</Text>
+                <Text style={[s.cell, { width: cols[6].width }]}>{g.group_name || "\u2014"}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={s.footer} fixed>
+            <Text style={s.footerText}>{guests.length} guests</Text>
+            <Text style={s.footerBrand}>eydn.app</Text>
+          </View>
+        </PdfPage>
+      </Document>
+    );
+
+    const blob = await pdf(PdfDoc).toBlob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "guest-list.pdf";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Guest list exported as PDF");
+  }
+
+  const [showExportMenu, setShowExportMenu] = useState(false);
+
   const filtered = guests.filter((g) => {
     if (filterRole && g.role !== filterRole) return false;
     if (filterStatus && g.rsvp_status !== filterStatus) return false;
@@ -187,6 +360,41 @@ export default function GuestsPage() {
         <h1>Guest List</h1>
         <div className="flex gap-2">
           <input ref={fileInput} type="file" accept=".csv" onChange={importCSV} className="hidden" />
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              disabled={guests.length === 0}
+              className="btn-secondary btn-sm disabled:opacity-50 inline-flex items-center gap-1"
+            >
+              Export
+              <span className="text-[10px]">&#9662;</span>
+            </button>
+            {showExportMenu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />
+                <div className="absolute right-0 mt-1 z-20 bg-white border border-border rounded-[10px] shadow-lg py-1 w-40">
+                  <button
+                    onClick={() => { exportCSV(); setShowExportMenu(false); }}
+                    className="w-full text-left px-4 py-2 text-[14px] text-plum hover:bg-lavender transition"
+                  >
+                    Export as CSV
+                  </button>
+                  <button
+                    onClick={() => { exportXLSX(); setShowExportMenu(false); }}
+                    className="w-full text-left px-4 py-2 text-[14px] text-plum hover:bg-lavender transition"
+                  >
+                    Export as Excel
+                  </button>
+                  <button
+                    onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                    className="w-full text-left px-4 py-2 text-[14px] text-plum hover:bg-lavender transition"
+                  >
+                    Export as PDF
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <button onClick={() => fileInput.current?.click()} className="btn-ghost btn-sm">
             Import CSV
           </button>
@@ -214,19 +422,112 @@ export default function GuestsPage() {
       </div>
 
       {/* Add guest */}
-      <form onSubmit={addGuest} className="mt-6 flex gap-3">
-        <input type="text" placeholder="Guest name" value={name} onChange={(e) => setName(e.target.value)} className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1" required />
-        <input type="email" placeholder="Email (optional)" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1" />
-        <button type="submit" className="btn-primary">Add Guest</button>
+      <form onSubmit={addGuest} className="mt-6 card overflow-hidden">
+        <div className="flex gap-3 px-4 py-3">
+          <input type="text" placeholder="Guest name" value={name} onChange={(e) => setName(e.target.value)} className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1" required />
+          <input type="email" placeholder="Email (optional)" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1" />
+          <button
+            type="button"
+            onClick={() => setShowAddFields(!showAddFields)}
+            className={`text-[12px] font-semibold px-3 py-1 rounded-full transition ${
+              showAddFields ? "bg-violet text-white" : "bg-lavender text-violet hover:bg-violet hover:text-white"
+            }`}
+          >
+            {showAddFields ? "Less" : "More Details"}
+          </button>
+          <button type="submit" className="btn-primary">Add Guest</button>
+        </div>
+
+        {showAddFields && (
+          <div className="border-t border-border px-4 py-4 bg-lavender/20">
+            <p className="text-[12px] text-violet font-semibold mb-3">
+              Optional &mdash; you can also add these later
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div>
+                <label className="text-[12px] font-semibold text-muted">Role</label>
+                <select
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value)}
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+                >
+                  {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-[12px] font-semibold text-muted">Meal Preference</label>
+                <input
+                  type="text"
+                  value={newMeal}
+                  onChange={(e) => setNewMeal(e.target.value)}
+                  placeholder="e.g. Vegetarian, Gluten-free"
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+                />
+              </div>
+              <div>
+                <label className="text-[12px] font-semibold text-muted">Plus One Name</label>
+                <input
+                  type="text"
+                  value={newPlusOne}
+                  onChange={(e) => setNewPlusOne(e.target.value)}
+                  placeholder="Their guest's name"
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+                />
+              </div>
+              <div>
+                <label className="text-[12px] font-semibold text-muted">Phone</label>
+                <input
+                  type="tel"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                  placeholder="(555) 123-4567"
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+                />
+              </div>
+              <div>
+                <label className="text-[12px] font-semibold text-muted">Group</label>
+                <input
+                  type="text"
+                  value={newGroup}
+                  onChange={(e) => setNewGroup(e.target.value)}
+                  placeholder="e.g. Bride's family, College friends"
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+                />
+              </div>
+              <div className="sm:col-span-2 lg:col-span-3">
+                <label className="text-[12px] font-semibold text-muted">Mailing Address</label>
+                <div className="mt-1 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <input type="text" value={newAddr1} onChange={(e) => setNewAddr1(e.target.value)} placeholder="Street address" className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
+                  <input type="text" value={newAddr2} onChange={(e) => setNewAddr2(e.target.value)} placeholder="Apt, suite, etc." className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
+                  <input type="text" value={newCity} onChange={(e) => setNewCity(e.target.value)} placeholder="City" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" />
+                  <input type="text" value={newState} onChange={(e) => setNewState(e.target.value)} placeholder="State" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={2} />
+                  <input type="text" value={newZip} onChange={(e) => setNewZip(e.target.value)} placeholder="ZIP" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={10} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </form>
 
       {/* Guest list */}
       {filtered.length > 0 && (
         <div className="mt-6 space-y-2">
-          {filtered.map((guest) => (
-            <div key={guest.id} className="card overflow-hidden">
+          {filtered.map((guest) => {
+            const isExpanded = expanded === guest.id;
+            const filledCount = [guest.meal_preference, guest.phone, guest.plus_one_name, guest.group_name, guest.address_line1].filter(Boolean).length;
+            const totalOptional = 5;
+            const hasAllDetails = filledCount === totalOptional;
+
+            return (
+            <div
+              key={guest.id}
+              className={`card overflow-hidden transition-all ${isExpanded ? "ring-2 ring-violet/20" : ""}`}
+            >
               {/* Main row */}
-              <div className="flex items-center gap-3 px-4 py-3">
+              <div
+                className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-lavender/20 transition"
+                onClick={() => setExpanded(isExpanded ? null : guest.id)}
+              >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[15px] font-semibold text-plum">{guest.name}</span>
@@ -234,12 +535,26 @@ export default function GuestsPage() {
                       <span className="badge">{ROLE_LABELS[guest.role] || guest.role}</span>
                     )}
                   </div>
-                  {guest.email && <p className="text-[12px] text-muted truncate">{guest.email}</p>}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {guest.email && <span className="text-[12px] text-muted truncate">{guest.email}</span>}
+                    {!isExpanded && (
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                        hasAllDetails
+                          ? "bg-[#D6F5E3] text-[#2E7D4F]"
+                          : filledCount > 0
+                          ? "bg-[#FFF3CC] text-[#8A5200]"
+                          : "bg-lavender text-violet"
+                      }`}>
+                        {hasAllDetails ? "Complete" : `${filledCount}/${totalOptional} details`}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <select
                   value={guest.rsvp_status}
-                  onChange={(e) => updateGuest(guest.id, "rsvp_status", e.target.value)}
+                  onChange={(e) => { e.stopPropagation(); updateGuest(guest.id, "rsvp_status", e.target.value); }}
+                  onClick={(e) => e.stopPropagation()}
                   className={`rounded-full px-2 py-0.5 text-[12px] font-semibold border-0 ${STATUS_BADGE[guest.rsvp_status] || ""}`}
                 >
                   {Object.entries(STATUS_LABELS).map(([v, l]) => (
@@ -248,21 +563,32 @@ export default function GuestsPage() {
                 </select>
 
                 <button
-                  onClick={() => setExpanded(expanded === guest.id ? null : guest.id)}
-                  className="text-[12px] text-muted hover:text-plum"
+                  onClick={(e) => { e.stopPropagation(); setExpanded(isExpanded ? null : guest.id); }}
+                  className={`text-[12px] font-semibold px-3 py-1 rounded-full transition ${
+                    isExpanded
+                      ? "bg-violet text-white"
+                      : "bg-lavender text-violet hover:bg-violet hover:text-white"
+                  }`}
                 >
-                  {expanded === guest.id ? "Close" : "Details"}
+                  {isExpanded ? "Close" : "Edit Details"}
                 </button>
-                <button onClick={() => removeGuest(guest.id)} className="text-[12px] text-error hover:opacity-80">
+                <button
+                  onClick={(e) => { e.stopPropagation(); removeGuest(guest.id); }}
+                  className="text-[12px] text-error hover:opacity-80"
+                >
                   Remove
                 </button>
               </div>
 
               {/* Expanded details */}
-              {expanded === guest.id && (
-                <div className="border-t border-border px-4 py-3 bg-lavender/30 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {isExpanded && (
+                <div className="border-t border-border px-4 py-4 bg-lavender/20">
+                  <p className="text-[12px] text-violet font-semibold mb-3">
+                    Guest Details &mdash; fill in as much as you&apos;d like
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <div>
-                    <label className="text-[12px] text-muted">Role</label>
+                    <label className="text-[12px] font-semibold text-muted">Role</label>
                     <select
                       value={guest.role || "friend"}
                       onChange={(e) => updateGuest(guest.id, "role", e.target.value)}
@@ -272,27 +598,27 @@ export default function GuestsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-[12px] text-muted">Meal Preference</label>
+                    <label className="text-[12px] font-semibold text-muted">Meal Preference</label>
                     <input
                       type="text"
                       defaultValue={guest.meal_preference || ""}
                       onBlur={(e) => updateGuest(guest.id, "meal_preference", e.target.value || null)}
-                      placeholder="e.g. Vegetarian"
+                      placeholder="e.g. Vegetarian, Gluten-free"
                       className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                     />
                   </div>
                   <div>
-                    <label className="text-[12px] text-muted">Plus One Name</label>
+                    <label className="text-[12px] font-semibold text-muted">Plus One Name</label>
                     <input
                       type="text"
                       defaultValue={guest.plus_one_name || ""}
                       onBlur={(e) => updateGuest(guest.id, "plus_one_name", e.target.value || null)}
-                      placeholder="—"
+                      placeholder="Their guest's name"
                       className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                     />
                   </div>
                   <div>
-                    <label className="text-[12px] text-muted">Phone</label>
+                    <label className="text-[12px] font-semibold text-muted">Phone</label>
                     <input
                       type="tel"
                       defaultValue={guest.phone || ""}
@@ -302,17 +628,17 @@ export default function GuestsPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-[12px] text-muted">Group</label>
+                    <label className="text-[12px] font-semibold text-muted">Group</label>
                     <input
                       type="text"
                       defaultValue={guest.group_name || ""}
                       onBlur={(e) => updateGuest(guest.id, "group_name", e.target.value || null)}
-                      placeholder="e.g. Bride's family"
+                      placeholder="e.g. Bride's family, College friends"
                       className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                     />
                   </div>
                   <div className="sm:col-span-2 lg:col-span-3">
-                    <label className="text-[12px] text-muted">Address</label>
+                    <label className="text-[12px] font-semibold text-muted">Mailing Address</label>
                     <div className="mt-1 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                       <input
                         type="text"
@@ -353,10 +679,12 @@ export default function GuestsPage() {
                       />
                     </div>
                   </div>
+                  </div>
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

@@ -2,27 +2,17 @@ import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { pickFields } from "@/lib/validation";
 
-const ALLOWED_FIELDS = [
-  "partner1_name", "partner2_name", "date", "venue", "budget",
-  "guest_count_estimate", "style_description",
-  "has_wedding_party", "wedding_party_count",
-  "has_pre_wedding_events", "has_honeymoon",
-];
+const ALLOWED_FIELDS = ["caption", "category", "sort_order"];
 
 export async function PATCH(
   request: Request,
-  ctx: RouteContext<"/api/weddings/[id]">
+  ctx: RouteContext<"/api/mood-board/[id]">
 ) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
   const { wedding, supabase } = result;
 
   const { id } = await ctx.params;
-
-  if (wedding.id !== id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   const body = await request.json();
   const updates = pickFields(body, ALLOWED_FIELDS);
 
@@ -31,12 +21,10 @@ export async function PATCH(
   }
 
   const { data, error } = await supabase
-    .from("weddings")
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString(),
-    })
+    .from("mood_board_items")
+    .update(updates)
     .eq("id", id)
+    .eq("wedding_id", wedding.id)
     .select()
     .single();
 
@@ -45,4 +33,27 @@ export async function PATCH(
   }
 
   return NextResponse.json(data);
+}
+
+export async function DELETE(
+  _request: Request,
+  ctx: RouteContext<"/api/mood-board/[id]">
+) {
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  const { wedding, supabase } = result;
+
+  const { id } = await ctx.params;
+
+  const { error } = await supabase
+    .from("mood_board_items")
+    .delete()
+    .eq("id", id)
+    .eq("wedding_id", wedding.id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
 }

@@ -1,5 +1,12 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
+import { pickFields } from "@/lib/validation";
+
+const ALLOWED_FIELDS = [
+  "name", "category", "description", "website", "phone", "email",
+  "address", "city", "state", "zip", "country", "price_range",
+  "featured", "active",
+];
 
 export async function PATCH(
   request: Request,
@@ -11,10 +18,11 @@ export async function PATCH(
 
   const { id } = await ctx.params;
   const body = await request.json();
+  const updates = pickFields(body, ALLOWED_FIELDS);
 
   const { data, error } = await supabase
     .from("suggested_vendors")
-    .update({ ...body, updated_at: new Date().toISOString() })
+    .update({ ...updates, updated_at: new Date().toISOString() })
     .eq("id", id)
     .select()
     .single();
