@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { SkeletonList } from "@/components/Skeleton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
 
 type Guest = {
   id: string;
@@ -66,6 +69,7 @@ export default function GuestsPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -339,6 +343,11 @@ export default function GuestsPage() {
   }
 
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [selectedGuests, setSelectedGuests] = useState<Set<string>>(new Set());
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+  const [bulkGroupValue, setBulkGroupValue] = useState("");
+  const [showBulkGroupInput, setShowBulkGroupInput] = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const filtered = guests.filter((g) => {
     if (filterRole && g.role !== filterRole) return false;
@@ -346,12 +355,133 @@ export default function GuestsPage() {
     return true;
   });
 
+  const allFilteredSelected = filtered.length > 0 && filtered.every((g) => selectedGuests.has(g.id));
+  const someSelected = selectedGuests.size > 0;
+
+  function toggleSelectAll() {
+    if (allFilteredSelected) {
+      setSelectedGuests(new Set());
+    } else {
+      setSelectedGuests(new Set(filtered.map((g) => g.id)));
+    }
+  }
+
+  function toggleSelectGuest(id: string) {
+    setSelectedGuests((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  async function bulkChangeStatus(status: string) {
+    const ids = [...selectedGuests];
+    const prev = guests;
+    setGuests((g) =>
+      g.map((x) => (selectedGuests.has(x.id) ? { ...x, rsvp_status: status as Guest["rsvp_status"] } : x))
+    );
+    setBulkStatusOpen(false);
+
+    let successCount = 0;
+    for (const id of ids) {
+      try {
+        const res = await fetch(`/api/guests/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rsvp_status: status }),
+        });
+        if (!res.ok) throw new Error();
+        successCount++;
+      } catch {
+        // continue with others
+      }
+    }
+
+    if (successCount === ids.length) {
+      toast.success(`Updated status for ${successCount} guests`);
+    } else if (successCount > 0) {
+      toast.success(`Updated ${successCount} of ${ids.length} guests`);
+    } else {
+      setGuests(prev);
+      toast.error("Failed to update guests");
+    }
+    setSelectedGuests(new Set());
+  }
+
+  async function bulkChangeGroup() {
+    const ids = [...selectedGuests];
+    const groupVal = bulkGroupValue.trim() || null;
+    const prev = guests;
+    setGuests((g) =>
+      g.map((x) => (selectedGuests.has(x.id) ? { ...x, group_name: groupVal } : x))
+    );
+    setShowBulkGroupInput(false);
+    setBulkGroupValue("");
+
+    let successCount = 0;
+    for (const id of ids) {
+      try {
+        const res = await fetch(`/api/guests/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ group_name: groupVal }),
+        });
+        if (!res.ok) throw new Error();
+        successCount++;
+      } catch {
+        // continue
+      }
+    }
+
+    if (successCount === ids.length) {
+      toast.success(`Updated group for ${successCount} guests`);
+    } else if (successCount > 0) {
+      toast.success(`Updated ${successCount} of ${ids.length} guests`);
+    } else {
+      setGuests(prev);
+      toast.error("Failed to update guests");
+    }
+    setSelectedGuests(new Set());
+  }
+
+  async function bulkDelete() {
+    const ids = [...selectedGuests];
+    const prev = guests;
+    setGuests((g) => g.filter((x) => !selectedGuests.has(x.id)));
+    setConfirmBulkDelete(false);
+
+    let successCount = 0;
+    for (const id of ids) {
+      try {
+        const res = await fetch(`/api/guests/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error();
+        successCount++;
+      } catch {
+        // continue
+      }
+    }
+
+    if (successCount === ids.length) {
+      toast.success(`Removed ${successCount} guests`);
+    } else if (successCount > 0) {
+      toast.success(`Removed ${successCount} of ${ids.length} guests`);
+      // Reload to get accurate state
+      const reload = await fetch("/api/guests");
+      if (reload.ok) setGuests(await reload.json());
+    } else {
+      setGuests(prev);
+      toast.error("Failed to remove guests");
+    }
+    setSelectedGuests(new Set());
+  }
+
   const accepted = guests.filter((g) => g.rsvp_status === "accepted").length;
   const declined = guests.filter((g) => g.rsvp_status === "declined").length;
   const invited = guests.filter((g) => g.rsvp_status !== "not_invited").length;
 
   if (loading) {
-    return <p className="text-[15px] text-muted py-8">Loading guests...</p>;
+    return <SkeletonList count={6} />;
   }
 
   return (
@@ -410,7 +540,16 @@ export default function GuestsPage() {
       </div>
 
       {/* Filters */}
-      <div className="mt-4 flex gap-3">
+      <div className="mt-4 flex gap-3 items-center">
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={allFilteredSelected}
+            onChange={toggleSelectAll}
+            className="w-4 h-4 rounded border-border accent-violet"
+          />
+          <span className="text-[13px] text-muted font-medium">Select all</span>
+        </label>
         <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="rounded-[10px] border-border px-3 py-1.5 text-[15px]">
           <option value="">All Roles</option>
           {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
@@ -528,6 +667,13 @@ export default function GuestsPage() {
                 className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-lavender/20 transition"
                 onClick={() => setExpanded(isExpanded ? null : guest.id)}
               >
+                <input
+                  type="checkbox"
+                  checked={selectedGuests.has(guest.id)}
+                  onChange={() => toggleSelectGuest(guest.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-4 h-4 rounded border-border accent-violet flex-shrink-0"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[15px] font-semibold text-plum">{guest.name}</span>
@@ -573,7 +719,7 @@ export default function GuestsPage() {
                   {isExpanded ? "Close" : "Edit Details"}
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); removeGuest(guest.id); }}
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(guest.id); }}
                   className="text-[12px] text-error hover:opacity-80"
                 >
                   Remove
@@ -692,7 +838,121 @@ export default function GuestsPage() {
         <p className="text-[15px] text-muted text-center py-8">No guests match your filters.</p>
       )}
       {guests.length === 0 && (
-        <p className="text-[15px] text-muted text-center py-8">No guests yet. Add one above to get started.</p>
+        <EmptyState
+          icon="👥"
+          title="No guests yet"
+          message="Add your first guest above to start building your list."
+        />
+      )}
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Remove guest?"
+        message="This guest will be permanently removed from your guest list. This action cannot be undone."
+        confirmLabel="Remove"
+        onConfirm={() => {
+          if (confirmDelete) removeGuest(confirmDelete);
+          setConfirmDelete(null);
+        }}
+        onCancel={() => setConfirmDelete(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        title={`Delete ${selectedGuests.size} guests?`}
+        message="These guests will be permanently removed from your guest list. This action cannot be undone."
+        confirmLabel="Delete All"
+        onConfirm={bulkDelete}
+        onCancel={() => setConfirmBulkDelete(false)}
+      />
+
+      {/* Bulk action bar */}
+      {someSelected && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white rounded-[16px] shadow-2xl border border-border px-5 py-3 flex items-center gap-3 flex-wrap">
+          <span className="text-[14px] font-semibold text-plum">
+            {selectedGuests.size} selected
+          </span>
+
+          <div className="w-px h-6 bg-border" />
+
+          {/* Change Status dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setBulkStatusOpen(!bulkStatusOpen)}
+              className="btn-secondary btn-sm inline-flex items-center gap-1"
+            >
+              Change Status
+              <span className="text-[10px]">&#9662;</span>
+            </button>
+            {bulkStatusOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setBulkStatusOpen(false)} />
+                <div className="absolute bottom-full mb-1 left-0 z-20 bg-white border border-border rounded-[10px] shadow-lg py-1 w-40">
+                  {Object.entries(STATUS_LABELS).map(([v, l]) => (
+                    <button
+                      key={v}
+                      onClick={() => bulkChangeStatus(v)}
+                      className="w-full text-left px-4 py-2 text-[14px] text-plum hover:bg-lavender transition"
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Change Group */}
+          <div className="relative">
+            {showBulkGroupInput ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={bulkGroupValue}
+                  onChange={(e) => setBulkGroupValue(e.target.value)}
+                  placeholder="Group name"
+                  className="rounded-[10px] border-border px-3 py-1 text-[14px] w-40"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") bulkChangeGroup();
+                    if (e.key === "Escape") setShowBulkGroupInput(false);
+                  }}
+                />
+                <button onClick={bulkChangeGroup} className="btn-primary btn-sm">
+                  Apply
+                </button>
+                <button onClick={() => setShowBulkGroupInput(false)} className="btn-ghost btn-sm">
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowBulkGroupInput(true)}
+                className="btn-secondary btn-sm"
+              >
+                Change Group
+              </button>
+            )}
+          </div>
+
+          <div className="w-px h-6 bg-border" />
+
+          {/* Delete Selected */}
+          <button
+            onClick={() => setConfirmBulkDelete(true)}
+            className="rounded-[10px] bg-error text-white px-3 py-1.5 text-[13px] font-semibold hover:opacity-90 transition"
+          >
+            Delete Selected
+          </button>
+
+          {/* Clear Selection */}
+          <button
+            onClick={() => setSelectedGuests(new Set())}
+            className="btn-ghost btn-sm"
+          >
+            Clear Selection
+          </button>
+        </div>
       )}
     </div>
   );

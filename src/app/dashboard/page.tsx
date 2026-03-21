@@ -116,10 +116,14 @@ export default async function DashboardPage() {
       )}
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Progress Ring */}
+        <div className="card-summary p-4 flex flex-col items-center justify-center">
+          <ProgressRing percentage={taskPct} />
+          <p className="mt-2 text-[13px] font-semibold text-muted">Planning Progress</p>
+        </div>
         <StatCard label="Guests" value={guestCount ?? 0} />
-        <StatCard label="Tasks" value={taskCount ?? 0} progress={taskPct} />
         <StatCard
-          label="Completed"
+          label="Tasks"
           value={`${completedTasks ?? 0}/${taskCount ?? 0}`}
         />
         <StatCard
@@ -162,16 +166,71 @@ export default async function DashboardPage() {
   );
 }
 
-function StatCard({ label, value, progress }: { label: string; value: string | number; progress?: number }) {
+function ProgressRing({ percentage }: { percentage: number }) {
+  const size = 120;
+  const strokeWidth = 10;
+  const r = (size - strokeWidth) / 2;
+  const cx = size / 2;
+  const cy = size / 2;
+  const circumference = 2 * Math.PI * r;
+  const filled = (percentage / 100) * circumference;
+  const offset = circumference - filled;
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {/* Gradient definition */}
+      <defs>
+        <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#8B3FCC" />
+          <stop offset="100%" stopColor="#F0609A" />
+        </linearGradient>
+      </defs>
+      {/* Background ring */}
+      <circle
+        cx={cx} cy={cy} r={r}
+        fill="none"
+        stroke="var(--lavender, #F0E6FA)"
+        strokeWidth={strokeWidth}
+      />
+      {/* Filled ring */}
+      <circle
+        cx={cx} cy={cy} r={r}
+        fill="none"
+        stroke="url(#ring-gradient)"
+        strokeWidth={strokeWidth}
+        strokeDasharray={`${circumference}`}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${cx} ${cy})`}
+        style={{ transition: "stroke-dashoffset 0.6s ease" }}
+      />
+      {/* Percentage text */}
+      <text
+        x={cx} y={cy - 4}
+        textAnchor="middle"
+        fontSize="28"
+        fontWeight="600"
+        fill="var(--plum, #3D2252)"
+      >
+        {percentage}%
+      </text>
+      <text
+        x={cx} y={cy + 16}
+        textAnchor="middle"
+        fontSize="10"
+        fill="var(--muted, #8E7A9E)"
+      >
+        complete
+      </text>
+    </svg>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="card-summary p-4">
       <p className="text-[13px] font-semibold text-muted">{label}</p>
       <p className="mt-1 text-[26px] font-semibold text-plum">{value}</p>
-      {progress !== undefined && (
-        <div className="progress-track mt-2">
-          <div className="progress-fill" style={{ width: `${progress}%` }} />
-        </div>
-      )}
     </div>
   );
 }

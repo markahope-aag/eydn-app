@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Paywall } from "@/components/Paywall";
+import { SkeletonList } from "@/components/Skeleton";
 
 type Message = {
   id: string;
@@ -85,7 +86,7 @@ export default function ChatPage() {
   }
 
   if (loading) {
-    return <p className="text-[15px] text-muted py-8">Loading chat...</p>;
+    return <SkeletonList count={3} />;
   }
 
   return (

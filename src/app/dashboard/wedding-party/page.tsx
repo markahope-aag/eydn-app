@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { SkeletonList } from "@/components/Skeleton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
 
 type Member = {
   id: string;
@@ -31,6 +34,7 @@ export default function WeddingPartyPage() {
   const [name, setName] = useState("");
   const [role, setRole] = useState("Bridesmaid");
   const [editing, setEditing] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/wedding-party")
@@ -109,7 +113,7 @@ export default function WeddingPartyPage() {
   }
 
   if (loading) {
-    return <p className="text-[15px] text-muted py-8">Loading...</p>;
+    return <SkeletonList count={4} />;
   }
 
   return (
@@ -180,7 +184,7 @@ export default function WeddingPartyPage() {
                 {editing === member.id ? "Close" : "Edit"}
               </button>
               <button
-                onClick={() => deleteMember(member.id)}
+                onClick={() => setConfirmDelete(member.id)}
                 className="text-[12px] text-error hover:opacity-80"
               >
                 Remove
@@ -237,11 +241,25 @@ export default function WeddingPartyPage() {
         ))}
 
         {members.length === 0 && (
-          <p className="text-[15px] text-muted text-center py-8">
-            No wedding party members yet. Add someone to get started!
-          </p>
+          <EmptyState
+            icon="👗"
+            title="No wedding party members yet"
+            message="Add your bridesmaids, groomsmen, and other members of your wedding party."
+          />
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Remove member?"
+        message="This person will be removed from your wedding party. This action cannot be undone."
+        confirmLabel="Remove"
+        onConfirm={() => {
+          if (confirmDelete) deleteMember(confirmDelete);
+          setConfirmDelete(null);
+        }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

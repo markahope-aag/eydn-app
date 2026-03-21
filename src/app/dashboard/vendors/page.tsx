@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { SkeletonList } from "@/components/Skeleton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EmptyState } from "@/components/EmptyState";
+import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { VENDOR_CATEGORIES, VENDOR_STATUSES } from "@/lib/vendors/categories";
 import { EmailTemplate } from "./EmailTemplate";
 
@@ -33,7 +37,7 @@ export default function VendorsPage() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [emailCategory, setEmailCategory] = useState<string | null>(null);
-
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   // Add form
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState<string>(VENDOR_CATEGORIES[0]);
@@ -119,6 +123,10 @@ export default function VendorsPage() {
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error();
+
+      if (status === "booked") {
+        triggerConfetti();
+      }
     } catch {
       setVendors(prev);
       toast.error("Failed to update vendor");
@@ -153,11 +161,12 @@ export default function VendorsPage() {
   ).length;
 
   if (loading) {
-    return <p className="text-[15px] text-muted py-8">Loading vendors...</p>;
+    return <SkeletonList count={5} />;
   }
 
   return (
     <div>
+      <Confetti />
       <div className="flex items-center justify-between">
         <div>
           <h1>Vendors</h1>
@@ -276,7 +285,7 @@ export default function VendorsPage() {
                     </span>
                   )}
                   <button
-                    onClick={() => deleteVendor(vendor.id)}
+                    onClick={() => setConfirmDelete(vendor.id)}
                     className="text-[12px] text-error hover:opacity-80"
                   >
                     Delete
@@ -288,9 +297,13 @@ export default function VendorsPage() {
         ))}
 
         {vendors.length === 0 && (
-          <p className="text-[15px] text-muted text-center py-8">
-            No vendors yet. Add one to start tracking!
-          </p>
+          <EmptyState
+            icon="🏪"
+            title="No vendors yet"
+            message="Start by browsing our directory or adding your own vendors."
+            actionLabel="Browse Directory"
+            actionHref="/dashboard/vendors/directory"
+          />
         )}
       </div>
 
@@ -300,6 +313,18 @@ export default function VendorsPage() {
           onClose={() => setEmailCategory(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Delete vendor?"
+        message="This vendor and all its details will be permanently removed. This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (confirmDelete) deleteVendor(confirmDelete);
+          setConfirmDelete(null);
+        }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

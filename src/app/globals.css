@@ -25,6 +25,38 @@
 
   --background: var(--whisper);
   --foreground: var(--deep-plum);
+  --surface: #FFFFFF;
+  --surface-raised: #FFFFFF;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] {
+  --violet: #A855F7;
+  --soft-violet: #C084FC;
+  --blush-pink: #F472B6;
+  --petal: #3B1D4E;
+  --lavender-mist: #1E1230;
+  --whisper: #0F0A18;
+  --deep-plum: #F0E6FA;
+  --muted-plum: #B8A0CC;
+  --border: #2D1F3D;
+  --error: #F87171;
+
+  --confirmed-bg: #1A3D2A;
+  --confirmed-text: #6EE7A0;
+  --pending-bg: #3D3010;
+  --pending-text: #FCD34D;
+  --declined-bg: #3D1A2A;
+  --declined-text: #F87171;
+  --booked-bg: #2D1B4E;
+  --booked-text: #C084FC;
+
+  --background: var(--whisper);
+  --foreground: var(--deep-plum);
+  --surface: #1A1030;
+  --surface-raised: #221840;
+
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -48,6 +80,8 @@
   --color-declined-text: var(--declined-text);
   --color-booked-bg: var(--booked-bg);
   --color-booked-text: var(--booked-text);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
   --font-sans: "Nunito", Arial, sans-serif;
 }
 
@@ -136,13 +170,13 @@ h3 { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--deep-plum
 
 /* Cards */
 .card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   border: 0.5px solid var(--border);
 }
 
 .card-summary {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   border: 0.5px solid var(--border);
   overflow: hidden;
@@ -156,7 +190,7 @@ h3 { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--deep-plum
 }
 
 .card-list {
-  background: #fff;
+  background: var(--surface);
   border-radius: 0 16px 16px 0;
   border: 0.5px solid var(--border);
   border-left: 3px solid var(--violet);
@@ -180,7 +214,7 @@ textarea,
 select {
   height: 40px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
   padding: 8px 12px;
   font-size: 15px;
@@ -246,4 +280,33 @@ input, textarea, select, select option {
 /* Gradient */
 .bg-brand-gradient {
   background: linear-gradient(135deg, var(--violet), var(--blush-pink));
+}
+
+/* Sidebar slide-in animation for mobile */
+@keyframes slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-in {
+  animation: slide-in 200ms ease-out;
+}
+
+/* Dark mode: override Tailwind bg-white utility */
+[data-theme="dark"] .bg-white {
+  background-color: var(--surface) !important;
+}
+[data-theme="dark"] .bg-white\/95 {
+  background-color: color-mix(in srgb, var(--surface) 95%, transparent) !important;
+}
+[data-theme="dark"] .text-white {
+  /* Keep text-white as-is; only override where it's used on surface backgrounds */
+}
+[data-theme="dark"] .btn-destructive {
+  background: var(--declined-bg);
+}
+[data-theme="dark"] .shadow-sm {
+  --tw-shadow-color: rgba(0, 0, 0, 0.3);
+}
+[data-theme="dark"] .shadow-xl {
+  --tw-shadow-color: rgba(0, 0, 0, 0.5);
 }

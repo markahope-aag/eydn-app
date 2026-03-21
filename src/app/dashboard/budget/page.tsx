@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { SkeletonList } from "@/components/Skeleton";
 import { BUDGET_CATEGORIES } from "@/lib/budget/budget-template";
 
 type Expense = {
@@ -210,8 +211,30 @@ export default function BudgetPage() {
 
   const allCategories = [...new Set([...BUDGET_CATEGORIES, ...grouped.keys()])];
 
+  // Aggregate spend by category for donut chart
+  const categoryTotals = sortedCategories.map((cat) => {
+    const items = grouped.get(cat)!;
+    return {
+      category: cat,
+      total: items.reduce((sum, e) => sum + (e.amount_paid || 0), 0),
+    };
+  }).filter((c) => c.total > 0);
+
+  const CATEGORY_COLORS = [
+    "#8B3FCC", // violet
+    "#F0609A", // blush
+    "#B06EE0", // soft-violet
+    "#F7C8E0", // petal
+    "#6C63FF", // indigo
+    "#FF8C42", // tangerine
+    "#36B37E", // green
+    "#00B8D9", // teal
+    "#FF5630", // coral
+    "#FFC400", // amber
+  ];
+
   if (loading) {
-    return <p className="text-[15px] text-muted py-8">Loading budget...</p>;
+    return <SkeletonList count={4} />;
   }
 
   return (
@@ -256,6 +279,131 @@ export default function BudgetPage() {
             className={`progress-fill ${totalPaid > budget ? "!bg-error" : ""}`}
             style={{ width: `${Math.min((totalPaid / budget) * 100, 100)}%` }}
           />
+        </div>
+      )}
+
+      {/* Budget visualizations */}
+      {expenses.length > 0 && (
+        <div className="mt-8 grid gap-6 sm:grid-cols-2">
+          {/* Donut chart - spend by category */}
+          <div className="card p-6">
+            <h2 className="text-[15px] font-semibold text-plum mb-4">Spend by Category</h2>
+            {categoryTotals.length > 0 ? (
+              <div className="flex items-center gap-6">
+                <svg width="140" height="140" viewBox="0 0 140 140" className="flex-shrink-0">
+                  {(() => {
+                    const totalSpend = categoryTotals.reduce((s, c) => s + c.total, 0);
+                    const cx = 70, cy = 70, r = 54;
+                    const circumference = 2 * Math.PI * r;
+                    let accumulated = 0;
+
+                    return (
+                      <>
+                        {/* Background ring */}
+                        <circle
+                          cx={cx} cy={cy} r={r}
+                          fill="none"
+                          stroke="var(--lavender, #F0E6FA)"
+                          strokeWidth="16"
+                        />
+                        {/* Category segments */}
+                        {categoryTotals.map((cat, i) => {
+                          const pct = cat.total / totalSpend;
+                          const dashLen = pct * circumference;
+                          const gap = circumference - dashLen;
+                          const offset = -accumulated * circumference + circumference * 0.25;
+                          accumulated += pct;
+                          return (
+                            <circle
+                              key={cat.category}
+                              cx={cx} cy={cy} r={r}
+                              fill="none"
+                              stroke={CATEGORY_COLORS[i % CATEGORY_COLORS.length]}
+                              strokeWidth="16"
+                              strokeDasharray={`${dashLen} ${gap}`}
+                              strokeDashoffset={offset}
+                              strokeLinecap="butt"
+                              style={{ transition: "stroke-dasharray 0.5s ease, stroke-dashoffset 0.5s ease" }}
+                            />
+                          );
+                        })}
+                        {/* Center text */}
+                        <text x={cx} y={cy - 6} textAnchor="middle" fontSize="20" fontWeight="600" fill="var(--plum, #3D2252)">
+                          ${totalSpend.toLocaleString()}
+                        </text>
+                        <text x={cx} y={cy + 14} textAnchor="middle" fontSize="11" fill="var(--muted, #8E7A9E)">
+                          total paid
+                        </text>
+                      </>
+                    );
+                  })()}
+                </svg>
+                {/* Legend */}
+                <div className="flex flex-col gap-1.5 min-w-0">
+                  {categoryTotals.map((cat, i) => (
+                    <div key={cat.category} className="flex items-center gap-2 text-[13px]">
+                      <span
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length] }}
+                      />
+                      <span className="text-plum truncate">{cat.category}</span>
+                      <span className="text-muted ml-auto flex-shrink-0">${cat.total.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-[13px] text-muted">No payments recorded yet.</p>
+            )}
+          </div>
+
+          {/* Budget vs Spent bar */}
+          <div className="card p-6">
+            <h2 className="text-[15px] font-semibold text-plum mb-4">Budget vs Spent</h2>
+            <div className="space-y-4">
+              {/* Estimated bar */}
+              <div>
+                <div className="flex justify-between text-[13px] mb-1">
+                  <span className="text-muted">Estimated</span>
+                  <span className="font-semibold text-plum">${totalEstimated.toLocaleString()}</span>
+                </div>
+                <div className="h-4 rounded-full overflow-hidden" style={{ backgroundColor: "var(--lavender, #F0E6FA)" }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: budget > 0 ? `${Math.min((totalEstimated / budget) * 100, 100)}%` : "0%",
+                      background: "linear-gradient(90deg, #B06EE0, #F7C8E0)",
+                      transition: "width 0.5s ease",
+                    }}
+                  />
+                </div>
+              </div>
+              {/* Paid bar */}
+              <div>
+                <div className="flex justify-between text-[13px] mb-1">
+                  <span className="text-muted">Paid</span>
+                  <span className="font-semibold text-violet">${totalPaid.toLocaleString()}</span>
+                </div>
+                <div className="h-4 rounded-full overflow-hidden" style={{ backgroundColor: "var(--lavender, #F0E6FA)" }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: budget > 0 ? `${Math.min((totalPaid / budget) * 100, 100)}%` : "0%",
+                      background: totalPaid > budget ? "var(--error, #E53E3E)" : "linear-gradient(90deg, #8B3FCC, #F0609A)",
+                      transition: "width 0.5s ease",
+                    }}
+                  />
+                </div>
+              </div>
+              {/* Budget line reference */}
+              {budget > 0 && (
+                <div className="flex items-center gap-2 text-[13px] text-muted pt-1">
+                  <span className="w-3 border-t-2 border-dashed" style={{ borderColor: "var(--plum, #3D2252)" }} />
+                  <span>Budget: <span className="font-semibold text-plum">${budget.toLocaleString()}</span></span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

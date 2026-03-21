@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
+import { SkeletonList } from "@/components/Skeleton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 type Table = {
   id: string;
@@ -39,6 +41,7 @@ export default function SeatingPage() {
   const [draggingTable, setDraggingTable] = useState<string | null>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [confirmDeleteTable, setConfirmDeleteTable] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -235,7 +238,7 @@ export default function SeatingPage() {
   const assignedPartyNames = new Set(ceremonyPositions.map((p) => p.person_name));
   const availableParty = partyMembers.filter((m) => !assignedPartyNames.has(m.name));
 
-  if (loading) return <p className="text-[15px] text-muted py-8">Loading...</p>;
+  if (loading) return <SkeletonList count={4} />;
 
   return (
     <div>
@@ -373,7 +376,7 @@ export default function SeatingPage() {
                     )}
 
                     <button
-                      onClick={(e) => { e.stopPropagation(); deleteTable(table.id); }}
+                      onClick={(e) => { e.stopPropagation(); setConfirmDeleteTable(table.id); }}
                       className="absolute -top-1 -right-1 w-4 h-4 bg-error text-white rounded-full text-[10px] flex items-center justify-center hover:opacity-80"
                     >
                       x
@@ -555,6 +558,18 @@ export default function SeatingPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDeleteTable !== null}
+        title="Delete table?"
+        message="This table and all its guest assignments will be permanently removed. This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (confirmDeleteTable) deleteTable(confirmDeleteTable);
+          setConfirmDeleteTable(null);
+        }}
+        onCancel={() => setConfirmDeleteTable(null)}
+      />
     </div>
   );
 }

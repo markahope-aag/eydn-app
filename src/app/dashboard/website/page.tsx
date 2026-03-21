@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { SkeletonList } from "@/components/Skeleton";
 
 type Tab = "setup" | "schedule" | "registry" | "rsvp" | "gallery";
 
@@ -286,7 +287,7 @@ export default function WebsitePage() {
   }
 
   if (loading) {
-    return <p className="text-[15px] text-muted py-8">Loading...</p>;
+    return <SkeletonList count={4} />;
   }
 
   const tabs: { key: Tab; label: string }[] = [

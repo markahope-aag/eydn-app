@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { SkeletonGrid } from "@/components/Skeleton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 type MoodItem = {
   id: string;
@@ -39,6 +41,7 @@ export default function MoodBoardPage() {
   const [category, setCategory] = useState("General");
   const [uploading, setUploading] = useState(false);
   const [lightbox, setLightbox] = useState<MoodItem | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -138,7 +141,7 @@ export default function MoodBoardPage() {
   const categories = ["All", ...new Set(items.map((i) => i.category))];
   const filtered = filterCategory === "All" ? items : items.filter((i) => i.category === filterCategory);
 
-  if (loading) return <p className="text-[15px] text-muted py-8">Loading...</p>;
+  if (loading) return <SkeletonGrid count={6} cols={3} />;
 
   return (
     <div>
@@ -286,7 +289,7 @@ export default function MoodBoardPage() {
                   <p className="text-[11px] text-white/70 mt-0.5">{item.category}</p>
                 </div>
                 <button
-                  onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(item.id); }}
                   className="absolute top-2 right-2 w-7 h-7 bg-black/40 hover:bg-error text-white rounded-full text-[12px] flex items-center justify-center transition opacity-0 group-hover:opacity-100"
                 >
                   &times;
@@ -371,7 +374,7 @@ export default function MoodBoardPage() {
                   Added {new Date(lightbox.created_at).toLocaleDateString()}
                 </p>
                 <button
-                  onClick={() => { removeItem(lightbox.id); setLightbox(null); }}
+                  onClick={() => { setConfirmDelete(lightbox.id); }}
                   className="text-[13px] text-error hover:opacity-80 font-semibold"
                 >
                   Remove
@@ -381,6 +384,21 @@ export default function MoodBoardPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Remove from mood board?"
+        message="This image will be permanently removed from your mood board. This action cannot be undone."
+        confirmLabel="Remove"
+        onConfirm={() => {
+          if (confirmDelete) {
+            removeItem(confirmDelete);
+            if (lightbox?.id === confirmDelete) setLightbox(null);
+          }
+          setConfirmDelete(null);
+        }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

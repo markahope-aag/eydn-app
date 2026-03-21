@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { SkeletonList } from "@/components/Skeleton";
+import { EmptyState } from "@/components/EmptyState";
+import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { TaskList } from "./TaskList";
 import { TaskDetail } from "./TaskDetail";
 import { TaskFilters } from "./TaskFilters";
@@ -166,6 +169,44 @@ export default function TasksPage() {
         body: JSON.stringify({ status: newStatus, completed: newCompleted }),
       });
       if (!res.ok) throw new Error();
+
+      if (newStatus === "done") {
+        // Check if all tasks in this phase are now complete
+        if (task.timeline_phase) {
+          const phaseTasks = tasks.filter(
+            (t) => t.timeline_phase === task.timeline_phase && !t.parent_task_id
+          );
+          const allPhaseDone = phaseTasks.every(
+            (t) => t.id === id ? true : t.status === "done"
+          );
+          if (allPhaseDone) {
+            triggerConfetti();
+          }
+        }
+
+        const prevStatus = task.status;
+        toast("Task completed", {
+          action: {
+            label: "Undo",
+            onClick: () => {
+              const rollbackCompleted = prevStatus === "done";
+              setTasks((t) =>
+                t.map((x) =>
+                  x.id === id ? { ...x, status: prevStatus, completed: rollbackCompleted } : x
+                )
+              );
+              if (selectedTask?.id === id) {
+                setSelectedTask((s) => s ? { ...s, status: prevStatus, completed: rollbackCompleted } : s);
+              }
+              fetch(`/api/tasks/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: prevStatus, completed: rollbackCompleted }),
+              }).catch(() => toast.error("Failed to undo"));
+            },
+          },
+        });
+      }
     } catch {
       setTasks(prev);
       toast.error("Failed to update task");
@@ -249,8 +290,39 @@ export default function TasksPage() {
     }
   }
 
+  async function reorderTasks(orderedIds: string[]) {
+    // Update local state: reorder tasks to match the new order
+    setTasks((prev) => {
+      const taskMap = new Map(prev.map((t) => [t.id, t]));
+      const reordered = orderedIds
+        .map((id) => taskMap.get(id))
+        .filter(Boolean) as Task[];
+      // Merge: put reordered tasks in place, keep other tasks unchanged
+      const reorderedSet = new Set(orderedIds);
+      const others = prev.filter((t) => !reorderedSet.has(t.id));
+      // Find position of first reordered task in original array
+      const firstIdx = prev.findIndex((t) => reorderedSet.has(t.id));
+      const result = [...others];
+      result.splice(firstIdx, 0, ...reordered);
+      return result;
+    });
+
+    // Persist sort_order for each task
+    for (let i = 0; i < orderedIds.length; i++) {
+      try {
+        await fetch(`/api/tasks/${orderedIds[i]}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sort_order: i }),
+        });
+      } catch {
+        // best-effort persistence
+      }
+    }
+  }
+
   if (loading) {
-    return <p className="text-[15px] text-muted py-8">Loading tasks...</p>;
+    return <SkeletonList count={6} />;
   }
 
   const subTasks = selectedTask
@@ -259,6 +331,7 @@ export default function TasksPage() {
 
   return (
     <div>
+      <Confetti />
       <div className="flex items-center justify-between">
         <div>
           <h1>Tasks</h1>
@@ -351,12 +424,17 @@ export default function TasksPage() {
               onToggle={cycleStatus}
               onDelete={deleteTask}
               onSelect={setSelectedTask}
+              onReorder={reorderTasks}
+            />
+          ) : tasks.length === 0 ? (
+            <EmptyState
+              icon="✓"
+              title="No tasks yet"
+              message="Tasks will be generated when you complete onboarding with a wedding date."
             />
           ) : (
             <p className="text-[15px] text-muted text-center py-8">
-              {tasks.length === 0
-                ? "No tasks yet. Complete onboarding to generate your timeline, or add tasks above."
-                : "No tasks match your filters."}
+              No tasks match your filters.
             </p>
           )
         ) : (

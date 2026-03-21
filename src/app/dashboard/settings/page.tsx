@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { SkeletonList } from "@/components/Skeleton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type Collaborator = {
   id: string;
@@ -112,7 +114,7 @@ export default function SettingsPage() {
   }
 
   if (loading) {
-    return <p className="text-[15px] text-muted py-8">Loading...</p>;
+    return <SkeletonList count={3} />;
   }
 
   return (
@@ -133,6 +135,17 @@ export default function SettingsPage() {
         <p className="mt-1 text-[12px] text-muted">
           Go back through the onboarding questions to update your wedding details
         </p>
+      </div>
+
+      {/* Theme */}
+      <div className="mt-8">
+        <h2 className="text-[18px] font-semibold text-plum">Theme</h2>
+        <p className="mt-1 text-[12px] text-muted">
+          Choose between light and dark appearance
+        </p>
+        <div className="mt-3">
+          <ThemeToggle />
+        </div>
       </div>
 
       <div className="mt-8 space-y-6">
@@ -237,8 +250,8 @@ export default function SettingsPage() {
                         <span
                           className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                             c.invite_status === "accepted"
-                              ? "bg-[#D6F5E3] text-[#2E7D4F]"
-                              : "bg-[#FFF3CC] text-[#8A5200]"
+                              ? "bg-confirmed-bg text-confirmed-text"
+                              : "bg-pending-bg text-pending-text"
                           }`}
                         >
                           {c.invite_status === "accepted" ? "Active" : "Pending"}

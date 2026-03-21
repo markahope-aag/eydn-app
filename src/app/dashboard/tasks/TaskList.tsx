@@ -1,6 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 type Task = {
   id: string;
@@ -23,6 +39,7 @@ type Props = {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onSelect: (task: Task) => void;
+  onReorder?: (phaseTaskIds: string[]) => void;
 };
 
 const PHASE_ORDER = [
@@ -54,9 +71,128 @@ const PRIORITY_DOT: Record<string, string> = {
   low: "bg-transparent",
 };
 
-export function TaskList({ tasks, onToggle, onDelete, onSelect }: Props) {
+function SortableTaskItem({
+  task,
+  onToggle,
+  onDelete,
+  onSelect,
+}: {
+  task: Task;
+  onToggle: (id: string) => void;
+  onDelete: (id: string) => void;
+  onSelect: (task: Task) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  const isOverdue =
+    task.due_date &&
+    task.status !== "done" &&
+    new Date(task.due_date) < new Date();
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 px-4 py-2.5 hover:bg-lavender transition bg-white"
+    >
+      {/* Drag handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="flex-shrink-0 cursor-grab active:cursor-grabbing text-muted hover:text-plum p-0.5 touch-none"
+        aria-label="Drag to reorder"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <circle cx="5" cy="3" r="1.5" />
+          <circle cx="11" cy="3" r="1.5" />
+          <circle cx="5" cy="8" r="1.5" />
+          <circle cx="11" cy="8" r="1.5" />
+          <circle cx="5" cy="13" r="1.5" />
+          <circle cx="11" cy="13" r="1.5" />
+        </svg>
+      </button>
+
+      {/* Priority dot */}
+      <span
+        className={`w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]} ${
+          task.priority === "low" ? "border border-border" : ""
+        }`}
+      />
+
+      {/* Status badge - click to cycle */}
+      <button
+        onClick={() => onToggle(task.id)}
+        className={`rounded-full px-2 py-0.5 text-[12px] flex-shrink-0 ${STATUS_CLASSES[task.status]}`}
+      >
+        {STATUS_LABELS[task.status]}
+      </button>
+
+      {/* Task title */}
+      <button
+        onClick={() => onSelect(task)}
+        className={`flex-1 text-[15px] text-left ${
+          task.status === "done"
+            ? "text-muted line-through"
+            : task.status === "in_progress"
+            ? "text-violet"
+            : "text-plum"
+        }`}
+      >
+        {task.title}
+      </button>
+
+      {task.category && (
+        <span className="badge">
+          {task.category}
+        </span>
+      )}
+      {task.due_date && (
+        <span
+          className={`text-[12px] flex-shrink-0 ${
+            isOverdue
+              ? "text-error font-semibold"
+              : "text-muted"
+          }`}
+        >
+          {task.due_date}
+        </span>
+      )}
+      {!task.is_system_generated && (
+        <button
+          onClick={() => onDelete(task.id)}
+          className="text-[12px] text-error hover:opacity-80 flex-shrink-0"
+        >
+          Delete
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function TaskList({ tasks, onToggle, onDelete, onSelect, onReorder }: Props) {
   const [collapsedPhases, setCollapsedPhases] = useState<Set<string>>(
     new Set()
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    }),
+    useSensor(KeyboardSensor)
   );
 
   // Group top-level tasks by phase
@@ -86,6 +222,22 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect }: Props) {
       else next.add(phase);
       return next;
     });
+  }
+
+  function handleDragEnd(phaseTasks: Task[]) {
+    return (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const oldIndex = phaseTasks.findIndex((t) => t.id === active.id);
+      const newIndex = phaseTasks.findIndex((t) => t.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const reordered = arrayMove(phaseTasks, oldIndex, newIndex);
+      if (onReorder) {
+        onReorder(reordered.map((t) => t.id));
+      }
+    };
   }
 
   return (
@@ -128,75 +280,28 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect }: Props) {
             </button>
 
             {!collapsed && (
-              <div className="divide-y divide-border">
-                {phaseTasks.map((task) => {
-                  const isOverdue =
-                    task.due_date &&
-                    task.status !== "done" &&
-                    new Date(task.due_date) < new Date();
-
-                  return (
-                    <div
-                      key={task.id}
-                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-lavender transition"
-                    >
-                      {/* Priority dot */}
-                      <span
-                        className={`w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]} ${
-                          task.priority === "low" ? "border border-border" : ""
-                        }`}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd(phaseTasks)}
+              >
+                <SortableContext
+                  items={phaseTasks.map((t) => t.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="divide-y divide-border">
+                    {phaseTasks.map((task) => (
+                      <SortableTaskItem
+                        key={task.id}
+                        task={task}
+                        onToggle={onToggle}
+                        onDelete={onDelete}
+                        onSelect={onSelect}
                       />
-
-                      {/* Status badge - click to cycle */}
-                      <button
-                        onClick={() => onToggle(task.id)}
-                        className={`rounded-full px-2 py-0.5 text-[12px] flex-shrink-0 ${STATUS_CLASSES[task.status]}`}
-                      >
-                        {STATUS_LABELS[task.status]}
-                      </button>
-
-                      {/* Task title */}
-                      <button
-                        onClick={() => onSelect(task)}
-                        className={`flex-1 text-[15px] text-left ${
-                          task.status === "done"
-                            ? "text-muted line-through"
-                            : task.status === "in_progress"
-                            ? "text-violet"
-                            : "text-plum"
-                        }`}
-                      >
-                        {task.title}
-                      </button>
-
-                      {task.category && (
-                        <span className="badge">
-                          {task.category}
-                        </span>
-                      )}
-                      {task.due_date && (
-                        <span
-                          className={`text-[12px] flex-shrink-0 ${
-                            isOverdue
-                              ? "text-error font-semibold"
-                              : "text-muted"
-                          }`}
-                        >
-                          {task.due_date}
-                        </span>
-                      )}
-                      {!task.is_system_generated && (
-                        <button
-                          onClick={() => onDelete(task.id)}
-                          className="text-[12px] text-error hover:opacity-80 flex-shrink-0"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
         );

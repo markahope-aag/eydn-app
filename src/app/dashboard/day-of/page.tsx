@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { SkeletonList } from "@/components/Skeleton";
 
 type TimelineItem = { time: string; event: string; notes: string };
 type VendorContact = { vendor: string; category: string; contact: string; phone: string };
@@ -396,7 +397,7 @@ export default function DayOfPage() {
   }
 
   if (loading) {
-    return <p className="text-[15px] text-muted py-8">Loading...</p>;
+    return <SkeletonList count={5} />;
   }
 
   if (!plan) {
