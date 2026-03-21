@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { isAdmin } from "@/lib/admin";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
+import { SkeletonList } from "@/components/Skeleton";
 
 export default async function DashboardLayout({
   children,
@@ -13,7 +15,11 @@ export default async function DashboardLayout({
       <DashboardSidebar admin={admin} />
 
       {/* Main content — add left padding on mobile for hamburger button */}
-      <main className="flex-1 bg-whisper p-8 pt-16 md:pt-8">{children}</main>
+      <main className="flex-1 bg-whisper p-8 pt-16 md:pt-8">
+        <Suspense fallback={<SkeletonList count={5} />}>
+          {children}
+        </Suspense>
+      </main>
     </div>
   );
 }

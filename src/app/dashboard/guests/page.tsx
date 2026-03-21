@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { usePremium } from "@/components/PremiumGate";
 
 type Guest = {
   id: string;
@@ -245,15 +246,36 @@ export default function GuestsPage() {
 
   async function exportXLSX() {
     if (guests.length === 0) return;
-    const XLSX = (await import("xlsx")).default;
-    const ws = XLSX.utils.aoa_to_sheet([EXPORT_HEADERS, ...getExportRows()]);
+    const ExcelJS = (await import("exceljs")).default;
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Guest List");
+
+    // Header row with styling
+    ws.addRow(EXPORT_HEADERS);
+    const headerRow = ws.getRow(1);
+    headerRow.font = { bold: true };
+    headerRow.eachCell((cell) => {
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF0E0FF" } };
+    });
+
+    // Data rows
+    const rows = getExportRows();
+    for (const row of rows) ws.addRow(row);
+
     // Auto-size columns
-    ws["!cols"] = EXPORT_HEADERS.map((h, i) => ({
-      wch: Math.max(h.length, ...getExportRows().map((r) => String(r[i]).length)) + 2,
-    }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Guest List");
-    XLSX.writeFile(wb, "guest-list.xlsx");
+    ws.columns.forEach((col, i) => {
+      const maxLen = Math.max(EXPORT_HEADERS[i].length, ...rows.map((r) => String(r[i]).length));
+      col.width = maxLen + 3;
+    });
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "guest-list.xlsx";
+    a.click();
+    URL.revokeObjectURL(url);
     toast.success("Guest list exported as Excel");
   }
 
@@ -343,6 +365,7 @@ export default function GuestsPage() {
   }
 
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const { guardAction } = usePremium();
   const [selectedGuests, setSelectedGuests] = useState<Set<string>>(new Set());
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
   const [bulkGroupValue, setBulkGroupValue] = useState("");
@@ -516,7 +539,7 @@ export default function GuestsPage() {
                     Export as Excel
                   </button>
                   <button
-                    onClick={() => { exportPDF(); setShowExportMenu(false); }}
+                    onClick={() => { guardAction(() => exportPDF()); setShowExportMenu(false); }}
                     className="w-full text-left px-4 py-2 text-[14px] text-plum hover:bg-lavender transition"
                   >
                     Export as PDF

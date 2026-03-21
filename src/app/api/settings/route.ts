@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError, isValidNumber } from "@/lib/validation";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -20,14 +21,20 @@ export async function PUT(request: Request) {
   if ("error" in result) return result.error;
   const { wedding, supabase } = result;
 
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+
+  if (body.reminder_days_before !== undefined && !isValidNumber(body.reminder_days_before, 0, 365)) {
+    return NextResponse.json({ error: "reminder_days_before must be a number between 0 and 365" }, { status: 400 });
+  }
 
   const { error } = await supabase
     .from("notification_preferences")
     .upsert({
       wedding_id: wedding.id,
-      email_reminders: body.email_reminders,
-      reminder_days_before: body.reminder_days_before,
+      email_reminders: body.email_reminders as boolean,
+      reminder_days_before: body.reminder_days_before as number,
     });
 
   if (error) {

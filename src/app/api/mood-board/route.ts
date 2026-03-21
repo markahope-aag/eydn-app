@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { isValidUrl } from "@/lib/validation";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -30,8 +31,8 @@ export async function POST(request: Request) {
   // Support both image upload URL and direct URL
   const { image_url, caption, category } = body;
 
-  if (!image_url) {
-    return NextResponse.json({ error: "image_url is required" }, { status: 400 });
+  if (!image_url || !isValidUrl(image_url) || !image_url.startsWith("https://")) {
+    return NextResponse.json({ error: "Valid HTTPS URL required" }, { status: 400 });
   }
 
   const { data, error } = await supabase

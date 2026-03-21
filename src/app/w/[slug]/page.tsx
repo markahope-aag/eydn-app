@@ -134,7 +134,6 @@ export default async function WeddingWebsitePage({
               className="object-cover"
               fill
               priority
-              unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-b from-[#1A1030]/20 via-transparent to-[#1A1030]/70" />
             <div className="relative z-10 flex flex-col items-center justify-end h-full pb-20 text-center px-6">
@@ -208,8 +207,7 @@ export default async function WeddingWebsitePage({
                   alt={coupleNames}
                   className="object-cover"
                   fill
-                  unoptimized
-                />
+                    />
               </div>
               <p className="mt-6 text-[20px] font-[family-name:var(--font-serif)] text-plum">{coupleNames}</p>
             </div>
@@ -350,8 +348,7 @@ export default async function WeddingWebsitePage({
                     alt={photo.caption || "Wedding photo"}
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     fill
-                    unoptimized
-                  />
+                        />
                   {photo.caption && (
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 opacity-0 group-hover:opacity-100 transition">
                       <p className="text-[13px] text-white">{photo.caption}</p>

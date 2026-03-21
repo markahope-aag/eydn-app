@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -25,14 +26,16 @@ export async function PATCH(request: Request) {
   if ("error" in result) return result.error;
   const { wedding, supabase } = result;
 
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
 
   // If slug is being set/changed, check uniqueness
   if (body.slug && body.slug !== wedding.website_slug) {
     const { data: existing } = await supabase
       .from("weddings")
       .select("id")
-      .eq("website_slug", body.slug)
+      .eq("website_slug", body.slug as string)
       .neq("id", wedding.id)
       .maybeSingle();
 

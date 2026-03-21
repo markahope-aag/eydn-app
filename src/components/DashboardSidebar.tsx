@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { NotificationBell } from "@/components/NotificationBell";
-import { CommandPalette } from "@/components/CommandPalette";
-import { OnboardingTour } from "@/components/OnboardingTour";
+
+const CommandPalette = lazy(() => import("@/components/CommandPalette").then((m) => ({ default: m.CommandPalette })));
+const OnboardingTour = lazy(() => import("@/components/OnboardingTour").then((m) => ({ default: m.OnboardingTour })));
 
 const navItems = [
   { href: "/dashboard", label: "Overview" },
@@ -180,10 +181,16 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
       </aside>
 
       {/* Command Palette (global) */}
-      <CommandPalette />
+      <Suspense fallback={null}>
+        <CommandPalette />
+      </Suspense>
 
       {/* Onboarding tour — only on dashboard overview */}
-      {pathname === "/dashboard" && <OnboardingTour />}
+      {pathname === "/dashboard" && (
+        <Suspense fallback={null}>
+          <OnboardingTour />
+        </Suspense>
+      )}
     </>
   );
 }

@@ -1,23 +1,11 @@
-import { auth } from "@clerk/nextjs/server";
-import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError, requireFields, isValidNumber } from "@/lib/validation";
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const supabase = createSupabaseAdmin();
-  const { data: wedding } = await supabase
-    .from("weddings")
-    .select("id")
-    .eq("user_id", userId)
-    .single();
-
-  if (!wedding) {
-    return NextResponse.json({ error: "Wedding not found" }, { status: 404 });
-  }
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  const { wedding, supabase } = result;
 
   // Fetch expenses + linked vendor names
   const { data: expensesData, error } = await supabase
@@ -54,34 +42,40 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  const { wedding, supabase } = result;
+
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+
+  const missing = requireFields(body, ["description", "category"]);
+  if (missing) {
+    return NextResponse.json({ error: `${missing} is required` }, { status: 400 });
   }
 
-  const supabase = createSupabaseAdmin();
-  const { data: wedding } = await supabase
-    .from("weddings")
-    .select("id")
-    .eq("user_id", userId)
-    .single();
-
-  if (!wedding) {
-    return NextResponse.json({ error: "Wedding not found" }, { status: 404 });
+  if (body.estimated !== undefined && !isValidNumber(body.estimated, 0)) {
+    return NextResponse.json({ error: "estimated must be a non-negative number" }, { status: 400 });
+  }
+  if (body.amount_paid !== undefined && !isValidNumber(body.amount_paid, 0)) {
+    return NextResponse.json({ error: "amount_paid must be a non-negative number" }, { status: 400 });
+  }
+  if (body.final_cost !== undefined && body.final_cost !== null && !isValidNumber(body.final_cost, 0)) {
+    return NextResponse.json({ error: "final_cost must be a non-negative number" }, { status: 400 });
   }
 
-  const body = await request.json();
   const { data, error } = await supabase
     .from("expenses")
     .insert({
       wedding_id: wedding.id,
-      description: body.description,
-      estimated: body.estimated ?? body.amount ?? 0,
-      amount_paid: body.amount_paid ?? 0,
-      final_cost: body.final_cost ?? null,
-      category: body.category,
-      paid: body.paid || false,
-      vendor_id: body.vendor_id || null,
+      description: body.description as string,
+      estimated: (body.estimated ?? body.amount ?? 0) as number,
+      amount_paid: (body.amount_paid ?? 0) as number,
+      final_cost: (body.final_cost ?? null) as number | null,
+      category: body.category as string,
+      paid: (body.paid || false) as boolean,
+      vendor_id: (body.vendor_id || null) as string | null,
     })
     .select()
     .single();

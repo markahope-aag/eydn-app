@@ -1,14 +1,21 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { Confetti, triggerConfetti } from "@/components/Confetti";
-import { TaskList } from "./TaskList";
-import { TaskDetail } from "./TaskDetail";
 import { TaskFilters } from "./TaskFilters";
-import { TaskCalendar } from "./TaskCalendar";
+
+// Dynamic imports for heavy components (dnd-kit, react-pdf in detail)
+const TaskList = dynamic(() => import("./TaskList").then((m) => ({ default: m.TaskList })), {
+  loading: () => <SkeletonList count={6} />,
+});
+const TaskDetail = dynamic(() => import("./TaskDetail").then((m) => ({ default: m.TaskDetail })));
+const TaskCalendar = dynamic(() => import("./TaskCalendar").then((m) => ({ default: m.TaskCalendar })), {
+  loading: () => <SkeletonList count={4} />,
+});
 
 type Task = {
   id: string;

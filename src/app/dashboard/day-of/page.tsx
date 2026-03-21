@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
+import { PremiumButton } from "@/components/PremiumGate";
 
 type TimelineItem = { time: string; event: string; notes: string };
 type VendorContact = { vendor: string; category: string; contact: string; phone: string };
@@ -477,9 +478,9 @@ export default function DayOfPage() {
     <div className="max-w-3xl">
       <div className="flex items-center justify-between">
         <h1>Day-of Planner</h1>
-        <button onClick={exportPDF} className="btn-primary btn-sm">
+        <PremiumButton onClick={exportPDF} className="btn-primary btn-sm">
           Export PDF
-        </button>
+        </PremiumButton>
       </div>
       <p className="mt-1 text-[15px] text-muted">
         Your complete wedding day plan. Click any field to edit.

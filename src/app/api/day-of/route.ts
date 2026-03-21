@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import type { Database } from "@/lib/supabase/types";
+import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
 
 type Wedding = Database["public"]["Tables"]["weddings"]["Row"];
 
@@ -29,13 +30,20 @@ export async function PUT(request: Request) {
   if ("error" in result) return result.error;
   const { wedding, supabase } = result;
 
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+
+  const missing = requireFields(body, ["content"]);
+  if (missing) {
+    return NextResponse.json({ error: `${missing} is required` }, { status: 400 });
+  }
 
   const { data, error } = await supabase
     .from("day_of_plans")
     .upsert({
       wedding_id: wedding.id,
-      content: body.content,
+      content: body.content as Record<string, unknown>,
       edited_at: new Date().toISOString(),
     })
     .select()

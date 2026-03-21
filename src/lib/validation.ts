@@ -70,3 +70,35 @@ export function isValidBoolean(value: unknown): value is boolean {
 export function validationError(message: string) {
   return { error: message };
 }
+
+/**
+ * Safely parse JSON from a request body.
+ * Returns the parsed body or a 400 NextResponse on failure.
+ */
+export async function safeParseJSON(request: Request): Promise<Record<string, unknown> | Response> {
+  try {
+    return await request.json();
+  } catch {
+    const { NextResponse } = await import("next/server");
+    return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 });
+  }
+}
+
+/** Check if a safeParseJSON result is an error response. */
+export function isParseError(result: Record<string, unknown> | Response): result is Response {
+  return result instanceof Response;
+}
+
+/**
+ * Validate required string fields exist and are non-empty.
+ * Returns the first missing field name, or null if all are present.
+ */
+export function requireFields(body: Record<string, unknown>, fields: string[]): string | null {
+  for (const field of fields) {
+    const val = body[field];
+    if (val === undefined || val === null || (typeof val === "string" && val.trim() === "")) {
+      return field;
+    }
+  }
+  return null;
+}

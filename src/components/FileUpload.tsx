@@ -28,6 +28,15 @@ export function FileUpload({ entityType, entityId, onUpload }: Props) {
         method: "POST",
         body: formData,
       });
+      if (res.status === 403) {
+        toast.error("File attachments are a premium feature. Upgrade to continue.", {
+          action: {
+            label: "Upgrade — $79",
+            onClick: () => { window.location.href = "/dashboard/pricing"; },
+          },
+        });
+        return;
+      }
       if (!res.ok) throw new Error();
       toast.success("File uploaded");
       onUpload?.();

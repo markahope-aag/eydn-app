@@ -278,7 +278,6 @@ export default function MoodBoardPage() {
                 className="w-full object-cover"
                 width={400}
                 height={400}
-                unoptimized
               />
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
@@ -337,7 +336,6 @@ export default function MoodBoardPage() {
                 className="w-full max-h-[60vh] object-contain bg-black/5"
                 width={800}
                 height={600}
-                unoptimized
               />
               <button
                 onClick={() => setLightbox(null)}

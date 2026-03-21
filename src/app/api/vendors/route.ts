@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError, requireFields, pickFields, isOneOf } from "@/lib/validation";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -24,20 +25,27 @@ export async function POST(request: Request) {
   if ("error" in result) return result.error;
   const { wedding, supabase } = result;
 
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+
+  const missing = requireFields(body, ["name", "category"]);
+  if (missing) {
+    return NextResponse.json({ error: `${missing} is required` }, { status: 400 });
+  }
+
+  if (body.status !== undefined && !isOneOf(body.status, ["searching", "contacted", "booked", "confirmed", "cancelled"] as const)) {
+    return NextResponse.json({ error: "status must be one of: searching, contacted, booked, confirmed, cancelled" }, { status: 400 });
+  }
+
+  const allowed = pickFields(body, ["status", "poc_name", "poc_email", "poc_phone", "notes", "amount", "amount_paid"]);
   const { data, error } = await supabase
     .from("vendors")
     .insert({
       wedding_id: wedding.id,
-      category: body.category,
-      name: body.name,
-      status: body.status || "searching",
-      poc_name: body.poc_name || null,
-      poc_email: body.poc_email || null,
-      poc_phone: body.poc_phone || null,
-      notes: body.notes || null,
-      amount: body.amount || null,
-      amount_paid: body.amount_paid || null,
+      name: body.name as string,
+      category: body.category as string,
+      ...allowed,
     })
     .select()
     .single();

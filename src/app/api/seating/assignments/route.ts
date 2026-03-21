@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -34,20 +35,27 @@ export async function POST(request: Request) {
   if ("error" in result) return result.error;
   const { supabase } = result;
 
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+
+  const missing = requireFields(body, ["seating_table_id", "guest_id"]);
+  if (missing) {
+    return NextResponse.json({ error: `${missing} is required` }, { status: 400 });
+  }
 
   // Remove existing assignment for this guest
   await supabase
     .from("seat_assignments")
     .delete()
-    .eq("guest_id", body.guest_id);
+    .eq("guest_id", body.guest_id as string);
 
   const { data, error } = await supabase
     .from("seat_assignments")
     .insert({
-      seating_table_id: body.seating_table_id,
-      guest_id: body.guest_id,
-      seat_number: body.seat_number || null,
+      seating_table_id: body.seating_table_id as string,
+      guest_id: body.guest_id as string,
+      seat_number: (body.seat_number as number) || null,
     })
     .select()
     .single();

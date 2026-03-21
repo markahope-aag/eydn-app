@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -25,12 +26,14 @@ export async function PATCH(request: Request) {
   if ("error" in result) return result.error;
   const { wedding, supabase } = result;
 
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
 
   const { error } = await supabase
     .from("notifications")
-    .update({ read: body.read })
-    .eq("id", body.id)
+    .update({ read: body.read as boolean })
+    .eq("id", body.id as string)
     .eq("wedding_id", wedding.id);
 
   if (error) {

@@ -755,8 +755,7 @@ export default function WebsitePage() {
                         alt={photo.caption || "Wedding photo"}
                         className="object-cover"
                         fill
-                        unoptimized
-                      />
+                                             />
                     </div>
                     <div className="p-3 space-y-2">
                       {photo.caption && (

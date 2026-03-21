@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError, requireFields, pickFields, isValidEmail } from "@/lib/validation";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -24,16 +25,26 @@ export async function POST(request: Request) {
   if ("error" in result) return result.error;
   const { wedding, supabase } = result;
 
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+
+  const missing = requireFields(body, ["name"]);
+  if (missing) {
+    return NextResponse.json({ error: `${missing} is required` }, { status: 400 });
+  }
+
+  if (body.email && !isValidEmail(body.email)) {
+    return NextResponse.json({ error: "email is not a valid email address" }, { status: 400 });
+  }
+
+  const allowed = pickFields(body, ["email", "rsvp_status", "meal_preference", "plus_one"]);
   const { data, error } = await supabase
     .from("guests")
     .insert({
       wedding_id: wedding.id,
-      name: body.name,
-      email: body.email || null,
-      rsvp_status: body.rsvp_status || "pending",
-      meal_preference: body.meal_preference || null,
-      plus_one: body.plus_one || false,
+      name: body.name as string,
+      ...allowed,
     })
     .select()
     .single();

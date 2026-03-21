@@ -58,6 +58,17 @@ export default function ChatPage() {
         body: JSON.stringify({ message: userMsg.content }),
       });
 
+      if (res.status === 403) {
+        toast.error("AI chat is a premium feature. Upgrade to continue.", {
+          action: {
+            label: "Upgrade — $79",
+            onClick: () => { window.location.href = "/dashboard/pricing"; },
+          },
+        });
+        setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+        setStreaming(false);
+        return;
+      }
       if (!res.ok) throw new Error();
 
       const reader = res.body?.getReader();

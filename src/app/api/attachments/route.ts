@@ -2,6 +2,46 @@ import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { requirePremium } from "@/lib/subscription";
 
+// Synthetic entity IDs used by website and mood board uploads — not real DB records
+const SYNTHETIC_IDS = new Set(["website-cover", "website-couple-photo", "mood-board"]);
+
+function isSyntheticUpload(entityId: string) {
+  return SYNTHETIC_IDS.has(entityId);
+}
+
+async function verifyEntityOwnership(
+  supabase: ReturnType<typeof import("@/lib/supabase/server").createSupabaseAdmin>,
+  entityType: string,
+  entityId: string,
+  weddingId: string
+): Promise<NextResponse | null> {
+  if (isSyntheticUpload(entityId)) return null;
+
+  if (entityType === "task") {
+    const { data: task } = await supabase
+      .from("tasks")
+      .select("id")
+      .eq("id", entityId)
+      .eq("wedding_id", weddingId)
+      .single();
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+  } else if (entityType === "vendor") {
+    const { data: vendor } = await supabase
+      .from("vendors")
+      .select("id")
+      .eq("id", entityId)
+      .eq("wedding_id", weddingId)
+      .single();
+    if (!vendor) {
+      return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+    }
+  }
+
+  return null;
+}
+
 export async function GET(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
@@ -11,29 +51,9 @@ export async function GET(request: Request) {
   const entityType = url.searchParams.get("entity_type");
   const entityId = url.searchParams.get("entity_id");
 
-  // If requesting attachments for a specific entity, verify it belongs to this wedding
   if (entityType && entityId) {
-    if (entityType === "task") {
-      const { data: task } = await supabase
-        .from("tasks")
-        .select("id")
-        .eq("id", entityId)
-        .eq("wedding_id", wedding.id)
-        .single();
-      if (!task) {
-        return NextResponse.json({ error: "Task not found" }, { status: 404 });
-      }
-    } else if (entityType === "vendor") {
-      const { data: vendor } = await supabase
-        .from("vendors")
-        .select("id")
-        .eq("id", entityId)
-        .eq("wedding_id", wedding.id)
-        .single();
-      if (!vendor) {
-        return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
-      }
-    }
+    const err = await verifyEntityOwnership(supabase, entityType, entityId, wedding.id);
+    if (err) return err;
   }
 
   let query = supabase
@@ -67,35 +87,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  // Require premium for task/vendor attachments (not website or mood-board uploads)
-  const freeUploadIds = ["website-cover", "website-couple-photo", "mood-board"];
-  if (!freeUploadIds.includes(entityId)) {
+  // Require premium for real task/vendor attachments (not website or mood-board uploads)
+  if (!isSyntheticUpload(entityId)) {
     const paywall = await requirePremium();
     if (paywall) return paywall;
   }
 
-  // Verify the entity belongs to this wedding
-  if (entityType === "task") {
-    const { data: task } = await supabase
-      .from("tasks")
-      .select("id")
-      .eq("id", entityId)
-      .eq("wedding_id", wedding.id)
-      .single();
-    if (!task) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
-    }
-  } else if (entityType === "vendor") {
-    const { data: vendor } = await supabase
-      .from("vendors")
-      .select("id")
-      .eq("id", entityId)
-      .eq("wedding_id", wedding.id)
-      .single();
-    if (!vendor) {
-      return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
-    }
-  }
+  // Verify the entity belongs to this wedding (skipped for synthetic IDs)
+  const err = await verifyEntityOwnership(supabase, entityType, entityId, wedding.id);
+  if (err) return err;
 
   // Upload to Supabase Storage
   const fileName = `${wedding.id}/${entityType}/${entityId}/${Date.now()}_${file.name}`;
