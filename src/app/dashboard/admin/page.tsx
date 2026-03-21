@@ -103,7 +103,14 @@ type BackupInfo = {
   }>;
 };
 
-type Tab = "overview" | "subscribers" | "settings" | "data-security" | "cron-jobs";
+type EmailData = {
+  config: { resendConfigured: boolean; fromEmail: string };
+  emailTypes: Array<{ type: string; label: string; trigger: string; sent: number }>;
+  recentEmails: Array<{ email_type: string; wedding_id: string; sent_at: string }>;
+  totalSent: number;
+};
+
+type Tab = "overview" | "subscribers" | "settings" | "data-security" | "cron-jobs" | "email";
 
 export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -117,6 +124,11 @@ export default function AdminPage() {
   const [triggeringBackup, setTriggeringBackup] = useState(false);
   const [cronData, setCronData] = useState<CronData | null>(null);
   const [cronLoading, setCronLoading] = useState(false);
+  const [emailData, setEmailData] = useState<EmailData | null>(null);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [testEmailTo, setTestEmailTo] = useState("");
+  const [testEmailType, setTestEmailType] = useState("post_wedding_welcome");
+  const [sendingTest, setSendingTest] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -227,7 +239,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="mt-4 flex gap-1 border-b border-border">
-        {(["overview", "subscribers", "settings", "data-security", "cron-jobs"] as Tab[]).map((t) => (
+        {(["overview", "subscribers", "settings", "data-security", "cron-jobs", "email"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -237,7 +249,7 @@ export default function AdminPage() {
                 : "border-transparent text-muted hover:text-plum"
             }`}
           >
-            {t === "data-security" ? "Data & Security" : t === "cron-jobs" ? "Cron Jobs" : t.charAt(0).toUpperCase() + t.slice(1)}
+            {t === "data-security" ? "Data & Security" : t === "cron-jobs" ? "Cron Jobs" : t === "email" ? "Email" : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
@@ -382,6 +394,153 @@ export default function AdminPage() {
               .finally(() => setCronLoading(false));
           }}
         />
+      )}
+
+      {/* Email Tab */}
+      {tab === "email" && (
+        <div className="mt-6 space-y-8">
+          {/* Load data on tab open */}
+          {!emailData && !emailLoading && (
+            <button
+              onClick={() => {
+                setEmailLoading(true);
+                fetch("/api/admin/email")
+                  .then((r) => (r.ok ? r.json() : null))
+                  .then((data) => { if (data) setEmailData(data); })
+                  .catch(() => toast.error("Failed to load email data"))
+                  .finally(() => setEmailLoading(false));
+              }}
+              className="btn-primary"
+            >
+              Load Email Dashboard
+            </button>
+          )}
+          {emailLoading && <p className="text-[15px] text-muted py-8">Loading email data...</p>}
+
+          {emailData && (
+            <>
+              {/* Config Status */}
+              <div>
+                <h2 className="text-[18px] font-semibold text-plum">Email Configuration</h2>
+                <div className="mt-3 flex gap-4">
+                  <div className="card p-4 flex items-center gap-3">
+                    <span className={`w-3 h-3 rounded-full ${emailData.config.resendConfigured ? "bg-green-500" : "bg-red-500"}`} />
+                    <div>
+                      <p className="text-[15px] font-semibold text-plum">
+                        Resend {emailData.config.resendConfigured ? "Connected" : "Not Configured"}
+                      </p>
+                      <p className="text-[12px] text-muted">From: {emailData.config.fromEmail}</p>
+                    </div>
+                  </div>
+                  <div className="card p-4">
+                    <p className="text-[15px] font-semibold text-plum">{emailData.totalSent}</p>
+                    <p className="text-[12px] text-muted">Lifecycle emails sent</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Send Test Email */}
+              <div>
+                <h2 className="text-[18px] font-semibold text-plum">Send Test Email</h2>
+                <p className="mt-1 text-[13px] text-muted">Preview any email template by sending a test to yourself.</p>
+                <div className="mt-3 flex gap-3 items-end">
+                  <div className="flex-1">
+                    <label className="text-[12px] font-semibold text-muted">Recipient</label>
+                    <input
+                      type="email"
+                      value={testEmailTo}
+                      onChange={(e) => setTestEmailTo(e.target.value)}
+                      placeholder="your@email.com"
+                      className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[12px] font-semibold text-muted">Template</label>
+                    <select
+                      value={testEmailType}
+                      onChange={(e) => setTestEmailType(e.target.value)}
+                      className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                    >
+                      {emailData.emailTypes.map((et) => (
+                        <option key={et.type} value={et.type}>{et.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!testEmailTo) { toast.error("Enter a recipient email"); return; }
+                      setSendingTest(true);
+                      try {
+                        const res = await fetch("/api/admin/email", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ to: testEmailTo, templateType: testEmailType }),
+                        });
+                        const data = await res.json();
+                        if (data.success) toast.success("Test email sent!");
+                        else toast.error(data.error || "Failed to send");
+                      } catch { toast.error("Failed to send test email"); }
+                      finally { setSendingTest(false); }
+                    }}
+                    disabled={sendingTest || !testEmailTo}
+                    className="btn-primary disabled:opacity-50"
+                  >
+                    {sendingTest ? "Sending..." : "Send Test"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Email Types & Stats */}
+              <div>
+                <h2 className="text-[18px] font-semibold text-plum">Email Templates</h2>
+                <div className="mt-3 overflow-x-auto rounded-[16px] border border-border bg-white">
+                  <table className="w-full text-[14px]">
+                    <thead className="border-b border-border bg-lavender">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-semibold text-muted">Template</th>
+                        <th className="px-4 py-3 text-left font-semibold text-muted">Trigger</th>
+                        <th className="px-4 py-3 text-right font-semibold text-muted">Sent</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {emailData.emailTypes.map((et) => (
+                        <tr key={et.type}>
+                          <td className="px-4 py-3 font-semibold text-plum">{et.label}</td>
+                          <td className="px-4 py-3 text-muted">{et.trigger}</td>
+                          <td className="px-4 py-3 text-right font-semibold text-plum">{et.sent}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Recent Sends */}
+              <div>
+                <h2 className="text-[18px] font-semibold text-plum">Recent Sends</h2>
+                {emailData.recentEmails.length > 0 ? (
+                  <div className="mt-3 space-y-1">
+                    {emailData.recentEmails.map((e, i) => (
+                      <div key={i} className="card-list flex items-center gap-3 px-4 py-2">
+                        <span className="text-[12px] font-semibold px-2 py-0.5 rounded-full bg-lavender text-violet">
+                          {e.email_type.replace(/_/g, " ")}
+                        </span>
+                        <span className="text-[13px] text-muted flex-1 truncate">
+                          Wedding: {e.wedding_id.slice(0, 8)}...
+                        </span>
+                        <span className="text-[12px] text-muted">
+                          {new Date(e.sent_at).toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-[15px] text-muted">No emails sent yet.</p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       )}
 
       {/* Settings Tab */}

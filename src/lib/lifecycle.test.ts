@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { calculatePhase, isReadOnly, getEmailsDue } from "./lifecycle";
 
 /** Helper: return an ISO date string N months ago from "now". */
