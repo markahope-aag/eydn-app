@@ -135,7 +135,7 @@ export default async function WeddingWebsitePage({
               fill
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#1A1030]/20 via-transparent to-[#1A1030]/70" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#1A1A2E]/20 via-transparent to-[#1A1A2E]/70" />
             <div className="relative z-10 flex flex-col items-center justify-end h-full pb-20 text-center px-6">
               <h1
                 className="text-[56px] md:text-[72px] font-[family-name:var(--font-serif)] font-normal text-white drop-shadow-lg leading-tight"
@@ -158,7 +158,7 @@ export default async function WeddingWebsitePage({
             </div>
           </div>
         ) : (
-          <div className="relative overflow-hidden py-32 text-center px-6" style={{ background: "linear-gradient(135deg, var(--violet), var(--blush-pink))" }}>
+          <div className="relative overflow-hidden py-32 text-center px-6" style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))" }}>
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 20% 80%, white 0%, transparent 50%), radial-gradient(circle at 80% 20%, white 0%, transparent 50%)" }} />
             <div className="relative z-10">
               <h1 className="text-[56px] md:text-[72px] font-[family-name:var(--font-serif)] font-normal text-white leading-tight">

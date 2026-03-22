@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand Colors */
-  --violet: #8B3FCC;
-  --soft-violet: #B06EE0;
-  --blush-pink: #F0609A;
-  --petal: #F7C8E0;
-  --lavender-mist: #F0E0FF;
-  --whisper: #FBF6FF;
-  --deep-plum: #1A1030;
-  --muted-plum: #5A4070;
-  --border: #E8D0F5;
+  /* Brand Colors — Cream / Forest / Gold */
+  --violet: #2C3E2D;          /* forest green — primary actions */
+  --soft-violet: #C9A84C;     /* gold — accent, hover */
+  --blush-pink: #D4A5A5;      /* soft rose — highlights */
+  --petal: #E8D5B7;           /* champagne — warm accent */
+  --lavender-mist: #EDE7DF;   /* cream tint — panels */
+  --whisper: #FAF6F1;         /* cream — background */
+  --deep-plum: #1A1A2E;       /* charcoal — text */
+  --muted-plum: #6B6B6B;      /* muted text */
+  --border: #E8D5B7;          /* champagne — borders */
   --error: #A0204A;
 
   /* Status */
@@ -20,8 +20,8 @@
   --pending-text: #8A5200;
   --declined-bg: #FFE0EC;
   --declined-text: #A0204A;
-  --booked-bg: #F0E0FF;
-  --booked-text: #6B2FA0;
+  --booked-bg: #EDE7DF;
+  --booked-text: #2C3E2D;
 
   --background: var(--whisper);
   --foreground: var(--deep-plum);
@@ -31,15 +31,15 @@
 
 /* Dark theme overrides */
 [data-theme="dark"] {
-  --violet: #A855F7;
-  --soft-violet: #C084FC;
-  --blush-pink: #F472B6;
-  --petal: #3B1D4E;
-  --lavender-mist: #1E1230;
-  --whisper: #0F0A18;
-  --deep-plum: #F0E6FA;
-  --muted-plum: #B8A0CC;
-  --border: #2D1F3D;
+  --violet: #4A6B4D;
+  --soft-violet: #E8C97A;
+  --blush-pink: #C08080;
+  --petal: #3A3020;
+  --lavender-mist: #1E1E2A;
+  --whisper: #121218;
+  --deep-plum: #E8E0D8;
+  --muted-plum: #9A9A9A;
+  --border: #2A2A36;
   --error: #F87171;
 
   --confirmed-bg: #1A3D2A;
@@ -48,13 +48,13 @@
   --pending-text: #FCD34D;
   --declined-bg: #3D1A2A;
   --declined-text: #F87171;
-  --booked-bg: #2D1B4E;
-  --booked-text: #C084FC;
+  --booked-bg: #1E2E1F;
+  --booked-text: #7EBF82;
 
   --background: var(--whisper);
   --foreground: var(--deep-plum);
-  --surface: #1A1030;
-  --surface-raised: #221840;
+  --surface: #1A1A24;
+  --surface-raised: #222230;
 
   color-scheme: dark;
 }
@@ -186,7 +186,7 @@ h3 { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--deep-plum
   display: block;
   height: 5px;
   border-radius: 16px 16px 0 0;
-  background: linear-gradient(135deg, var(--violet), var(--blush-pink));
+  background: linear-gradient(135deg, var(--violet), var(--soft-violet));
 }
 
 .card-list {
@@ -279,7 +279,7 @@ input, textarea, select, select option {
 
 /* Gradient */
 .bg-brand-gradient {
-  background: linear-gradient(135deg, var(--violet), var(--blush-pink));
+  background: linear-gradient(135deg, var(--violet), var(--soft-violet));
 }
 
 /* Sidebar slide-in animation for mobile */

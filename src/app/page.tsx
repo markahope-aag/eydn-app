@@ -166,7 +166,7 @@ export default function HomePage() {
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <Show when="signed-out">
               <SignUpButton>
-                <button className="group relative px-8 py-4 text-[15px] font-semibold text-[#1A1030] overflow-hidden rounded-full transition-all hover:shadow-xl hover:shadow-violet/20" style={{ background: "linear-gradient(135deg, #fff 0%, var(--petal) 100%)" }}>
+                <button className="group relative px-8 py-4 text-[15px] font-semibold text-[#1A1A2E] overflow-hidden rounded-full transition-all hover:shadow-xl hover:shadow-violet/20" style={{ background: "linear-gradient(135deg, #fff 0%, var(--petal) 100%)" }}>
                   Start Your Free Trial
                 </button>
               </SignUpButton>
@@ -178,7 +178,7 @@ export default function HomePage() {
               </Link>
             </Show>
             <Show when="signed-in">
-              <Link href="/dashboard" className="px-8 py-4 text-[15px] font-semibold text-[#1A1030] rounded-full transition-all hover:shadow-xl" style={{ background: "linear-gradient(135deg, #fff 0%, var(--petal) 100%)" }}>
+              <Link href="/dashboard" className="px-8 py-4 text-[15px] font-semibold text-[#1A1A2E] rounded-full transition-all hover:shadow-xl" style={{ background: "linear-gradient(135deg, #fff 0%, var(--petal) 100%)" }}>
                 Go to Dashboard
               </Link>
             </Show>
@@ -278,7 +278,7 @@ export default function HomePage() {
               </div>
               <div className="flex-1 flex justify-center w-full">
                 <div className="w-full max-w-sm rounded-[24px] p-10 text-center border border-border/60 relative overflow-hidden" style={{ background: "var(--surface)" }}>
-                  <div className="absolute top-0 left-0 right-0 h-1" style={{ background: "linear-gradient(90deg, var(--violet), var(--blush-pink))" }} />
+                  <div className="absolute top-0 left-0 right-0 h-1" style={{ background: "linear-gradient(90deg, var(--violet), var(--soft-violet))" }} />
                   <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-5 text-violet" style={{ background: "var(--lavender-mist)" }}>
                     {deepDiveIcons[i]}
                   </div>
@@ -342,10 +342,10 @@ export default function HomePage() {
           </p>
 
           <div className="mt-16 max-w-md mx-auto rounded-[24px] border border-border/60 overflow-hidden" style={{ background: "var(--surface)" }}>
-            <div className="h-1.5" style={{ background: "linear-gradient(90deg, var(--violet), var(--blush-pink))" }} />
+            <div className="h-1.5" style={{ background: "linear-gradient(90deg, var(--violet), var(--soft-violet))" }} />
             <div className="p-10 sm:p-12">
               <p className="text-[12px] tracking-[0.2em] uppercase text-muted font-medium">Full Access</p>
-              <div className="mt-3" style={{ background: "linear-gradient(135deg, var(--violet), var(--blush-pink))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+              <div className="mt-3" style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                 <span className="text-[64px] font-[family-name:var(--font-serif)] font-normal leading-none">$79</span>
               </div>
               <p className="mt-2 text-[14px] text-muted">One-time payment &middot; 1 wedding &middot; Forever</p>
@@ -365,13 +365,13 @@ export default function HomePage() {
 
               <Show when="signed-out">
                 <SignUpButton>
-                  <button className="w-full mt-10 py-4 text-[15px] font-semibold text-white rounded-full transition-all hover:shadow-lg hover:shadow-violet/25" style={{ background: "linear-gradient(135deg, var(--violet), var(--blush-pink))" }}>
+                  <button className="w-full mt-10 py-4 text-[15px] font-semibold text-white rounded-full transition-all hover:shadow-lg hover:shadow-violet/25" style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))" }}>
                     Start 14-Day Free Trial
                   </button>
                 </SignUpButton>
               </Show>
               <Show when="signed-in">
-                <Link href="/dashboard" className="block w-full mt-10 py-4 text-[15px] font-semibold text-white rounded-full text-center transition-all hover:shadow-lg hover:shadow-violet/25" style={{ background: "linear-gradient(135deg, var(--violet), var(--blush-pink))" }}>
+                <Link href="/dashboard" className="block w-full mt-10 py-4 text-[15px] font-semibold text-white rounded-full text-center transition-all hover:shadow-lg hover:shadow-violet/25" style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))" }}>
                   Go to Dashboard
                 </Link>
               </Show>
@@ -406,7 +406,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Final CTA ─── */}
-      <section className="relative py-28 overflow-hidden" style={{ background: "#1A1030" }}>
+      <section className="relative py-28 overflow-hidden" style={{ background: "#1A1A2E" }}>
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, var(--violet) 0%, transparent 50%), radial-gradient(circle at 80% 50%, var(--blush-pink) 0%, transparent 50%)" }} />
         <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
           <h2 className="font-[family-name:var(--font-serif)] text-[40px] sm:text-[56px] text-white leading-[1.1]">
@@ -417,13 +417,13 @@ export default function HomePage() {
           </p>
           <Show when="signed-out">
             <SignUpButton>
-              <button className="mt-10 px-10 py-4 text-[15px] font-semibold text-[#1A1030] rounded-full transition-all hover:shadow-xl hover:shadow-petal/30" style={{ background: "linear-gradient(135deg, #fff 0%, var(--petal) 100%)" }}>
+              <button className="mt-10 px-10 py-4 text-[15px] font-semibold text-[#1A1A2E] rounded-full transition-all hover:shadow-xl hover:shadow-petal/30" style={{ background: "linear-gradient(135deg, #fff 0%, var(--petal) 100%)" }}>
                 Get Started Free
               </button>
             </SignUpButton>
           </Show>
           <Show when="signed-in">
-            <Link href="/dashboard" className="mt-10 inline-block px-10 py-4 text-[15px] font-semibold text-[#1A1030] rounded-full transition-all hover:shadow-xl" style={{ background: "linear-gradient(135deg, #fff 0%, var(--petal) 100%)" }}>
+            <Link href="/dashboard" className="mt-10 inline-block px-10 py-4 text-[15px] font-semibold text-[#1A1A2E] rounded-full transition-all hover:shadow-xl" style={{ background: "linear-gradient(135deg, #fff 0%, var(--petal) 100%)" }}>
               Go to Dashboard
             </Link>
           </Show>
@@ -431,7 +431,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── Footer ─── */}
-      <footer className="py-16" style={{ backgroundColor: "#1A1030" }}>
+      <footer className="py-16" style={{ backgroundColor: "#1A1A2E" }}>
         <div className="max-w-5xl mx-auto px-6 sm:px-12">
           <div className="grid gap-10 sm:grid-cols-4">
             <div>

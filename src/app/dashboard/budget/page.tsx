@@ -243,10 +243,10 @@ export default function BudgetPage() {
   }).filter((c) => c.total > 0);
 
   const CATEGORY_COLORS = [
-    "#8B3FCC", // violet
-    "#F0609A", // blush
-    "#B06EE0", // soft-violet
-    "#F7C8E0", // petal
+    "#2C3E2D", // violet
+    "#D4A5A5", // blush
+    "#C9A84C", // soft-violet
+    "#E8D5B7", // petal
     "#6C63FF", // indigo
     "#FF8C42", // tangerine
     "#36B37E", // green
@@ -394,7 +394,7 @@ export default function BudgetPage() {
                     className="h-full rounded-full"
                     style={{
                       width: budget > 0 ? `${Math.min((totalEstimated / budget) * 100, 100)}%` : "0%",
-                      background: "linear-gradient(90deg, #B06EE0, #F7C8E0)",
+                      background: "linear-gradient(90deg, #C9A84C, #E8D5B7)",
                       transition: "width 0.5s ease",
                     }}
                   />
@@ -411,7 +411,7 @@ export default function BudgetPage() {
                     className="h-full rounded-full"
                     style={{
                       width: budget > 0 ? `${Math.min((totalPaid / budget) * 100, 100)}%` : "0%",
-                      background: totalPaid > budget ? "var(--error, #E53E3E)" : "linear-gradient(90deg, #8B3FCC, #F0609A)",
+                      background: totalPaid > budget ? "var(--error, #E53E3E)" : "linear-gradient(90deg, #2C3E2D, #D4A5A5)",
                       transition: "width 0.5s ease",
                     }}
                   />

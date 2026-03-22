@@ -37,7 +37,7 @@ export default function PricingPage() {
       <div className="mt-8 card-summary p-8">
         <div
           style={{
-            background: "linear-gradient(135deg, var(--violet), var(--blush-pink))",
+            background: "linear-gradient(135deg, var(--violet), var(--soft-violet))",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",

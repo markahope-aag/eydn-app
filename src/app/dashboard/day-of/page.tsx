@@ -234,15 +234,15 @@ export default function DayOfPage() {
 
     // eydn brand colors
     const brand = {
-      violet: "#8B3FCC",
-      softViolet: "#B06EE0",
-      blush: "#F0609A",
-      petal: "#F7C8E0",
-      lavender: "#F0E0FF",
-      whisper: "#FBF6FF",
-      plum: "#1A1030",
-      muted: "#5A4070",
-      border: "#E8D0F5",
+      violet: "#2C3E2D",
+      softViolet: "#C9A84C",
+      blush: "#D4A5A5",
+      petal: "#E8D5B7",
+      lavender: "#EDE7DF",
+      whisper: "#FAF6F1",
+      plum: "#1A1A2E",
+      muted: "#6B6B6B",
+      border: "#E8D5B7",
       white: "#FFFFFF",
     };
 

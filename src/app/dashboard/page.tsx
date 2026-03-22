@@ -99,7 +99,7 @@ export default async function DashboardPage() {
             <div
               className="mt-3 inline-flex items-baseline gap-2"
               style={{
-                background: "linear-gradient(135deg, var(--violet), var(--blush-pink))",
+                background: "linear-gradient(135deg, var(--violet), var(--soft-violet))",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -244,8 +244,8 @@ function ProgressRing({ percentage }: { percentage: number }) {
       {/* Gradient definition */}
       <defs>
         <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#8B3FCC" />
-          <stop offset="100%" stopColor="#F0609A" />
+          <stop offset="0%" stopColor="#2C3E2D" />
+          <stop offset="100%" stopColor="#D4A5A5" />
         </linearGradient>
       </defs>
       {/* Background ring */}

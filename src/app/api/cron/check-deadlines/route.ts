@@ -96,19 +96,19 @@ export async function GET(request: Request) {
           to: userEmail,
           subject: `${partnerNames} — ${weddingTasks.length} task${weddingTasks.length > 1 ? "s" : ""} due this week`,
           html: `
-            <div style="max-width: 560px; margin: 0 auto; background: #FBF6FF; border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-              <div style="background: linear-gradient(135deg, #8B3FCC, #F0609A); padding: 32px; text-align: center; border-radius: 16px 16px 0 0;">
+            <div style="max-width: 560px; margin: 0 auto; background: #FAF6F1; border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+              <div style="background: linear-gradient(135deg, #2C3E2D, #D4A5A5); padding: 32px; text-align: center; border-radius: 16px 16px 0 0;">
                 <h1 style="color: white; font-size: 24px; margin: 0;">eydn</h1>
               </div>
-              <div style="padding: 32px; color: #1A1030; font-size: 15px; line-height: 1.7;">
-                <h2 style="color: #1A1030; font-size: 20px;">Upcoming deadlines this week</h2>
+              <div style="padding: 32px; color: #1A1A2E; font-size: 15px; line-height: 1.7;">
+                <h2 style="color: #1A1A2E; font-size: 20px;">Upcoming deadlines this week</h2>
                 <p>Hi ${wedding.partner1_name}! You have ${weddingTasks.length} task${weddingTasks.length > 1 ? "s" : ""} coming up:</p>
                 <ul style="padding-left: 20px;">${taskListHtml}</ul>
                 <p style="text-align: center; margin-top: 24px;">
-                  <a href="https://eydn.app/dashboard/tasks" style="display: inline-block; background: linear-gradient(135deg, #8B3FCC, #F0609A); color: white; padding: 12px 28px; border-radius: 999px; text-decoration: none; font-weight: 600;">View Tasks</a>
+                  <a href="https://eydn.app/dashboard/tasks" style="display: inline-block; background: linear-gradient(135deg, #2C3E2D, #D4A5A5); color: white; padding: 12px 28px; border-radius: 999px; text-decoration: none; font-weight: 600;">View Tasks</a>
                 </p>
               </div>
-              <div style="padding: 24px; text-align: center; color: #5A4070; font-size: 12px;">
+              <div style="padding: 24px; text-align: center; color: #6B6B6B; font-size: 12px;">
                 <p>eydn — Your AI Wedding Planning Guide</p>
               </div>
             </div>

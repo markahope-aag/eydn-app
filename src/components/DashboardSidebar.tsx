@@ -40,7 +40,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
       <Link
         href="/dashboard"
         className="text-xl font-semibold"
-        style={{ background: "linear-gradient(135deg, var(--violet), var(--blush-pink))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}
+        style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}
         onClick={() => setOpen(false)}
       >
         eydn

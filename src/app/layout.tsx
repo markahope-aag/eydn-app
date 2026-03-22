@@ -39,7 +39,7 @@ export default function RootLayout({
         <ClerkProvider>
           <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-white/95 backdrop-blur px-6 py-3">
             <div className="flex items-center gap-8">
-              <Link href="/" className="text-xl font-semibold" style={{ background: "linear-gradient(135deg, var(--violet), var(--blush-pink))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+              <Link href="/" className="text-xl font-semibold" style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                 eydn
               </Link>
               <Show when="signed-out">

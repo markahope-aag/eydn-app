@@ -283,7 +283,7 @@ export default function GuestsPage() {
     if (guests.length === 0) return;
     const { pdf, Document, Page: PdfPage, Text, View, StyleSheet } = await import("@react-pdf/renderer");
 
-    const brand = { violet: "#8B3FCC", plum: "#1A1030", muted: "#5A4070", lavender: "#F0E0FF", border: "#E8D0F5", blush: "#F0609A" };
+    const brand = { violet: "#2C3E2D", plum: "#1A1A2E", muted: "#6B6B6B", lavender: "#EDE7DF", border: "#E8D5B7", blush: "#D4A5A5" };
 
     const s = StyleSheet.create({
       page: { fontFamily: "Helvetica", fontSize: 9, color: brand.plum, padding: 36 },
