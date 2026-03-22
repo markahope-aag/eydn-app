@@ -317,6 +317,7 @@ export default function MoodBoardPage() {
                 src={item.image_url}
                 alt={item.caption || "Inspiration"}
                 className="w-full object-cover"
+                unoptimized
                 width={400}
                 height={400}
               />
@@ -383,6 +384,7 @@ export default function MoodBoardPage() {
                 src={lightbox.image_url}
                 alt={lightbox.caption || "Inspiration"}
                 className="w-full max-h-[60vh] object-contain bg-black/5"
+                unoptimized
                 width={800}
                 height={600}
               />
