@@ -24,6 +24,7 @@ const navItems = [
   { href: "/dashboard/vendor-portal", label: "Vendor Portal" },
   { href: "/dashboard/website", label: "Wedding Website" },
   { href: "/dashboard/settings", label: "Settings" },
+  { href: "/dashboard/help", label: "Help & Support" },
 ];
 
 function isActive(pathname: string, href: string) {
