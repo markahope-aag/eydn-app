@@ -47,9 +47,9 @@ export default function HomePage() {
           <span className="w-1 h-1 rounded-full bg-border" />
           <span>13 vendor categories</span>
           <span className="w-1 h-1 rounded-full bg-border" />
-          <span>AI-powered planning</span>
+          <span>AI that remembers your vision</span>
           <span className="w-1 h-1 rounded-full bg-border" />
-          <span>Beautiful wedding websites</span>
+          <span>Complete day-of binder</span>
           <span className="w-1 h-1 rounded-full bg-border" />
           <span>Bank-grade data protection</span>
         </div>
@@ -320,8 +320,8 @@ export default function HomePage() {
 const features = [
   {
     icon: "\u{1F4AC}",
-    title: "AI wedding assistant",
-    description: "Chat with eydn for personalized advice, vendor tips, and planning guidance — like having a planner on call 24/7.",
+    title: "AI assistant that remembers you",
+    description: "Chat with eydn for personalized advice — it knows your style, allergies, budget priorities, and every decision you've made. Like a planner who never forgets.",
   },
   {
     icon: "\u{2705}",
@@ -340,8 +340,8 @@ const features = [
   },
   {
     icon: "\u{1F91D}",
-    title: "Vendor tracker",
-    description: "Manage 13 vendor categories with a status pipeline, contacts, financials, and email outreach templates.",
+    title: "Vendor tracker with Google profiles",
+    description: "Manage 13 vendor categories with status pipeline, contacts, financials, email templates, and auto-enriched Google Business profiles with ratings and reviews.",
   },
   {
     icon: "\u{1F310}",
@@ -355,8 +355,8 @@ const features = [
   },
   {
     icon: "\u{1F4C5}",
-    title: "Day-of planner",
-    description: "Auto-generated timeline based on your ceremony time. Vendor contacts, party jobs, and packing checklist. Export to PDF.",
+    title: "Complete day-of binder",
+    description: "Timeline, ceremony script, music lists, speeches, setup assignments, attire details, vendor contacts, and packing checklist — all exportable as a beautiful branded PDF.",
   },
   {
     icon: "\u{1F4F8}",
@@ -389,11 +389,13 @@ const deepDives = [
   {
     label: "AI Assistant",
     title: "Like having a planner in your pocket",
-    description: "eydn knows your wedding inside and out — your budget, guest count, vendor statuses, and task progress. Ask anything and get advice that's specific to your wedding.",
+    description: "eydn knows your wedding inside and out — your budget, guest count, vendor statuses, task progress, and every key decision you've made. It remembers your preferences across every conversation.",
     bullets: [
-      "Personalized answers based on your wedding data",
+      "Remembers your style, allergies, priorities, and decisions",
+      "Personalized answers based on your complete wedding data",
       "Vendor outreach tips and etiquette advice",
       "Budget allocation suggestions",
+      "50-message conversation memory for natural dialogue",
       "Deadline reminders and next-step guidance",
     ],
     icon: "\u{1F4AC}",
@@ -426,6 +428,23 @@ const deepDives = [
     cardText: "36 pre-built line items across 13 categories",
   },
   {
+    label: "Day-of Binder",
+    title: "Your complete wedding binder, digitized",
+    description: "Everything your coordinator, DJ, photographer, and wedding party needs — in one document. Per-person schedules, ceremony script, music cues, vendor arrival times, decor layouts, and more.",
+    bullets: [
+      "Separate schedules for bride, groom, bridesmaids, and groomsmen",
+      "Full ceremony script with processional order",
+      "Music list for every moment (ceremony, reception, dances)",
+      "Speech order with speaker roles and topics",
+      "Setup task assignments (who does what, day before)",
+      "Attire documentation with photos",
+      "Vendor contact sheet with arrival times and meal needs",
+      "Packing checklist so nothing gets left behind",
+    ],
+    icon: "\u{1F4D6}",
+    cardText: "Everything in one PDF — like Karly's 64-page binder",
+  },
+  {
     label: "Data Security",
     title: "Your plans deserve protection",
     description: "Your wedding is one of the most important events of your life. We treat your data with the same care you put into planning it. Daily backups, recovery tools, and full data ownership — built into every account.",
@@ -450,18 +469,22 @@ const memoryPlanFeatures = [
 ];
 
 const pricingFeatures = [
-  "AI wedding assistant (Ask eydn)",
+  "AI assistant that remembers your vision",
   "50+ auto-generated tasks with smart timeline",
   "Budget tracker with 36 pre-built line items",
   "Guest management with RSVP links",
-  "Vendor tracker across 13 categories",
+  "Vendor tracker with Google Business profiles",
   "Beautiful wedding website for your guests",
   "Drag-and-drop seating chart",
-  "Day-of planner with PDF export",
+  "Complete day-of binder with PDF export",
+  "Ceremony script & music planning",
+  "Rehearsal dinner planner",
+  "Pinterest-style mood board",
+  "Collaborative comments with your partner",
   "Guest photo gallery",
   "Email templates for vendor outreach",
-  "Wedding party management",
-  "Smart deadline notifications",
+  "Wedding party management with photos",
+  "Smart deadline email reminders",
   "Daily backups with 30-day recovery",
   "Download all your data anytime",
 ];
