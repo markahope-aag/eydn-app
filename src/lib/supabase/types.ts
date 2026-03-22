@@ -1162,6 +1162,7 @@ export type Database = {
           email: string | null;
           phone: string | null;
           job_assignment: string | null;
+          photo_url: string | null;
           sort_order: number;
           created_at: string;
         };
@@ -1173,6 +1174,7 @@ export type Database = {
           email?: string | null;
           phone?: string | null;
           job_assignment?: string | null;
+          photo_url?: string | null;
           sort_order?: number;
           created_at?: string;
         };
@@ -1184,6 +1186,7 @@ export type Database = {
           email?: string | null;
           phone?: string | null;
           job_assignment?: string | null;
+          photo_url?: string | null;
           sort_order?: number;
         };
         Relationships: [

@@ -4,7 +4,7 @@ import { pickFields } from "@/lib/validation";
 import { softDelete, logActivity } from "@/lib/audit";
 
 const ALLOWED_FIELDS = [
-  "name", "role", "email", "phone", "job_assignment", "sort_order",
+  "name", "role", "email", "phone", "job_assignment", "photo_url", "sort_order",
 ];
 
 export async function PATCH(

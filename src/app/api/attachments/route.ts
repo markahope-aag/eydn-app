@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { requirePremium } from "@/lib/subscription";
 
 // Synthetic entity IDs used by website and mood board uploads — not real DB records
-const SYNTHETIC_IDS = new Set(["website-cover", "website-couple-photo", "mood-board"]);
+const SYNTHETIC_IDS = new Set(["website-cover", "website-couple-photo", "mood-board", "wedding-party-photo"]);
 
 function isSyntheticUpload(entityId: string) {
   return SYNTHETIC_IDS.has(entityId);
