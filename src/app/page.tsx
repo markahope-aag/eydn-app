@@ -273,7 +273,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-plum text-white/70">
+      <footer className="py-12 text-white/70" style={{ backgroundColor: "#1A1030" }}>
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid gap-8 sm:grid-cols-4">
             <div>
