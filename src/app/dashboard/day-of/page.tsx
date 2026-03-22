@@ -20,17 +20,47 @@ type DayOfPlan = {
 
 type Tab = "timeline" | "vendors" | "packing";
 
-function generateTimelineFromCeremony(ceremonyTime: string): TimelineItem[] {
-  // Parse ceremony time (e.g. "4:30 PM")
-  const match = ceremonyTime.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (!match) return [];
+function parseCeremonyTime(input: string): number | null {
+  const trimmed = input.trim();
 
-  let hours = parseInt(match[1]);
-  const minutes = parseInt(match[2]);
-  const period = match[3].toUpperCase();
-  if (period === "PM" && hours !== 12) hours += 12;
-  if (period === "AM" && hours === 12) hours = 0;
-  const ceremonyMinutes = hours * 60 + minutes;
+  // Try "4:30 PM", "4:30PM", "4:30 pm", "4:30pm"
+  const match12 = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (match12) {
+    let h = parseInt(match12[1]);
+    const m = parseInt(match12[2]);
+    const p = match12[3].toUpperCase();
+    if (p === "PM" && h !== 12) h += 12;
+    if (p === "AM" && h === 12) h = 0;
+    return h * 60 + m;
+  }
+
+  // Try "4 PM", "4PM", "4 pm"
+  const matchHourOnly = trimmed.match(/^(\d{1,2})\s*(AM|PM)$/i);
+  if (matchHourOnly) {
+    let h = parseInt(matchHourOnly[1]);
+    const p = matchHourOnly[2].toUpperCase();
+    if (p === "PM" && h !== 12) h += 12;
+    if (p === "AM" && h === 12) h = 0;
+    return h * 60;
+  }
+
+  // Try 24-hour "16:30", "09:00"
+  const match24 = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+  if (match24) {
+    const h = parseInt(match24[1]);
+    const m = parseInt(match24[2]);
+    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+      return h * 60 + m;
+    }
+  }
+
+  // Try HTML time input "16:30" (same as above but also handles leading zeros)
+  return null;
+}
+
+function generateTimelineFromCeremony(ceremonyTime: string): TimelineItem[] {
+  const ceremonyMinutes = parseCeremonyTime(ceremonyTime);
+  if (ceremonyMinutes === null) return [];
 
   function formatTime(totalMinutes: number): string {
     let h = Math.floor(totalMinutes / 60);
@@ -412,11 +442,10 @@ export default function DayOfPage() {
           <div className="flex items-center gap-3">
             <label className="text-[13px] font-semibold text-plum whitespace-nowrap">Ceremony time:</label>
             <input
-              type="text"
+              type="time"
               value={ceremonyTime}
               onChange={(e) => setCeremonyTime(e.target.value)}
-              placeholder="e.g. 4:30 PM"
-              className="rounded-[10px] border-border px-3 py-1.5 text-[15px] w-32"
+              className="rounded-[10px] border-border px-3 py-1.5 text-[15px] w-36"
             />
           </div>
           <button
@@ -487,14 +516,13 @@ export default function DayOfPage() {
       </p>
 
       {/* Ceremony time */}
-      <div className="mt-4 card p-4 flex items-center gap-3">
+      <div className="mt-4 card p-4 flex flex-wrap items-center gap-3">
         <label className="text-[13px] font-semibold text-plum whitespace-nowrap">Ceremony time:</label>
         <input
-          type="text"
+          type="time"
           value={ceremonyTime}
           onChange={(e) => setCeremonyTime(e.target.value)}
-          placeholder="e.g. 4:30 PM"
-          className="rounded-[10px] border-border px-3 py-1.5 text-[15px] w-32"
+          className="rounded-[10px] border-border px-3 py-1.5 text-[15px] w-36"
         />
         <button onClick={handleCeremonyTimeSet} className="btn-secondary btn-sm">
           Generate Timeline
