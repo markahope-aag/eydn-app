@@ -265,7 +265,7 @@ export default function SeatingPage() {
         <div className="flex gap-6 h-[calc(100vh-10rem)]">
           <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[13px] text-muted">Drag tables to reposition. Drag guests onto tables.</p>
+              <p className="text-[13px] text-muted">Drag tables to reposition. Drag guests onto tables. Click <strong>Edit</strong> on any table to change its size, shape, or name.</p>
               <button onClick={addTable} className="btn-primary btn-sm">Add Table</button>
             </div>
 
@@ -294,15 +294,22 @@ export default function SeatingPage() {
                   >
                     <div className={`${table.shape === "round" ? "w-36 rounded-full" : "w-44 rounded-[16px]"} border-2 bg-white shadow-sm p-3 ${isFull ? "border-violet" : "border-border"}`}>
                       <div className="text-center">
-                        <p
-                          className="text-[12px] font-semibold text-plum cursor-pointer hover:text-violet"
-                          onClick={(e) => { e.stopPropagation(); setEditingTable(editingTable === table.id ? null : table.id); }}
-                        >
+                        <p className="text-[12px] font-semibold text-plum">
                           {table.name || `Table ${table.table_number}`}
                         </p>
                         <p className="text-[10px] text-muted">
                           {tableGuests.length}/{table.capacity} &middot; {table.shape}
                         </p>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditingTable(editingTable === table.id ? null : table.id); }}
+                          className={`mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full transition ${
+                            editingTable === table.id
+                              ? "bg-violet text-white"
+                              : "bg-lavender text-violet hover:bg-violet hover:text-white"
+                          }`}
+                        >
+                          {editingTable === table.id ? "Close" : "Edit"}
+                        </button>
                       </div>
                       <div className="mt-1 space-y-0.5">
                         {tableGuests.map((g) => (
