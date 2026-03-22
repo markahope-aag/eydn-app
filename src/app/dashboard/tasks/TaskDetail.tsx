@@ -108,6 +108,7 @@ export function TaskDetail({
   const [relatedTasks, setRelatedTasks] = useState<RelatedTask[]>([]);
   const [newResourceLabel, setNewResourceLabel] = useState("");
   const [newResourceUrl, setNewResourceUrl] = useState("");
+  const [showAddResource, setShowAddResource] = useState(false);
   const [showEmailTemplate, setShowEmailTemplate] = useState(false);
   const emailTemplate = getEmailTemplate(task.category, task.title);
   const followUpTemplate = VENDOR_EMAIL_TEMPLATES.find((t) => t.category === "Follow-Up");
@@ -165,6 +166,7 @@ export function TaskDetail({
       if (!res.ok) throw new Error();
       setNewResourceLabel("");
       setNewResourceUrl("");
+      setShowAddResource(false);
       fetchResources();
       toast.success("Resource added");
     } catch {
@@ -466,25 +468,44 @@ export function TaskDetail({
                 ))}
               </div>
             )}
-            <form onSubmit={addResource} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Label"
-                value={newResourceLabel}
-                onChange={(e) => setNewResourceLabel(e.target.value)}
-                className="rounded-[10px] border-border px-3 py-1.5 text-[13px] flex-1"
-              />
-              <input
-                type="url"
-                placeholder="https://..."
-                value={newResourceUrl}
-                onChange={(e) => setNewResourceUrl(e.target.value)}
-                className="rounded-[10px] border-border px-3 py-1.5 text-[13px] flex-1"
-              />
-              <button type="submit" className="btn-secondary btn-sm">
-                Add
+            {showAddResource ? (
+              <form onSubmit={addResource} className="rounded-[12px] border border-border bg-lavender/20 p-3 space-y-2">
+                <input
+                  type="text"
+                  placeholder="Label (e.g. Venue contract)"
+                  value={newResourceLabel}
+                  onChange={(e) => setNewResourceLabel(e.target.value)}
+                  className="w-full rounded-[10px] border-border px-3 py-1.5 text-[13px]"
+                  autoFocus
+                />
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={newResourceUrl}
+                  onChange={(e) => setNewResourceUrl(e.target.value)}
+                  className="w-full rounded-[10px] border-border px-3 py-1.5 text-[13px]"
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => { setShowAddResource(false); setNewResourceLabel(""); setNewResourceUrl(""); }}
+                    className="text-[12px] text-muted hover:text-plum"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-primary btn-sm">
+                    Add
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                onClick={() => setShowAddResource(true)}
+                className="text-[13px] text-violet font-semibold hover:text-soft-violet transition"
+              >
+                + Add Resource
               </button>
-            </form>
+            )}
           </div>
 
           {/* Attachments */}
