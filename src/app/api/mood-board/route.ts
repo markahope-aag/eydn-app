@@ -36,11 +36,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Valid HTTPS URL required" }, { status: 400 });
   }
 
+  // If the URL is not a direct image, try to extract og:image from the page
+  let finalImageUrl = image_url as string;
+  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".avif"];
+  const isDirectImage = imageExtensions.some((ext) => (image_url as string).toLowerCase().split("?")[0].endsWith(ext));
+
+  if (!isDirectImage) {
+    try {
+      const pageRes = await fetch(image_url as string, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; eydn/1.0)" },
+        signal: AbortSignal.timeout(5000),
+      });
+      const html = await pageRes.text();
+      // Extract og:image meta tag
+      const ogMatch = html.match(/<meta\s+(?:property|name)="og:image"\s+content="([^"]+)"/i)
+        || html.match(/content="([^"]+)"\s+(?:property|name)="og:image"/i);
+      if (ogMatch?.[1]) {
+        finalImageUrl = ogMatch[1];
+      } else {
+        return NextResponse.json(
+          { error: "Could not find an image at this URL. Try pasting a direct image URL instead (right-click an image → Copy image address)." },
+          { status: 400 }
+        );
+      }
+    } catch {
+      return NextResponse.json(
+        { error: "Could not load this URL. Try pasting a direct image URL instead." },
+        { status: 400 }
+      );
+    }
+  }
+
   const { data, error } = await supabase
     .from("mood_board_items")
     .insert({
       wedding_id: wedding.id,
-      image_url,
+      image_url: finalImageUrl,
       caption: caption || null,
       category: category || "General",
     })

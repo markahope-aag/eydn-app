@@ -61,15 +61,15 @@ export default function MoodBoardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image_url: imageUrl.trim(), caption: caption.trim() || null, category }),
       });
-      if (!res.ok) throw new Error();
-      const saved = await res.json();
-      setItems((prev) => [saved, ...prev]);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add image");
+      setItems((prev) => [data, ...prev]);
       setImageUrl("");
       setCaption("");
       setShowAdd(false);
       toast.success("Added to mood board");
-    } catch {
-      toast.error("Failed to add image");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add image");
     } finally {
       setUploading(false);
     }
@@ -87,7 +87,10 @@ export default function MoodBoardPage() {
 
     try {
       const uploadRes = await fetch("/api/attachments", { method: "POST", body: formData });
-      if (!uploadRes.ok) throw new Error();
+      if (!uploadRes.ok) {
+        const errData = await uploadRes.json().catch(() => ({}));
+        throw new Error(errData.error || `Upload failed (${uploadRes.status})`);
+      }
       const { file_url } = await uploadRes.json();
 
       const res = await fetch("/api/mood-board", {
@@ -101,8 +104,8 @@ export default function MoodBoardPage() {
       setCaption("");
       setShowAdd(false);
       toast.success("Added to mood board");
-    } catch {
-      toast.error("Failed to upload image");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload image");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
