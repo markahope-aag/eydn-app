@@ -98,13 +98,32 @@ export async function POST(request: Request) {
   if (err) return err;
 
   // Upload to Supabase Storage
+  // Convert File to ArrayBuffer for reliable server-side upload
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
   const fileName = `${wedding.id}/${entityType}/${entityId}/${Date.now()}_${file.name}`;
-  const { error: uploadError } = await supabase.storage
+
+  let { error: uploadError } = await supabase.storage
     .from("attachments")
-    .upload(fileName, file);
+    .upload(fileName, fileBuffer, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+
+  // If bucket doesn't exist, create it and retry
+  if (uploadError?.message?.includes("not found") || uploadError?.message?.includes("Bucket")) {
+    await supabase.storage.createBucket("attachments", { public: true });
+    const retry = await supabase.storage
+      .from("attachments")
+      .upload(fileName, fileBuffer, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
+    uploadError = retry.error;
+  }
 
   if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    console.error("[ATTACHMENTS] Upload failed:", uploadError.message);
+    return NextResponse.json({ error: `Upload failed: ${uploadError.message}` }, { status: 500 });
   }
 
   const { data: urlData } = supabase.storage
