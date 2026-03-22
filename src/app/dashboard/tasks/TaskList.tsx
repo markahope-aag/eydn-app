@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatDueDate } from "@/lib/date-utils";
 import {
   DndContext,
   closestCenter,
@@ -98,10 +99,8 @@ function SortableTaskItem({
     zIndex: isDragging ? 10 : undefined,
   };
 
-  const isOverdue =
-    task.due_date &&
-    task.status !== "done" &&
-    new Date(task.due_date) < new Date();
+  const dueDateInfo = task.due_date ? formatDueDate(task.due_date) : null;
+  const isOverdue = dueDateInfo?.isOverdue && task.status !== "done";
 
   return (
     <div
@@ -160,15 +159,17 @@ function SortableTaskItem({
           {task.category}
         </span>
       )}
-      {task.due_date && (
+      {dueDateInfo && (
         <span
           className={`text-[12px] flex-shrink-0 ${
             isOverdue
               ? "text-error font-semibold"
+              : dueDateInfo.isToday
+              ? "text-violet font-semibold"
               : "text-muted"
           }`}
         >
-          {task.due_date}
+          {dueDateInfo.formatted} &middot; {dueDateInfo.relative}
         </span>
       )}
       {!task.is_system_generated && (

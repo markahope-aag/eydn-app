@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { EdynMessage } from "@/components/EdynMessage";
 import { FileUpload } from "@/components/FileUpload";
 import { VENDOR_EMAIL_TEMPLATES } from "@/lib/vendors/email-templates";
+import { formatDueDate } from "@/lib/date-utils";
 
 // Map task categories to email template vendor categories
 const TASK_TO_EMAIL_CATEGORY: Record<string, string> = {
@@ -112,8 +113,8 @@ export function TaskDetail({
   const followUpTemplate = VENDOR_EMAIL_TEMPLATES.find((t) => t.category === "Follow-Up");
   const [relatedTaskId, setRelatedTaskId] = useState("");
 
-  const isOverdue =
-    task.due_date && task.status !== "done" && new Date(task.due_date) < new Date();
+  const dueDateInfo = task.due_date ? formatDueDate(task.due_date) : null;
+  const isOverdue = dueDateInfo?.isOverdue && task.status !== "done";
 
   // Fetch resources, attachments, and related tasks on open
   useEffect(() => {
@@ -256,10 +257,10 @@ export function TaskDetail({
           </div>
 
           {/* Due date */}
-          {task.due_date && (
+          {dueDateInfo && (
             <div className="mt-4">
-              <span className={`text-[15px] ${isOverdue ? "text-error" : "text-muted"}`}>
-                Due: {task.due_date}
+              <span className={`text-[15px] ${isOverdue ? "text-error font-semibold" : dueDateInfo.isToday ? "text-violet font-semibold" : "text-muted"}`}>
+                Due: {dueDateInfo.formatted} &middot; {dueDateInfo.relative}
               </span>
             </div>
           )}

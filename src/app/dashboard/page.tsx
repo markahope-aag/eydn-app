@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
+import { formatDueDate } from "@/lib/date-utils";
 
 type Wedding = Database["public"]["Tables"]["weddings"]["Row"];
 
@@ -138,8 +139,8 @@ export default async function DashboardPage() {
           <h2>Upcoming tasks</h2>
           <div className="mt-3 space-y-2">
             {(upcomingTasks as { title: string; due_date: string | null; category: string | null; completed: boolean }[]).map((task, i) => {
-              const isOverdue =
-                task.due_date && new Date(task.due_date) < new Date();
+              const dueDateInfo = task.due_date ? formatDueDate(task.due_date) : null;
+              const isOverdue = dueDateInfo?.isOverdue;
               return (
                 <div key={i} className="card-list flex items-center gap-3 px-4 py-3">
                   <span className="flex-1 text-[15px] text-plum">
@@ -148,9 +149,9 @@ export default async function DashboardPage() {
                   {task.category && (
                     <span className="badge badge-booked">{task.category}</span>
                   )}
-                  {task.due_date && (
-                    <span className={`text-[12px] ${isOverdue ? "text-error font-semibold" : "text-muted"}`}>
-                      {isOverdue ? "Overdue: " : ""}{task.due_date}
+                  {dueDateInfo && (
+                    <span className={`text-[12px] ${isOverdue ? "text-error font-semibold" : dueDateInfo.isToday ? "text-violet font-semibold" : "text-muted"}`}>
+                      {dueDateInfo.formatted} &middot; {dueDateInfo.relative}
                     </span>
                   )}
                 </div>
