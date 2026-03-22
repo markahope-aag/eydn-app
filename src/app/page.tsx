@@ -1330,7 +1330,7 @@ const pricingFeatures = [
   "Complete day-of binder with PDF export",
   "Ceremony script & music planning",
   "Rehearsal dinner planner",
-  "Pinterest-style mood board",
+  "Pinterest-style vision board",
   "Collaborative comments with your partner",
   "Guest photo gallery",
   "Email templates for vendor outreach",

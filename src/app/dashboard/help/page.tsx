@@ -37,7 +37,7 @@ const GUIDE_SECTIONS = [
       { label: "Task timeline", desc: "50+ tasks auto-generated from your date, organized by phase. Mark as complete, add notes, drag to reorder." },
       { label: "Vendor tracker", desc: "Track 13 categories through the pipeline: searching → contacted → booked → paid. Use email templates for outreach." },
       { label: "Seating chart", desc: "Drag-and-drop tables. Click Edit on any table to change size, shape, or name. Drag guests from the sidebar onto tables." },
-      { label: "Mood board", desc: "Upload images or paste URLs (including Pinterest). Organize by category and venue location." },
+      { label: "Vision board", desc: "Upload images or paste URLs (including Pinterest). Organize by category and venue location." },
       { label: "Day-of planner", desc: "8 tabs: Timeline, Ceremony Script, Music, Speeches, Setup Tasks, Attire, Vendor Contacts, Packing Checklist." },
       { label: "Rehearsal dinner", desc: "Separate page for venue, timeline, and guest list for the rehearsal." },
     ],

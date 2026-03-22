@@ -2,7 +2,7 @@ import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { requirePremium } from "@/lib/subscription";
 
-// Synthetic entity IDs used by website and mood board uploads — not real DB records
+// Synthetic entity IDs used by website and vision board uploads — not real DB records
 const SYNTHETIC_IDS = new Set(["website-cover", "website-couple-photo", "mood-board", "wedding-party-photo"]);
 
 function isSyntheticUpload(entityId: string) {

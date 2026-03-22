@@ -18,7 +18,7 @@ const commands: Command[] = [
   { label: "Guests", href: "/dashboard/guests", category: "Navigation" },
   { label: "Wedding Party", href: "/dashboard/wedding-party", category: "Navigation" },
   { label: "Seating Chart", href: "/dashboard/seating", category: "Navigation" },
-  { label: "Mood Board", href: "/dashboard/mood-board", category: "Navigation" },
+  { label: "Vision Board", href: "/dashboard/mood-board", category: "Navigation" },
   { label: "Day-of Planner", href: "/dashboard/day-of", category: "Navigation" },
   { label: "Ask eydn", href: "/dashboard/chat", category: "Navigation" },
   { label: "Wedding Website", href: "/dashboard/website", category: "Navigation" },

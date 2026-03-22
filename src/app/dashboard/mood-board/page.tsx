@@ -62,7 +62,7 @@ export default function MoodBoardPage() {
     fetch("/api/mood-board")
       .then((r) => (r.ok ? r.json() : []))
       .then(setItems)
-      .catch(() => toast.error("Failed to load mood board"))
+      .catch(() => toast.error("Failed to load vision board"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -82,7 +82,7 @@ export default function MoodBoardPage() {
       setCaption("");
       setLocation("");
       setShowAdd(false);
-      toast.success("Added to mood board");
+      toast.success("Added to vision board");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add image");
     } finally {
@@ -119,7 +119,7 @@ export default function MoodBoardPage() {
       setCaption("");
       setLocation("");
       setShowAdd(false);
-      toast.success("Added to mood board");
+      toast.success("Added to vision board");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to upload image");
     } finally {
@@ -175,7 +175,7 @@ export default function MoodBoardPage() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1>Mood Board</h1>
+          <h1>Vision Board</h1>
           <p className="mt-1 text-[15px] text-muted">
             Collect inspiration for your wedding look and feel
           </p>
@@ -451,8 +451,8 @@ export default function MoodBoardPage() {
 
       <ConfirmDialog
         open={confirmDelete !== null}
-        title="Remove from mood board?"
-        message="This image will be permanently removed from your mood board. This action cannot be undone."
+        title="Remove from vision board?"
+        message="This image will be permanently removed from your vision board. This action cannot be undone."
         confirmLabel="Remove"
         onConfirm={() => {
           if (confirmDelete) {
