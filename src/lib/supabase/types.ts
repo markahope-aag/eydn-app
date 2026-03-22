@@ -1,6 +1,30 @@
 export type Database = {
   public: {
     Tables: {
+      comments: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          entity_type: "task" | "vendor" | "guest" | "expense" | "general";
+          entity_id: string;
+          user_id: string;
+          user_name: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          wedding_id: string;
+          entity_type: "task" | "vendor" | "guest" | "expense" | "general";
+          entity_id: string;
+          user_id: string;
+          user_name: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
       cron_log: {
         Row: {
           id: string;

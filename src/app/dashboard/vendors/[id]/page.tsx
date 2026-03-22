@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { VENDOR_STATUSES } from "@/lib/vendors/categories";
 import { EmailTemplate } from "../EmailTemplate";
+import { Comments } from "@/components/Comments";
 
 type Vendor = {
   id: string;
@@ -235,6 +236,11 @@ export default function VendorDetailPage({
           onClose={() => setShowEmail(false)}
         />
       )}
+
+      {/* Comments */}
+      <div className="mt-6 pt-6 border-t border-border">
+        <Comments entityType="vendor" entityId={vendor.id} />
+      </div>
     </div>
   );
 }

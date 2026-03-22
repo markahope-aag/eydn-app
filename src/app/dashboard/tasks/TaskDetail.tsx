@@ -6,6 +6,7 @@ import { EdynMessage } from "@/components/EdynMessage";
 import { FileUpload } from "@/components/FileUpload";
 import { VENDOR_EMAIL_TEMPLATES } from "@/lib/vendors/email-templates";
 import { formatDueDate } from "@/lib/date-utils";
+import { Comments } from "@/components/Comments";
 
 // Map task categories to email template vendor categories
 const TASK_TO_EMAIL_CATEGORY: Record<string, string> = {
@@ -593,6 +594,11 @@ export function TaskDetail({
               rows={3}
               className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
             />
+          </div>
+
+          {/* Comments */}
+          <div className="mt-4 pt-4 border-t border-border">
+            <Comments entityType="task" entityId={task.id} />
           </div>
         </div>
       </div>

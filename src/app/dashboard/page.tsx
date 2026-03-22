@@ -163,6 +163,68 @@ export default async function DashboardPage() {
           </a>
         </div>
       )}
+
+      {/* Recent Activity */}
+      <RecentActivity weddingId={wedding.id} />
+    </div>
+  );
+}
+
+async function RecentActivity({ weddingId }: { weddingId: string }) {
+  const supabase = createSupabaseAdmin();
+
+  const [{ data: activityData }, { data: commentsData }] = await Promise.all([
+    supabase
+      .from("activity_log")
+      .select("action, entity_type, entity_name, created_at")
+      .eq("wedding_id", weddingId)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("comments")
+      .select("user_name, content, entity_type, created_at")
+      .eq("wedding_id", weddingId)
+      .order("created_at", { ascending: false })
+      .limit(5),
+  ]);
+
+  type FeedItem = { type: "activity" | "comment"; text: string; time: string };
+  const feed: FeedItem[] = [];
+
+  for (const a of activityData || []) {
+    feed.push({
+      type: "activity",
+      text: `${a.action === "create" ? "Added" : a.action === "update" ? "Updated" : a.action === "delete" ? "Removed" : "Restored"} ${a.entity_type.replace(/_/g, " ")}${a.entity_name ? `: ${a.entity_name}` : ""}`,
+      time: a.created_at,
+    });
+  }
+  for (const c of commentsData || []) {
+    feed.push({
+      type: "comment",
+      text: `${c.user_name} commented on ${c.entity_type}: "${(c.content as string).slice(0, 60)}${(c.content as string).length > 60 ? "..." : ""}"`,
+      time: c.created_at,
+    });
+  }
+
+  feed.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+  const recent = feed.slice(0, 8);
+
+  if (recent.length === 0) return null;
+
+  return (
+    <div className="mt-8">
+      <h2>Recent Activity</h2>
+      <div className="mt-3 space-y-1">
+        {recent.map((item, i) => (
+          <div key={i} className="card-list flex items-center gap-3 px-4 py-2">
+            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${item.type === "comment" ? "bg-violet" : "bg-petal"}`} />
+            <span className="text-[14px] text-plum flex-1">{item.text}</span>
+            <span className="text-[11px] text-muted flex-shrink-0">
+              {new Date(item.time).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
