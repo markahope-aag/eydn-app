@@ -1,472 +1,1032 @@
+"use client";
+
 import Link from "next/link";
 import { Show, SignUpButton } from "@clerk/nextjs";
-import { Playfair_Display } from "next/font/google";
+import { Cormorant_Garamond, DM_Sans, Great_Vibes } from "next/font/google";
+import { useEffect, useRef, type ReactNode } from "react";
 
-const playfair = Playfair_Display({
+/* ── Fonts ───────────────────────────────────────────────── */
+
+const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-serif",
+  weight: ["400", "600", "700"],
+  variable: "--font-display",
 });
 
-/* ── SVG Icon Components ─────────────────────────────────── */
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-body",
+});
 
-function IconAI() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2a4 4 0 0 1 4 4v1a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z" />
-      <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
-      <circle cx="12" cy="6" r="1" fill="currentColor" />
-      <path d="M15 3l2-1M9 3L7 2M12 1v1" />
-    </svg>
-  );
-}
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-script",
+});
 
-function IconTimeline() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-      <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
-    </svg>
-  );
-}
+/* ── ScrollReveal ────────────────────────────────────────── */
 
-function IconBudget() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="1" x2="12" y2="23" />
-      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-    </svg>
-  );
-}
+function ScrollReveal({ children, className = "" }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
 
-function IconGuests() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("sr-visible");
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.12 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
-function IconVendors() {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  );
-}
-
-function IconWebsite() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <line x1="2" y1="12" x2="22" y2="12" />
-      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-    </svg>
-  );
-}
-
-function IconSeating() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="7" width="20" height="14" rx="2" />
-      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-      <line x1="12" y1="12" x2="12" y2="16" />
-      <line x1="8" y1="14" x2="16" y2="14" />
-    </svg>
-  );
-}
-
-function IconBinder() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-      <line x1="8" y1="7" x2="16" y2="7" />
-      <line x1="8" y1="11" x2="14" y2="11" />
-    </svg>
-  );
-}
-
-function IconCamera() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-      <circle cx="12" cy="13" r="4" />
-    </svg>
-  );
-}
-
-function IconShield() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      <polyline points="9 12 11 14 15 10" />
-    </svg>
-  );
-}
-
-function IconCheck() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-
-function Ornament() {
-  return (
-    <div className="flex items-center justify-center gap-3 my-2">
-      <div className="w-16 h-px" style={{ background: "linear-gradient(90deg, transparent, var(--border))" }} />
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5L6 0Z" fill="var(--violet)" opacity="0.4" />
-      </svg>
-      <div className="w-16 h-px" style={{ background: "linear-gradient(90deg, var(--border), transparent)" }} />
+    <div
+      ref={ref}
+      className={`sr-reveal ${className}`}
+      style={{
+        opacity: 0,
+        transform: "translateY(28px)",
+        transition: "opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1)",
+      }}
+    >
+      {children}
     </div>
   );
 }
 
-const featureIcons = [IconAI, IconTimeline, IconBudget, IconGuests, IconVendors, IconWebsite, IconSeating, IconBinder, IconCamera, IconShield];
+/* ── Keyframe styles (injected once) ─────────────────────── */
 
-const deepDiveIcons = [
-  <IconAI key="ai" />,
-  <IconWebsite key="web" />,
-  <IconBudget key="budget" />,
-  <IconBinder key="binder" />,
-  <IconShield key="shield" />,
+const keyframeCSS = `
+.sr-visible {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(-2deg); }
+  50% { transform: translateY(-14px) rotate(-2deg); }
+}
+@keyframes float2 {
+  0%, 100% { transform: translateY(0px) rotate(1deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+@keyframes float3 {
+  0%, 100% { transform: translateY(0px) rotate(2deg); }
+  50% { transform: translateY(-18px) rotate(2deg); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+`;
+
+/* ── Mini UI Components for Hero ─────────────────────────── */
+
+function HeroTaskCard() {
+  const tasks = [
+    { label: "Book photographer", due: "Mar 15", color: "#C9A84C", done: true },
+    { label: "Finalize guest list", due: "Mar 22", color: "#2C3E2D", done: false },
+    { label: "Cake tasting", due: "Apr 2", color: "#D4A5A5", done: false },
+    { label: "Send invitations", due: "Apr 10", color: "#C9A84C", done: false },
+  ];
+  return (
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: 12,
+        padding: "18px 20px",
+        width: 260,
+        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+        transform: "rotate(-2deg)",
+        animation: "float 5s ease-in-out infinite",
+      }}
+    >
+      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Task Timeline</p>
+      {tasks.map((t, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: i < tasks.length - 1 ? 10 : 0 }}>
+          <span style={{ width: 10, height: 10, borderRadius: "50%", background: t.color, flexShrink: 0, opacity: t.done ? 0.5 : 1 }} />
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: t.done ? "#aaa" : "#1A1A2E", textDecoration: t.done ? "line-through" : "none", flex: 1 }}>{t.label}</span>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "#6B6B6B" }}>{t.due}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HeroBudgetCard() {
+  const rows = [
+    { cat: "Venue", est: "$12,000", paid: "$6,000" },
+    { cat: "Catering", est: "$8,500", paid: "$2,000" },
+    { cat: "Photography", est: "$3,200", paid: "$1,600" },
+  ];
+  return (
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: 12,
+        padding: "18px 20px",
+        width: 270,
+        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+        transform: "rotate(1deg)",
+        animation: "float2 6s ease-in-out infinite",
+      }}
+    >
+      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Budget Tracker</p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "6px 14px", fontFamily: "var(--font-body)", fontSize: 11 }}>
+        <span style={{ color: "#6B6B6B", fontWeight: 600 }}>Category</span>
+        <span style={{ color: "#6B6B6B", fontWeight: 600 }}>Estimated</span>
+        <span style={{ color: "#6B6B6B", fontWeight: 600 }}>Paid</span>
+        {rows.map((r, i) => (
+          <div key={i} style={{ display: "contents" }}>
+            <span style={{ fontSize: 13, color: "#1A1A2E" }}>{r.cat}</span>
+            <span style={{ fontSize: 13, color: "#1A1A2E" }}>{r.est}</span>
+            <span style={{ fontSize: 13, color: "#2C3E2D", fontWeight: 600 }}>{r.paid}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HeroAIChatCard() {
+  return (
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: 12,
+        padding: "18px 20px",
+        width: 280,
+        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+        transform: "rotate(2deg)",
+        animation: "float3 7s ease-in-out infinite",
+      }}
+    >
+      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>AI Assistant</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ alignSelf: "flex-end", background: "#2C3E2D", color: "#FAF6F1", borderRadius: "12px 12px 4px 12px", padding: "8px 12px", maxWidth: "80%", fontFamily: "var(--font-body)", fontSize: 12.5 }}>
+          What should I prioritize this month?
+        </div>
+        <div style={{ alignSelf: "flex-start", background: "#FAF6F1", color: "#1A1A2E", borderRadius: "12px 12px 12px 4px", padding: "8px 12px", maxWidth: "85%", fontFamily: "var(--font-body)", fontSize: 12.5, lineHeight: 1.45 }}>
+          Focus on booking your photographer and finalizing the guest list. Both have March deadlines.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Mini UI Components for Feature Rows ─────────────────── */
+
+function MiniAIChat() {
+  return (
+    <div style={{ background: "#1A1A2E", borderRadius: 12, padding: 20, maxWidth: 380 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#C9A84C" }} />
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#FAF6F1", fontWeight: 600 }}>eydn AI</span>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ alignSelf: "flex-end", background: "#2C3E2D", color: "#FAF6F1", borderRadius: "12px 12px 4px 12px", padding: "10px 14px", maxWidth: "78%", fontFamily: "var(--font-body)", fontSize: 13 }}>
+          Can you suggest a timeline for DIY centerpieces?
+        </div>
+        <div style={{ alignSelf: "flex-start", background: "#2A2A3A", color: "#E8D5B7", borderRadius: "12px 12px 12px 4px", padding: "10px 14px", maxWidth: "85%", fontFamily: "var(--font-body)", fontSize: 13, lineHeight: 1.5 }}>
+          Based on your 150-guest wedding, I recommend starting 8 weeks out. Order supplies by April 1, do a trial run April 15, then assemble May 10-12.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniTaskTimeline() {
+  const groups = [
+    { phase: "This Week", tasks: [{ t: "Confirm florist contract", s: "urgent" }, { t: "Mail save-the-dates", s: "done" }] },
+    { phase: "Next Week", tasks: [{ t: "Cake tasting appointment", s: "upcoming" }, { t: "Book rehearsal dinner venue", s: "upcoming" }] },
+  ];
+  const statusColor: Record<string, string> = { urgent: "#D4A5A5", done: "#2C3E2D", upcoming: "#C9A84C" };
+  return (
+    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 360, border: "1px solid #E8D5B7" }}>
+      {groups.map((g, gi) => (
+        <div key={gi} style={{ marginBottom: gi < groups.length - 1 ? 16 : 0 }}>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>{g.phase}</p>
+          {g.tasks.map((t, ti) => (
+            <div key={ti} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <span style={{ width: 10, height: 10, borderRadius: "50%", background: statusColor[t.s], flexShrink: 0 }} />
+              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#1A1A2E", textDecoration: t.s === "done" ? "line-through" : "none" }}>{t.t}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MiniBudgetTracker() {
+  const rows = [
+    { cat: "Venue", est: "$12,000", paid: "$6,000", pct: 50 },
+    { cat: "Catering", est: "$8,500", paid: "$2,000", pct: 24 },
+    { cat: "Photography", est: "$3,200", paid: "$1,600", pct: 50 },
+    { cat: "Florals", est: "$2,800", paid: "$0", pct: 0 },
+  ];
+  return (
+    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 380, border: "1px solid #E8D5B7" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Total Budget</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 600, color: "#2C3E2D" }}>$26,500</span>
+      </div>
+      {rows.map((r, i) => (
+        <div key={i} style={{ marginBottom: 10 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--font-body)", fontSize: 12.5, color: "#1A1A2E", marginBottom: 4 }}>
+            <span>{r.cat}</span>
+            <span style={{ color: "#6B6B6B" }}>{r.paid} / {r.est}</span>
+          </div>
+          <div style={{ height: 5, borderRadius: 100, background: "#EDE7DF" }}>
+            <div style={{ height: "100%", borderRadius: 100, background: "#2C3E2D", width: `${r.pct}%`, transition: "width 300ms" }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MiniGuestList() {
+  const guests = [
+    { name: "Emma Johnson", rsvp: "Confirmed", color: "#2E7D4F", bg: "#D6F5E3" },
+    { name: "David Chen", rsvp: "Pending", color: "#8A5200", bg: "#FFF3CC" },
+    { name: "Sarah Williams", rsvp: "Confirmed", color: "#2E7D4F", bg: "#D6F5E3" },
+    { name: "Michael Brown", rsvp: "Declined", color: "#A0204A", bg: "#FFE0EC" },
+  ];
+  return (
+    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 360, border: "1px solid #E8D5B7" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "10px 20px" }}>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase" }}>Guest</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase" }}>RSVP</span>
+        {guests.map((g, i) => (
+          <div key={i} style={{ display: "contents" }}>
+            <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#1A1A2E" }}>{g.name}</span>
+            <span style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, background: g.bg, color: g.color, borderRadius: 100, padding: "3px 10px" }}>{g.rsvp}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MiniVendorPipeline() {
+  const cols = [
+    { label: "Researching", items: ["DJ", "Florist"] },
+    { label: "Contacted", items: ["Baker"] },
+    { label: "Booked", items: ["Photographer", "Venue"] },
+  ];
+  const colColors = ["#FFF3CC", "#E8D5B7", "#D6F5E3"];
+  return (
+    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 380, border: "1px solid #E8D5B7" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+        {cols.map((c, ci) => (
+          <div key={ci}>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", marginBottom: 8, textTransform: "uppercase" }}>{c.label}</p>
+            {c.items.map((item, ii) => (
+              <div key={ii} style={{ background: colColors[ci], borderRadius: 8, padding: "6px 10px", marginBottom: 6, fontFamily: "var(--font-body)", fontSize: 12, color: "#1A1A2E" }}>
+                {item}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MiniWeddingSite() {
+  return (
+    <div style={{ background: "#fff", borderRadius: 12, overflow: "hidden", maxWidth: 360, border: "1px solid #E8D5B7" }}>
+      <div style={{ background: "#2C3E2D", padding: "6px 14px", display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#D4A5A5" }} />
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#C9A84C" }} />
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#D6F5E3" }} />
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "#FAF6F1", marginLeft: 8 }}>eydn.app/w/mark-and-sarah</span>
+      </div>
+      <div style={{ padding: 20, textAlign: "center" }}>
+        <p style={{ fontFamily: "var(--font-script)", fontSize: 22, color: "#C9A84C" }}>Mark & Sarah</p>
+        <p style={{ fontFamily: "var(--font-display)", fontSize: 16, color: "#1A1A2E", marginTop: 4 }}>September 20, 2026</p>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#6B6B6B", marginTop: 6 }}>The Grand Estate, Napa Valley</p>
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 14 }}>
+          {["Schedule", "Travel", "RSVP", "Registry"].map((l) => (
+            <span key={l} style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "#2C3E2D", background: "#EDE7DF", borderRadius: 100, padding: "4px 10px" }}>{l}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniDayOfBinder() {
+  return (
+    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 340, border: "1px solid #E8D5B7", position: "relative" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "linear-gradient(90deg, #2C3E2D, #C9A84C)", borderRadius: "12px 12px 0 0" }} />
+      <p style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "#1A1A2E", marginBottom: 4 }}>Day-of Binder</p>
+      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "#6B6B6B", marginBottom: 14 }}>Complete wedding guide - PDF</p>
+      {["Ceremony Timeline", "Vendor Contact Sheet", "Music & Readings", "Setup Assignments", "Emergency Kit List"].map((s, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <span style={{ width: 16, height: 2, background: i < 3 ? "#2C3E2D" : "#E8D5B7", borderRadius: 2 }} />
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: i < 3 ? "#1A1A2E" : "#6B6B6B" }}>{s}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const featureVisuals = [MiniAIChat, MiniTaskTimeline, MiniBudgetTracker, MiniGuestList, MiniVendorPipeline, MiniWeddingSite, MiniDayOfBinder];
+
+const featureScriptLabels = [
+  "Intelligent planning",
+  "Stay on track",
+  "Every dollar, accounted for",
+  "Everyone, organized",
+  "Your dream team",
+  "Share your story",
+  "The final touch",
+];
+
+const featureBullets: string[][] = [
+  ["Remembers your style, budget, and decisions", "Personalized advice based on your full wedding data", "Vendor outreach tips and etiquette guidance", "Natural conversation with 50-message memory"],
+  ["50+ tasks auto-generated from your date", "Grouped by phase with smart deadlines", "Priority levels and completion tracking", "Reminders so nothing slips through"],
+  ["36 pre-built line items across 13 categories", "Track estimated, paid, and final costs", "Link vendors to budget items automatically", "Category subtotals and visual progress"],
+  ["RSVPs, meal choices, plus-ones, and groups", "Import guests via CSV in seconds", "Unique RSVP links for each guest", "Addresses and roles management"],
+  ["13 vendor categories with status pipeline", "Auto-enriched Google Business profiles", "Contact details, financials, and notes", "Email templates for outreach"],
+  ["Custom URL for your guests", "Schedule, travel, registry, and FAQ sections", "Guest photo uploads to shared gallery", "RSVP integration built in"],
+  ["Timeline, ceremony script, and music lists", "Per-person schedules for the entire party", "Vendor contacts with arrival times", "Export as a beautiful branded PDF"],
 ];
 
 /* ── Page ─────────────────────────────────────────────────── */
 
 export default function HomePage() {
+  const fontVars = `${cormorant.variable} ${dmSans.variable} ${greatVibes.variable}`;
+
   return (
-    <main className={`flex-1 flex flex-col ${playfair.variable}`}>
+    <main className={`flex-1 flex flex-col ${fontVars}`}>
+      <style dangerouslySetInnerHTML={{ __html: keyframeCSS }} />
 
-      {/* ─── Hero ─── */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/hero.jpg" alt="" className="w-full h-full object-cover scale-105" aria-hidden="true" style={{ filter: "brightness(0.85)" }} />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(26,16,48,0.92) 0%, rgba(26,16,48,0.7) 40%, rgba(26,16,48,0.5) 100%)" }} />
-        </div>
-        <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-12 py-32">
-          <p className="text-[13px] tracking-[0.3em] uppercase text-white/50 font-light">Your AI Wedding Planning Guide</p>
-          <h1 className="mt-4 font-[family-name:var(--font-serif)] text-[52px] sm:text-[72px] lg:text-[88px] font-medium text-white leading-[1.05]" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.5), 0 4px 40px rgba(0,0,0,0.3)" }}>
-            Plan your wedding,<br />
-            <span className="italic" style={{ color: "var(--petal)" }}>not your stress</span>
-          </h1>
-          <p className="mt-8 text-[17px] sm:text-[19px] text-white/70 max-w-xl leading-relaxed font-light">
-            From guest lists to vendor outreach to your day-of binder — everything in one place, with a personal touch.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Show when="signed-out">
-              <SignUpButton>
-                <button className="group relative px-8 py-4 text-[15px] font-semibold text-[#1A1A2E] overflow-hidden rounded-full transition-all hover:shadow-xl hover:shadow-violet/20" style={{ background: "linear-gradient(135deg, #fff 0%, var(--petal) 100%)" }}>
-                  Start Your Free Trial
-                </button>
-              </SignUpButton>
-              <Link
-                href="/#features"
-                className="px-8 py-4 text-[15px] font-medium text-white/90 border border-white/20 rounded-full hover:bg-white/10 hover:border-white/40 transition-all"
+      {/* ─── HERO ─── */}
+      <section style={{ minHeight: "100vh", display: "flex" }}>
+        {/* Left Column */}
+        <div
+          style={{
+            flex: "0 0 55%",
+            background: "var(--whisper)",
+            display: "flex",
+            alignItems: "center",
+            padding: "80px 60px 80px 80px",
+          }}
+          className="max-lg:!flex-[1_1_100%] max-lg:!p-8 max-lg:!pt-20"
+        >
+          <div style={{ maxWidth: 600 }}>
+            <ScrollReveal>
+              <p style={{ fontFamily: "var(--font-script)", fontSize: 26, color: "var(--petal)" }}>
+                Your wedding, beautifully planned
+              </p>
+            </ScrollReveal>
+            <ScrollReveal>
+              <h1
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 88,
+                  fontWeight: 700,
+                  color: "var(--violet)",
+                  lineHeight: 1.02,
+                  marginTop: 16,
+                }}
+                className="max-lg:!text-[48px]"
               >
-                Explore Features
-              </Link>
-            </Show>
-            <Show when="signed-in">
-              <Link href="/dashboard" className="px-8 py-4 text-[15px] font-semibold text-[#1A1A2E] rounded-full transition-all hover:shadow-xl" style={{ background: "linear-gradient(135deg, #fff 0%, var(--petal) 100%)" }}>
-                Go to Dashboard
-              </Link>
-            </Show>
+                Plan your wedding,
+                <br />
+                not your stress.
+              </h1>
+            </ScrollReveal>
+            <ScrollReveal>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 18, color: "var(--muted-plum)", lineHeight: 1.65, marginTop: 28, maxWidth: 480 }}>
+                From guest lists to vendor outreach to your day-of binder — everything in one beautiful place, guided by an AI that knows your wedding inside and out.
+              </p>
+            </ScrollReveal>
+            <ScrollReveal>
+              <div style={{ marginTop: 36, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16 }}>
+                <Show when="signed-out">
+                  <SignUpButton>
+                    <button
+                      style={{
+                        background: "var(--violet)",
+                        color: "var(--whisper)",
+                        borderRadius: 100,
+                        padding: "16px 36px",
+                        fontFamily: "var(--font-body)",
+                        fontSize: 15,
+                        fontWeight: 600,
+                        border: "none",
+                        cursor: "pointer",
+                        transition: "all 200ms",
+                      }}
+                    >
+                      Start Planning Today
+                    </button>
+                  </SignUpButton>
+                  <Link
+                    href="/#how-it-works"
+                    style={{
+                      fontFamily: "var(--font-body)",
+                      fontSize: 15,
+                      fontWeight: 500,
+                      color: "var(--violet)",
+                      textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <span style={{ fontSize: 18 }}>&rarr;</span> See how it works
+                  </Link>
+                </Show>
+                <Show when="signed-in">
+                  <Link
+                    href="/dashboard"
+                    style={{
+                      background: "var(--violet)",
+                      color: "var(--whisper)",
+                      borderRadius: 100,
+                      padding: "16px 36px",
+                      fontFamily: "var(--font-body)",
+                      fontSize: 15,
+                      fontWeight: 600,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Go to Dashboard
+                  </Link>
+                </Show>
+              </div>
+            </ScrollReveal>
+            <ScrollReveal>
+              <p style={{ marginTop: 24, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--muted-plum)", letterSpacing: "0.02em" }}>
+                50+ Tasks &middot; AI That Knows You &middot; $79 One-Time
+              </p>
+            </ScrollReveal>
           </div>
-          <p className="mt-5 text-[12px] text-white/40 tracking-wide">14-day free trial &middot; No credit card required</p>
         </div>
+
+        {/* Right Column */}
+        <div
+          style={{
+            flex: "0 0 45%",
+            background: "var(--violet)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            position: "relative",
+            overflow: "hidden",
+            padding: 40,
+          }}
+          className="max-lg:!hidden"
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 24, alignItems: "center" }}>
+            <HeroTaskCard />
+            <HeroBudgetCard />
+            <HeroAIChatCard />
+          </div>
+        </div>
+
+        {/* Mobile cards band */}
+        <div
+          className="lg:hidden"
+          style={{
+            display: "none",
+          }}
+        />
       </section>
 
-      {/* ─── Social Proof ─── */}
-      <section className="py-5 border-b border-border/50" style={{ background: "var(--surface)" }}>
-        <div className="max-w-5xl mx-auto px-6 flex items-center justify-center gap-6 sm:gap-10 text-[12px] tracking-[0.05em] uppercase text-muted/80 flex-wrap">
-          {["50+ Auto-Generated Tasks", "13 Vendor Categories", "AI That Remembers You", "Complete Day-of Binder", "Bank-Grade Protection"].map((item, i) => (
-            <span key={i} className="flex items-center gap-6 sm:gap-10">
-              {i > 0 && <span className="w-1 h-1 rounded-full bg-border -ml-3 sm:-ml-5" />}
-              <span>{item}</span>
-            </span>
-          ))}
-        </div>
-      </section>
+      {/* Mobile hero cards band — shown below hero left on small screens */}
+      <div
+        className="lg:!hidden"
+        style={{
+          background: "var(--violet)",
+          padding: "40px 20px",
+          display: "flex",
+          gap: 16,
+          overflowX: "auto",
+          maxHeight: 380,
+          alignItems: "center",
+        }}
+      >
+        <HeroTaskCard />
+        <HeroBudgetCard />
+        <HeroAIChatCard />
+      </div>
 
-      {/* ─── Features ─── */}
-      <section id="features" className="py-28" style={{ background: "var(--whisper)" }}>
-        <div className="max-w-6xl mx-auto px-6 sm:px-12">
-          <div className="max-w-2xl">
-            <p className="text-[12px] tracking-[0.3em] uppercase text-violet font-medium">Features</p>
-            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-[40px] sm:text-[52px] text-plum leading-[1.1]">
-              Everything you need,<br />nothing you don&apos;t
-            </h2>
-            <p className="mt-5 text-[16px] text-muted leading-relaxed">
-              Stop juggling five different apps. eydn brings your entire wedding plan into one place — smart, personal, and genuinely delightful to use.
+      {/* ─── SOCIAL PROOF BAR ─── */}
+      <ScrollReveal>
+        <section style={{ background: "var(--petal)", padding: "20px 24px" }}>
+          <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+            {/* Overlapping avatars */}
+            <div style={{ display: "flex", alignItems: "center" }}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={n}
+                  src={`https://i.pravatar.cc/72?img=${n + 10}`}
+                  alt=""
+                  width={36}
+                  height={36}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    border: "2px solid var(--petal)",
+                    marginLeft: n > 1 ? -8 : 0,
+                    objectFit: "cover",
+                  }}
+                />
+              ))}
+            </div>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 14, fontWeight: 500, color: "var(--deep-plum)" }}>
+              Join 2,400+ couples planning smarter
             </p>
+            <div style={{ display: "flex", gap: 2 }}>
+              {[1, 2, 3, 4, 5].map((s) => (
+                <svg key={s} width="16" height="16" viewBox="0 0 24 24" fill="#C9A84C" stroke="none">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              ))}
+            </div>
           </div>
+        </section>
+      </ScrollReveal>
 
-          <div className="mt-16 grid gap-px sm:grid-cols-2 lg:grid-cols-3 rounded-[20px] overflow-hidden border border-border/60" style={{ background: "var(--border)" }}>
-            {features.map((f, i) => {
-              const Icon = featureIcons[i] || IconShield;
-              return (
-                <div key={f.title} className="p-8 sm:p-10 group transition-colors" style={{ background: "var(--surface)" }}>
-                  <div className="w-12 h-12 rounded-full border border-border flex items-center justify-center text-violet group-hover:bg-violet group-hover:text-white group-hover:border-violet transition-all duration-300">
-                    <Icon />
-                  </div>
-                  <h3 className="mt-5 text-[17px] font-semibold text-plum">{f.title}</h3>
-                  <p className="mt-2 text-[14px] text-muted leading-relaxed">{f.description}</p>
+      {/* ─── FEATURES — Alternating full-width rows ─── */}
+      <section id="features">
+        {features.slice(0, 7).map((f, i) => {
+          const isForest = i % 2 !== 0;
+          const bg = isForest ? "var(--violet)" : "var(--whisper)";
+          const textColor = isForest ? "var(--whisper)" : "var(--deep-plum)";
+          const mutedColor = isForest ? "rgba(250,246,241,0.6)" : "var(--muted-plum)";
+          const VisualComponent = featureVisuals[i];
+          const scriptLabel = featureScriptLabels[i];
+          const bullets = featureBullets[i];
+          const num = String(i + 1).padStart(2, "0");
+
+          return (
+            <div key={f.title} style={{ background: bg, padding: "100px 0", position: "relative", overflow: "hidden" }}>
+              <div
+                style={{
+                  maxWidth: 1200,
+                  margin: "0 auto",
+                  padding: "0 40px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 60,
+                  flexDirection: i % 2 === 0 ? "row" : "row-reverse",
+                  flexWrap: "wrap",
+                }}
+                className="max-lg:!flex-col max-lg:!gap-10"
+              >
+                {/* Text panel */}
+                <div style={{ flex: "1 1 50%", position: "relative", minWidth: 300 }}>
+                  {/* Large decorative number */}
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: -40,
+                      left: -10,
+                      fontFamily: "var(--font-display)",
+                      fontSize: 180,
+                      fontWeight: 700,
+                      color: isForest ? "rgba(250,246,241,0.06)" : "rgba(44,62,45,0.06)",
+                      lineHeight: 1,
+                      pointerEvents: "none",
+                      userSelect: "none",
+                    }}
+                  >
+                    {num}
+                  </span>
+                  <ScrollReveal>
+                    <p style={{ fontFamily: "var(--font-script)", fontSize: 24, color: "var(--soft-violet)", position: "relative", zIndex: 1 }}>{scriptLabel}</p>
+                    <h3
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: 48,
+                        fontWeight: 700,
+                        color: textColor,
+                        lineHeight: 1.1,
+                        marginTop: 8,
+                        position: "relative",
+                        zIndex: 1,
+                      }}
+                      className="max-lg:!text-[36px]"
+                    >
+                      {f.title}
+                    </h3>
+                    <p style={{ fontFamily: "var(--font-body)", fontSize: 16, color: mutedColor, lineHeight: 1.7, marginTop: 16, position: "relative", zIndex: 1 }}>
+                      {f.description}
+                    </p>
+                    <ul style={{ marginTop: 20, listStyle: "none", padding: 0 }}>
+                      {bullets.map((b) => (
+                        <li key={b} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10, position: "relative", zIndex: 1 }}>
+                          <span style={{ color: "var(--soft-violet)", fontSize: 14, flexShrink: 0, marginTop: 2 }}>&#10022;</span>
+                          <span style={{ fontFamily: "var(--font-body)", fontSize: 14, color: textColor, lineHeight: 1.6 }}>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </ScrollReveal>
                 </div>
-              );
-            })}
-          </div>
-        </div>
+                {/* Visual panel */}
+                <div style={{ flex: "1 1 45%", display: "flex", justifyContent: "center", minWidth: 280 }}>
+                  <ScrollReveal>
+                    <VisualComponent />
+                  </ScrollReveal>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </section>
 
-      {/* ─── How It Works ─── */}
-      <section id="how-it-works" className="py-28" style={{ background: "var(--surface)" }}>
-        <div className="max-w-5xl mx-auto px-6 sm:px-12">
-          <div className="text-center max-w-xl mx-auto">
-            <p className="text-[12px] tracking-[0.3em] uppercase text-violet font-medium">How It Works</p>
-            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-[40px] sm:text-[52px] text-plum leading-[1.1]">
+      {/* ─── HOW IT WORKS ─── */}
+      <ScrollReveal>
+        <section id="how-it-works" style={{ background: "var(--violet)", padding: "120px 24px" }}>
+          <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
+            <p style={{ fontFamily: "var(--font-script)", fontSize: 28, color: "var(--soft-violet)" }}>Simple by design</p>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: 56, fontWeight: 700, color: "var(--whisper)", lineHeight: 1.1, marginTop: 8 }} className="max-lg:!text-[40px]">
               From &ldquo;yes&rdquo; to &ldquo;I do&rdquo;
             </h2>
-          </div>
 
-          <div className="mt-20 grid sm:grid-cols-3 gap-0">
-            {steps.map((s, i) => (
-              <div key={s.title} className="relative text-center px-8 py-6">
-                {i < steps.length - 1 && (
-                  <div className="hidden sm:block absolute top-8 right-0 w-px h-16 bg-border" />
-                )}
-                <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-[22px] font-[family-name:var(--font-serif)] font-light" style={{ background: "var(--lavender-mist)", color: "var(--violet)" }}>
-                  {i + 1}
-                </div>
-                <h3 className="mt-6 text-[18px] font-semibold text-plum">{s.title}</h3>
-                <p className="mt-3 text-[14px] text-muted leading-relaxed">{s.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Deep Dives ─── */}
-      <section className="py-28" style={{ background: "var(--whisper)" }}>
-        <div className="max-w-6xl mx-auto px-6 sm:px-12 space-y-32">
-          {deepDives.map((d, i) => (
-            <div key={d.title} className={`flex flex-col gap-16 items-center ${i % 2 === 0 ? "lg:flex-row" : "lg:flex-row-reverse"}`}>
-              <div className="flex-1 max-w-xl">
-                <p className="text-[12px] tracking-[0.3em] uppercase text-violet font-medium">{d.label}</p>
-                <h3 className="mt-3 font-[family-name:var(--font-serif)] text-[34px] sm:text-[42px] text-plum leading-[1.15]">{d.title}</h3>
-                <p className="mt-5 text-[15px] text-muted leading-relaxed">{d.description}</p>
-                <ul className="mt-6 space-y-3">
-                  {d.bullets.map((b) => (
-                    <li key={b} className="flex items-start gap-3">
-                      <span className="w-5 h-5 rounded-full bg-violet/10 flex items-center justify-center flex-shrink-0 mt-0.5 text-violet">
-                        <IconCheck />
-                      </span>
-                      <span className="text-[14px] text-plum leading-relaxed">{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="flex-1 flex justify-center w-full">
-                <div className="w-full max-w-sm rounded-[24px] p-10 text-center border border-border/60 relative overflow-hidden" style={{ background: "var(--surface)" }}>
-                  <div className="absolute top-0 left-0 right-0 h-1" style={{ background: "linear-gradient(90deg, var(--violet), var(--soft-violet))" }} />
-                  <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-5 text-violet" style={{ background: "var(--lavender-mist)" }}>
-                    {deepDiveIcons[i]}
+            <div
+              style={{
+                marginTop: 80,
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 40,
+                position: "relative",
+              }}
+              className="max-md:!grid-cols-1 max-md:!gap-16"
+            >
+              {/* Connecting dashed line — hidden on mobile */}
+              <div
+                className="max-md:!hidden"
+                style={{
+                  position: "absolute",
+                  top: 40,
+                  left: "calc(16.67% + 40px)",
+                  right: "calc(16.67% + 40px)",
+                  height: 0,
+                  borderTop: "2px dashed rgba(201,168,76,0.4)",
+                }}
+              />
+              {steps.map((s, i) => (
+                <div key={s.title} style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
+                  <div
+                    style={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: "50%",
+                      border: "2px solid var(--soft-violet)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      margin: "0 auto",
+                      fontFamily: "var(--font-display)",
+                      fontSize: 32,
+                      fontWeight: 700,
+                      color: "var(--soft-violet)",
+                      background: "var(--violet)",
+                    }}
+                  >
+                    {i + 1}
                   </div>
-                  <p className="text-[15px] text-muted italic leading-relaxed">{d.cardText}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ─── Trust & Security ─── */}
-      <section className="py-24" style={{ background: "var(--surface)" }}>
-        <div className="max-w-5xl mx-auto px-6 sm:px-12">
-          <div className="text-center max-w-xl mx-auto">
-            <p className="text-[12px] tracking-[0.3em] uppercase text-violet font-medium">Trust &amp; Security</p>
-            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-[36px] sm:text-[48px] text-plum leading-[1.1]">
-              We protect what matters most
-            </h2>
-            <p className="mt-5 text-[15px] text-muted leading-relaxed">
-              Your wedding plans are irreplaceable. We&apos;ve built eydn with multiple layers of data protection.
-            </p>
-          </div>
-
-          <div className="mt-16 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { title: "Daily Backups", desc: "Automated encrypted backups every night to redundant off-site servers", icon: (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
-              )},
-              { title: "30-Day Recovery", desc: "Accidentally delete something? Restore any guest, task, or vendor instantly", icon: (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></svg>
-              )},
-              { title: "Data Export", desc: "Download everything in one click. Your data belongs to you, always", icon: (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-              )},
-              { title: "Audit Trail", desc: "Every change is logged. See who changed what, when, with full history", icon: (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
-              )},
-            ].map((item) => (
-              <div key={item.title} className="text-center group">
-                <div className="w-14 h-14 rounded-full border border-border mx-auto flex items-center justify-center text-violet group-hover:bg-violet group-hover:text-white group-hover:border-violet transition-all duration-300">
-                  {item.icon}
-                </div>
-                <h3 className="mt-4 text-[15px] font-semibold text-plum">{item.title}</h3>
-                <p className="mt-2 text-[13px] text-muted leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Pricing ─── */}
-      <section id="pricing" className="py-28" style={{ background: "var(--whisper)" }}>
-        <div className="max-w-4xl mx-auto px-6 sm:px-12 text-center">
-          <p className="text-[12px] tracking-[0.3em] uppercase text-violet font-medium">Pricing</p>
-          <h2 className="mt-3 font-[family-name:var(--font-serif)] text-[40px] sm:text-[52px] text-plum leading-[1.1]">
-            One price. Your whole wedding.
-          </h2>
-          <p className="mt-5 text-[15px] text-muted max-w-lg mx-auto leading-relaxed">
-            No subscriptions, no hidden fees. Pay once and plan your entire wedding with full access to every feature.
-          </p>
-
-          <div className="mt-16 max-w-md mx-auto rounded-[24px] border border-border/60 overflow-hidden" style={{ background: "var(--surface)" }}>
-            <div className="h-1.5" style={{ background: "linear-gradient(90deg, var(--violet), var(--soft-violet))" }} />
-            <div className="p-10 sm:p-12">
-              <p className="text-[12px] tracking-[0.2em] uppercase text-muted font-medium">Full Access</p>
-              <div className="mt-3" style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                <span className="text-[64px] font-[family-name:var(--font-serif)] font-normal leading-none">$79</span>
-              </div>
-              <p className="mt-2 text-[14px] text-muted">One-time payment &middot; 1 wedding &middot; Forever</p>
-
-              <Ornament />
-
-              <div className="mt-6 text-left grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
-                {pricingFeatures.map((f) => (
-                  <div key={f} className="flex items-start gap-2.5">
-                    <span className="w-4 h-4 rounded-full bg-violet/10 flex items-center justify-center flex-shrink-0 mt-0.5 text-violet">
-                      <IconCheck />
-                    </span>
-                    <span className="text-[13px] text-plum leading-snug">{f}</span>
-                  </div>
-                ))}
-              </div>
-
-              <Show when="signed-out">
-                <SignUpButton>
-                  <button className="w-full mt-10 py-4 text-[15px] font-semibold text-white rounded-full transition-all hover:shadow-lg hover:shadow-violet/25" style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))" }}>
-                    Start 14-Day Free Trial
-                  </button>
-                </SignUpButton>
-              </Show>
-              <Show when="signed-in">
-                <Link href="/dashboard" className="block w-full mt-10 py-4 text-[15px] font-semibold text-white rounded-full text-center transition-all hover:shadow-lg hover:shadow-violet/25" style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))" }}>
-                  Go to Dashboard
-                </Link>
-              </Show>
-              <p className="mt-4 text-[12px] text-muted/60">No credit card required for the trial.</p>
-            </div>
-          </div>
-
-          {/* Memory Plan */}
-          <div className="mt-8 max-w-md mx-auto rounded-[20px] border border-border/40 p-8 text-left" style={{ background: "var(--surface)" }}>
-            <div className="flex items-baseline justify-between">
-              <p className="text-[15px] font-semibold text-plum">Memory Plan</p>
-              <div>
-                <span className="text-[28px] font-[family-name:var(--font-serif)] text-plum">$29</span>
-                <span className="text-[13px] text-muted">/year</span>
-              </div>
-            </div>
-            <p className="mt-2 text-[13px] text-muted leading-relaxed">
-              Keep your wedding website live and your data accessible after the wedding.
-            </p>
-            <div className="mt-4 space-y-2">
-              {memoryPlanFeatures.map((f) => (
-                <div key={f} className="flex items-center gap-2.5">
-                  <span className="w-4 h-4 rounded-full bg-violet/10 flex items-center justify-center flex-shrink-0 text-violet">
-                    <IconCheck />
-                  </span>
-                  <span className="text-[13px] text-plum">{f}</span>
+                  <h3 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 600, color: "var(--whisper)", marginTop: 24 }}>{s.title}</h3>
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: 15, color: "rgba(250,246,241,0.6)", lineHeight: 1.65, marginTop: 12 }}>{s.description}</p>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </ScrollReveal>
 
-      {/* ─── Final CTA ─── */}
-      <section className="relative py-28 overflow-hidden" style={{ background: "#1A1A2E" }}>
-        <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, var(--violet) 0%, transparent 50%), radial-gradient(circle at 80% 50%, var(--blush-pink) 0%, transparent 50%)" }} />
-        <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
-          <h2 className="font-[family-name:var(--font-serif)] text-[40px] sm:text-[56px] text-white leading-[1.1]">
-            Your dream wedding<br /><span className="italic" style={{ color: "var(--petal)" }}>starts here</span>
-          </h2>
-          <p className="mt-6 text-[17px] text-white/60 font-light">
-            Join the couples who are planning smarter with eydn.
-          </p>
-          <Show when="signed-out">
-            <SignUpButton>
-              <button className="mt-10 px-10 py-4 text-[15px] font-semibold text-[#1A1A2E] rounded-full transition-all hover:shadow-xl hover:shadow-petal/30" style={{ background: "linear-gradient(135deg, #fff 0%, var(--petal) 100%)" }}>
-                Get Started Free
-              </button>
-            </SignUpButton>
-          </Show>
-          <Show when="signed-in">
-            <Link href="/dashboard" className="mt-10 inline-block px-10 py-4 text-[15px] font-semibold text-[#1A1A2E] rounded-full transition-all hover:shadow-xl" style={{ background: "linear-gradient(135deg, #fff 0%, var(--petal) 100%)" }}>
-              Go to Dashboard
-            </Link>
-          </Show>
-        </div>
-      </section>
+      {/* ─── TESTIMONIALS ─── */}
+      <ScrollReveal>
+        <section style={{ background: "var(--whisper)", padding: "120px 24px" }}>
+          <div style={{ maxWidth: 1100, margin: "0 auto", textAlign: "center" }}>
+            <p style={{ fontFamily: "var(--font-script)", fontSize: 28, color: "var(--soft-violet)" }}>Real couples, real love</p>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: 52, fontWeight: 700, color: "var(--deep-plum)", lineHeight: 1.1, marginTop: 8 }} className="max-lg:!text-[40px]">
+              What couples are saying
+            </h2>
 
-      {/* ─── Footer ─── */}
-      <footer className="py-16" style={{ backgroundColor: "#1A1A2E" }}>
-        <div className="max-w-5xl mx-auto px-6 sm:px-12">
-          <div className="grid gap-10 sm:grid-cols-4">
+            <div
+              style={{
+                marginTop: 60,
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 28,
+              }}
+              className="max-lg:!grid-cols-1 max-lg:!max-w-md max-lg:!mx-auto"
+            >
+              {testimonials.map((t, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: "var(--blush-pink)",
+                    borderRadius: 16,
+                    padding: "36px 28px",
+                    textAlign: "left",
+                    transition: "transform 300ms, box-shadow 300ms",
+                    cursor: "default",
+                  }}
+                  className="hover:-translate-y-2 hover:shadow-xl"
+                >
+                  {/* Stars */}
+                  <div style={{ display: "flex", gap: 2, marginBottom: 20 }}>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <svg key={s} width="16" height="16" viewBox="0 0 24 24" fill="#C9A84C" stroke="none">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                    ))}
+                  </div>
+                  {/* Quote */}
+                  <p style={{ fontFamily: "var(--font-display)", fontSize: 22, fontStyle: "italic", color: "var(--deep-plum)", lineHeight: 1.5 }}>
+                    &ldquo;{t.quote}&rdquo;
+                  </p>
+                  {/* Divider */}
+                  <div style={{ width: 40, height: 1, background: "rgba(26,26,46,0.2)", margin: "24px 0 20px" }} />
+                  {/* Author */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`https://i.pravatar.cc/80?img=${i + 20}`}
+                      alt=""
+                      width={40}
+                      height={40}
+                      style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.5)" }}
+                    />
+                    <div>
+                      <p style={{ fontFamily: "var(--font-body)", fontSize: 14, fontWeight: 600, color: "var(--deep-plum)" }}>{t.names}</p>
+                      <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(26,26,46,0.6)" }}>{t.detail}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
+
+      {/* ─── PRICING ─── */}
+      <ScrollReveal>
+        <section id="pricing" style={{ background: "var(--whisper)", padding: "120px 24px 80px" }}>
+          <div style={{ maxWidth: 700, margin: "0 auto", textAlign: "center" }}>
+            <p style={{ fontFamily: "var(--font-script)", fontSize: 28, color: "var(--soft-violet)" }}>One price, forever yours</p>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: 52, fontWeight: 700, color: "var(--deep-plum)", lineHeight: 1.1, marginTop: 8 }} className="max-lg:!text-[40px]">
+              One price. Your whole wedding.
+            </h2>
+
+            {/* Main pricing card */}
+            <div
+              style={{
+                marginTop: 48,
+                borderRadius: 20,
+                padding: 3,
+                background: "linear-gradient(135deg, var(--soft-violet), var(--violet), var(--soft-violet))",
+                backgroundSize: "200% auto",
+                animation: "shimmer 4s linear infinite",
+              }}
+            >
+              <div style={{ background: "var(--violet)", borderRadius: 17, padding: "52px 40px" }}>
+                <p style={{ fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(250,246,241,0.5)" }}>Full Access</p>
+                <p style={{ fontFamily: "var(--font-display)", fontSize: 104, fontWeight: 700, color: "var(--soft-violet)", lineHeight: 1, marginTop: 8 }} className="max-sm:!text-[72px]">
+                  $79
+                </p>
+                <p style={{ fontFamily: "var(--font-body)", fontSize: 15, color: "rgba(250,246,241,0.5)", marginTop: 8 }}>One-time payment &middot; 1 wedding &middot; Forever</p>
+
+                {/* Two-column feature list */}
+                <div
+                  style={{
+                    marginTop: 40,
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "10px 24px",
+                    textAlign: "left",
+                  }}
+                  className="max-sm:!grid-cols-1"
+                >
+                  {pricingFeatures.map((pf) => (
+                    <div key={pf} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                      <span style={{ color: "var(--soft-violet)", fontSize: 13, flexShrink: 0, marginTop: 2 }}>&#10022;</span>
+                      <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--whisper)", lineHeight: 1.5 }}>{pf}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA */}
+                <div style={{ marginTop: 44 }}>
+                  <Show when="signed-out">
+                    <SignUpButton>
+                      <button
+                        style={{
+                          background: "var(--soft-violet)",
+                          color: "var(--deep-plum)",
+                          borderRadius: 100,
+                          padding: "18px 48px",
+                          fontFamily: "var(--font-body)",
+                          fontSize: 16,
+                          fontWeight: 600,
+                          border: "none",
+                          cursor: "pointer",
+                          transition: "all 200ms",
+                        }}
+                      >
+                        Start Planning Today
+                      </button>
+                    </SignUpButton>
+                  </Show>
+                  <Show when="signed-in">
+                    <Link
+                      href="/dashboard"
+                      style={{
+                        display: "inline-block",
+                        background: "var(--soft-violet)",
+                        color: "var(--deep-plum)",
+                        borderRadius: 100,
+                        padding: "18px 48px",
+                        fontFamily: "var(--font-body)",
+                        fontSize: 16,
+                        fontWeight: 600,
+                        textDecoration: "none",
+                      }}
+                    >
+                      Go to Dashboard
+                    </Link>
+                  </Show>
+                </div>
+              </div>
+            </div>
+
+            {/* Quote below pricing */}
+            <p style={{ fontFamily: "var(--font-display)", fontSize: 20, fontStyle: "italic", color: "var(--muted-plum)", marginTop: 40, lineHeight: 1.6 }}>
+              &ldquo;Most couples spend $35,000+ on their wedding. A $79 planning tool that keeps you organized and on budget is the best investment you can make.&rdquo;
+            </p>
+
+            {/* Memory Plan */}
+            <div
+              style={{
+                marginTop: 40,
+                background: "var(--blush-pink)",
+                borderRadius: 16,
+                padding: "32px 36px",
+                textAlign: "left",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+                <p style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--deep-plum)" }}>Memory Plan</p>
+                <div>
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: 36, fontWeight: 700, color: "var(--deep-plum)" }}>$29</span>
+                  <span style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--muted-plum)", marginLeft: 4 }}>/year</span>
+                </div>
+              </div>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--muted-plum)", marginTop: 8, lineHeight: 1.6 }}>
+                Keep your wedding website live and your data accessible after the wedding.
+              </p>
+              <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                {memoryPlanFeatures.map((mf) => (
+                  <div key={mf} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: "var(--soft-violet)", fontSize: 13 }}>&#10022;</span>
+                    <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--deep-plum)" }}>{mf}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
+
+      {/* ─── FINAL CTA ─── */}
+      <ScrollReveal>
+        <section
+          style={{
+            background: "var(--violet)",
+            padding: "140px 24px",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "radial-gradient(circle at 50% 50%, rgba(201,168,76,0.15) 0%, transparent 60%)",
+              pointerEvents: "none",
+            }}
+          />
+          <div style={{ maxWidth: 700, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 1 }}>
+            <p style={{ fontFamily: "var(--font-script)", fontSize: 30, color: "var(--soft-violet)" }}>Begin your story</p>
+            <h2
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 72,
+                fontWeight: 700,
+                color: "var(--whisper)",
+                lineHeight: 1.08,
+                marginTop: 12,
+              }}
+              className="max-lg:!text-[48px]"
+            >
+              Your story deserves to be told beautifully.
+            </h2>
+            <div style={{ marginTop: 44 }}>
+              <Show when="signed-out">
+                <SignUpButton>
+                  <button
+                    style={{
+                      background: "var(--soft-violet)",
+                      color: "var(--deep-plum)",
+                      borderRadius: 100,
+                      padding: "18px 48px",
+                      fontFamily: "var(--font-body)",
+                      fontSize: 16,
+                      fontWeight: 600,
+                      border: "none",
+                      cursor: "pointer",
+                      transition: "all 200ms",
+                    }}
+                  >
+                    Start Planning Today
+                  </button>
+                </SignUpButton>
+              </Show>
+              <Show when="signed-in">
+                <Link
+                  href="/dashboard"
+                  style={{
+                    display: "inline-block",
+                    background: "var(--soft-violet)",
+                    color: "var(--deep-plum)",
+                    borderRadius: 100,
+                    padding: "18px 48px",
+                    fontFamily: "var(--font-body)",
+                    fontSize: 16,
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  Go to Dashboard
+                </Link>
+              </Show>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
+
+      {/* ─── FOOTER ─── */}
+      <footer style={{ backgroundColor: "#1A1A2E", padding: "80px 24px 48px" }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: 40,
+            }}
+            className="max-md:!grid-cols-2 max-sm:!grid-cols-1"
+          >
             <div>
-              <p className="font-[family-name:var(--font-serif)] text-[20px] text-white">eydn</p>
-              <p className="mt-3 text-[13px] text-white/40 leading-relaxed">
+              <p style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, color: "#fff" }}>eydn</p>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.7, marginTop: 12 }}>
                 Your AI-powered wedding planning guide. From engagement to &ldquo;I do.&rdquo;
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-white/60 uppercase tracking-[0.15em]">Product</p>
-              <div className="mt-4 space-y-2.5 text-[13px]">
-                <Link href="/#features" className="block text-white/40 hover:text-white transition">Features</Link>
-                <Link href="/#pricing" className="block text-white/40 hover:text-white transition">Pricing</Link>
-                <Link href="/#how-it-works" className="block text-white/40 hover:text-white transition">How It Works</Link>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Product</p>
+              <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                <Link href="/#features" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Features</Link>
+                <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Pricing</Link>
+                <Link href="/#how-it-works" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>How It Works</Link>
               </div>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-white/60 uppercase tracking-[0.15em]">For Vendors</p>
-              <div className="mt-4 space-y-2.5 text-[13px]">
-                <Link href="/dashboard/vendor-portal" className="block text-white/40 hover:text-white transition">Vendor Portal</Link>
-                <Link href="/#pricing" className="block text-white/40 hover:text-white transition">Placement Tiers</Link>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.15em" }}>For Vendors</p>
+              <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                <Link href="/dashboard/vendor-portal" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Vendor Portal</Link>
+                <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Placement Tiers</Link>
               </div>
             </div>
             <div>
-              <p className="text-[11px] font-medium text-white/60 uppercase tracking-[0.15em]">Company</p>
-              <div className="mt-4 space-y-2.5 text-[13px]">
-                <a href="mailto:support@eydn.app" className="block text-white/40 hover:text-white transition">Contact</a>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Company</p>
+              <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                <a href="mailto:support@eydn.app" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Contact</a>
               </div>
             </div>
           </div>
-          <div className="mt-16 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px] text-white/30">
-            <p>&copy; {new Date().getFullYear()} eydn. All rights reserved.</p>
-            <div className="flex gap-6">
-              <Link href="/privacy" className="hover:text-white/60 transition">Privacy</Link>
-              <Link href="/terms" className="hover:text-white/60 transition">Terms</Link>
+          <div style={{ marginTop: 64, paddingTop: 32, borderTop: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>&copy; {new Date().getFullYear()} eydn. All rights reserved.</p>
+            <div style={{ display: "flex", gap: 24 }}>
+              <Link href="/privacy" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(255,255,255,0.3)", textDecoration: "none" }}>Privacy</Link>
+              <Link href="/terms" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(255,255,255,0.3)", textDecoration: "none" }}>Terms</Link>
             </div>
           </div>
         </div>
@@ -484,8 +1044,8 @@ const features = [
   { title: "Guest management", description: "RSVPs, meal preferences, roles, addresses, plus-ones, and groups. Import via CSV. Send RSVP links." },
   { title: "Vendor tracker with Google profiles", description: "Manage 13 vendor categories with status pipeline, contacts, financials, email templates, and auto-enriched Google Business profiles with ratings and reviews." },
   { title: "Wedding website", description: "A beautiful public page for your guests with schedule, travel info, registry links, photo gallery, and RSVP." },
-  { title: "Seating chart", description: "Drag-and-drop tables for your reception. Ceremony layout for who stands where at the altar." },
   { title: "Complete day-of binder", description: "Timeline, ceremony script, music lists, speeches, setup assignments, attire details, vendor contacts, and packing checklist — all exportable as a beautiful branded PDF." },
+  { title: "Seating chart", description: "Drag-and-drop tables for your reception. Ceremony layout for who stands where at the altar." },
   { title: "Photo gallery", description: "Guests upload their photos to a shared album right from your wedding website. No app download needed." },
   { title: "Your data, protected", description: "Daily encrypted backups, soft-delete recovery, full data export, and audit logging. Your wedding plans are never at risk." },
 ];
@@ -494,14 +1054,6 @@ const steps = [
   { title: "Tell us about your wedding", description: "Complete a quick 11-step guided setup. eydn learns your date, budget, style, and what you've already booked." },
   { title: "Get your personalized plan", description: "eydn generates 50+ tasks with real deadlines, a pre-built budget with line items, and a custom planning timeline." },
   { title: "Plan with confidence", description: "Track vendors, manage guests, build your seating chart, and chat with eydn whenever you need advice." },
-];
-
-const deepDives = [
-  { label: "AI Assistant", title: "Like having a planner in your pocket", description: "eydn knows your wedding inside and out — your budget, guest count, vendor statuses, task progress, and every key decision you've made. It remembers your preferences across every conversation.", bullets: ["Remembers your style, allergies, priorities, and decisions", "Personalized answers based on your complete wedding data", "Vendor outreach tips and etiquette advice", "Budget allocation suggestions", "50-message conversation memory for natural dialogue", "Deadline reminders and next-step guidance"], cardText: "\"What should I prioritize this month?\"" },
-  { label: "Wedding Website", title: "One link for all your guests", description: "Share your custom wedding website with your schedule, travel details, registry, and RSVP — all in one place. Guests can even upload photos.", bullets: ["Custom URL (eydn.app/w/your-names)", "Schedule, travel info, accommodations, FAQ", "Guest photo uploads to a shared gallery", "Unique RSVP links for each guest"], cardText: "eydn.app/w/mark-and-sarah" },
-  { label: "Budget", title: "Know exactly where your money goes", description: "Start with a pre-built budget template with 36 line items across 13 categories. Track estimated costs, actual payments, and link vendors directly to budget items.", bullets: ["Pre-populated with standard wedding line items", "Estimated, paid, and final cost columns", "Link vendors to auto-sync costs", "Category subtotals and progress tracking"], cardText: "36 pre-built line items across 13 categories" },
-  { label: "Day-of Binder", title: "Your complete wedding binder, digitized", description: "Everything your coordinator, DJ, photographer, and wedding party needs — in one document. Per-person schedules, ceremony script, music cues, vendor arrival times, decor layouts, and more.", bullets: ["Separate schedules for bride, groom, bridesmaids, and groomsmen", "Full ceremony script with processional order", "Music list for every moment (ceremony, reception, dances)", "Speech order with speaker roles and topics", "Setup task assignments (who does what, day before)", "Attire documentation with photos", "Vendor contact sheet with arrival times and meal needs", "Packing checklist so nothing gets left behind"], cardText: "Everything in one PDF — your complete wedding binder" },
-  { label: "Data Security", title: "Your plans deserve protection", description: "Your wedding is one of the most important events of your life. We treat your data with the same care you put into planning it. Daily backups, recovery tools, and full data ownership — built into every account.", bullets: ["Daily encrypted backups to redundant off-site servers", "Soft-delete recovery — restore anything within 30 days", "Download all your data anytime with one click", "Full audit trail of every change made to your wedding", "Point-in-time database recovery (7-day window)", "Enterprise-grade security headers and rate limiting"], cardText: "Daily backups. 30-day recovery. Your data, always." },
 ];
 
 const memoryPlanFeatures = [
@@ -530,4 +1082,22 @@ const pricingFeatures = [
   "Smart deadline email reminders",
   "Daily backups with 30-day recovery",
   "Download all your data anytime",
+];
+
+const testimonials = [
+  {
+    quote: "We were overwhelmed before eydn. Having everything — tasks, budget, vendors, guests — in one place with an AI that actually remembered our preferences changed everything.",
+    names: "Priya & James",
+    detail: "Married June 2025 \u00B7 Chicago, IL",
+  },
+  {
+    quote: "The day-of binder alone was worth it. Our coordinator said it was the most organized couple she'd ever worked with.",
+    names: "Sarah & Michael",
+    detail: "Married Sept 2025 \u00B7 Austin, TX",
+  },
+  {
+    quote: "I almost spent $3,000 on a wedding planner. eydn did everything I needed for $79. I cannot believe this is a one-time payment.",
+    names: "Lauren & Chris",
+    detail: "Married May 2025 \u00B7 Denver, CO",
+  },
 ];
