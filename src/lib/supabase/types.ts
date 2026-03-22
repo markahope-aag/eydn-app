@@ -1218,6 +1218,9 @@ export type Database = {
           notes: string | null;
           amount: number | null;
           amount_paid: number | null;
+          arrival_time: string | null;
+          meal_needed: boolean;
+          insurance_submitted: boolean;
           gmb_place_id: string | null;
           gmb_data: Record<string, unknown> | null;
           gmb_fetched_at: string | null;
@@ -1236,6 +1239,9 @@ export type Database = {
           notes?: string | null;
           amount?: number | null;
           amount_paid?: number | null;
+          arrival_time?: string | null;
+          meal_needed?: boolean;
+          insurance_submitted?: boolean;
           gmb_place_id?: string | null;
           gmb_data?: Record<string, unknown> | null;
           gmb_fetched_at?: string | null;
@@ -1254,6 +1260,9 @@ export type Database = {
           notes?: string | null;
           amount?: number | null;
           amount_paid?: number | null;
+          arrival_time?: string | null;
+          meal_needed?: boolean;
+          insurance_submitted?: boolean;
           gmb_place_id?: string | null;
           gmb_data?: Record<string, unknown> | null;
           gmb_fetched_at?: string | null;

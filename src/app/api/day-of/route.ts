@@ -127,6 +127,7 @@ async function generateDayOfPlan(
     music: [],
     speeches: [],
     setupTasks: [],
+    attire: [],
   };
 
   const { data } = await supabase

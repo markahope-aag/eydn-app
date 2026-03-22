@@ -19,6 +19,9 @@ type Vendor = {
   notes: string | null;
   amount: number | null;
   amount_paid: number | null;
+  arrival_time: string | null;
+  meal_needed: boolean;
+  insurance_submitted: boolean;
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -216,13 +219,57 @@ export default function VendorDetailPage({
         </div>
       </div>
 
+      {/* Day-of Details */}
+      <div className="mt-6">
+        <h2 className="text-[15px] font-semibold text-plum mb-3">Day-of Details</h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <label className="text-[12px] font-semibold text-muted">Arrival Time</label>
+            <input
+              type="time"
+              defaultValue={vendor.arrival_time || ""}
+              onChange={(e) => updateField("arrival_time", e.target.value || null)}
+              className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+            />
+          </div>
+          <div>
+            <label className="text-[12px] font-semibold text-muted">Meal Needed?</label>
+            <div className="mt-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={vendor.meal_needed}
+                  onChange={(e) => updateField("meal_needed", e.target.checked as unknown as string)}
+                  className="accent-violet"
+                />
+                <span className="text-[14px] text-plum">Yes, needs a meal</span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label className="text-[12px] font-semibold text-muted">Insurance Submitted?</label>
+            <div className="mt-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={vendor.insurance_submitted}
+                  onChange={(e) => updateField("insurance_submitted", e.target.checked as unknown as string)}
+                  className="accent-violet"
+                />
+                <span className="text-[14px] text-plum">Yes, submitted</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Notes */}
       <div className="mt-6">
-        <label className="text-[12px] font-semibold text-muted">Notes</label>
+        <label className="text-[12px] font-semibold text-muted">Notes &amp; Special Instructions</label>
         <textarea
           defaultValue={vendor.notes || ""}
           onBlur={(e) => updateField("notes", e.target.value || null)}
-          placeholder="Add notes about this vendor..."
+          placeholder="Arrival instructions, specific requests, dietary needs, parking info..."
           rows={4}
           className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
         />

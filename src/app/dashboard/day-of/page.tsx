@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { PremiumButton } from "@/components/PremiumGate";
 
-type TimelineItem = { time: string; event: string; notes: string };
+type TimelineItem = { time: string; event: string; notes: string; forGroup?: string };
 type VendorContact = { vendor: string; category: string; contact: string; phone: string };
 type PartyAssignment = { name: string; role: string; job: string; phone: string };
 type PackingItem = { item: string; notes: string };
@@ -25,9 +25,14 @@ type DayOfPlan = {
   music: MusicEntry[];
   speeches: SpeechEntry[];
   setupTasks: SetupTask[];
+  attire: AttireItem[];
 };
 
-type Tab = "timeline" | "vendors" | "packing" | "ceremony" | "music" | "speeches" | "setup";
+type AttireItem = { person: string; description: string; photoUrl: string | null };
+
+type Tab = "timeline" | "vendors" | "packing" | "ceremony" | "music" | "speeches" | "setup" | "attire";
+
+const TIMELINE_GROUPS = ["Everyone", "Bride", "Groom", "Bridesmaids", "Groomsmen", "Family", "Vendors"];
 
 const DEFAULT_MUSIC_MOMENTS = [
   "Processional",
@@ -119,7 +124,10 @@ export default function DayOfPage() {
   const [loading, setLoading] = useState(true);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<Tab>("timeline");
+  const [timelineFilter, setTimelineFilter] = useState("All");
   const [ceremonyTime, setCeremonyTime] = useState("");
+  const attirePhotoRef = useRef<HTMLInputElement>(null);
+  const attirePhotoIndex = useRef<number | null>(null);
   const [newPackingItem, setNewPackingItem] = useState("");
 
   useEffect(() => {
@@ -144,6 +152,7 @@ export default function DayOfPage() {
         if (!content.music) content.music = [];
         if (!content.speeches) content.speeches = [];
         if (!content.setupTasks) content.setupTasks = [];
+        if (!content.attire) content.attire = [];
         setPlan(content);
         setCeremonyTime(content.ceremonyTime || "");
       })
@@ -560,7 +569,7 @@ export default function DayOfPage() {
 
       {/* Tabs */}
       <div className="mt-6 flex gap-1 border-b border-border overflow-x-auto">
-        {(["timeline", "vendors", "packing", "ceremony", "music", "speeches", "setup"] as Tab[]).map((t) => (
+        {(["timeline", "ceremony", "music", "speeches", "setup", "attire", "vendors", "packing"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -579,6 +588,7 @@ export default function DayOfPage() {
                 music: "Music",
                 speeches: "Speeches",
                 setup: "Setup Tasks",
+                attire: "Attire",
               }[t]
             }
           </button>
@@ -588,11 +598,30 @@ export default function DayOfPage() {
       {/* TIMELINE TAB */}
       {tab === "timeline" && (
         <div className="mt-4">
+          {/* Group filter */}
+          <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1">
+            {["All", ...TIMELINE_GROUPS].map((g) => (
+              <button
+                key={g}
+                onClick={() => setTimelineFilter(g)}
+                className={`px-3 py-1 text-[12px] font-semibold rounded-full whitespace-nowrap transition ${
+                  timelineFilter === g
+                    ? "bg-violet text-white"
+                    : "bg-lavender text-violet hover:bg-violet hover:text-white"
+                }`}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
           <div className="space-y-1">
-            {plan.timeline.map((item, i) => (
+            {plan.timeline
+              .map((item, i) => ({ item, i }))
+              .filter(({ item }) => timelineFilter === "All" || (item.forGroup || "Everyone") === timelineFilter)
+              .map(({ item, i }) => (
               <div
                 key={i}
-                className="flex items-center gap-3 rounded-[12px] border border-border bg-white px-4 py-2"
+                className="flex items-center gap-2 rounded-[12px] border border-border bg-white px-4 py-2"
               >
                 <input
                   type="text"
@@ -608,12 +637,21 @@ export default function DayOfPage() {
                   className="flex-1 text-[15px] text-plum border-0 bg-transparent"
                   placeholder="Event"
                 />
+                <select
+                  defaultValue={item.forGroup || "Everyone"}
+                  onChange={(e) => updateTimeline(i, "forGroup", e.target.value)}
+                  className="w-28 text-[11px] text-muted border-0 bg-transparent"
+                >
+                  {TIMELINE_GROUPS.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
                 <input
                   type="text"
                   defaultValue={item.notes}
                   onBlur={(e) => updateTimeline(i, "notes", e.target.value)}
                   placeholder="Notes"
-                  className="w-40 text-[12px] text-muted border-0 bg-transparent"
+                  className="w-32 text-[12px] text-muted border-0 bg-transparent"
                 />
                 <button
                   onClick={() => removeTimelineItem(i)}
@@ -1126,6 +1164,110 @@ export default function DayOfPage() {
           >
             Add task
           </button>
+        </div>
+      )}
+
+      {/* ATTIRE TAB */}
+      {tab === "attire" && (
+        <div className="mt-4">
+          <p className="text-[13px] text-muted mb-4">
+            Document what each person is wearing. Add photos of outfits, accessories, and details.
+          </p>
+          <div className="space-y-3">
+            {plan.attire.map((item, i) => (
+              <div key={i} className="card p-4 flex gap-4">
+                {item.photoUrl ? (
+                  <div className="w-20 h-20 rounded-[12px] overflow-hidden flex-shrink-0 relative cursor-pointer group"
+                    onClick={() => {
+                      attirePhotoIndex.current = i;
+                      attirePhotoRef.current?.click();
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={item.photoUrl} alt={item.person || "Attire"} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                      <span className="text-white text-[10px] font-semibold">Change</span>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      attirePhotoIndex.current = i;
+                      attirePhotoRef.current?.click();
+                    }}
+                    className="w-20 h-20 rounded-[12px] bg-lavender flex items-center justify-center flex-shrink-0 hover:bg-violet transition group"
+                  >
+                    <span className="text-[24px] text-violet group-hover:text-white">+</span>
+                  </button>
+                )}
+                <div className="flex-1 space-y-2">
+                  <input
+                    type="text"
+                    defaultValue={item.person}
+                    onBlur={(e) => {
+                      const updated = [...plan.attire];
+                      updated[i] = { ...updated[i], person: e.target.value };
+                      savePlan({ ...plan, attire: updated });
+                    }}
+                    placeholder="Person (e.g. Bride, Groom, Maid of Honor)"
+                    className="w-full text-[15px] font-semibold text-plum border-0 bg-transparent"
+                  />
+                  <textarea
+                    defaultValue={item.description}
+                    onBlur={(e) => {
+                      const updated = [...plan.attire];
+                      updated[i] = { ...updated[i], description: e.target.value };
+                      savePlan({ ...plan, attire: updated });
+                    }}
+                    placeholder="e.g. Ivory lace A-line gown, cathedral veil, pearl earrings, nude heels..."
+                    rows={2}
+                    className="w-full text-[13px] text-muted border-0 bg-transparent resize-none"
+                  />
+                </div>
+                <button
+                  onClick={() => savePlan({ ...plan, attire: plan.attire.filter((_, j) => j !== i) })}
+                  className="text-[10px] text-error hover:opacity-80 self-start"
+                >
+                  x
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => savePlan({ ...plan, attire: [...plan.attire, { person: "", description: "", photoUrl: null }] })}
+            className="btn-ghost btn-sm mt-3"
+          >
+            Add attire entry
+          </button>
+          <input
+            ref={attirePhotoRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async () => {
+              const file = attirePhotoRef.current?.files?.[0];
+              const idx = attirePhotoIndex.current;
+              if (!file || idx === null) return;
+
+              const formData = new FormData();
+              formData.append("file", file);
+              formData.append("entity_type", "task");
+              formData.append("entity_id", "wedding-party-photo");
+
+              try {
+                const res = await fetch("/api/attachments", { method: "POST", body: formData });
+                if (!res.ok) throw new Error();
+                const { file_url } = await res.json();
+                const updated = [...plan.attire];
+                updated[idx] = { ...updated[idx], photoUrl: file_url };
+                savePlan({ ...plan, attire: updated });
+                toast.success("Photo uploaded");
+              } catch {
+                toast.error("Failed to upload photo");
+              }
+              if (attirePhotoRef.current) attirePhotoRef.current.value = "";
+            }}
+          />
         </div>
       )}
     </div>
