@@ -6,7 +6,7 @@ const ALLOWED_FIELDS = [
   "partner1_name", "partner2_name", "date", "venue", "budget",
   "guest_count_estimate", "style_description",
   "has_wedding_party", "wedding_party_count",
-  "has_pre_wedding_events", "has_honeymoon",
+  "has_pre_wedding_events", "has_honeymoon", "key_decisions",
 ];
 
 export async function PATCH(

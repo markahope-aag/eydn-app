@@ -403,6 +403,7 @@ export type Database = {
           phase: "active" | "post_wedding" | "archived" | "sunset";
           memory_plan_active: boolean;
           memory_plan_expires_at: string | null;
+          key_decisions: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -423,6 +424,7 @@ export type Database = {
           phase?: "active" | "post_wedding" | "archived" | "sunset";
           memory_plan_active?: boolean;
           memory_plan_expires_at?: string | null;
+          key_decisions?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -443,6 +445,7 @@ export type Database = {
           phase?: "active" | "post_wedding" | "archived" | "sunset";
           memory_plan_active?: boolean;
           memory_plan_expires_at?: string | null;
+          key_decisions?: string | null;
           updated_at?: string;
         };
         Relationships: [];

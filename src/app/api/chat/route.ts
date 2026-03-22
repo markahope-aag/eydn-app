@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     .select("role, content")
     .eq("wedding_id", wedding.id)
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(50);
 
   // Get wedding context for system prompt
   const [{ count: taskTotal }, { count: taskCompleted }, { count: vendorCount }, { count: guestCount }, { data: expenses }] =

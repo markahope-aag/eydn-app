@@ -69,6 +69,7 @@ export default function SettingsPage() {
   const [reminderDays, setReminderDays] = useState(7);
   const [loading, setLoading] = useState(true);
   const [weddingId, setWeddingId] = useState<string | null>(null);
+  const [keyDecisions, setKeyDecisions] = useState("");
 
   // Collaborators
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
@@ -103,6 +104,7 @@ export default function SettingsPage() {
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((wedding) => {
         setWeddingId(wedding.id);
+        setKeyDecisions(wedding.key_decisions || "");
         return fetch(`/api/settings`);
       })
       .then((r) => (r.ok ? r.json() : null))
@@ -263,6 +265,35 @@ export default function SettingsPage() {
         <p className="mt-1 text-[12px] text-muted">
           Go back through the onboarding questions to update your wedding details
         </p>
+      </div>
+
+      {/* Things eydn should know */}
+      <div className="mt-6">
+        <h2 className="text-[18px] font-semibold text-plum">Things eydn should know</h2>
+        <p className="mt-1 text-[12px] text-muted">
+          Key decisions and preferences that eydn will remember across all conversations. Add anything important — theme, allergies, must-haves, cultural traditions, etc.
+        </p>
+        <textarea
+          value={keyDecisions}
+          onChange={(e) => setKeyDecisions(e.target.value)}
+          onBlur={async () => {
+            if (!weddingId) return;
+            try {
+              const res = await fetch(`/api/weddings/${weddingId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ key_decisions: keyDecisions || null }),
+              });
+              if (!res.ok) throw new Error();
+              toast.success("Saved — eydn will remember this");
+            } catch {
+              toast.error("Failed to save");
+            }
+          }}
+          placeholder={"e.g.\n• We're going rustic-elegant with a woodland theme\n• No shellfish — groom has an allergy\n• Ceremony will be outdoors rain or shine\n• Colors are blush, sage, and gold\n• We want a first look before the ceremony\n• Budget priority: photography > food > flowers"}
+          rows={6}
+          className="mt-3 w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
+        />
       </div>
 
       {/* Theme */}

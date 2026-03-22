@@ -46,7 +46,10 @@ ${wedding.budget ? `- Budget: $${wedding.budget.toLocaleString()} (spent: $${bud
 - Vendors tracked: ${vendorCount}
 - Guests on list: ${guestCount}
 ${wedding.style_description ? `- Style: ${wedding.style_description}` : ""}
-
+${wedding.key_decisions ? `
+## Key Decisions & Preferences
+${wedding.key_decisions}
+` : ""}
 ## Guidelines
 - Use the wedding context to give personalized advice
 - If asked about something you don't know, suggest checking the relevant section of the app
