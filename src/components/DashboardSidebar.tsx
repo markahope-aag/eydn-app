@@ -38,7 +38,8 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
     <>
       <Link
         href="/dashboard"
-        className="text-xl font-semibold bg-brand-gradient bg-clip-text text-transparent"
+        className="text-xl font-semibold"
+        style={{ background: "linear-gradient(135deg, var(--violet), var(--blush-pink))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}
         onClick={() => setOpen(false)}
       >
         eydn
