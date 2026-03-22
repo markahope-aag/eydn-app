@@ -5,8 +5,13 @@ export default function HomePage() {
   return (
     <main className="flex-1 flex flex-col">
       {/* Hero */}
-      <section className="bg-brand-gradient py-24 sm:py-32">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+      <section className="relative min-h-[600px] sm:min-h-[700px] flex items-center overflow-hidden">
+        <div className="absolute inset-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/hero.jpg" alt="" className="w-full h-full object-cover" aria-hidden="true" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#1A1030]/80 via-[#1A1030]/60 to-[#1A1030]/40" />
+        </div>
+        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center py-24 sm:py-32">
           <h1 className="text-[40px] sm:text-[52px] font-semibold text-white leading-[1.1]" style={{ letterSpacing: "-1px" }}>
             Plan your wedding,<br />not your stress
           </h1>
