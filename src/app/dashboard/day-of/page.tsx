@@ -9,6 +9,9 @@ type TimelineItem = { time: string; event: string; notes: string };
 type VendorContact = { vendor: string; category: string; contact: string; phone: string };
 type PartyAssignment = { name: string; role: string; job: string; phone: string };
 type PackingItem = { item: string; notes: string };
+type MusicEntry = { moment: string; song: string; artist: string };
+type SpeechEntry = { speaker: string; role: string; topic: string };
+type SetupTask = { task: string; assignedTo: string; notes: string };
 
 type DayOfPlan = {
   ceremonyTime: string;
@@ -16,9 +19,27 @@ type DayOfPlan = {
   vendorContacts: VendorContact[];
   partyAssignments: PartyAssignment[];
   packingChecklist: PackingItem[];
+  ceremonyScript: string;
+  processionalOrder: string[];
+  officiantNotes: string;
+  music: MusicEntry[];
+  speeches: SpeechEntry[];
+  setupTasks: SetupTask[];
 };
 
-type Tab = "timeline" | "vendors" | "packing";
+type Tab = "timeline" | "vendors" | "packing" | "ceremony" | "music" | "speeches" | "setup";
+
+const DEFAULT_MUSIC_MOMENTS = [
+  "Processional",
+  "Bride Entrance",
+  "Recessional",
+  "First Dance",
+  "Father/Daughter Dance",
+  "Mother/Son Dance",
+  "Cake Cutting",
+  "Last Dance",
+  "Exit Song",
+];
 
 function parseCeremonyTime(input: string): number | null {
   const trimmed = input.trim();
@@ -116,6 +137,13 @@ export default function DayOfPage() {
             );
           }
         }
+        // Ensure new fields have defaults for plans generated before these fields existed
+        if (!content.ceremonyScript) content.ceremonyScript = "";
+        if (!content.processionalOrder) content.processionalOrder = [];
+        if (!content.officiantNotes) content.officiantNotes = "";
+        if (!content.music) content.music = [];
+        if (!content.speeches) content.speeches = [];
+        if (!content.setupTasks) content.setupTasks = [];
         setPlan(content);
         setCeremonyTime(content.ceremonyTime || "");
       })
@@ -531,18 +559,28 @@ export default function DayOfPage() {
       </div>
 
       {/* Tabs */}
-      <div className="mt-6 flex gap-1 border-b border-border">
-        {(["timeline", "vendors", "packing"] as Tab[]).map((t) => (
+      <div className="mt-6 flex gap-1 border-b border-border overflow-x-auto">
+        {(["timeline", "vendors", "packing", "ceremony", "music", "speeches", "setup"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${
+            className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition whitespace-nowrap ${
               tab === t
                 ? "border-violet text-violet"
                 : "border-transparent text-plum/60 hover:text-plum"
             }`}
           >
-            {t === "timeline" ? "Timeline" : t === "vendors" ? "Vendors & Party" : "Packing Checklist"}
+            {
+              {
+                timeline: "Timeline",
+                vendors: "Vendors & Party",
+                packing: "Packing Checklist",
+                ceremony: "Ceremony",
+                music: "Music",
+                speeches: "Speeches",
+                setup: "Setup Tasks",
+              }[t]
+            }
           </button>
         ))}
       </div>
@@ -713,6 +751,381 @@ export default function DayOfPage() {
             />
             <button type="submit" className="btn-secondary btn-sm">Add</button>
           </form>
+        </div>
+      )}
+
+      {/* CEREMONY TAB */}
+      {tab === "ceremony" && (
+        <div className="mt-4 space-y-6">
+          {/* Ceremony Script */}
+          <div>
+            <h2 className="text-[15px] font-semibold text-plum mb-2">Ceremony Script</h2>
+            <textarea
+              defaultValue={plan.ceremonyScript}
+              onBlur={(e) => savePlan({ ...plan, ceremonyScript: e.target.value })}
+              placeholder="Paste or write your ceremony script here..."
+              rows={10}
+              className="w-full rounded-[12px] border border-border bg-white px-4 py-3 text-[15px] text-plum resize-y"
+            />
+          </div>
+
+          {/* Processional Order */}
+          <div>
+            <h2 className="text-[15px] font-semibold text-plum mb-2">Processional Order</h2>
+            <p className="text-[12px] text-muted mb-3">Drag to reorder, or use the arrows. Names appear in order of entry.</p>
+            <div className="space-y-1">
+              {plan.processionalOrder.map((name, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 rounded-[12px] border border-border bg-white px-4 py-2"
+                >
+                  <span className="text-[13px] text-muted w-6 text-center">{i + 1}</span>
+                  <input
+                    type="text"
+                    defaultValue={name}
+                    onBlur={(e) => {
+                      const updated = [...plan.processionalOrder];
+                      updated[i] = e.target.value;
+                      savePlan({ ...plan, processionalOrder: updated });
+                    }}
+                    className="flex-1 text-[15px] text-plum border-0 bg-transparent"
+                    placeholder="Name"
+                  />
+                  <button
+                    onClick={() => {
+                      if (i === 0) return;
+                      const updated = [...plan.processionalOrder];
+                      [updated[i - 1], updated[i]] = [updated[i], updated[i - 1]];
+                      savePlan({ ...plan, processionalOrder: updated });
+                    }}
+                    disabled={i === 0}
+                    className="text-[12px] text-muted hover:text-plum disabled:opacity-30"
+                  >
+                    &uarr;
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (i === plan.processionalOrder.length - 1) return;
+                      const updated = [...plan.processionalOrder];
+                      [updated[i], updated[i + 1]] = [updated[i + 1], updated[i]];
+                      savePlan({ ...plan, processionalOrder: updated });
+                    }}
+                    disabled={i === plan.processionalOrder.length - 1}
+                    className="text-[12px] text-muted hover:text-plum disabled:opacity-30"
+                  >
+                    &darr;
+                  </button>
+                  <button
+                    onClick={() => {
+                      savePlan({
+                        ...plan,
+                        processionalOrder: plan.processionalOrder.filter((_, j) => j !== i),
+                      });
+                    }}
+                    className="text-[10px] text-error hover:opacity-80"
+                  >
+                    x
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() =>
+                savePlan({ ...plan, processionalOrder: [...plan.processionalOrder, ""] })
+              }
+              className="btn-ghost btn-sm mt-3"
+            >
+              Add person
+            </button>
+          </div>
+
+          {/* Officiant Notes */}
+          <div>
+            <h2 className="text-[15px] font-semibold text-plum mb-2">Officiant Notes</h2>
+            <textarea
+              defaultValue={plan.officiantNotes}
+              onBlur={(e) => savePlan({ ...plan, officiantNotes: e.target.value })}
+              placeholder="Notes for the officiant..."
+              rows={5}
+              className="w-full rounded-[12px] border border-border bg-white px-4 py-3 text-[15px] text-plum resize-y"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* MUSIC TAB */}
+      {tab === "music" && (
+        <div className="mt-4">
+          <div className="overflow-hidden rounded-[16px] border border-border bg-white">
+            <table className="w-full text-[15px]">
+              <thead className="border-b border-border bg-lavender">
+                <tr>
+                  <th className="px-4 py-2 text-left font-semibold text-muted">Moment</th>
+                  <th className="px-4 py-2 text-left font-semibold text-muted">Song</th>
+                  <th className="px-4 py-2 text-left font-semibold text-muted">Artist</th>
+                  <th className="px-4 py-2 w-10"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {plan.music.map((m, i) => (
+                  <tr key={i}>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        defaultValue={m.moment}
+                        onBlur={(e) => {
+                          const updated = [...plan.music];
+                          updated[i] = { ...updated[i], moment: e.target.value };
+                          savePlan({ ...plan, music: updated });
+                        }}
+                        className="w-full text-[15px] text-plum font-semibold border-0 bg-transparent"
+                        placeholder="Moment"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        defaultValue={m.song}
+                        onBlur={(e) => {
+                          const updated = [...plan.music];
+                          updated[i] = { ...updated[i], song: e.target.value };
+                          savePlan({ ...plan, music: updated });
+                        }}
+                        className="w-full text-[15px] text-plum border-0 bg-transparent"
+                        placeholder="Song name"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        defaultValue={m.artist}
+                        onBlur={(e) => {
+                          const updated = [...plan.music];
+                          updated[i] = { ...updated[i], artist: e.target.value };
+                          savePlan({ ...plan, music: updated });
+                        }}
+                        className="w-full text-[15px] text-muted border-0 bg-transparent"
+                        placeholder="Artist"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() =>
+                          savePlan({ ...plan, music: plan.music.filter((_, j) => j !== i) })
+                        }
+                        className="text-[10px] text-error hover:opacity-80"
+                      >
+                        x
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={() =>
+                savePlan({
+                  ...plan,
+                  music: [...plan.music, { moment: "", song: "", artist: "" }],
+                })
+              }
+              className="btn-ghost btn-sm"
+            >
+              Add row
+            </button>
+            {plan.music.length === 0 && (
+              <button
+                onClick={() =>
+                  savePlan({
+                    ...plan,
+                    music: DEFAULT_MUSIC_MOMENTS.map((moment) => ({
+                      moment,
+                      song: "",
+                      artist: "",
+                    })),
+                  })
+                }
+                className="btn-secondary btn-sm"
+              >
+                Pre-fill common moments
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* SPEECHES TAB */}
+      {tab === "speeches" && (
+        <div className="mt-4">
+          <div className="overflow-hidden rounded-[16px] border border-border bg-white">
+            <table className="w-full text-[15px]">
+              <thead className="border-b border-border bg-lavender">
+                <tr>
+                  <th className="px-4 py-2 text-left font-semibold text-muted w-8">#</th>
+                  <th className="px-4 py-2 text-left font-semibold text-muted">Speaker</th>
+                  <th className="px-4 py-2 text-left font-semibold text-muted">Role</th>
+                  <th className="px-4 py-2 text-left font-semibold text-muted">Topic / Notes</th>
+                  <th className="px-4 py-2 w-10"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {plan.speeches.map((s, i) => (
+                  <tr key={i}>
+                    <td className="px-4 py-2 text-muted text-[13px]">{i + 1}</td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        defaultValue={s.speaker}
+                        onBlur={(e) => {
+                          const updated = [...plan.speeches];
+                          updated[i] = { ...updated[i], speaker: e.target.value };
+                          savePlan({ ...plan, speeches: updated });
+                        }}
+                        className="w-full text-[15px] text-plum font-semibold border-0 bg-transparent"
+                        placeholder="Name"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        defaultValue={s.role}
+                        onBlur={(e) => {
+                          const updated = [...plan.speeches];
+                          updated[i] = { ...updated[i], role: e.target.value };
+                          savePlan({ ...plan, speeches: updated });
+                        }}
+                        className="w-full text-[15px] text-muted border-0 bg-transparent"
+                        placeholder="e.g. Best Man"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        defaultValue={s.topic}
+                        onBlur={(e) => {
+                          const updated = [...plan.speeches];
+                          updated[i] = { ...updated[i], topic: e.target.value };
+                          savePlan({ ...plan, speeches: updated });
+                        }}
+                        className="w-full text-[15px] text-muted border-0 bg-transparent"
+                        placeholder="Topic or notes"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() =>
+                          savePlan({ ...plan, speeches: plan.speeches.filter((_, j) => j !== i) })
+                        }
+                        className="text-[10px] text-error hover:opacity-80"
+                      >
+                        x
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <button
+            onClick={() =>
+              savePlan({
+                ...plan,
+                speeches: [...plan.speeches, { speaker: "", role: "", topic: "" }],
+              })
+            }
+            className="btn-ghost btn-sm mt-3"
+          >
+            Add speaker
+          </button>
+        </div>
+      )}
+
+      {/* SETUP TASKS TAB */}
+      {tab === "setup" && (
+        <div className="mt-4">
+          <div className="overflow-hidden rounded-[16px] border border-border bg-white">
+            <table className="w-full text-[15px]">
+              <thead className="border-b border-border bg-lavender">
+                <tr>
+                  <th className="px-4 py-2 text-left font-semibold text-muted">What</th>
+                  <th className="px-4 py-2 text-left font-semibold text-muted">Who</th>
+                  <th className="px-4 py-2 text-left font-semibold text-muted">Notes</th>
+                  <th className="px-4 py-2 w-10"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {plan.setupTasks.map((t, i) => (
+                  <tr key={i}>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        defaultValue={t.task}
+                        onBlur={(e) => {
+                          const updated = [...plan.setupTasks];
+                          updated[i] = { ...updated[i], task: e.target.value };
+                          savePlan({ ...plan, setupTasks: updated });
+                        }}
+                        className="w-full text-[15px] text-plum font-semibold border-0 bg-transparent"
+                        placeholder="Task"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        defaultValue={t.assignedTo}
+                        onBlur={(e) => {
+                          const updated = [...plan.setupTasks];
+                          updated[i] = { ...updated[i], assignedTo: e.target.value };
+                          savePlan({ ...plan, setupTasks: updated });
+                        }}
+                        className="w-full text-[15px] text-muted border-0 bg-transparent"
+                        placeholder="Assigned to"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        defaultValue={t.notes}
+                        onBlur={(e) => {
+                          const updated = [...plan.setupTasks];
+                          updated[i] = { ...updated[i], notes: e.target.value };
+                          savePlan({ ...plan, setupTasks: updated });
+                        }}
+                        className="w-full text-[15px] text-muted border-0 bg-transparent"
+                        placeholder="Notes"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() =>
+                          savePlan({
+                            ...plan,
+                            setupTasks: plan.setupTasks.filter((_, j) => j !== i),
+                          })
+                        }
+                        className="text-[10px] text-error hover:opacity-80"
+                      >
+                        x
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <button
+            onClick={() =>
+              savePlan({
+                ...plan,
+                setupTasks: [...plan.setupTasks, { task: "", assignedTo: "", notes: "" }],
+              })
+            }
+            className="btn-ghost btn-sm mt-3"
+          >
+            Add task
+          </button>
         </div>
       )}
     </div>

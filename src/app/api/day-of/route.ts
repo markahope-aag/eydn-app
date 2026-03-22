@@ -121,6 +121,12 @@ async function generateDayOfPlan(
       "Cake knife & server",
       "Toasting glasses",
     ],
+    ceremonyScript: "",
+    processionalOrder: [],
+    officiantNotes: "",
+    music: [],
+    speeches: [],
+    setupTasks: [],
   };
 
   const { data } = await supabase

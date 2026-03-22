@@ -13,21 +13,24 @@ function mockRequest(body: unknown): Request {
 }
 
 function createMockSupabase(overrides: { selectData?: unknown[]; insertData?: unknown; error?: unknown } = {}) {
-  const chain = {
-    select: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        is: vi.fn(() => ({
-          order: vi.fn(() => ({ data: overrides.selectData ?? [], error: null })),
-        })),
-      })),
-    })),
-    insert: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({ data: overrides.insertData ?? { id: "wp-1" }, error: overrides.error ?? null }),
-  };
-  chain.insert.mockReturnValue({ select: vi.fn().mockReturnValue({ single: chain.single }) });
+  // Flexible chain that returns itself for any method call
+  const flexChain: Record<string, unknown> = {};
+  const methods = ["select", "eq", "is", "order", "limit", "single", "insert", "delete"];
+  for (const m of methods) {
+    flexChain[m] = vi.fn().mockReturnValue(flexChain);
+  }
+  // Terminal methods
+  flexChain.order = vi.fn().mockReturnValue({ data: overrides.selectData ?? [], error: null });
+  flexChain.single = vi.fn().mockResolvedValue({ data: overrides.insertData ?? { id: "wp-1" }, error: overrides.error ?? null });
+  // Insert chain
+  flexChain.insert = vi.fn().mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      single: vi.fn().mockResolvedValue({ data: overrides.insertData ?? { id: "wp-1" }, error: overrides.error ?? null }),
+    }),
+  });
   return {
-    from: vi.fn().mockReturnValue(chain),
-    _chain: chain,
+    from: vi.fn().mockReturnValue(flexChain),
+    _chain: flexChain,
   };
 }
 

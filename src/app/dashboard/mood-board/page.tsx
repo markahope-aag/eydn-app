@@ -11,8 +11,21 @@ type MoodItem = {
   image_url: string;
   caption: string | null;
   category: string;
+  location: string | null;
   created_at: string;
 };
+
+const LOCATIONS = [
+  "Ceremony",
+  "Reception",
+  "Cocktail Hour",
+  "Bar",
+  "Entrance",
+  "Dessert Table",
+  "Sweetheart Table",
+  "Photo Booth",
+  "Other",
+];
 
 const CATEGORIES = [
   "General",
@@ -39,6 +52,7 @@ export default function MoodBoardPage() {
   const [imageUrl, setImageUrl] = useState("");
   const [caption, setCaption] = useState("");
   const [category, setCategory] = useState("General");
+  const [location, setLocation] = useState("");
   const [uploading, setUploading] = useState(false);
   const [lightbox, setLightbox] = useState<MoodItem | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -59,13 +73,14 @@ export default function MoodBoardPage() {
       const res = await fetch("/api/mood-board", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image_url: imageUrl.trim(), caption: caption.trim() || null, category }),
+        body: JSON.stringify({ image_url: imageUrl.trim(), caption: caption.trim() || null, category, location: location || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to add image");
       setItems((prev) => [data, ...prev]);
       setImageUrl("");
       setCaption("");
+      setLocation("");
       setShowAdd(false);
       toast.success("Added to mood board");
     } catch (err) {
@@ -96,12 +111,13 @@ export default function MoodBoardPage() {
       const res = await fetch("/api/mood-board", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image_url: file_url, caption: caption.trim() || null, category }),
+        body: JSON.stringify({ image_url: file_url, caption: caption.trim() || null, category, location: location || null }),
       });
       if (!res.ok) throw new Error();
       const saved = await res.json();
       setItems((prev) => [saved, ...prev]);
       setCaption("");
+      setLocation("");
       setShowAdd(false);
       toast.success("Added to mood board");
     } catch (err) {
@@ -138,6 +154,15 @@ export default function MoodBoardPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ category: newCategory }),
+    }).catch(() => {});
+  }
+
+  async function updateLocation(id: string, newLocation: string | null) {
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, location: newLocation } : i)));
+    await fetch(`/api/mood-board/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ location: newLocation }),
     }).catch(() => {});
   }
 
@@ -207,7 +232,7 @@ export default function MoodBoardPage() {
             </div>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <div>
               <label className="text-[12px] font-semibold text-muted">Caption (optional)</label>
               <input
@@ -227,6 +252,19 @@ export default function MoodBoardPage() {
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[12px] font-semibold text-muted">Location (optional)</label>
+              <select
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+              >
+                <option value="">None</option>
+                {LOCATIONS.map((l) => (
+                  <option key={l} value={l}>{l}</option>
                 ))}
               </select>
             </div>
@@ -288,7 +326,10 @@ export default function MoodBoardPage() {
                   {item.caption && (
                     <p className="text-[13px] text-white font-semibold">{item.caption}</p>
                   )}
-                  <p className="text-[11px] text-white/70 mt-0.5">{item.category}</p>
+                  <p className="text-[11px] text-white/70 mt-0.5">
+                    {item.category}
+                    {item.location && <span> &middot; {item.location}</span>}
+                  </p>
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); setConfirmDelete(item.id); }}
@@ -297,11 +338,16 @@ export default function MoodBoardPage() {
                   &times;
                 </button>
               </div>
-              {/* Category badge */}
-              <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Category & location badges */}
+              <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                 <span className="bg-white/90 backdrop-blur-sm text-[11px] font-semibold text-plum px-2 py-0.5 rounded-full">
                   {item.category}
                 </span>
+                {item.location && (
+                  <span className="bg-white/90 backdrop-blur-sm text-[11px] font-semibold text-violet px-2 py-0.5 rounded-full">
+                    {item.location}
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -358,17 +404,32 @@ export default function MoodBoardPage() {
                   className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                 />
               </div>
-              <div>
-                <label className="text-[11px] font-semibold text-muted uppercase">Category</label>
-                <select
-                  defaultValue={lightbox.category}
-                  onChange={(e) => { updateCategory(lightbox.id, e.target.value); setLightbox({ ...lightbox, category: e.target.value }); }}
-                  className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="text-[11px] font-semibold text-muted uppercase">Category</label>
+                  <select
+                    defaultValue={lightbox.category}
+                    onChange={(e) => { updateCategory(lightbox.id, e.target.value); setLightbox({ ...lightbox, category: e.target.value }); }}
+                    className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-muted uppercase">Location</label>
+                  <select
+                    defaultValue={lightbox.location || ""}
+                    onChange={(e) => { const val = e.target.value || null; updateLocation(lightbox.id, val); setLightbox({ ...lightbox, location: val }); }}
+                    className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+                  >
+                    <option value="">None</option>
+                    {LOCATIONS.map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="flex justify-between items-center pt-1">
                 <p className="text-[12px] text-muted">

@@ -96,6 +96,7 @@ export type Database = {
           image_url: string;
           caption: string | null;
           category: string;
+          location: string | null;
           sort_order: number;
           created_at: string;
         };
@@ -105,6 +106,7 @@ export type Database = {
           image_url: string;
           caption?: string | null;
           category?: string;
+          location?: string | null;
           sort_order?: number;
           created_at?: string;
         };
@@ -112,6 +114,7 @@ export type Database = {
           id?: string;
           caption?: string | null;
           category?: string;
+          location?: string | null;
           sort_order?: number;
         };
         Relationships: [
@@ -1163,6 +1166,7 @@ export type Database = {
           phone: string | null;
           job_assignment: string | null;
           photo_url: string | null;
+          attire: string | null;
           sort_order: number;
           created_at: string;
         };
@@ -1175,6 +1179,7 @@ export type Database = {
           phone?: string | null;
           job_assignment?: string | null;
           photo_url?: string | null;
+          attire?: string | null;
           sort_order?: number;
           created_at?: string;
         };
@@ -1187,6 +1192,7 @@ export type Database = {
           phone?: string | null;
           job_assignment?: string | null;
           photo_url?: string | null;
+          attire?: string | null;
           sort_order?: number;
         };
         Relationships: [
@@ -1258,6 +1264,51 @@ export type Database = {
             foreignKeyName: "vendors_wedding_id_fkey";
             columns: ["wedding_id"];
             isOneToOne: false;
+            referencedRelation: "weddings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      rehearsal_dinner: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          venue: string | null;
+          date: string | null;
+          time: string | null;
+          address: string | null;
+          notes: string | null;
+          timeline: Record<string, unknown>[];
+          guest_list: string[];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          wedding_id: string;
+          venue?: string | null;
+          date?: string | null;
+          time?: string | null;
+          address?: string | null;
+          notes?: string | null;
+          timeline?: Record<string, unknown>[];
+          guest_list?: string[];
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          venue?: string | null;
+          date?: string | null;
+          time?: string | null;
+          address?: string | null;
+          notes?: string | null;
+          timeline?: Record<string, unknown>[];
+          guest_list?: string[];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rehearsal_dinner_wedding_id_fkey";
+            columns: ["wedding_id"];
+            isOneToOne: true;
             referencedRelation: "weddings";
             referencedColumns: ["id"];
           },

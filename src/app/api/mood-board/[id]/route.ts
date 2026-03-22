@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { pickFields } from "@/lib/validation";
 import { softDelete, logActivity } from "@/lib/audit";
 
-const ALLOWED_FIELDS = ["caption", "category", "sort_order"];
+const ALLOWED_FIELDS = ["caption", "category", "location", "sort_order"];
 
 export async function PATCH(
   request: Request,

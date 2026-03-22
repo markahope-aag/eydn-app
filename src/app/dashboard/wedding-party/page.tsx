@@ -15,6 +15,7 @@ type Member = {
   phone: string | null;
   job_assignment: string | null;
   photo_url: string | null;
+  attire: string | null;
   sort_order: number;
 };
 
@@ -65,6 +66,7 @@ export default function WeddingPartyPage() {
       phone: newPhone.trim() || null,
       job_assignment: null,
       photo_url: null,
+      attire: null,
       sort_order: members.length,
     };
 
@@ -332,6 +334,16 @@ export default function WeddingPartyPage() {
                       onBlur={(e) => updateField(member.id, "job_assignment", e.target.value || null)}
                       className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                       placeholder="e.g. Carry rings, hold bouquet during vows"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-[12px] font-semibold text-muted">Attire</label>
+                    <input
+                      type="text"
+                      defaultValue={member.attire || ""}
+                      onBlur={(e) => updateField(member.id, "attire", e.target.value || null)}
+                      className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+                      placeholder="e.g. Navy suit, blush bridesmaid dress, accessories..."
                     />
                   </div>
                   <div className="sm:col-span-2">

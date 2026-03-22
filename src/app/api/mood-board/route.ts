@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   const body = await request.json();
 
   // Support both image upload URL and direct URL
-  const { image_url, caption, category } = body;
+  const { image_url, caption, category, location } = body;
 
   if (!image_url || !isValidUrl(image_url) || !image_url.startsWith("https://")) {
     return NextResponse.json({ error: "Valid HTTPS URL required" }, { status: 400 });
@@ -74,6 +74,7 @@ export async function POST(request: Request) {
       image_url: finalImageUrl,
       caption: caption || null,
       category: category || "General",
+      location: location || null,
     })
     .select()
     .single();
