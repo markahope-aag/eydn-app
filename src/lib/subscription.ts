@@ -16,10 +16,6 @@ export type SubscriptionStatus = {
 };
 
 /**
- * Check if the current user has access to premium features.
- * Premium features: AI chat, PDF export, file attachments.
- */
-/**
  * Guard for premium API routes. Returns null if the user has access,
  * or a 403 NextResponse if they don't.
  */
@@ -40,7 +36,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
 
   const supabase = createSupabaseAdmin();
 
-  // Check for active purchase
+  // Check for active purchase by this user
   const { data: purchase } = await supabase
     .from("subscriber_purchases")
     .select("id")
@@ -53,18 +49,59 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
     return { hasAccess: true, isPaid: true, isTrialing: false, trialDaysLeft: 0, trialExpired: false };
   }
 
-  // Check trial status
-  const { data: wedding } = await supabase
+  // Check trial status from owned wedding
+  const { data: ownedWedding } = await supabase
     .from("weddings")
-    .select("trial_started_at, created_at")
+    .select("user_id, trial_started_at, created_at")
     .eq("user_id", userId)
     .single();
 
-  if (!wedding) {
-    return { hasAccess: true, isPaid: false, isTrialing: true, trialDaysLeft: TRIAL_DAYS, trialExpired: false };
+  if (ownedWedding) {
+    return computeTrialStatus(ownedWedding as { trial_started_at: string | null; created_at: string });
   }
 
-  const trialStart = new Date((wedding as { trial_started_at: string | null; created_at: string }).trial_started_at || (wedding as { created_at: string }).created_at);
+  // No owned wedding — check if collaborator and inherit owner's status
+  const { data: collab } = await supabase
+    .from("wedding_collaborators")
+    .select("wedding_id")
+    .eq("user_id", userId)
+    .eq("invite_status", "accepted")
+    .limit(1)
+    .single();
+
+  if (collab) {
+    // Get the wedding to find the owner
+    const { data: wedding } = await supabase
+      .from("weddings")
+      .select("user_id, trial_started_at, created_at")
+      .eq("id", collab.wedding_id)
+      .single();
+
+    if (wedding) {
+      // Check if the OWNER has an active purchase
+      const { data: ownerPurchase } = await supabase
+        .from("subscriber_purchases")
+        .select("id")
+        .eq("user_id", (wedding as { user_id: string }).user_id)
+        .eq("status", "active")
+        .limit(1)
+        .single();
+
+      if (ownerPurchase) {
+        return { hasAccess: true, isPaid: true, isTrialing: false, trialDaysLeft: 0, trialExpired: false };
+      }
+
+      // Inherit the owner's trial status
+      return computeTrialStatus(wedding as { trial_started_at: string | null; created_at: string });
+    }
+  }
+
+  // No owned wedding and no collaboration — no access
+  return { hasAccess: false, isPaid: false, isTrialing: false, trialDaysLeft: 0, trialExpired: true };
+}
+
+function computeTrialStatus(wedding: { trial_started_at: string | null; created_at: string }): SubscriptionStatus {
+  const trialStart = new Date(wedding.trial_started_at || wedding.created_at);
   const trialEnd = new Date(trialStart.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
   const now = new Date();
   const daysLeft = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
