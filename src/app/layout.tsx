@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import {
   ClerkProvider,
-  SignInButton,
-  SignUpButton,
   Show,
   UserButton,
 } from "@clerk/nextjs";
@@ -52,12 +50,8 @@ export default function RootLayout({
             </div>
             <div className="flex items-center gap-3">
               <Show when="signed-out">
-                <SignInButton>
-                  <button className="btn-ghost btn-sm">Sign In</button>
-                </SignInButton>
-                <SignUpButton>
-                  <button className="btn-primary btn-sm">Start Free Trial</button>
-                </SignUpButton>
+                <Link href="/sign-in" className="btn-ghost btn-sm">Sign In</Link>
+                <Link href="/sign-up" className="btn-primary btn-sm">Start Free Trial</Link>
               </Show>
               <Show when="signed-in">
                 <Link
