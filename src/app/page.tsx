@@ -268,7 +268,7 @@ function MiniBudgetTracker() {
     { cat: "Florals", est: "$2,800", paid: "$0", pct: 0 },
   ];
   return (
-    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 380, border: "1px solid rgba(201,168,76,0.3)", boxShadow: "0 4px 20px rgba(180,140,130,.15)" }}>
+    <div style={{ background: "#1E2E1F", borderRadius: 12, padding: 20, maxWidth: 380, border: "1px solid rgba(201,168,76,0.3)", boxShadow: "0 4px 20px rgba(0,0,0,.3)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
         <span style={{ fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 600, color: "#FAF6F1" }}>Total Budget</span>
         <span style={{ fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 600, color: "#E8C97A" }}>$26,500</span>
@@ -285,7 +285,7 @@ function MiniBudgetTracker() {
           </div>
         ))}
       </div>
-      <div style={{ borderTop: "1px solid rgba(250,246,241,0.1)", paddingTop: 10, display: "flex", justifyContent: "space-between" }}>
+      <div style={{ borderTop: "1px solid rgba(250,246,241,0.15)", paddingTop: 10, display: "flex", justifyContent: "space-between" }}>
         <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.5)" }}>Subtotal</span>
         <span style={{ fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600, color: "#E8C97A" }}>$9,600 / $26,500</span>
       </div>
@@ -366,10 +366,10 @@ function MiniWeddingSite() {
 
 function MiniDayOfBinder() {
   return (
-    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 340, border: "1px solid rgba(201,168,76,0.3)", position: "relative", boxShadow: "0 4px 20px rgba(180,140,130,.15)" }}>
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "linear-gradient(90deg, #2C3E2D, #C9A84C)", borderRadius: "12px 12px 0 0" }} />
+    <div style={{ background: "#1E2E1F", borderRadius: 12, padding: 20, maxWidth: 340, border: "1px solid rgba(201,168,76,0.3)", position: "relative", boxShadow: "0 4px 20px rgba(0,0,0,.3)" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "linear-gradient(90deg, #C9A84C, #E8C97A)", borderRadius: "12px 12px 0 0" }} />
       <p style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: "#FAF6F1", marginBottom: 4 }}>Day-of Binder</p>
-      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "rgba(250,246,241,0.5)", marginBottom: 14 }}>Complete wedding guide - PDF</p>
+      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "rgba(250,246,241,0.5)", marginBottom: 14 }}>Complete wedding guide &middot; PDF</p>
       {["Ceremony Timeline", "Vendor Contact Sheet", "Music & Readings", "Setup Assignments", "Emergency Kit List"].map((s, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <span style={{ width: 16, height: 2, background: i < 3 ? "#E8C97A" : "rgba(250,246,241,0.2)", borderRadius: 2 }} />
