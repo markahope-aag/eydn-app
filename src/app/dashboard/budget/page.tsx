@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
-import { BUDGET_CATEGORIES } from "@/lib/budget/budget-template";
+import { BUDGET_CATEGORIES, BUDGET_TEMPLATE } from "@/lib/budget/budget-template";
 
 type Expense = {
   id: string;
@@ -42,12 +42,34 @@ export default function BudgetPage() {
       fetch("/api/weddings").then((r) => (r.ok ? r.json() : null)),
       fetch("/api/vendors").then((r) => (r.ok ? r.json() : [])),
     ])
-      .then(([expData, weddingData, vendorData]) => {
-        setExpenses(expData);
+      .then(async ([expData, weddingData, vendorData]) => {
         setVendors(vendorData);
         if (weddingData) {
           setBudget(weddingData.budget ?? 0);
           setWeddingId(weddingData.id);
+        }
+
+        // Auto-seed budget items if none exist (safety net for users who skipped onboarding)
+        if ((!expData || expData.length === 0) && weddingData) {
+          try {
+            const seedPromises = BUDGET_TEMPLATE.map((item) =>
+              fetch("/api/expenses", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  description: item.description,
+                  estimated: 0,
+                  category: item.category,
+                }),
+              }).then((r) => (r.ok ? r.json() : null))
+            );
+            const seeded = (await Promise.all(seedPromises)).filter(Boolean);
+            setExpenses(seeded);
+          } catch {
+            setExpenses([]);
+          }
+        } else {
+          setExpenses(expData);
         }
       })
       .catch(() => toast.error("Failed to load budget data"))
