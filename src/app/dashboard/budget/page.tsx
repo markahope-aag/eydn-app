@@ -247,7 +247,7 @@ export default function BudgetPage() {
     "#D4A5A5", // blush
     "#C9A84C", // soft-violet
     "#E8D5B7", // petal
-    "#6C63FF", // indigo
+    "#2C3E2D", // indigo
     "#FF8C42", // tangerine
     "#36B37E", // green
     "#00B8D9", // teal

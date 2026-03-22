@@ -65,10 +65,10 @@ export function OnboardingTour() {
         {/* Step indicator */}
         <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 20 }}>
           {STEPS.map((_, i) => (
-            <div key={i} style={{ width: i === step ? 24 : 8, height: 8, borderRadius: 4, backgroundColor: i === step ? "#7C3AED" : "#E9D5FF", transition: "all 0.3s ease" }} />
+            <div key={i} style={{ width: i === step ? 24 : 8, height: 8, borderRadius: 4, backgroundColor: i === step ? "#2C3E2D" : "#EDE7DF", transition: "all 0.3s ease" }} />
           ))}
         </div>
-        <p style={{ fontSize: 12, fontWeight: 600, color: "#7C3AED", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, textAlign: "center" }}>
+        <p style={{ fontSize: 12, fontWeight: 600, color: "#2C3E2D", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, textAlign: "center" }}>
           {isFirst ? "Getting Started" : isLast ? "All Done" : `Step ${step} of ${STEPS.length - 2}`}
         </p>
         <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1a1a2e", textAlign: "center", marginBottom: 8 }}>{current.title}</h2>
@@ -83,7 +83,7 @@ export function OnboardingTour() {
             )}
             <button
               onClick={() => { if (isLast) complete(); else setStep((s) => s + 1); }}
-              style={{ padding: "8px 20px", fontSize: 14, fontWeight: 600, color: "white", background: "linear-gradient(135deg, #7C3AED, #A78BFA)", border: "none", borderRadius: 10, cursor: "pointer" }}
+              style={{ padding: "8px 20px", fontSize: 14, fontWeight: 600, color: "white", background: "linear-gradient(135deg, #2C3E2D, #C9A84C)", border: "none", borderRadius: 10, cursor: "pointer" }}
             >
               {isLast ? "Start Planning" : "Next"}
             </button>

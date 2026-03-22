@@ -2,7 +2,7 @@ import { SignUp } from "@clerk/nextjs";
 import Link from "next/link";
 import { Cormorant_Garamond, DM_Sans, Great_Vibes } from "next/font/google";
 
-const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "700"] });
+const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "600"] });
 const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500"] });
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
 
@@ -24,13 +24,13 @@ export default function SignUpPage() {
       >
         <div style={{ position: "absolute", inset: 0, opacity: 0.08, backgroundImage: "radial-gradient(circle at 30% 20%, #C9A84C 0%, transparent 50%), radial-gradient(circle at 70% 80%, #C9A84C 0%, transparent 50%)" }} />
         <div style={{ position: "relative", zIndex: 1 }}>
-          <Link href="/" className={cormorant.className} style={{ fontSize: 28, fontWeight: 700, color: "#FAF6F1", textDecoration: "none" }}>
+          <Link href="/" className={cormorant.className} style={{ fontSize: 28, fontWeight: 600, color: "#FAF6F1", textDecoration: "none" }}>
             eydn
           </Link>
           <p className={greatVibes.className} style={{ fontSize: 24, color: "#C9A84C", marginTop: 48 }}>
             Let the adventure begin
           </p>
-          <h1 className={cormorant.className} style={{ fontSize: 52, fontWeight: 700, color: "#FAF6F1", lineHeight: 1.1, marginTop: 8 }}>
+          <h1 className={cormorant.className} style={{ fontSize: 52, fontWeight: 600, color: "#FAF6F1", lineHeight: 1.1, marginTop: 8 }}>
             Plan your dream<br />wedding.
           </h1>
           <p style={{ fontSize: 16, color: "rgba(250,246,241,0.6)", lineHeight: 1.7, marginTop: 24, maxWidth: 360 }}>
@@ -70,7 +70,7 @@ export default function SignUpPage() {
       >
         {/* Mobile logo */}
         <div className="lg:hidden" style={{ marginBottom: 32, textAlign: "center" }}>
-          <Link href="/" className={cormorant.className} style={{ fontSize: 24, fontWeight: 700, color: "#2C3E2D", textDecoration: "none" }}>
+          <Link href="/" className={cormorant.className} style={{ fontSize: 24, fontWeight: 600, color: "#2C3E2D", textDecoration: "none" }}>
             eydn
           </Link>
           <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 4 }}>Start your 14-day free trial</p>
@@ -91,7 +91,7 @@ export default function SignUpPage() {
             },
             elements: {
               card: { boxShadow: "0 4px 24px rgba(0,0,0,0.06)", border: "1px solid #E8D5B7", borderRadius: 16 },
-              headerTitle: { fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 700, color: "#1A1A2E" },
+              headerTitle: { fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 600, color: "#1A1A2E" },
               headerSubtitle: { fontFamily: "'DM Sans', sans-serif", color: "#6B6B6B" },
               formButtonPrimary: { background: "#2C3E2D", borderRadius: 100, fontWeight: 600, fontSize: 15, height: 48 },
               formFieldInput: { borderColor: "#E8D5B7", borderRadius: 8, fontSize: 15 },

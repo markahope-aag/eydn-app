@@ -3,7 +3,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 
 const COLORS = [
-  "#7C3AED", "#F9A8D4", "#FBCFE8", "#C4B5FD", "#FFD700", "#A78BFA", "#F472B6",
+  "#2C3E2D", "#D4A5A5", "#E8D5B7", "#EDE7DF", "#FFD700", "#C9A84C", "#C08080",
 ];
 
 type ConfettiPiece = {
