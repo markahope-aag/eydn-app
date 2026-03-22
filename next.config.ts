@@ -2,12 +2,18 @@ import type { NextConfig } from "next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["ssh2-sftp-client", "ssh2"],
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "pnclblivqpakijkerykn.supabase.co",
         pathname: "/storage/v1/object/public/**",
+      },
+      {
+        protocol: "https",
+        hostname: "places.googleapis.com",
+        pathname: "/v1/**",
       },
       {
         protocol: "https",

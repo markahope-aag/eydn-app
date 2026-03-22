@@ -1209,6 +1209,9 @@ export type Database = {
           notes: string | null;
           amount: number | null;
           amount_paid: number | null;
+          gmb_place_id: string | null;
+          gmb_data: Record<string, unknown> | null;
+          gmb_fetched_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -1224,6 +1227,9 @@ export type Database = {
           notes?: string | null;
           amount?: number | null;
           amount_paid?: number | null;
+          gmb_place_id?: string | null;
+          gmb_data?: Record<string, unknown> | null;
+          gmb_fetched_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1239,6 +1245,9 @@ export type Database = {
           notes?: string | null;
           amount?: number | null;
           amount_paid?: number | null;
+          gmb_place_id?: string | null;
+          gmb_data?: Record<string, unknown> | null;
+          gmb_fetched_at?: string | null;
           updated_at?: string;
         };
         Relationships: [

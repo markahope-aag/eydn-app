@@ -4,9 +4,7 @@ import { isAdmin } from "@/lib/admin";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { SkeletonList } from "@/components/Skeleton";
 
-const ArchiveBanner = dynamic(() => import("@/components/ArchiveBanner"), {
-  ssr: false,
-});
+const ArchiveBanner = dynamic(() => import("@/components/ArchiveBanner"));
 
 export default async function DashboardLayout({
   children,

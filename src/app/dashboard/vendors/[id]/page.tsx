@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { VENDOR_STATUSES } from "@/lib/vendors/categories";
 import { EmailTemplate } from "../EmailTemplate";
 import { Comments } from "@/components/Comments";
+import { VendorCard } from "@/components/VendorCard";
 
 type Vendor = {
   id: string;
@@ -103,6 +104,11 @@ export default function VendorDetailPage({
 
       <h1>{vendor.name}</h1>
       <p className="mt-1 text-[15px] text-muted">{vendor.category}</p>
+
+      {/* Google Business Profile */}
+      <div className="mt-4">
+        <VendorCard vendorId={vendor.id} />
+      </div>
 
       {/* Status pipeline */}
       <div className="mt-6">
