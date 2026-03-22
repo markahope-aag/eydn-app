@@ -87,6 +87,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
+  // Validate file size (max 10MB)
+  const MAX_SIZE = 10 * 1024 * 1024;
+  if (file.size > MAX_SIZE) {
+    return NextResponse.json({ error: "File too large. Maximum size is 10MB." }, { status: 413 });
+  }
+
+  // Validate file type
+  const ALLOWED_TYPES = [
+    "image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif", "image/svg+xml",
+    "application/pdf",
+    "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv", "text/plain",
+  ];
+  if (!ALLOWED_TYPES.includes(file.type) && file.type !== "application/octet-stream") {
+    return NextResponse.json({ error: "File type not allowed. Accepted: images, PDF, Word, Excel, CSV." }, { status: 400 });
+  }
+
   // Require premium for real task/vendor attachments (not website or mood-board uploads)
   if (!isSyntheticUpload(entityId)) {
     const paywall = await requirePremium();
