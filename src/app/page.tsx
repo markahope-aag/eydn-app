@@ -133,6 +133,14 @@ function Ornament() {
 
 const featureIcons = [IconAI, IconTimeline, IconBudget, IconGuests, IconVendors, IconWebsite, IconSeating, IconBinder, IconCamera, IconShield];
 
+const deepDiveIcons = [
+  <IconAI key="ai" />,
+  <IconWebsite key="web" />,
+  <IconBudget key="budget" />,
+  <IconBinder key="binder" />,
+  <IconShield key="shield" />,
+];
+
 /* ── Page ─────────────────────────────────────────────────── */
 
 export default function HomePage() {
@@ -144,11 +152,11 @@ export default function HomePage() {
         <div className="absolute inset-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/hero.jpg" alt="" className="w-full h-full object-cover scale-105" aria-hidden="true" style={{ filter: "brightness(0.85)" }} />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(26,16,48,0.85) 0%, rgba(26,16,48,0.5) 40%, rgba(26,16,48,0.3) 100%)" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(26,16,48,0.92) 0%, rgba(26,16,48,0.7) 40%, rgba(26,16,48,0.5) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-12 py-32">
           <p className="text-[13px] tracking-[0.3em] uppercase text-white/50 font-light">Your AI Wedding Planning Guide</p>
-          <h1 className="mt-4 font-[family-name:var(--font-serif)] text-[44px] sm:text-[64px] lg:text-[76px] font-normal text-white leading-[1.05]">
+          <h1 className="mt-4 font-[family-name:var(--font-serif)] text-[52px] sm:text-[72px] lg:text-[88px] font-medium text-white leading-[1.05]" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.5), 0 4px 40px rgba(0,0,0,0.3)" }}>
             Plan your wedding,<br />
             <span className="italic" style={{ color: "var(--petal)" }}>not your stress</span>
           </h1>
@@ -196,7 +204,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 sm:px-12">
           <div className="max-w-2xl">
             <p className="text-[12px] tracking-[0.3em] uppercase text-violet font-medium">Features</p>
-            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-[36px] sm:text-[44px] text-plum leading-[1.1]">
+            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-[40px] sm:text-[52px] text-plum leading-[1.1]">
               Everything you need,<br />nothing you don&apos;t
             </h2>
             <p className="mt-5 text-[16px] text-muted leading-relaxed">
@@ -226,7 +234,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 sm:px-12">
           <div className="text-center max-w-xl mx-auto">
             <p className="text-[12px] tracking-[0.3em] uppercase text-violet font-medium">How It Works</p>
-            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-[36px] sm:text-[44px] text-plum leading-[1.1]">
+            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-[40px] sm:text-[52px] text-plum leading-[1.1]">
               From &ldquo;yes&rdquo; to &ldquo;I do&rdquo;
             </h2>
           </div>
@@ -255,7 +263,7 @@ export default function HomePage() {
             <div key={d.title} className={`flex flex-col gap-16 items-center ${i % 2 === 0 ? "lg:flex-row" : "lg:flex-row-reverse"}`}>
               <div className="flex-1 max-w-xl">
                 <p className="text-[12px] tracking-[0.3em] uppercase text-violet font-medium">{d.label}</p>
-                <h3 className="mt-3 font-[family-name:var(--font-serif)] text-[30px] sm:text-[36px] text-plum leading-[1.15]">{d.title}</h3>
+                <h3 className="mt-3 font-[family-name:var(--font-serif)] text-[34px] sm:text-[42px] text-plum leading-[1.15]">{d.title}</h3>
                 <p className="mt-5 text-[15px] text-muted leading-relaxed">{d.description}</p>
                 <ul className="mt-6 space-y-3">
                   {d.bullets.map((b) => (
@@ -271,7 +279,10 @@ export default function HomePage() {
               <div className="flex-1 flex justify-center w-full">
                 <div className="w-full max-w-sm rounded-[24px] p-10 text-center border border-border/60 relative overflow-hidden" style={{ background: "var(--surface)" }}>
                   <div className="absolute top-0 left-0 right-0 h-1" style={{ background: "linear-gradient(90deg, var(--violet), var(--blush-pink))" }} />
-                  <p className="text-[14px] text-muted italic leading-relaxed">{d.cardText}</p>
+                  <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-5 text-violet" style={{ background: "var(--lavender-mist)" }}>
+                    {deepDiveIcons[i]}
+                  </div>
+                  <p className="text-[15px] text-muted italic leading-relaxed">{d.cardText}</p>
                 </div>
               </div>
             </div>
@@ -284,7 +295,7 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-6 sm:px-12">
           <div className="text-center max-w-xl mx-auto">
             <p className="text-[12px] tracking-[0.3em] uppercase text-violet font-medium">Trust &amp; Security</p>
-            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-[32px] sm:text-[40px] text-plum leading-[1.1]">
+            <h2 className="mt-3 font-[family-name:var(--font-serif)] text-[36px] sm:text-[48px] text-plum leading-[1.1]">
               We protect what matters most
             </h2>
             <p className="mt-5 text-[15px] text-muted leading-relaxed">
@@ -323,7 +334,7 @@ export default function HomePage() {
       <section id="pricing" className="py-28" style={{ background: "var(--whisper)" }}>
         <div className="max-w-4xl mx-auto px-6 sm:px-12 text-center">
           <p className="text-[12px] tracking-[0.3em] uppercase text-violet font-medium">Pricing</p>
-          <h2 className="mt-3 font-[family-name:var(--font-serif)] text-[36px] sm:text-[44px] text-plum leading-[1.1]">
+          <h2 className="mt-3 font-[family-name:var(--font-serif)] text-[40px] sm:text-[52px] text-plum leading-[1.1]">
             One price. Your whole wedding.
           </h2>
           <p className="mt-5 text-[15px] text-muted max-w-lg mx-auto leading-relaxed">
@@ -398,7 +409,7 @@ export default function HomePage() {
       <section className="relative py-28 overflow-hidden" style={{ background: "#1A1030" }}>
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, var(--violet) 0%, transparent 50%), radial-gradient(circle at 80% 50%, var(--blush-pink) 0%, transparent 50%)" }} />
         <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
-          <h2 className="font-[family-name:var(--font-serif)] text-[36px] sm:text-[48px] text-white leading-[1.1]">
+          <h2 className="font-[family-name:var(--font-serif)] text-[40px] sm:text-[56px] text-white leading-[1.1]">
             Your dream wedding<br /><span className="italic" style={{ color: "var(--petal)" }}>starts here</span>
           </h2>
           <p className="mt-6 text-[17px] text-white/60 font-light">
