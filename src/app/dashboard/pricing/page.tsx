@@ -35,7 +35,14 @@ export default function PricingPage() {
       </p>
 
       <div className="mt-8 card-summary p-8">
-        <div className="bg-brand-gradient bg-clip-text text-transparent">
+        <div
+          style={{
+            background: "linear-gradient(135deg, var(--violet), var(--blush-pink))",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
           <span className="text-[48px] font-semibold leading-none">$79</span>
         </div>
         <p className="mt-2 text-[15px] text-muted">One-time payment. 1 wedding. Forever.</p>

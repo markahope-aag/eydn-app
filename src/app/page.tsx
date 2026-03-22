@@ -180,7 +180,15 @@ export default function HomePage() {
 
           <div className="mt-12 card-summary p-10 max-w-md mx-auto">
             <p className="text-[13px] font-semibold text-muted uppercase tracking-wide">Full access</p>
-            <div className="mt-2 bg-brand-gradient bg-clip-text text-transparent">
+            <div
+              className="mt-2"
+              style={{
+                background: "linear-gradient(135deg, var(--violet), var(--blush-pink))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
               <span className="text-[56px] font-semibold leading-none">$79</span>
             </div>
             <p className="mt-2 text-[15px] text-muted">One-time payment. 1 wedding. Forever.</p>
