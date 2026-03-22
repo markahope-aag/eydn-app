@@ -25,7 +25,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const ip = getClientIP(request);
-  const rl = checkRateLimit(`chat:${ip}`, RATE_LIMITS.chat);
+  const rl = await checkRateLimit(`chat:${ip}`, RATE_LIMITS.chat);
   if (rl.limited) {
     return NextResponse.json({ error: "Too many requests. Please wait before sending another message." }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
   }

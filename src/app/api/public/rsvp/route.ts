@@ -9,7 +9,7 @@ type RsvpTokenRow = Database["public"]["Tables"]["rsvp_tokens"]["Row"];
 export async function POST(request: Request) {
   const start = Date.now();
   const ip = getClientIP(request);
-  const rl = checkRateLimit(`rsvp:${ip}`, RATE_LIMITS.public);
+  const rl = await checkRateLimit(`rsvp:${ip}`, RATE_LIMITS.public);
   if (rl.limited) {
     logRequest("POST", "/api/public/rsvp", 429, Date.now() - start, { ip });
     return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });

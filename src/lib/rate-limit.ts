@@ -1,24 +1,14 @@
 /**
- * Simple in-memory rate limiter for API routes.
- * Uses a sliding window counter per IP address.
+ * Rate limiter using Upstash Redis for serverless environments.
+ * Falls back to in-memory if UPSTASH_REDIS_REST_URL is not configured.
  *
- * For production at scale, replace with Redis-based rate limiting (e.g. @upstash/ratelimit).
+ * Env vars:
+ *   UPSTASH_REDIS_REST_URL   — Upstash Redis REST endpoint
+ *   UPSTASH_REDIS_REST_TOKEN — Upstash Redis REST token
  */
 
-type RateLimitEntry = {
-  count: number;
-  resetAt: number;
-};
-
-const store = new Map<string, RateLimitEntry>();
-
-// Clean up expired entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of store) {
-    if (now > entry.resetAt) store.delete(key);
-  }
-}, 60_000);
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 export type RateLimitConfig = {
   /** Max requests allowed in the window */
@@ -27,19 +17,39 @@ export type RateLimitConfig = {
   windowSeconds: number;
 };
 
-/**
- * Check if a request should be rate limited.
- * Returns { limited: false } if allowed, or { limited: true, retryAfter } if blocked.
- */
-export function checkRateLimit(
+// Lazy-init Redis-backed rate limiters (one per config)
+const limiters = new Map<string, Ratelimit>();
+
+function getRedisLimiter(config: RateLimitConfig): Ratelimit | null {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return null;
+  }
+
+  const cacheKey = `${config.limit}:${config.windowSeconds}`;
+  let limiter = limiters.get(cacheKey);
+  if (!limiter) {
+    limiter = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(config.limit, `${config.windowSeconds} s`),
+      analytics: true,
+    });
+    limiters.set(cacheKey, limiter);
+  }
+  return limiter;
+}
+
+// In-memory fallback for local development
+const memoryStore = new Map<string, { count: number; resetAt: number }>();
+
+function checkMemoryLimit(
   key: string,
   config: RateLimitConfig
 ): { limited: false } | { limited: true; retryAfter: number } {
   const now = Date.now();
-  const entry = store.get(key);
+  const entry = memoryStore.get(key);
 
   if (!entry || now > entry.resetAt) {
-    store.set(key, { count: 1, resetAt: now + config.windowSeconds * 1000 });
+    memoryStore.set(key, { count: 1, resetAt: now + config.windowSeconds * 1000 });
     return { limited: false };
   }
 
@@ -50,6 +60,32 @@ export function checkRateLimit(
 
   entry.count++;
   return { limited: false };
+}
+
+/**
+ * Check if a request should be rate limited.
+ * Uses Upstash Redis if configured, falls back to in-memory.
+ */
+export async function checkRateLimit(
+  key: string,
+  config: RateLimitConfig
+): Promise<{ limited: false } | { limited: true; retryAfter: number }> {
+  const redisLimiter = getRedisLimiter(config);
+
+  if (redisLimiter) {
+    try {
+      const result = await redisLimiter.limit(key);
+      if (!result.success) {
+        const retryAfter = Math.ceil((result.reset - Date.now()) / 1000);
+        return { limited: true, retryAfter: Math.max(1, retryAfter) };
+      }
+      return { limited: false };
+    } catch {
+      // Redis failure — fall through to memory
+    }
+  }
+
+  return checkMemoryLimit(key, config);
 }
 
 /**
