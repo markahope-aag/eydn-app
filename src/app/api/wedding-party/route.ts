@@ -51,5 +51,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Auto-add as guest if not already on guest list (skip if flagged to prevent loops)
+  if (!body._skip_sync) {
+    const name = body.name as string;
+    const { data: existingGuest } = await supabase
+      .from("guests")
+      .select("id")
+      .eq("wedding_id", wedding.id)
+      .eq("name", name)
+      .is("deleted_at", null)
+      .limit(1)
+      .single();
+
+    if (!existingGuest) {
+      await supabase.from("guests").insert({
+        wedding_id: wedding.id,
+        name,
+        email: (body.email as string) || null,
+        phone: (body.phone as string) || null,
+        role: "wedding_party",
+        rsvp_status: "accepted",
+      });
+    }
+  }
+
   return NextResponse.json(data, { status: 201 });
 }
