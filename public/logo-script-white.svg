@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="140" viewBox="0 0 480 140">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,400&amp;family=Great+Vibes&amp;display=swap');
+    </style>
+    
+  </defs>
+  <rect width="480" height="140" fill="#2C3E2D"/><text x="240" y="95" font-family="Great Vibes, cursive" font-size="88" fill="#FAF6F1" text-anchor="middle">eydn</text>
+</svg>

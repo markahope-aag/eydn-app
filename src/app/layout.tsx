@@ -17,6 +17,15 @@ const nunito = Nunito({
 export const metadata: Metadata = {
   title: "eydn — Your AI Wedding Planning Guide",
   description: "Plan your perfect wedding with eydn. AI-powered task timeline, budget tracker, vendor management, guest RSVPs, seating chart, and a beautiful wedding website — all in one place.",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -37,8 +46,9 @@ export default function RootLayout({
         <ClerkProvider>
           <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-white/95 backdrop-blur px-6 py-3">
             <div className="flex items-center gap-8">
-              <Link href="/" className="text-xl font-semibold" style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                eydn
+              <Link href="/" className="flex items-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.svg" alt="eydn" className="h-7" />
               </Link>
               <Show when="signed-out">
                 <nav className="hidden sm:flex items-center gap-6">

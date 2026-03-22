@@ -24,14 +24,16 @@
 
 ## 🛠 Tech Stack
 
-- **Framework**: Next.js 16 with App Router
-- **Frontend**: React 19, TypeScript, Tailwind CSS 4
-- **Authentication**: Clerk
-- **Database**: Supabase (PostgreSQL)
-- **AI**: Anthropic Claude SDK
-- **Payments**: Stripe
-- **Testing**: Vitest + React Testing Library
-- **Deployment**: Vercel
+- **Framework**: Next.js 16.2.0 with App Router
+- **Frontend**: React 19.2.4, TypeScript 5, Tailwind CSS 4
+- **Authentication**: Clerk 7.0.5 with middleware protection
+- **Database**: Supabase 2.99.2 (PostgreSQL) with Row Level Security
+- **AI**: Anthropic Claude SDK 0.80.0 for wedding planning assistance
+- **Payments**: Stripe 20.4.1 with webhook integration
+- **File Storage**: Supabase Storage for images and documents
+- **Rate Limiting**: Upstash Redis for API protection
+- **Testing**: Vitest 4.1.0 + React Testing Library 16.3.2
+- **Deployment**: Vercel with edge functions and cron jobs
 
 ## 🚀 Quick Start
 

@@ -39,11 +39,11 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
     <>
       <Link
         href="/dashboard"
-        className="text-xl font-semibold"
-        style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}
+        className="flex items-center"
         onClick={() => setOpen(false)}
       >
-        eydn
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.svg" alt="eydn" className="h-7" />
       </Link>
       <nav className="mt-8 flex flex-col gap-1 overflow-y-auto">
         {navItems.map((item) => {

@@ -1247,7 +1247,8 @@ export default function HomePage() {
             className="max-md:!grid-cols-2 max-sm:!grid-cols-1"
           >
             <div>
-              <p style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 600, color: "#FAF6F1" }}>eydn</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-white.svg" alt="eydn" style={{ height: 28 }} />
               <p style={{ fontFamily: "var(--font-script)", fontSize: 16, color: "rgba(212,165,165,0.7)", marginTop: 8 }}>
                 From engagement to &ldquo;I do.&rdquo;
               </p>
