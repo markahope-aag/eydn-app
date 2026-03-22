@@ -9,7 +9,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["400", "600"],
   variable: "--font-display",
 });
 
@@ -68,7 +68,7 @@ const keyframeCSS = `
   opacity: 1 !important;
   transform: translateY(0) !important;
 }
-@keyframes float {
+@keyframes float1 {
   0%, 100% { transform: translateY(0px) rotate(-2deg); }
   50% { transform: translateY(-14px) rotate(-2deg); }
 }
@@ -84,7 +84,48 @@ const keyframeCSS = `
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
 }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 `;
+
+/* ── Botanical SVG Watermarks ────────────────────────────── */
+
+function BotanicalOverlay({ color = "#D4A5A5", opacity = 0.1 }: { color?: string; opacity?: number }) {
+  return (
+    <svg
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", opacity }}
+      viewBox="0 0 800 600"
+      preserveAspectRatio="xMidYMid slice"
+      fill="none"
+    >
+      {/* Leaf cluster top-right */}
+      <g transform="translate(600,80) rotate(25)">
+        <ellipse cx="0" cy="0" rx="60" ry="18" fill={color} />
+        <ellipse cx="-20" cy="-30" rx="50" ry="14" fill={color} transform="rotate(-30)" />
+        <ellipse cx="20" cy="-25" rx="45" ry="12" fill={color} transform="rotate(20)" />
+        <line x1="0" y1="18" x2="0" y2="60" stroke={color} strokeWidth="2" />
+      </g>
+      {/* Leaf cluster bottom-left */}
+      <g transform="translate(120,480) rotate(-15)">
+        <ellipse cx="0" cy="0" rx="55" ry="16" fill={color} />
+        <ellipse cx="25" cy="-28" rx="48" ry="13" fill={color} transform="rotate(35)" />
+        <ellipse cx="-15" cy="-22" rx="40" ry="11" fill={color} transform="rotate(-25)" />
+        <line x1="0" y1="16" x2="0" y2="55" stroke={color} strokeWidth="2" />
+      </g>
+      {/* Small accent leaves */}
+      <g transform="translate(350,120) rotate(45)">
+        <ellipse cx="0" cy="0" rx="30" ry="10" fill={color} />
+        <ellipse cx="10" cy="-15" rx="25" ry="8" fill={color} transform="rotate(20)" />
+      </g>
+      <g transform="translate(680,420) rotate(-40)">
+        <ellipse cx="0" cy="0" rx="35" ry="11" fill={color} />
+        <ellipse cx="-12" cy="-18" rx="28" ry="9" fill={color} transform="rotate(-30)" />
+      </g>
+    </svg>
+  );
+}
 
 /* ── Mini UI Components for Hero ─────────────────────────── */
 
@@ -102,17 +143,20 @@ function HeroTaskCard() {
         borderRadius: 12,
         padding: "18px 20px",
         width: 260,
-        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+        boxShadow: "0 8px 32px rgba(180,140,130,.2)",
         transform: "rotate(-2deg)",
-        animation: "float 5s ease-in-out infinite",
+        animation: "float1 5s ease-in-out infinite",
+        position: "absolute",
+        top: "8%",
+        right: "10%",
       }}
     >
-      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Task Timeline</p>
+      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Task Timeline</p>
       {tasks.map((t, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: i < tasks.length - 1 ? 10 : 0 }}>
           <span style={{ width: 10, height: 10, borderRadius: "50%", background: t.color, flexShrink: 0, opacity: t.done ? 0.5 : 1 }} />
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: t.done ? "#aaa" : "#1A1A2E", textDecoration: t.done ? "line-through" : "none", flex: 1 }}>{t.label}</span>
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "#6B6B6B" }}>{t.due}</span>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: t.done ? "#B09A87" : "#2A2018", textDecoration: t.done ? "line-through" : "none", flex: 1 }}>{t.label}</span>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "#8A7A6A" }}>{t.due}</span>
         </div>
       ))}
     </div>
@@ -132,20 +176,23 @@ function HeroBudgetCard() {
         borderRadius: 12,
         padding: "18px 20px",
         width: 270,
-        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+        boxShadow: "0 8px 32px rgba(180,140,130,.2)",
         transform: "rotate(1deg)",
         animation: "float2 6s ease-in-out infinite",
+        position: "absolute",
+        top: "38%",
+        left: "5%",
       }}
     >
-      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Budget Tracker</p>
+      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Budget Tracker</p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "6px 14px", fontFamily: "var(--font-body)", fontSize: 11 }}>
-        <span style={{ color: "#6B6B6B", fontWeight: 600 }}>Category</span>
-        <span style={{ color: "#6B6B6B", fontWeight: 600 }}>Estimated</span>
-        <span style={{ color: "#6B6B6B", fontWeight: 600 }}>Paid</span>
+        <span style={{ color: "#8A7A6A", fontWeight: 600 }}>Category</span>
+        <span style={{ color: "#8A7A6A", fontWeight: 600 }}>Estimated</span>
+        <span style={{ color: "#8A7A6A", fontWeight: 600 }}>Paid</span>
         {rows.map((r, i) => (
           <div key={i} style={{ display: "contents" }}>
-            <span style={{ fontSize: 13, color: "#1A1A2E" }}>{r.cat}</span>
-            <span style={{ fontSize: 13, color: "#1A1A2E" }}>{r.est}</span>
+            <span style={{ fontSize: 13, color: "#2A2018" }}>{r.cat}</span>
+            <span style={{ fontSize: 13, color: "#2A2018" }}>{r.est}</span>
             <span style={{ fontSize: 13, color: "#2C3E2D", fontWeight: 600 }}>{r.paid}</span>
           </div>
         ))}
@@ -162,17 +209,20 @@ function HeroAIChatCard() {
         borderRadius: 12,
         padding: "18px 20px",
         width: 280,
-        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+        boxShadow: "0 8px 32px rgba(180,140,130,.2)",
         transform: "rotate(2deg)",
         animation: "float3 7s ease-in-out infinite",
+        position: "absolute",
+        bottom: "10%",
+        right: "8%",
       }}
     >
-      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>AI Assistant</p>
+      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>AI Assistant</p>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={{ alignSelf: "flex-end", background: "#2C3E2D", color: "#FAF6F1", borderRadius: "12px 12px 4px 12px", padding: "8px 12px", maxWidth: "80%", fontFamily: "var(--font-body)", fontSize: 12.5 }}>
           What should I prioritize this month?
         </div>
-        <div style={{ alignSelf: "flex-start", background: "#FAF6F1", color: "#1A1A2E", borderRadius: "12px 12px 12px 4px", padding: "8px 12px", maxWidth: "85%", fontFamily: "var(--font-body)", fontSize: 12.5, lineHeight: 1.45 }}>
+        <div style={{ alignSelf: "flex-start", background: "#FAF6F1", color: "#2A2018", borderRadius: "12px 12px 12px 4px", padding: "8px 12px", maxWidth: "85%", fontFamily: "var(--font-body)", fontSize: 12.5, lineHeight: 1.45 }}>
           Focus on booking your photographer and finalizing the guest list. Both have March deadlines.
         </div>
       </div>
@@ -182,25 +232,6 @@ function HeroAIChatCard() {
 
 /* ── Mini UI Components for Feature Rows ─────────────────── */
 
-function MiniAIChat() {
-  return (
-    <div style={{ background: "#1A1A2E", borderRadius: 12, padding: 20, maxWidth: 380 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#C9A84C" }} />
-        <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#FAF6F1", fontWeight: 600 }}>eydn AI</span>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ alignSelf: "flex-end", background: "#2C3E2D", color: "#FAF6F1", borderRadius: "12px 12px 4px 12px", padding: "10px 14px", maxWidth: "78%", fontFamily: "var(--font-body)", fontSize: 13 }}>
-          Can you suggest a timeline for DIY centerpieces?
-        </div>
-        <div style={{ alignSelf: "flex-start", background: "#2A2A3A", color: "#E8D5B7", borderRadius: "12px 12px 12px 4px", padding: "10px 14px", maxWidth: "85%", fontFamily: "var(--font-body)", fontSize: 13, lineHeight: 1.5 }}>
-          Based on your 150-guest wedding, I recommend starting 8 weeks out. Order supplies by April 1, do a trial run April 15, then assemble May 10-12.
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function MiniTaskTimeline() {
   const groups = [
     { phase: "This Week", tasks: [{ t: "Confirm florist contract", s: "urgent" }, { t: "Mail save-the-dates", s: "done" }] },
@@ -208,16 +239,21 @@ function MiniTaskTimeline() {
   ];
   const statusColor: Record<string, string> = { urgent: "#D4A5A5", done: "#2C3E2D", upcoming: "#C9A84C" };
   return (
-    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 360, border: "1px solid #E8D5B7" }}>
+    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 360, border: "1px solid #E8D5B7", boxShadow: "0 4px 20px rgba(180,140,130,.15)" }}>
       {groups.map((g, gi) => (
         <div key={gi} style={{ marginBottom: gi < groups.length - 1 ? 16 : 0 }}>
-          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>{g.phase}</p>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>{g.phase}</p>
           {g.tasks.map((t, ti) => (
             <div key={ti} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
               <span style={{ width: 10, height: 10, borderRadius: "50%", background: statusColor[t.s], flexShrink: 0 }} />
-              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#1A1A2E", textDecoration: t.s === "done" ? "line-through" : "none" }}>{t.t}</span>
+              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#2A2018", textDecoration: t.s === "done" ? "line-through" : "none" }}>{t.t}</span>
             </div>
           ))}
+          {gi === 0 && (
+            <div style={{ height: 4, borderRadius: 100, background: "#F3EAE0", marginTop: 10 }}>
+              <div style={{ height: "100%", borderRadius: 100, background: "#2C3E2D", width: "60%" }} />
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -232,22 +268,27 @@ function MiniBudgetTracker() {
     { cat: "Florals", est: "$2,800", paid: "$0", pct: 0 },
   ];
   return (
-    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 380, border: "1px solid #E8D5B7" }}>
+    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 380, border: "1px solid rgba(201,168,76,0.3)", boxShadow: "0 4px 20px rgba(180,140,130,.15)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
-        <span style={{ fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 600, color: "#1A1A2E" }}>Total Budget</span>
-        <span style={{ fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 600, color: "#2C3E2D" }}>$26,500</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 600, color: "#FAF6F1" }}>Total Budget</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 600, color: "#E8C97A" }}>$26,500</span>
       </div>
-      {rows.map((r, i) => (
-        <div key={i} style={{ marginBottom: 10 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--font-body)", fontSize: 12.5, color: "#1A1A2E", marginBottom: 4 }}>
-            <span>{r.cat}</span>
-            <span style={{ color: "#6B6B6B" }}>{r.paid} / {r.est}</span>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "8px 16px", fontFamily: "var(--font-body)", fontSize: 11, marginBottom: 12 }}>
+        <span style={{ color: "rgba(250,246,241,0.5)", fontWeight: 600 }}>Category</span>
+        <span style={{ color: "rgba(250,246,241,0.5)", fontWeight: 600 }}>Estimated</span>
+        <span style={{ color: "rgba(250,246,241,0.5)", fontWeight: 600 }}>Paid</span>
+        {rows.map((r, i) => (
+          <div key={i} style={{ display: "contents" }}>
+            <span style={{ fontSize: 13, color: "#FAF6F1" }}>{r.cat}</span>
+            <span style={{ fontSize: 13, color: "rgba(250,246,241,0.7)" }}>{r.est}</span>
+            <span style={{ fontSize: 13, color: "#E8C97A", fontWeight: 600 }}>{r.paid}</span>
           </div>
-          <div style={{ height: 5, borderRadius: 100, background: "#EDE7DF" }}>
-            <div style={{ height: "100%", borderRadius: 100, background: "#2C3E2D", width: `${r.pct}%`, transition: "width 300ms" }} />
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
+      <div style={{ borderTop: "1px solid rgba(250,246,241,0.1)", paddingTop: 10, display: "flex", justifyContent: "space-between" }}>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.5)" }}>Subtotal</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600, color: "#E8C97A" }}>$9,600 / $26,500</span>
+      </div>
     </div>
   );
 }
@@ -260,13 +301,13 @@ function MiniGuestList() {
     { name: "Michael Brown", rsvp: "Declined", color: "#A0204A", bg: "#FFE0EC" },
   ];
   return (
-    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 360, border: "1px solid #E8D5B7" }}>
+    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 360, border: "1px solid #E8D5B7", boxShadow: "0 4px 20px rgba(180,140,130,.15)" }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "10px 20px" }}>
-        <span style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase" }}>Guest</span>
-        <span style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", textTransform: "uppercase" }}>RSVP</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", textTransform: "uppercase" }}>Guest</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", textTransform: "uppercase" }}>RSVP</span>
         {guests.map((g, i) => (
           <div key={i} style={{ display: "contents" }}>
-            <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#1A1A2E" }}>{g.name}</span>
+            <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#2A2018" }}>{g.name}</span>
             <span style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, background: g.bg, color: g.color, borderRadius: 100, padding: "3px 10px" }}>{g.rsvp}</span>
           </div>
         ))}
@@ -283,13 +324,13 @@ function MiniVendorPipeline() {
   ];
   const colColors = ["#FFF3CC", "#E8D5B7", "#D6F5E3"];
   return (
-    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 380, border: "1px solid #E8D5B7" }}>
+    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 380, border: "1px solid #E8D5B7", boxShadow: "0 4px 20px rgba(180,140,130,.15)" }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
         {cols.map((c, ci) => (
           <div key={ci}>
-            <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B6B6B", marginBottom: 8, textTransform: "uppercase" }}>{c.label}</p>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", marginBottom: 8, textTransform: "uppercase" }}>{c.label}</p>
             {c.items.map((item, ii) => (
-              <div key={ii} style={{ background: colColors[ci], borderRadius: 8, padding: "6px 10px", marginBottom: 6, fontFamily: "var(--font-body)", fontSize: 12, color: "#1A1A2E" }}>
+              <div key={ii} style={{ background: colColors[ci], borderRadius: 8, padding: "6px 10px", marginBottom: 6, fontFamily: "var(--font-body)", fontSize: 12, color: "#2A2018" }}>
                 {item}
               </div>
             ))}
@@ -302,7 +343,7 @@ function MiniVendorPipeline() {
 
 function MiniWeddingSite() {
   return (
-    <div style={{ background: "#fff", borderRadius: 12, overflow: "hidden", maxWidth: 360, border: "1px solid #E8D5B7" }}>
+    <div style={{ background: "#fff", borderRadius: 12, overflow: "hidden", maxWidth: 360, border: "1px solid #E8D5B7", boxShadow: "0 4px 20px rgba(180,140,130,.15)" }}>
       <div style={{ background: "#2C3E2D", padding: "6px 14px", display: "flex", alignItems: "center", gap: 6 }}>
         <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#D4A5A5" }} />
         <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#C9A84C" }} />
@@ -311,11 +352,11 @@ function MiniWeddingSite() {
       </div>
       <div style={{ padding: 20, textAlign: "center" }}>
         <p style={{ fontFamily: "var(--font-script)", fontSize: 22, color: "#C9A84C" }}>Mark & Sarah</p>
-        <p style={{ fontFamily: "var(--font-display)", fontSize: 16, color: "#1A1A2E", marginTop: 4 }}>September 20, 2026</p>
-        <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#6B6B6B", marginTop: 6 }}>The Grand Estate, Napa Valley</p>
+        <p style={{ fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 600, color: "#2A2018", marginTop: 4 }}>September 20, 2026</p>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#8A7A6A", marginTop: 6 }}>The Grand Estate, Napa Valley</p>
         <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 14 }}>
           {["Schedule", "Travel", "RSVP", "Registry"].map((l) => (
-            <span key={l} style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "#2C3E2D", background: "#EDE7DF", borderRadius: 100, padding: "4px 10px" }}>{l}</span>
+            <span key={l} style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "#2C3E2D", background: "#F3EAE0", borderRadius: 100, padding: "4px 10px" }}>{l}</span>
           ))}
         </div>
       </div>
@@ -325,41 +366,108 @@ function MiniWeddingSite() {
 
 function MiniDayOfBinder() {
   return (
-    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 340, border: "1px solid #E8D5B7", position: "relative" }}>
+    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 340, border: "1px solid rgba(201,168,76,0.3)", position: "relative", boxShadow: "0 4px 20px rgba(180,140,130,.15)" }}>
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "linear-gradient(90deg, #2C3E2D, #C9A84C)", borderRadius: "12px 12px 0 0" }} />
-      <p style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "#1A1A2E", marginBottom: 4 }}>Day-of Binder</p>
-      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "#6B6B6B", marginBottom: 14 }}>Complete wedding guide - PDF</p>
+      <p style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: "#FAF6F1", marginBottom: 4 }}>Day-of Binder</p>
+      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "rgba(250,246,241,0.5)", marginBottom: 14 }}>Complete wedding guide - PDF</p>
       {["Ceremony Timeline", "Vendor Contact Sheet", "Music & Readings", "Setup Assignments", "Emergency Kit List"].map((s, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <span style={{ width: 16, height: 2, background: i < 3 ? "#2C3E2D" : "#E8D5B7", borderRadius: 2 }} />
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: i < 3 ? "#1A1A2E" : "#6B6B6B" }}>{s}</span>
+          <span style={{ width: 16, height: 2, background: i < 3 ? "#E8C97A" : "rgba(250,246,241,0.2)", borderRadius: 2 }} />
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: i < 3 ? "#FAF6F1" : "rgba(250,246,241,0.5)" }}>{s}</span>
         </div>
       ))}
     </div>
   );
 }
 
-const featureVisuals = [MiniAIChat, MiniTaskTimeline, MiniBudgetTracker, MiniGuestList, MiniVendorPipeline, MiniWeddingSite, MiniDayOfBinder];
+function MiniDataSecurity() {
+  const items = ["256-bit encryption at rest", "Daily encrypted backups", "Soft-delete recovery (30 days)", "Full data export anytime", "Audit logging"];
+  return (
+    <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 360, border: "1px solid #E8D5B7", boxShadow: "0 4px 20px rgba(180,140,130,.15)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#F3EAE0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2C3E2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+        </div>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 14, fontWeight: 600, color: "#2A2018" }}>Data Protection</span>
+      </div>
+      {items.map((item, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2C3E2D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#2A2018" }}>{item}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── AI Spotlight Chat Component ─────────────────────────── */
+
+function SpotlightChat() {
+  return (
+    <div style={{ background: "#1E2340", borderRadius: 16, padding: 24, maxWidth: 420, boxShadow: "0 8px 40px rgba(0,0,0,0.3)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#C9A84C" }} />
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#FAF6F1", fontWeight: 600 }}>eydn AI</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "rgba(250,246,241,0.4)", marginLeft: "auto" }}>Online</span>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ alignSelf: "flex-end", background: "#2C3E2D", color: "#FAF6F1", borderRadius: "14px 14px 4px 14px", padding: "10px 16px", maxWidth: "78%", fontFamily: "var(--font-body)", fontSize: 13 }}>
+          Can you suggest a timeline for DIY centerpieces?
+        </div>
+        <div style={{ alignSelf: "flex-start", background: "#252B45", color: "#E8D5B7", borderRadius: "14px 14px 14px 4px", padding: "10px 16px", maxWidth: "85%", fontFamily: "var(--font-body)", fontSize: 13, lineHeight: 1.55 }}>
+          Based on your <span style={{ color: "#E8C97A" }}>150-guest wedding</span>, I recommend starting 8 weeks out. Order supplies by <span style={{ color: "#E8C97A" }}>April 1</span>, do a trial run April 15, then assemble May 10-12.
+        </div>
+        <div style={{ alignSelf: "flex-end", background: "#2C3E2D", color: "#FAF6F1", borderRadius: "14px 14px 4px 14px", padding: "10px 16px", maxWidth: "78%", fontFamily: "var(--font-body)", fontSize: 13 }}>
+          What about the budget for materials?
+        </div>
+        <div style={{ alignSelf: "flex-start", display: "flex", gap: 4, padding: "10px 16px" }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#E8C97A", animation: "float1 1s ease-in-out infinite" }} />
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#E8C97A", animation: "float2 1s ease-in-out infinite 0.2s" }} />
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#E8C97A", animation: "float3 1s ease-in-out infinite 0.4s" }} />
+        </div>
+      </div>
+      {/* Input bar */}
+      <div style={{ marginTop: 16, background: "#1A1A2E", borderRadius: 100, padding: "10px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.3)", flex: 1 }}>Ask eydn anything...</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8C97A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13" />
+          <polygon points="22 2 15 22 11 13 2 9 22 2" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+/* ── Feature row config ──────────────────────────────────── */
+
+const featureVisuals = [MiniTaskTimeline, MiniBudgetTracker, MiniGuestList, MiniVendorPipeline, MiniWeddingSite, MiniDayOfBinder, MiniDataSecurity];
 
 const featureScriptLabels = [
-  "Intelligent planning",
   "Stay on track",
   "Every dollar, accounted for",
   "Everyone, organized",
   "Your dream team",
   "Share your story",
   "The final touch",
+  "Safe and sound",
 ];
 
 const featureBullets: string[][] = [
-  ["Remembers your style, budget, and decisions", "Personalized advice based on your full wedding data", "Vendor outreach tips and etiquette guidance", "Natural conversation with 50-message memory"],
   ["50+ tasks auto-generated from your date", "Grouped by phase with smart deadlines", "Priority levels and completion tracking", "Reminders so nothing slips through"],
   ["36 pre-built line items across 13 categories", "Track estimated, paid, and final costs", "Link vendors to budget items automatically", "Category subtotals and visual progress"],
   ["RSVPs, meal choices, plus-ones, and groups", "Import guests via CSV in seconds", "Unique RSVP links for each guest", "Addresses and roles management"],
   ["13 vendor categories with status pipeline", "Auto-enriched Google Business profiles", "Contact details, financials, and notes", "Email templates for outreach"],
   ["Custom URL for your guests", "Schedule, travel, registry, and FAQ sections", "Guest photo uploads to shared gallery", "RSVP integration built in"],
   ["Timeline, ceremony script, and music lists", "Per-person schedules for the entire party", "Vendor contacts with arrival times", "Export as a beautiful branded PDF"],
+  ["256-bit encryption at rest", "Daily encrypted backups with 30-day recovery", "Full data export anytime", "Audit logging for every change"],
 ];
+
+/* dark row indices: 1 (Budget) and 5 (Day-of Binder) */
+const darkRowIndices = new Set([1, 5]);
 
 /* ── Page ─────────────────────────────────────────────────── */
 
@@ -367,7 +475,10 @@ export default function HomePage() {
   const fontVars = `${cormorant.variable} ${dmSans.variable} ${greatVibes.variable}`;
 
   return (
-    <main className={`flex-1 flex flex-col ${fontVars}`}>
+    <main
+      className={`flex-1 flex flex-col ${fontVars}`}
+      style={{ animation: "fadeIn 0.6s ease-out" }}
+    >
       <style dangerouslySetInnerHTML={{ __html: keyframeCSS }} />
 
       {/* ─── HERO ─── */}
@@ -376,16 +487,20 @@ export default function HomePage() {
         <div
           style={{
             flex: "0 0 55%",
-            background: "var(--whisper)",
+            background: "#FAF6F1",
             display: "flex",
             alignItems: "center",
             padding: "80px 60px 80px 80px",
+            position: "relative",
+            overflow: "hidden",
           }}
           className="max-lg:!flex-[1_1_100%] max-lg:!p-8 max-lg:!pt-20"
         >
-          <div style={{ maxWidth: 600 }}>
+          <BotanicalOverlay color="#D4A5A5" opacity={0.08} />
+          <BotanicalOverlay color="#C9A84C" opacity={0.05} />
+          <div style={{ maxWidth: 600, position: "relative", zIndex: 1 }}>
             <ScrollReveal>
-              <p style={{ fontFamily: "var(--font-script)", fontSize: 26, color: "var(--petal)" }}>
+              <p style={{ fontFamily: "var(--font-script)", fontSize: 32, color: "#D4A5A5" }}>
                 Your wedding, beautifully planned
               </p>
             </ScrollReveal>
@@ -393,9 +508,9 @@ export default function HomePage() {
               <h1
                 style={{
                   fontFamily: "var(--font-display)",
-                  fontSize: 88,
-                  fontWeight: 700,
-                  color: "var(--violet)",
+                  fontSize: 86,
+                  fontWeight: 600,
+                  color: "#2A2018",
                   lineHeight: 1.02,
                   marginTop: 16,
                 }}
@@ -407,7 +522,7 @@ export default function HomePage() {
               </h1>
             </ScrollReveal>
             <ScrollReveal>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 18, color: "var(--muted-plum)", lineHeight: 1.65, marginTop: 28, maxWidth: 480 }}>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 18, color: "#8A7A6A", lineHeight: 1.65, marginTop: 28, maxWidth: 480 }}>
                 From guest lists to vendor outreach to your day-of binder — everything in one beautiful place, guided by an AI that knows your wedding inside and out.
               </p>
             </ScrollReveal>
@@ -417,8 +532,8 @@ export default function HomePage() {
                   <SignUpButton>
                     <button
                       style={{
-                        background: "var(--violet)",
-                        color: "var(--whisper)",
+                        background: "#2C3E2D",
+                        color: "#FAF6F1",
                         borderRadius: 100,
                         padding: "16px 36px",
                         fontFamily: "var(--font-body)",
@@ -426,8 +541,10 @@ export default function HomePage() {
                         fontWeight: 600,
                         border: "none",
                         cursor: "pointer",
-                        transition: "all 200ms",
+                        transition: "background 200ms",
                       }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#C08080"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "#2C3E2D"; }}
                     >
                       Start Planning Today
                     </button>
@@ -438,7 +555,7 @@ export default function HomePage() {
                       fontFamily: "var(--font-body)",
                       fontSize: 15,
                       fontWeight: 500,
-                      color: "var(--violet)",
+                      color: "#2C3E2D",
                       textDecoration: "none",
                       display: "inline-flex",
                       alignItems: "center",
@@ -452,8 +569,8 @@ export default function HomePage() {
                   <Link
                     href="/dashboard"
                     style={{
-                      background: "var(--violet)",
-                      color: "var(--whisper)",
+                      background: "#2C3E2D",
+                      color: "#FAF6F1",
                       borderRadius: 100,
                       padding: "16px 36px",
                       fontFamily: "var(--font-body)",
@@ -468,18 +585,20 @@ export default function HomePage() {
               </div>
             </ScrollReveal>
             <ScrollReveal>
-              <p style={{ marginTop: 24, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--muted-plum)", letterSpacing: "0.02em" }}>
-                50+ Tasks &middot; AI That Knows You &middot; $79 One-Time
+              <p style={{ marginTop: 24, fontFamily: "var(--font-body)", fontSize: 13, color: "#8A7A6A", letterSpacing: "0.02em" }}>
+                <span style={{ color: "#C9A84C" }}>&#10022;</span> 50+ Tasks &middot;{" "}
+                <span style={{ color: "#C9A84C" }}>&#10022;</span> AI That Knows You &middot;{" "}
+                <span style={{ color: "#C9A84C" }}>&#10022;</span> $79 One-Time
               </p>
             </ScrollReveal>
           </div>
         </div>
 
-        {/* Right Column */}
+        {/* Right Column — warm gradient */}
         <div
           style={{
             flex: "0 0 45%",
-            background: "var(--violet)",
+            background: "linear-gradient(145deg, #F7EDED 0%, #F0E4CC 40%, #F3EAE0 100%)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -489,43 +608,50 @@ export default function HomePage() {
           }}
           className="max-lg:!hidden"
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: 24, alignItems: "center" }}>
+          <BotanicalOverlay color="#D4A5A5" opacity={0.1} />
+          <BotanicalOverlay color="#C9A84C" opacity={0.06} />
+          <div style={{ position: "relative", width: "100%", height: "100%", minHeight: 500 }}>
             <HeroTaskCard />
             <HeroBudgetCard />
             <HeroAIChatCard />
           </div>
         </div>
-
-        {/* Mobile cards band */}
-        <div
-          className="lg:hidden"
-          style={{
-            display: "none",
-          }}
-        />
       </section>
 
-      {/* Mobile hero cards band — shown below hero left on small screens */}
+      {/* Mobile hero cards band */}
       <div
         className="lg:!hidden"
         style={{
-          background: "var(--violet)",
+          background: "linear-gradient(145deg, #F7EDED 0%, #F0E4CC 40%, #F3EAE0 100%)",
           padding: "40px 20px",
           display: "flex",
           gap: 16,
           overflowX: "auto",
-          maxHeight: 380,
           alignItems: "center",
         }}
       >
-        <HeroTaskCard />
-        <HeroBudgetCard />
-        <HeroAIChatCard />
+        <div style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", minWidth: 260, boxShadow: "0 8px 32px rgba(180,140,130,.2)" }}>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Task Timeline</p>
+          {[{ label: "Book photographer", done: true }, { label: "Finalize guest list", done: false }, { label: "Cake tasting", done: false }].map((t, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <span style={{ width: 10, height: 10, borderRadius: "50%", background: t.done ? "#B09A87" : "#C9A84C", flexShrink: 0 }} />
+              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: t.done ? "#B09A87" : "#2A2018", textDecoration: t.done ? "line-through" : "none" }}>{t.label}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", minWidth: 260, boxShadow: "0 8px 32px rgba(180,140,130,.2)" }}>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Budget</p>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#2A2018" }}>$9,600 of $26,500 paid</p>
+        </div>
+        <div style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", minWidth: 260, boxShadow: "0 8px 32px rgba(180,140,130,.2)" }}>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>AI Chat</p>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#2A2018" }}>Ask eydn anything</p>
+        </div>
       </div>
 
       {/* ─── SOCIAL PROOF BAR ─── */}
       <ScrollReveal>
-        <section style={{ background: "var(--petal)", padding: "20px 24px" }}>
+        <section style={{ background: "#F7EDED", padding: "20px 24px" }}>
           <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
             {/* Overlapping avatars */}
             <div style={{ display: "flex", alignItems: "center" }}>
@@ -541,14 +667,14 @@ export default function HomePage() {
                     width: 36,
                     height: 36,
                     borderRadius: "50%",
-                    border: "2px solid var(--petal)",
+                    border: "2px solid #F7EDED",
                     marginLeft: n > 1 ? -8 : 0,
                     objectFit: "cover",
                   }}
                 />
               ))}
             </div>
-            <p style={{ fontFamily: "var(--font-body)", fontSize: 14, fontWeight: 500, color: "var(--deep-plum)" }}>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 14, fontWeight: 500, color: "#2A2018" }}>
               Join 2,400+ couples planning smarter
             </p>
             <div style={{ display: "flex", gap: 2 }}>
@@ -562,88 +688,102 @@ export default function HomePage() {
         </section>
       </ScrollReveal>
 
-      {/* ─── FEATURES — Alternating full-width rows ─── */}
+      {/* ─── FEATURES — 7 alternating rows ─── */}
       <section id="features">
         {features.slice(0, 7).map((f, i) => {
-          const isForest = i % 2 !== 0;
-          const bg = isForest ? "var(--violet)" : "var(--whisper)";
-          const textColor = isForest ? "var(--whisper)" : "var(--deep-plum)";
-          const mutedColor = isForest ? "rgba(250,246,241,0.6)" : "var(--muted-plum)";
+          const isDark = darkRowIndices.has(i);
+          const textPanelBg = isDark ? "#2C3E2D" : "#F7EDED";
+          const visualPanelBg = isDark ? "#233124" : "#F0E4CC";
+          const textColor = isDark ? "#FAF6F1" : "#2A2018";
+          const mutedColor = isDark ? "rgba(250,246,241,0.6)" : "#8A7A6A";
+          const scriptColor = isDark ? "#E8C97A" : "#C08080";
+          const bulletColor = isDark ? "#E8C97A" : "#C9A84C";
+          const numColor = isDark ? "rgba(250,246,241,0.05)" : "rgba(42,32,24,0.05)";
           const VisualComponent = featureVisuals[i];
           const scriptLabel = featureScriptLabels[i];
           const bullets = featureBullets[i];
           const num = String(i + 1).padStart(2, "0");
+          const isEven = i % 2 === 0;
 
           return (
-            <div key={f.title} style={{ background: bg, padding: "100px 0", position: "relative", overflow: "hidden" }}>
+            <div key={f.title} style={{ display: "flex", minHeight: 540 }} className="max-lg:!flex-col">
+              {/* Text panel */}
               <div
                 style={{
-                  maxWidth: 1200,
-                  margin: "0 auto",
-                  padding: "0 40px",
+                  flex: "0 0 50%",
+                  background: textPanelBg,
                   display: "flex",
                   alignItems: "center",
-                  gap: 60,
-                  flexDirection: i % 2 === 0 ? "row" : "row-reverse",
-                  flexWrap: "wrap",
+                  padding: "80px 60px",
+                  position: "relative",
+                  overflow: "hidden",
+                  order: isEven ? 0 : 1,
                 }}
-                className="max-lg:!flex-col max-lg:!gap-10"
+                className="max-lg:!order-none max-lg:!p-10"
               >
-                {/* Text panel */}
-                <div style={{ flex: "1 1 50%", position: "relative", minWidth: 300 }}>
-                  {/* Large decorative number */}
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: -40,
-                      left: -10,
-                      fontFamily: "var(--font-display)",
-                      fontSize: 180,
-                      fontWeight: 700,
-                      color: isForest ? "rgba(250,246,241,0.06)" : "rgba(44,62,45,0.06)",
-                      lineHeight: 1,
-                      pointerEvents: "none",
-                      userSelect: "none",
-                    }}
-                  >
-                    {num}
-                  </span>
-                  <ScrollReveal>
-                    <p style={{ fontFamily: "var(--font-script)", fontSize: 24, color: "var(--soft-violet)", position: "relative", zIndex: 1 }}>{scriptLabel}</p>
+                {/* Large decorative number */}
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -20,
+                    left: 20,
+                    fontFamily: "var(--font-display)",
+                    fontSize: 190,
+                    fontWeight: 600,
+                    color: numColor,
+                    lineHeight: 1,
+                    pointerEvents: "none",
+                    userSelect: "none",
+                  }}
+                >
+                  {num}
+                </span>
+                <ScrollReveal>
+                  <div style={{ position: "relative", zIndex: 1 }}>
+                    <p style={{ fontFamily: "var(--font-script)", fontSize: 26, color: scriptColor }}>{scriptLabel}</p>
                     <h3
                       style={{
                         fontFamily: "var(--font-display)",
                         fontSize: 48,
-                        fontWeight: 700,
+                        fontWeight: 600,
                         color: textColor,
                         lineHeight: 1.1,
                         marginTop: 8,
-                        position: "relative",
-                        zIndex: 1,
                       }}
                       className="max-lg:!text-[36px]"
                     >
                       {f.title}
                     </h3>
-                    <p style={{ fontFamily: "var(--font-body)", fontSize: 16, color: mutedColor, lineHeight: 1.7, marginTop: 16, position: "relative", zIndex: 1 }}>
+                    <p style={{ fontFamily: "var(--font-body)", fontSize: 16, color: mutedColor, lineHeight: 1.7, marginTop: 16 }}>
                       {f.description}
                     </p>
                     <ul style={{ marginTop: 20, listStyle: "none", padding: 0 }}>
                       {bullets.map((b) => (
-                        <li key={b} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10, position: "relative", zIndex: 1 }}>
-                          <span style={{ color: "var(--soft-violet)", fontSize: 14, flexShrink: 0, marginTop: 2 }}>&#10022;</span>
+                        <li key={b} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
+                          <span style={{ color: bulletColor, fontSize: 14, flexShrink: 0, marginTop: 2 }}>&#10022;</span>
                           <span style={{ fontFamily: "var(--font-body)", fontSize: 14, color: textColor, lineHeight: 1.6 }}>{b}</span>
                         </li>
                       ))}
                     </ul>
-                  </ScrollReveal>
-                </div>
-                {/* Visual panel */}
-                <div style={{ flex: "1 1 45%", display: "flex", justifyContent: "center", minWidth: 280 }}>
-                  <ScrollReveal>
-                    <VisualComponent />
-                  </ScrollReveal>
-                </div>
+                  </div>
+                </ScrollReveal>
+              </div>
+              {/* Visual panel */}
+              <div
+                style={{
+                  flex: "0 0 50%",
+                  background: visualPanelBg,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "60px 40px",
+                  order: isEven ? 1 : 0,
+                }}
+                className="max-lg:!order-none max-lg:!p-10"
+              >
+                <ScrollReveal>
+                  <VisualComponent />
+                </ScrollReveal>
               </div>
             </div>
           );
@@ -652,10 +792,13 @@ export default function HomePage() {
 
       {/* ─── HOW IT WORKS ─── */}
       <ScrollReveal>
-        <section id="how-it-works" style={{ background: "var(--violet)", padding: "120px 24px" }}>
+        <section id="how-it-works" style={{ background: "#2C3E2D", padding: "120px 24px" }}>
           <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
-            <p style={{ fontFamily: "var(--font-script)", fontSize: 28, color: "var(--soft-violet)" }}>Simple by design</p>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: 56, fontWeight: 700, color: "var(--whisper)", lineHeight: 1.1, marginTop: 8 }} className="max-lg:!text-[40px]">
+            <p style={{ fontFamily: "var(--font-script)", fontSize: 28, color: "#E8C97A" }}>Simple by design</p>
+            <h2
+              style={{ fontFamily: "var(--font-display)", fontSize: 60, fontWeight: 600, color: "#FAF6F1", lineHeight: 1.1, marginTop: 8 }}
+              className="max-lg:!text-[40px]"
+            >
               From &ldquo;yes&rdquo; to &ldquo;I do&rdquo;
             </h2>
 
@@ -669,7 +812,7 @@ export default function HomePage() {
               }}
               className="max-md:!grid-cols-1 max-md:!gap-16"
             >
-              {/* Connecting dashed line — hidden on mobile */}
+              {/* Connecting dashed line */}
               <div
                 className="max-md:!hidden"
                 style={{
@@ -688,21 +831,21 @@ export default function HomePage() {
                       width: 80,
                       height: 80,
                       borderRadius: "50%",
-                      border: "2px solid var(--soft-violet)",
+                      border: "2px solid #E8D5B7",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       margin: "0 auto",
                       fontFamily: "var(--font-display)",
                       fontSize: 32,
-                      fontWeight: 700,
-                      color: "var(--soft-violet)",
-                      background: "var(--violet)",
+                      fontWeight: 600,
+                      color: "#E8D5B7",
+                      background: "#2C3E2D",
                     }}
                   >
                     {i + 1}
                   </div>
-                  <h3 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 600, color: "var(--whisper)", marginTop: 24 }}>{s.title}</h3>
+                  <h3 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 600, color: "#FAF6F1", marginTop: 24 }}>{s.title}</h3>
                   <p style={{ fontFamily: "var(--font-body)", fontSize: 15, color: "rgba(250,246,241,0.6)", lineHeight: 1.65, marginTop: 12 }}>{s.description}</p>
                 </div>
               ))}
@@ -711,12 +854,74 @@ export default function HomePage() {
         </section>
       </ScrollReveal>
 
+      {/* ─── AI SPOTLIGHT ─── */}
+      <section style={{ display: "flex", minHeight: 600 }} className="max-lg:!flex-col">
+        {/* Left: dark panel with chat */}
+        <div
+          style={{
+            flex: "0 0 50%",
+            background: "linear-gradient(165deg, #1A1A2E 0%, #0F1525 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "80px 40px",
+          }}
+          className="max-lg:!p-10"
+        >
+          <ScrollReveal>
+            <SpotlightChat />
+          </ScrollReveal>
+        </div>
+        {/* Right: blush-pale with text */}
+        <div
+          style={{
+            flex: "0 0 50%",
+            background: "#F7EDED",
+            display: "flex",
+            alignItems: "center",
+            padding: "80px 60px",
+          }}
+          className="max-lg:!p-10"
+        >
+          <ScrollReveal>
+            <div>
+              <p style={{ fontFamily: "var(--font-script)", fontSize: 26, color: "#C08080" }}>Intelligent planning</p>
+              <h2
+                style={{ fontFamily: "var(--font-display)", fontSize: 48, fontWeight: 600, color: "#2A2018", lineHeight: 1.1, marginTop: 8 }}
+                className="max-lg:!text-[36px]"
+              >
+                An AI that remembers your wedding
+              </h2>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 16, color: "#8A7A6A", lineHeight: 1.7, marginTop: 20 }}>
+                Chat with eydn for personalized advice — it knows your style, allergies, budget priorities, and every decision you have made. Like a planner who never forgets.
+              </p>
+              <ul style={{ marginTop: 24, listStyle: "none", padding: 0 }}>
+                {[
+                  "Remembers your style, budget, and decisions",
+                  "Personalized advice based on your full wedding data",
+                  "Vendor outreach tips and etiquette guidance",
+                  "Natural conversation with 50-message memory",
+                ].map((b) => (
+                  <li key={b} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
+                    <span style={{ color: "#C9A84C", fontSize: 14, flexShrink: 0, marginTop: 2 }}>&#10022;</span>
+                    <span style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "#2A2018", lineHeight: 1.6 }}>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
       {/* ─── TESTIMONIALS ─── */}
       <ScrollReveal>
-        <section style={{ background: "var(--whisper)", padding: "120px 24px" }}>
+        <section style={{ background: "#FAF6F1", padding: "120px 24px" }}>
           <div style={{ maxWidth: 1100, margin: "0 auto", textAlign: "center" }}>
-            <p style={{ fontFamily: "var(--font-script)", fontSize: 28, color: "var(--soft-violet)" }}>Real couples, real love</p>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: 52, fontWeight: 700, color: "var(--deep-plum)", lineHeight: 1.1, marginTop: 8 }} className="max-lg:!text-[40px]">
+            <p style={{ fontFamily: "var(--font-script)", fontSize: 28, color: "#C08080" }}>Real couples, real love</p>
+            <h2
+              style={{ fontFamily: "var(--font-display)", fontSize: 52, fontWeight: 600, color: "#2A2018", lineHeight: 1.1, marginTop: 8 }}
+              className="max-lg:!text-[40px]"
+            >
               What couples are saying
             </h2>
 
@@ -729,50 +934,75 @@ export default function HomePage() {
               }}
               className="max-lg:!grid-cols-1 max-lg:!max-w-md max-lg:!mx-auto"
             >
-              {testimonials.map((t, i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: "var(--blush-pink)",
-                    borderRadius: 16,
-                    padding: "36px 28px",
-                    textAlign: "left",
-                    transition: "transform 300ms, box-shadow 300ms",
-                    cursor: "default",
-                  }}
-                  className="hover:-translate-y-2 hover:shadow-xl"
-                >
-                  {/* Stars */}
-                  <div style={{ display: "flex", gap: 2, marginBottom: 20 }}>
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <svg key={s} width="16" height="16" viewBox="0 0 24 24" fill="#C9A84C" stroke="none">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                      </svg>
-                    ))}
-                  </div>
-                  {/* Quote */}
-                  <p style={{ fontFamily: "var(--font-display)", fontSize: 22, fontStyle: "italic", color: "var(--deep-plum)", lineHeight: 1.5 }}>
-                    &ldquo;{t.quote}&rdquo;
-                  </p>
-                  {/* Divider */}
-                  <div style={{ width: 40, height: 1, background: "rgba(26,26,46,0.2)", margin: "24px 0 20px" }} />
-                  {/* Author */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`https://i.pravatar.cc/80?img=${i + 20}`}
-                      alt=""
-                      width={40}
-                      height={40}
-                      style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.5)" }}
-                    />
-                    <div>
-                      <p style={{ fontFamily: "var(--font-body)", fontSize: 14, fontWeight: 600, color: "var(--deep-plum)" }}>{t.names}</p>
-                      <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(26,26,46,0.6)" }}>{t.detail}</p>
+              {testimonials.map((t, i) => {
+                const gradients = [
+                  "linear-gradient(135deg, #D4A5A5, #C08080)",
+                  "linear-gradient(135deg, #E8D5B7, #C9A84C)",
+                  "linear-gradient(135deg, #D4A5A5, #C08080)",
+                ];
+                const initials = t.names.split(" & ").map((n) => n[0]).join("&");
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      background: "#F7EDED",
+                      borderRadius: 16,
+                      padding: "36px 28px",
+                      textAlign: "left",
+                      transition: "transform 300ms, box-shadow 300ms",
+                      cursor: "default",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-7px)";
+                      e.currentTarget.style.boxShadow = "0 16px 48px rgba(180,140,130,.25)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }}
+                  >
+                    {/* Stars */}
+                    <div style={{ display: "flex", gap: 2, marginBottom: 20 }}>
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <svg key={s} width="16" height="16" viewBox="0 0 24 24" fill="#C9A84C" stroke="none">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                      ))}
+                    </div>
+                    {/* Quote */}
+                    <p style={{ fontFamily: "var(--font-display)", fontSize: 22, fontStyle: "italic", color: "#2A2018", lineHeight: 1.5 }}>
+                      &ldquo;{t.quote}&rdquo;
+                    </p>
+                    {/* Divider */}
+                    <div style={{ width: 40, height: 1, background: "rgba(42,32,24,0.15)", margin: "24px 0 20px" }} />
+                    {/* Author */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: "50%",
+                          background: gradients[i],
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontFamily: "var(--font-body)",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: "#fff",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {initials}
+                      </div>
+                      <div>
+                        <p style={{ fontFamily: "var(--font-body)", fontSize: 14, fontWeight: 600, color: "#2A2018" }}>{t.names}</p>
+                        <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#8A7A6A" }}>{t.detail}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
@@ -780,10 +1010,13 @@ export default function HomePage() {
 
       {/* ─── PRICING ─── */}
       <ScrollReveal>
-        <section id="pricing" style={{ background: "var(--whisper)", padding: "120px 24px 80px" }}>
+        <section id="pricing" style={{ background: "#F7EDED", padding: "120px 24px 80px" }}>
           <div style={{ maxWidth: 700, margin: "0 auto", textAlign: "center" }}>
-            <p style={{ fontFamily: "var(--font-script)", fontSize: 28, color: "var(--soft-violet)" }}>One price, forever yours</p>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: 52, fontWeight: 700, color: "var(--deep-plum)", lineHeight: 1.1, marginTop: 8 }} className="max-lg:!text-[40px]">
+            <p style={{ fontFamily: "var(--font-script)", fontSize: 28, color: "#D4A5A5" }}>One investment</p>
+            <h2
+              style={{ fontFamily: "var(--font-display)", fontSize: 60, fontWeight: 600, color: "#2A2018", lineHeight: 1.1, marginTop: 8 }}
+              className="max-lg:!text-[40px]"
+            >
               One price. Your whole wedding.
             </h2>
 
@@ -793,14 +1026,17 @@ export default function HomePage() {
                 marginTop: 48,
                 borderRadius: 20,
                 padding: 3,
-                background: "linear-gradient(135deg, var(--soft-violet), var(--violet), var(--soft-violet))",
+                background: "linear-gradient(135deg, #C9A84C, #E8C97A, #C9A84C)",
                 backgroundSize: "200% auto",
                 animation: "shimmer 4s linear infinite",
               }}
             >
-              <div style={{ background: "var(--violet)", borderRadius: 17, padding: "52px 40px" }}>
-                <p style={{ fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(250,246,241,0.5)" }}>Full Access</p>
-                <p style={{ fontFamily: "var(--font-display)", fontSize: 104, fontWeight: 700, color: "var(--soft-violet)", lineHeight: 1, marginTop: 8 }} className="max-sm:!text-[72px]">
+              <div style={{ background: "#2C3E2D", borderRadius: 17, padding: "52px 40px" }}>
+                <p style={{ fontFamily: "var(--font-script)", fontSize: 22, color: "#E8C97A" }}>Full access, forever</p>
+                <p
+                  style={{ fontFamily: "var(--font-display)", fontSize: 96, fontWeight: 600, color: "#C9A84C", lineHeight: 1, marginTop: 8 }}
+                  className="max-sm:!text-[72px]"
+                >
                   $79
                 </p>
                 <p style={{ fontFamily: "var(--font-body)", fontSize: 15, color: "rgba(250,246,241,0.5)", marginTop: 8 }}>One-time payment &middot; 1 wedding &middot; Forever</p>
@@ -818,20 +1054,20 @@ export default function HomePage() {
                 >
                   {pricingFeatures.map((pf) => (
                     <div key={pf} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                      <span style={{ color: "var(--soft-violet)", fontSize: 13, flexShrink: 0, marginTop: 2 }}>&#10022;</span>
-                      <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--whisper)", lineHeight: 1.5 }}>{pf}</span>
+                      <span style={{ color: "#E8C97A", fontSize: 13, flexShrink: 0, marginTop: 2 }}>&#10022;</span>
+                      <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#FAF6F1", lineHeight: 1.5 }}>{pf}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* CTA */}
+                {/* CTA — blush to rose gradient */}
                 <div style={{ marginTop: 44 }}>
                   <Show when="signed-out">
                     <SignUpButton>
                       <button
                         style={{
-                          background: "var(--soft-violet)",
-                          color: "var(--deep-plum)",
+                          background: "linear-gradient(135deg, #D4A5A5, #C08080)",
+                          color: "#fff",
                           borderRadius: 100,
                           padding: "18px 48px",
                           fontFamily: "var(--font-body)",
@@ -840,6 +1076,15 @@ export default function HomePage() {
                           border: "none",
                           cursor: "pointer",
                           transition: "all 200ms",
+                          boxShadow: "0 4px 20px rgba(192,128,128,0.4)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow = "0 8px 32px rgba(192,128,128,0.6)";
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow = "0 4px 20px rgba(192,128,128,0.4)";
+                          e.currentTarget.style.transform = "translateY(0)";
                         }}
                       >
                         Start Planning Today
@@ -851,8 +1096,8 @@ export default function HomePage() {
                       href="/dashboard"
                       style={{
                         display: "inline-block",
-                        background: "var(--soft-violet)",
-                        color: "var(--deep-plum)",
+                        background: "linear-gradient(135deg, #D4A5A5, #C08080)",
+                        color: "#fff",
                         borderRadius: 100,
                         padding: "18px 48px",
                         fontFamily: "var(--font-body)",
@@ -869,7 +1114,7 @@ export default function HomePage() {
             </div>
 
             {/* Quote below pricing */}
-            <p style={{ fontFamily: "var(--font-display)", fontSize: 20, fontStyle: "italic", color: "var(--muted-plum)", marginTop: 40, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: "var(--font-display)", fontSize: 20, fontStyle: "italic", color: "#8A7A6A", marginTop: 40, lineHeight: 1.6 }}>
               &ldquo;Most couples spend $35,000+ on their wedding. A $79 planning tool that keeps you organized and on budget is the best investment you can make.&rdquo;
             </p>
 
@@ -877,27 +1122,31 @@ export default function HomePage() {
             <div
               style={{
                 marginTop: 40,
-                background: "var(--blush-pink)",
+                background: "#fff",
                 borderRadius: 16,
                 padding: "32px 36px",
                 textAlign: "left",
+                border: "1px solid #D4A5A5",
               }}
             >
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-                <p style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 700, color: "var(--deep-plum)" }}>Memory Plan</p>
                 <div>
-                  <span style={{ fontFamily: "var(--font-display)", fontSize: 36, fontWeight: 700, color: "var(--deep-plum)" }}>$29</span>
-                  <span style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--muted-plum)", marginLeft: 4 }}>/year</span>
+                  <p style={{ fontFamily: "var(--font-script)", fontSize: 20, color: "#C08080" }}>After the day</p>
+                  <p style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 600, color: "#2A2018", marginTop: 4 }}>Memory Plan</p>
+                </div>
+                <div>
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: 36, fontWeight: 600, color: "#2A2018" }}>$29</span>
+                  <span style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "#8A7A6A", marginLeft: 4 }}>/year</span>
                 </div>
               </div>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--muted-plum)", marginTop: 8, lineHeight: 1.6 }}>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "#8A7A6A", marginTop: 8, lineHeight: 1.6 }}>
                 Keep your wedding website live and your data accessible after the wedding.
               </p>
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
                 {memoryPlanFeatures.map((mf) => (
                   <div key={mf} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ color: "var(--soft-violet)", fontSize: 13 }}>&#10022;</span>
-                    <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--deep-plum)" }}>{mf}</span>
+                    <span style={{ color: "#C9A84C", fontSize: 13 }}>&#10022;</span>
+                    <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#2A2018" }}>{mf}</span>
                   </div>
                 ))}
               </div>
@@ -906,32 +1155,26 @@ export default function HomePage() {
         </section>
       </ScrollReveal>
 
-      {/* ─── FINAL CTA ─── */}
+      {/* ─── FINAL CTA — WARM GRADIENT ─── */}
       <ScrollReveal>
         <section
           style={{
-            background: "var(--violet)",
+            background: "linear-gradient(165deg, #F3EAE0 0%, #F7EDED 40%, #F0E4CC 100%)",
             padding: "140px 24px",
             position: "relative",
             overflow: "hidden",
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "radial-gradient(circle at 50% 50%, rgba(201,168,76,0.15) 0%, transparent 60%)",
-              pointerEvents: "none",
-            }}
-          />
+          <BotanicalOverlay color="#D4A5A5" opacity={0.08} />
+          <BotanicalOverlay color="#C9A84C" opacity={0.05} />
           <div style={{ maxWidth: 700, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 1 }}>
-            <p style={{ fontFamily: "var(--font-script)", fontSize: 30, color: "var(--soft-violet)" }}>Begin your story</p>
+            <p style={{ fontFamily: "var(--font-script)", fontSize: 42, color: "#C08080" }}>Begin your story</p>
             <h2
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: 72,
-                fontWeight: 700,
-                color: "var(--whisper)",
+                fontSize: 76,
+                fontWeight: 600,
+                color: "#2A2018",
                 lineHeight: 1.08,
                 marginTop: 12,
               }}
@@ -944,8 +1187,8 @@ export default function HomePage() {
                 <SignUpButton>
                   <button
                     style={{
-                      background: "var(--soft-violet)",
-                      color: "var(--deep-plum)",
+                      background: "linear-gradient(135deg, #D4A5A5, #C08080)",
+                      color: "#fff",
                       borderRadius: 100,
                       padding: "18px 48px",
                       fontFamily: "var(--font-body)",
@@ -954,6 +1197,15 @@ export default function HomePage() {
                       border: "none",
                       cursor: "pointer",
                       transition: "all 200ms",
+                      boxShadow: "0 4px 20px rgba(192,128,128,0.3)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.boxShadow = "0 12px 40px rgba(180,140,130,.35)";
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = "0 4px 20px rgba(192,128,128,0.3)";
+                      e.currentTarget.style.transform = "translateY(0)";
                     }}
                   >
                     Start Planning Today
@@ -965,8 +1217,8 @@ export default function HomePage() {
                   href="/dashboard"
                   style={{
                     display: "inline-block",
-                    background: "var(--soft-violet)",
-                    color: "var(--deep-plum)",
+                    background: "linear-gradient(135deg, #D4A5A5, #C08080)",
+                    color: "#fff",
                     borderRadius: 100,
                     padding: "18px 48px",
                     fontFamily: "var(--font-body)",
@@ -995,38 +1247,41 @@ export default function HomePage() {
             className="max-md:!grid-cols-2 max-sm:!grid-cols-1"
           >
             <div>
-              <p style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, color: "#fff" }}>eydn</p>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.7, marginTop: 12 }}>
-                Your AI-powered wedding planning guide. From engagement to &ldquo;I do.&rdquo;
+              <p style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 600, color: "#FAF6F1" }}>eydn</p>
+              <p style={{ fontFamily: "var(--font-script)", fontSize: 16, color: "rgba(212,165,165,0.7)", marginTop: 8 }}>
+                From engagement to &ldquo;I do.&rdquo;
+              </p>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", lineHeight: 1.7, marginTop: 12 }}>
+                Your AI-powered wedding planning guide.
               </p>
             </div>
             <div>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Product</p>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.5)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Product</p>
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                <Link href="/#features" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Features</Link>
-                <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Pricing</Link>
-                <Link href="/#how-it-works" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>How It Works</Link>
+                <Link href="/#features" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>Features</Link>
+                <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>Pricing</Link>
+                <Link href="/#how-it-works" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>How It Works</Link>
               </div>
             </div>
             <div>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.15em" }}>For Vendors</p>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.5)", textTransform: "uppercase", letterSpacing: "0.15em" }}>For Vendors</p>
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                <Link href="/dashboard/vendor-portal" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Vendor Portal</Link>
-                <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Placement Tiers</Link>
+                <Link href="/dashboard/vendor-portal" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>Vendor Portal</Link>
+                <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>Placement Tiers</Link>
               </div>
             </div>
             <div>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Company</p>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.5)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Company</p>
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                <a href="mailto:support@eydn.app" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>Contact</a>
+                <a href="mailto:support@eydn.app" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>Contact</a>
               </div>
             </div>
           </div>
-          <div style={{ marginTop: 64, paddingTop: 32, borderTop: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
-            <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>&copy; {new Date().getFullYear()} eydn. All rights reserved.</p>
+          <div style={{ marginTop: 64, paddingTop: 32, borderTop: "1px solid rgba(250,246,241,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)" }}>&copy; {new Date().getFullYear()} eydn. All rights reserved.</p>
             <div style={{ display: "flex", gap: 24 }}>
-              <Link href="/privacy" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(255,255,255,0.3)", textDecoration: "none" }}>Privacy</Link>
-              <Link href="/terms" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(255,255,255,0.3)", textDecoration: "none" }}>Terms</Link>
+              <Link href="/privacy" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)", textDecoration: "none" }}>Privacy</Link>
+              <Link href="/terms" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)", textDecoration: "none" }}>Terms</Link>
             </div>
           </div>
         </div>
@@ -1038,16 +1293,16 @@ export default function HomePage() {
 /* ── Data ────────────────────────────────────────────────── */
 
 const features = [
-  { title: "AI assistant that remembers you", description: "Chat with eydn for personalized advice — it knows your style, allergies, budget priorities, and every decision you've made. Like a planner who never forgets." },
   { title: "Smart task timeline", description: "50+ tasks auto-generated from your wedding date. Grouped by phase, with deadlines, priorities, and reminders." },
   { title: "Budget tracker", description: "Track estimated costs, payments, and final costs by category. Link vendors to line items automatically." },
   { title: "Guest management", description: "RSVPs, meal preferences, roles, addresses, plus-ones, and groups. Import via CSV. Send RSVP links." },
   { title: "Vendor tracker with Google profiles", description: "Manage 13 vendor categories with status pipeline, contacts, financials, email templates, and auto-enriched Google Business profiles with ratings and reviews." },
   { title: "Wedding website", description: "A beautiful public page for your guests with schedule, travel info, registry links, photo gallery, and RSVP." },
   { title: "Complete day-of binder", description: "Timeline, ceremony script, music lists, speeches, setup assignments, attire details, vendor contacts, and packing checklist — all exportable as a beautiful branded PDF." },
+  { title: "Your data, protected", description: "Daily encrypted backups, soft-delete recovery, full data export, and audit logging. Your wedding plans are never at risk." },
+  { title: "AI assistant that remembers you", description: "Chat with eydn for personalized advice — it knows your style, allergies, budget priorities, and every decision you've made. Like a planner who never forgets." },
   { title: "Seating chart", description: "Drag-and-drop tables for your reception. Ceremony layout for who stands where at the altar." },
   { title: "Photo gallery", description: "Guests upload their photos to a shared album right from your wedding website. No app download needed." },
-  { title: "Your data, protected", description: "Daily encrypted backups, soft-delete recovery, full data export, and audit logging. Your wedding plans are never at risk." },
 ];
 
 const steps = [
