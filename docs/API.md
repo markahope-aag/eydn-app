@@ -4,13 +4,20 @@ This document provides a comprehensive overview of all API endpoints in the eydn
 
 ## Authentication
 
-All API routes (except public and webhook endpoints) require authentication via Clerk. The API uses the `getWeddingForUser()` helper to ensure users can only access wedding data they have permission for.
+All API routes (except public and webhook endpoints) require authentication via Clerk. The API uses the `getWeddingForUser()` helper with role-based access control and premium feature enforcement.
 
 ### Access Roles
 
-- **Owner**: Full access to all wedding data and settings
+- **Owner**: Full access to all wedding data, settings, and collaborator management
 - **Partner**: Collaborative access to wedding planning (invited by owner)
-- **Coordinator**: Planning access for professional coordinators (invited by owner)
+- **Coordinator**: Professional planning access (invited by owner, limited settings access)
+
+### Premium Features
+
+The following endpoints require premium access (active subscription or trial):
+- `POST /api/chat` - AI wedding assistant
+- `POST /api/attachments` - File uploads
+- `GET /api/day-of` (PDF export) - Day-of planning PDF generation
 
 ### Authorization Pattern
 
@@ -23,13 +30,25 @@ const { wedding, supabase, userId, role } = result;
 if (role !== "owner") {
   return NextResponse.json({ error: "Owner access required" }, { status: 403 });
 }
+
+// Premium feature protection
+const premiumCheck = await requirePremium();
+if (premiumCheck) return premiumCheck; // Returns 403 if no access
 ```
 
 ### Headers
 ```
 Authorization: Bearer <clerk_session_token>
 Content-Type: application/json
+X-Rate-Limit: Enforced via Upstash Redis
 ```
+
+### Rate Limiting
+
+All API endpoints are protected by rate limiting:
+- **General endpoints**: 100 requests per minute per user
+- **AI chat endpoint**: 10 requests per minute per user
+- **File upload endpoint**: 5 requests per minute per user
 
 ## Core Resources
 
@@ -275,11 +294,17 @@ Invite a wedding collaborator (owner only).
 ```
 
 **Roles:**
-- `partner` - Wedding partner with full access
-- `coordinator` - Wedding coordinator with planning access
+- `partner` - Wedding partner with full planning access
+- `coordinator` - Wedding coordinator with professional planning access (limited settings)
+
+**Auto-Accept Flow:**
+- When invited user signs up with matching email, invitation is automatically accepted
+- User gains immediate access to wedding planning with assigned role
 
 #### `DELETE /api/collaborators/[id]`
 Remove a collaborator invitation (owner only).
+
+**Note:** Removing a collaborator immediately revokes their access to the wedding.
 
 ### Mood Board
 
@@ -323,6 +348,50 @@ Update a mood board item.
 
 #### `DELETE /api/mood-board/[id]`
 Remove a mood board item.
+
+### Comments
+
+#### `GET /api/comments`
+Get comments for wedding entities.
+
+**Query Parameters:**
+- `entity_type` - Filter by entity type (task, vendor, guest, expense, general)
+- `entity_id` - Filter by specific entity ID
+
+**Response:**
+```json
+[
+  {
+    "id": "uuid",
+    "wedding_id": "uuid",
+    "entity_type": "task",
+    "entity_id": "task_uuid",
+    "user_id": "user_123",
+    "user_name": "John Doe",
+    "content": "This task needs to be completed by next week",
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+]
+```
+
+#### `POST /api/comments`
+Add a comment to a wedding entity.
+
+**Request Body:**
+```json
+{
+  "entity_type": "task",
+  "entity_id": "task_uuid",
+  "content": "This task needs to be completed by next week"
+}
+```
+
+**Entity Types:**
+- `task` - Comments on specific tasks
+- `vendor` - Comments on vendor entries
+- `guest` - Comments on guest entries
+- `expense` - Comments on budget items
+- `general` - General wedding comments
 
 ### Seating
 

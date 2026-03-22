@@ -98,6 +98,7 @@ export type Database = {
           category: string;
           location: string | null;
           sort_order: number;
+          deleted_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -108,6 +109,7 @@ export type Database = {
           category?: string;
           location?: string | null;
           sort_order?: number;
+          deleted_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -470,6 +472,7 @@ export type Database = {
           phone: string | null;
           group_name: string | null;
           table_number: number | null;
+          deleted_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -491,6 +494,7 @@ export type Database = {
           phone?: string | null;
           group_name?: string | null;
           table_number?: number | null;
+          deleted_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -540,6 +544,7 @@ export type Database = {
           is_system_generated: boolean;
           parent_task_id: string | null;
           notes: string | null;
+          deleted_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -558,6 +563,7 @@ export type Database = {
           is_system_generated?: boolean;
           parent_task_id?: string | null;
           notes?: string | null;
+          deleted_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -598,6 +604,7 @@ export type Database = {
           category: string;
           paid: boolean;
           vendor_id: string | null;
+          deleted_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -610,6 +617,7 @@ export type Database = {
           category: string;
           paid?: boolean;
           vendor_id?: string | null;
+          deleted_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -932,6 +940,7 @@ export type Database = {
           y: number;
           shape: "round" | "rectangle";
           capacity: number;
+          deleted_at: string | null;
         };
         Insert: {
           id?: string;
@@ -942,6 +951,7 @@ export type Database = {
           y?: number;
           shape?: "round" | "rectangle";
           capacity?: number;
+          deleted_at?: string | null;
         };
         Update: {
           id?: string;
@@ -1171,6 +1181,7 @@ export type Database = {
           photo_url: string | null;
           attire: string | null;
           sort_order: number;
+          deleted_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -1184,6 +1195,7 @@ export type Database = {
           photo_url?: string | null;
           attire?: string | null;
           sort_order?: number;
+          deleted_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -1227,6 +1239,7 @@ export type Database = {
           gmb_place_id: string | null;
           gmb_data: Record<string, unknown> | null;
           gmb_fetched_at: string | null;
+          deleted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -1248,6 +1261,7 @@ export type Database = {
           gmb_place_id?: string | null;
           gmb_data?: Record<string, unknown> | null;
           gmb_fetched_at?: string | null;
+          deleted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

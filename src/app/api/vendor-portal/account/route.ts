@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
 
 export async function GET() {
   const { userId } = await auth();
@@ -44,21 +45,28 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+
+  const missing = requireFields(body, ["business_name", "category", "email", "city", "state"]);
+  if (missing) {
+    return NextResponse.json({ error: `${missing} is required` }, { status: 400 });
+  }
 
   const { data, error } = await supabase
     .from("vendor_accounts")
     .insert({
       user_id: userId,
-      business_name: body.business_name,
-      category: body.category,
-      email: body.email,
-      city: body.city || null,
-      state: body.state || null,
-      description: body.description || null,
-      website: body.website || null,
-      phone: body.phone || null,
-      price_range: body.price_range || null,
+      business_name: body.business_name as string,
+      category: body.category as string,
+      email: body.email as string,
+      city: body.city as string,
+      state: body.state as string,
+      description: (body.description as string) || null,
+      website: (body.website as string) || null,
+      phone: (body.phone as string) || null,
+      price_range: (body.price_range as "$" | "$$" | "$$$" | "$$$$") || null,
       status: "pending",
     })
     .select()

@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
 
 export async function POST(request: Request) {
   const { userId } = await auth();
@@ -8,21 +9,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+
+  const missing = requireFields(body, ["name", "category"]);
+  if (missing) {
+    return NextResponse.json({ error: `${missing} is required` }, { status: 400 });
+  }
+
   const supabase = createSupabaseAdmin();
-  const body = await request.json();
 
   const { error } = await supabase
     .from("vendor_submissions")
     .insert({
       submitted_by: userId,
-      name: body.name,
-      category: body.category,
-      website: body.website || null,
-      phone: body.phone || null,
-      email: body.email || null,
-      city: body.city || null,
-      state: body.state || null,
-      notes: body.notes || null,
+      name: body.name as string,
+      category: body.category as string,
+      website: (body.website as string) || null,
+      phone: (body.phone as string) || null,
+      email: (body.email as string) || null,
+      city: (body.city as string) || null,
+      state: (body.state as string) || null,
+      notes: (body.notes as string) || null,
     });
 
   if (error) {

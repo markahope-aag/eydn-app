@@ -15,10 +15,14 @@
 - **Day-of Planner**: Auto-generated timeline and coordination tools
 
 ### Advanced Features
-- **Public Wedding Websites**: Beautiful guest-facing sites at `/w/[slug]`
+- **Public Wedding Websites**: Beautiful guest-facing sites at `/w/[slug]` with RSVP system
+- **Wedding Collaboration**: Invite partners and coordinators with role-based access
+- **Mood Board**: Pinterest-style inspiration board with categorized images
 - **Vendor Marketplace**: Tiered vendor placements and discovery system
 - **Admin Dashboard**: Platform management and analytics
 - **Subscription System**: 14-day trial + $79 one-time purchase via Stripe
+- **Premium Enforcement**: Server-side protection for AI chat and file uploads
+- **Rate Limiting**: API protection with Upstash Redis
 - **Notification System**: Automated deadline reminders and updates
 - **Mobile-Responsive**: Optimized for all devices
 
@@ -82,6 +86,14 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 STRIPE_WEBHOOK_SECRET=your_webhook_secret
+
+# Upstash Redis (Rate Limiting)
+UPSTASH_REDIS_REST_URL=your_upstash_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_token
+
+# Optional
+ADMIN_EMAILS=admin@example.com
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 4. Set up the database:
@@ -124,20 +136,28 @@ docs/                   # Product and technical documentation
 
 ## 🏗 Architecture
 
-### Authentication Flow
+### Authentication & Authorization Flow
 - **Clerk** handles user authentication and session management
-- Each user is linked to a single `weddings` record in Supabase
-- API routes use `getWeddingForUser()` for authorization
+- **Multi-role Access**: Users can be wedding owners, partners, or coordinators
+- **Collaboration System**: Wedding owners can invite partners and coordinators
+- **API Authorization**: All routes use `getWeddingForUser()` with role-based access control
+- **Premium Enforcement**: Server-side protection for AI chat and file uploads
 
-### Database Schema
-- **weddings**: Core wedding data and settings
-- **tasks**: Planning timeline with categories and deadlines
-- **vendors**: Vendor pipeline and contact management
-- **guests**: Guest list, RSVPs, and meal preferences
-- **expenses**: Budget tracking and payments
-- **wedding_party**: Bridesmaids, groomsmen, and roles
-- **seating**: Table assignments and ceremony seating
-- **notifications**: System notifications and reminders
+### Database Schema (36 Tables)
+- **weddings**: Core wedding data and settings with lifecycle management
+- **tasks**: Planning timeline with 50+ auto-generated tasks
+- **vendors**: Vendor pipeline with Google Places integration
+- **guests**: Guest list, RSVPs, and addresses with soft delete
+- **expenses**: Budget tracking with 36 pre-seeded line items
+- **wedding_party**: Wedding party with photos and attire
+- **seating_tables & seat_assignments**: Drag-and-drop seating charts
+- **wedding_collaborators**: Partner and coordinator invitations
+- **mood_board_items**: Pinterest-style inspiration board
+- **chat_messages**: AI conversation history
+- **wedding_photos**: Guest photo uploads with approval
+- **vendor_accounts & placements**: Marketplace monetization
+- **subscriber_purchases**: One-time payment tracking
+- **activity_log**: Comprehensive audit trail
 
 ### AI Integration
 - **Claude API** powers the wedding planning chat

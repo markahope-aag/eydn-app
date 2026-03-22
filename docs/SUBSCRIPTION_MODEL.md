@@ -35,10 +35,11 @@ Unlike traditional SaaS models with recurring monthly fees, eydn's one-time purc
 
 #### **Trial Experience:**
 - **No Credit Card Required**: Sign up with just email and name
-- **Most Features Available**: Access to core planning features
+- **Full Feature Access**: Access to all features including AI chat and file uploads
 - **Personal Wedding Setup**: Create real wedding with actual data
-- **Limited Premium Features**: Some advanced features require upgrade
-- **Generous Limits**: No restrictions on guests, vendors, or basic tasks
+- **Collaboration Support**: Can invite partners and coordinators during trial
+- **Generous Limits**: No restrictions on guests, vendors, or tasks
+- **14-Day Duration**: Full 14 days to experience all premium features
 
 #### **Trial Conversion:**
 - **Gentle Reminders**: Soft prompts about trial expiration
@@ -58,9 +59,11 @@ Unlike traditional SaaS models with recurring monthly fees, eydn's one-time purc
 #### **Lifetime Benefits:**
 - **Permanent Access**: No expiration date on account access
 - **Future Features**: Access to new features as they're released
-- **Data Preservation**: Wedding data stored permanently
+- **Data Preservation**: Wedding data stored permanently with lifecycle management
 - **Multiple Weddings**: Can plan additional weddings (renewals, etc.)
+- **Collaboration Access**: Can invite unlimited partners and coordinators
 - **Reference Access**: Lifetime access to planning history and documents
+- **Memory Plan**: Optional $29/year plan for extended data retention after wedding
 
 ## Technical Implementation
 
@@ -162,6 +165,28 @@ export async function requirePremium(): Promise<NextResponse | null> {
     },
     { status: 403 }
   );
+}
+```
+
+#### **Collaboration Subscription Inheritance**
+```typescript
+// Collaborators inherit the wedding owner's subscription status
+export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
+  // 1. Check user's direct purchase
+  // 2. Check owned wedding trial status
+  // 3. Check collaboration and inherit owner's status
+  
+  if (collab) {
+    const wedding = await getWeddingById(collab.wedding_id);
+    const ownerPurchase = await getOwnerPurchase(wedding.user_id);
+    
+    if (ownerPurchase) {
+      return { hasAccess: true, isPaid: true, ... };
+    }
+    
+    // Inherit owner's trial status
+    return computeTrialStatus(wedding);
+  }
 }
 ```
 

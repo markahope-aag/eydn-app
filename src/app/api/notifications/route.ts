@@ -1,6 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { safeParseJSON, isParseError } from "@/lib/validation";
+import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -29,6 +29,11 @@ export async function PATCH(request: Request) {
   const parsed = await safeParseJSON(request);
   if (isParseError(parsed)) return parsed;
   const body = parsed;
+
+  const missing = requireFields(body, ["id"]);
+  if (missing) {
+    return NextResponse.json({ error: `${missing} is required` }, { status: 400 });
+  }
 
   const { error } = await supabase
     .from("notifications")

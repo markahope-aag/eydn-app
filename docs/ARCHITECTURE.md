@@ -29,23 +29,26 @@ eydn follows a modern, serverless architecture built on Next.js 16 with a focus 
 ## Technology Stack
 
 ### Frontend Layer
-- **Next.js 16**: React framework with App Router for modern development
-- **React 19**: Latest React with server components and concurrent features
-- **TypeScript**: Type-safe development with strict configuration
+- **Next.js 16.2.0**: React framework with App Router and server components
+- **React 19.2.4**: Latest React with concurrent features and improved hydration
+- **TypeScript 5**: Type-safe development with strict configuration
 - **Tailwind CSS 4**: Utility-first CSS framework with modern features
 - **Nunito Font**: Custom Google Font for brand consistency
+- **Sonner 2.0.7**: Toast notification system with rich colors
 
 ### Backend Layer
 - **Next.js API Routes**: Serverless API endpoints with TypeScript
-- **Supabase**: Backend-as-a-Service with PostgreSQL database
-- **Clerk**: Authentication and user management service
-- **Anthropic Claude**: AI-powered chat and planning assistance
+- **Supabase 2.99.2**: Backend-as-a-Service with PostgreSQL database
+- **Clerk 7.0.5**: Authentication and user management with middleware
+- **Anthropic Claude 0.80.0**: AI-powered chat and planning assistance
+- **Upstash Redis**: Rate limiting and caching layer
 
 ### Infrastructure
-- **Vercel**: Hosting platform with edge functions and CDN
-- **Stripe**: Payment processing and subscription management
-- **Sonner**: Toast notification system
-- **DND Kit**: Drag-and-drop functionality for seating charts
+- **Vercel**: Hosting platform with edge functions, CDN, and cron jobs
+- **Stripe 20.4.1**: Payment processing with webhook integration
+- **DND Kit 6.3.1**: Drag-and-drop functionality for seating charts
+- **React PDF 4.3.2**: PDF generation for day-of planning documents
+- **ExcelJS 4.4.0**: Excel file generation for guest list exports
 
 ## Database Architecture
 
@@ -341,7 +344,7 @@ create table public.subscriber_purchases (
 ```
 
 #### `wedding_collaborators`
-Wedding collaboration and sharing.
+Wedding collaboration and sharing system.
 
 ```sql
 create table public.wedding_collaborators (
@@ -357,8 +360,14 @@ create table public.wedding_collaborators (
 );
 ```
 
+**Collaboration Flow:**
+1. **Invitation**: Owner invites collaborator by email with role assignment
+2. **Auto-Accept**: When invitee signs up with matching email, invitation auto-accepts
+3. **Access Control**: Role-based permissions enforced at API level
+4. **Subscription Inheritance**: Collaborators inherit owner's premium status
+
 #### `mood_board_items`
-Wedding inspiration and mood board.
+Pinterest-style wedding inspiration board.
 
 ```sql
 create table public.mood_board_items (
@@ -367,10 +376,34 @@ create table public.mood_board_items (
   image_url text not null,
   caption text,
   category text not null default 'General',
+  location text,                           -- Ceremony, Reception, Bar, etc.
   sort_order integer not null default 0,
+  deleted_at timestamptz,                  -- Soft delete support
   created_at timestamptz default now()
 );
 ```
+
+**Categories:** Florals, Attire, Colors, Decor, Venue, Food, etc.
+**Locations:** Ceremony, Reception, Bar, Lounge, Photo Areas
+
+#### `comments`
+Collaborative commenting system for all entities.
+
+```sql
+create table public.comments (
+  id uuid primary key default gen_random_uuid(),
+  wedding_id uuid not null references public.weddings(id) on delete cascade,
+  entity_type text not null,               -- task, vendor, guest, expense, general
+  entity_id text not null,
+  user_id text not null,                   -- Clerk user ID
+  user_name text not null,                 -- Display name
+  content text not null,
+  created_at timestamptz default now()
+);
+```
+
+**Entity Types:** Tasks, vendors, guests, expenses, general wedding comments
+**Collaboration:** All roles can comment, fostering team communication
 
 ## Security Architecture
 
@@ -387,7 +420,7 @@ User Request → Clerk Middleware → API Route → getWeddingForUser() → Data
 
 ### Authorization Levels
 
-The `getWeddingForUser()` function now supports multiple access levels:
+The `getWeddingForUser()` function supports multi-role access control:
 
 ```typescript
 // Returns: { wedding, supabase, userId, role }
@@ -399,14 +432,19 @@ The `getWeddingForUser()` function now supports multiple access levels:
 ```
 
 **Access Control:**
-- **Owner**: Full access to all wedding data and settings
-- **Partner**: Collaborative planning access (invited by owner)
-- **Coordinator**: Professional coordinator access (invited by owner)
+- **Owner**: Full access to all wedding data, settings, and collaborator management
+- **Partner**: Full collaborative planning access (invited by owner)
+- **Coordinator**: Professional planning access with limited settings (invited by owner)
 
 **Role Restrictions:**
-- Collaborator management: Owner only
-- Subscription management: Owner only
-- Most planning features: All roles
+- **Owner Only**: Collaborator management, subscription management, core wedding settings
+- **Owner + Partner**: All planning features, budget management, vendor communications
+- **All Roles**: Task management, guest management, day-of planning, AI chat (premium)
+
+**Premium Feature Enforcement:**
+- `requirePremium()` function enforces subscription status
+- Protected endpoints: AI chat, file attachments, PDF exports
+- Collaborators inherit owner's subscription status
 
 ### Row Level Security (RLS) Policies
 
@@ -430,11 +468,14 @@ create policy "Users can manage guests for their weddings"
 
 ### API Security Features
 
-- **Rate Limiting**: Implemented per endpoint to prevent abuse
-- **Input Validation**: All inputs validated and sanitized
-- **HTTPS Only**: Enforced in production environments
+- **Rate Limiting**: Upstash Redis-based rate limiting per endpoint and user
+- **Input Validation**: Comprehensive input validation with `pickFields` pattern
+- **Premium Enforcement**: Server-side protection for premium features
+- **HTTPS Only**: Enforced in production with security headers
 - **CORS Configuration**: Restricted to allowed origins
 - **Webhook Verification**: Stripe webhooks verified with signatures
+- **Audit Trail**: Comprehensive activity logging for all user actions
+- **Soft Deletes**: Data preservation with audit trail for deleted items
 
 ## API Architecture
 

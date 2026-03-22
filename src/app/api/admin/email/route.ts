@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
 import { sendEmail, getLifecycleEmail } from "@/lib/email";
+import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -56,6 +57,15 @@ export async function GET() {
 
 /** Send a test email */
 export async function POST(request: Request) {
+  const ip = getClientIP(request);
+  const rateLimitResult = await checkRateLimit(`admin-email:${ip}`, RATE_LIMITS.auth);
+  if (rateLimitResult.limited) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(rateLimitResult.retryAfter) } }
+    );
+  }
+
   const result = await requireAdmin();
   if ("error" in result) return result.error;
 

@@ -24,6 +24,9 @@ Welcome to the comprehensive documentation for eydn, the AI-powered wedding plan
 - **[System Architecture](ARCHITECTURE.md)** - Technical architecture, database schema, and infrastructure
 - **[API Reference](API.md)** - Complete API documentation with endpoints and examples
 - **[Development Guide](DEVELOPMENT.md)** - Setup instructions, deployment, and contribution guidelines
+- **[Security & Compliance](SECURITY.md)** - Security measures, compliance standards, and best practices
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Common issues, solutions, and debugging procedures
+- **[Changelog](CHANGELOG.md)** - Platform updates, changes, and migration guides
 
 ## 🚀 Quick Start
 
@@ -68,17 +71,22 @@ Welcome to the comprehensive documentation for eydn, the AI-powered wedding plan
 
 ### Recent Updates (March 2026)
 - ✅ **Complete documentation overhaul** - Updated all docs to reflect current eydn platform
-- ✅ **New technical documentation** - Added comprehensive API and architecture docs
-- ✅ **Feature documentation** - Documented all features including collaboration and mood boards
-- ✅ **Business documentation** - Updated product vision and market analysis
-- ✅ **Code updates integration** - Updated docs to reflect recent code changes and new features
-- ✅ **Security improvements** - Documented premium feature enforcement and collaboration system
+- ✅ **Technical stack updates** - Next.js 16.2.0, React 19.2.4, Tailwind CSS 4
+- ✅ **New feature documentation** - Collaboration system, mood boards, premium enforcement
+- ✅ **API documentation refresh** - Updated with current endpoints and authentication flow
+- ✅ **Architecture updates** - 36-table database schema, role-based access control
+- ✅ **Security documentation** - Premium enforcement, rate limiting, audit trails
+- ✅ **Development guide updates** - Current setup instructions and deployment processes
+- ✅ **Business model updates** - Subscription enforcement and vendor marketplace
 
 ### Planned Updates
 - **User Guides** - Step-by-step user guides for key features
 - **Video Documentation** - Screen recordings for complex workflows
 - **Integration Guides** - Third-party service integration documentation
-- **Troubleshooting** - Common issues and solutions guide
+- **Troubleshooting Guide** - Common issues and solutions
+- **Performance Guide** - Optimization best practices
+- **Testing Documentation** - Comprehensive testing strategies
+- **Migration Guides** - Database and deployment migration procedures
 
 ## 📞 Support & Feedback
 

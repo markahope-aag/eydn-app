@@ -6,10 +6,11 @@ This guide covers development setup, deployment, and contribution guidelines for
 
 Before starting development, ensure you have:
 
-- **Node.js** 18.0.0 or higher
+- **Node.js** 18.0.0 or higher (Node.js 20+ recommended)
 - **npm**, **yarn**, or **pnpm** package manager
 - **Git** for version control
-- **VS Code** (recommended) with TypeScript extensions
+- **VS Code** (recommended) with TypeScript and Tailwind CSS extensions
+- **Docker** (optional, for local Supabase development)
 
 ### Required Accounts
 
@@ -76,6 +77,12 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 ```
 
+#### Upstash Redis (Rate Limiting)
+```env
+UPSTASH_REDIS_REST_URL=https://your-redis-url.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_redis_token
+```
+
 #### Optional Configuration
 ```env
 # For development
@@ -84,6 +91,12 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # For admin functionality
 ADMIN_EMAILS=admin@example.com,admin2@example.com
+
+# For Google Places API (vendor enrichment)
+GOOGLE_PLACES_API_KEY=your_google_places_key
+
+# For email notifications (Resend)
+RESEND_API_KEY=your_resend_api_key
 ```
 
 ### 4. Database Setup
@@ -113,22 +126,38 @@ supabase db reset
 
 This will create all necessary tables, RLS policies, and seed data.
 
-#### Database Schema Overview
+#### Database Schema Overview (36 Tables)
 
-The database includes these main tables:
+The database includes these main table groups:
 
-- `weddings` - Core wedding information
-- `tasks` - Planning timeline and tasks
-- `vendors` - Vendor pipeline management
-- `guests` - Guest list and RSVP tracking
-- `expenses` - Budget and expense tracking
-- `wedding_party` - Wedding party members
-- `seating_tables` & `seating_assignments` - Seating arrangements
-- `notifications` - System notifications
-- `suggested_vendors` - Vendor directory
-- `vendor_accounts` - Vendor portal accounts
-- `vendor_placements` - Paid vendor placements
-- `subscriber_purchases` - Subscription tracking
+**Core Wedding Data:**
+- `weddings` - Core wedding information with lifecycle management
+- `tasks` - Planning timeline with 50+ auto-generated tasks
+- `vendors` - Vendor pipeline with Google Places integration
+- `guests` - Guest list and RSVP tracking with addresses
+- `expenses` - Budget tracking with 36 pre-seeded line items
+- `wedding_party` - Wedding party with photos and attire
+
+**Collaboration & Communication:**
+- `wedding_collaborators` - Partner and coordinator invitations
+- `comments` - Collaborative commenting on all entities
+- `chat_messages` - AI conversation history
+
+**Wedding Website:**
+- `wedding_photos` - Guest photo uploads with approval workflow
+- `rsvp_tokens` - Secure RSVP links per guest
+- `registry_links` - Wedding registry information
+
+**Vendor Marketplace:**
+- `suggested_vendors` - Platform-curated vendor directory
+- `vendor_accounts` - Vendor business profiles
+- `vendor_placements` - Paid advertising placements
+- `vendor_analytics` - Performance tracking
+
+**System & Audit:**
+- `subscriber_purchases` - One-time payment tracking
+- `activity_log` - Comprehensive audit trail
+- `cron_log` - Scheduled job execution history
 
 ### 5. Authentication Setup
 
@@ -207,15 +236,24 @@ Follow these conventions:
 Run tests before committing:
 
 ```bash
-npm run test        # Run all tests
+npm run test        # Run all tests once
 npm run test:watch  # Watch mode for development
+npm run test:coverage # Run with coverage report
 ```
+
+#### Test Configuration
+
+- **Framework**: Vitest 4.1.0 with jsdom environment
+- **React Testing**: React Testing Library 16.3.2
+- **Setup**: `src/test/setup.ts` configures test environment
+- **Coverage**: V8 coverage provider with detailed reports
 
 #### Test Structure
 
 - **Unit tests**: Test individual functions and components
 - **Integration tests**: Test API endpoints and database operations
-- **E2E tests**: Test complete user workflows
+- **Subscription tests**: Test premium feature enforcement
+- **E2E tests**: Test complete user workflows (planned)
 
 #### Writing Tests
 
@@ -238,8 +276,7 @@ describe('TaskList', () => {
 #### Linting
 
 ```bash
-npm run lint        # Check for linting errors
-npm run lint:fix    # Fix auto-fixable issues
+npm run lint        # Check for linting errors (ESLint 9)
 ```
 
 #### Type Checking
@@ -248,13 +285,27 @@ npm run lint:fix    # Fix auto-fixable issues
 npx tsc --noEmit    # Check TypeScript types
 ```
 
+#### Security Auditing
+
+```bash
+npm run audit       # Check for security vulnerabilities
+npm run security-check # Run comprehensive security check (audit + tsc + lint)
+```
+
+#### Bundle Analysis
+
+```bash
+npm run analyze     # Analyze bundle size with webpack-bundle-analyzer
+```
+
 #### Pre-commit Hooks
 
-The project uses Husky for pre-commit hooks:
+The project enforces code quality through:
 
-- Lint staged files
-- Run type checking
-- Run relevant tests
+- TypeScript compilation checks
+- ESLint with Next.js configuration
+- Automated security auditing
+- Test execution for changed files
 
 ## Deployment
 

@@ -26,36 +26,41 @@ export async function GET() {
     moodBoardResult,
     registryLinksResult,
   ] = await Promise.all([
-    // Guests: include soft-deleted with a flag
     raw
       .from("guests")
       .select("*")
       .eq("wedding_id", weddingId)
+      .is("deleted_at", null)
       .order("created_at", { ascending: true }),
-    supabase
+    raw
       .from("vendors")
       .select("*")
       .eq("wedding_id", weddingId)
+      .is("deleted_at", null)
       .order("created_at", { ascending: true }),
-    supabase
+    raw
       .from("tasks")
       .select("*")
       .eq("wedding_id", weddingId)
+      .is("deleted_at", null)
       .order("created_at", { ascending: true }),
-    supabase
+    raw
       .from("expenses")
       .select("*")
       .eq("wedding_id", weddingId)
+      .is("deleted_at", null)
       .order("created_at", { ascending: true }),
-    supabase
+    raw
       .from("wedding_party")
       .select("*")
       .eq("wedding_id", weddingId)
+      .is("deleted_at", null)
       .order("sort_order", { ascending: true }),
-    supabase
+    raw
       .from("seating_tables")
       .select("*")
       .eq("wedding_id", weddingId)
+      .is("deleted_at", null)
       .order("table_number", { ascending: true }),
     raw
       .from("seat_assignments")
@@ -85,6 +90,7 @@ export async function GET() {
       .from("mood_board_items")
       .select("*")
       .eq("wedding_id", weddingId)
+      .is("deleted_at", null)
       .order("sort_order", { ascending: true }),
     supabase
       .from("registry_links")
@@ -93,14 +99,6 @@ export async function GET() {
       .order("sort_order", { ascending: true }),
   ]);
 
-  // Mark deleted guests with a `deleted` flag
-  const guests = (guestsResult.data ?? []).map(
-    (g: Record<string, unknown>) => ({
-      ...g,
-      deleted: g.deleted_at != null,
-    })
-  );
-
   const exportData = {
     metadata: {
       exportedAt: new Date().toISOString(),
@@ -108,7 +106,7 @@ export async function GET() {
       version: "1.0",
     },
     wedding,
-    guests,
+    guests: guestsResult.data ?? [],
     vendors: vendorsResult.data ?? [],
     tasks: tasksResult.data ?? [],
     expenses: expensesResult.data ?? [],

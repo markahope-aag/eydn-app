@@ -29,7 +29,8 @@ The collaboration system enables wedding owners to invite partners and professio
 - **Vendor Management**: Can manage vendor pipeline and communications
 - **Timeline Management**: Can create and update day-of timelines
 - **Guest Coordination**: Can manage guest list and RSVPs
-- **Limited Settings**: Cannot modify core wedding details or subscription
+- **Day-of Planning**: Full access to ceremony and reception planning tools
+- **Limited Settings**: Cannot modify core wedding details, subscription, or collaborator management
 
 ## Invitation Process
 
@@ -53,8 +54,10 @@ POST /api/collaborators
 
 1. **Account Creation**: Invitee creates eydn account with invited email
 2. **Automatic Recognition**: System automatically matches email to pending invitation
-3. **Access Granted**: User gains immediate access to wedding planning
-4. **Role Assignment**: User receives permissions based on assigned role
+3. **Auto-Accept**: Invitation automatically accepted and user_id populated
+4. **Access Granted**: User gains immediate access to wedding planning
+5. **Role Assignment**: User receives permissions based on assigned role
+6. **Subscription Inheritance**: Collaborator inherits owner's premium status
 
 ### Invitation States
 
@@ -138,12 +141,15 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
 - **Core Settings**: Wedding date, venue, basic details
 
 ### Shared Features (All Roles)
-- **Task Management**: Create, update, complete tasks
+- **Task Management**: Create, update, complete tasks with comments
 - **Vendor Pipeline**: Manage vendor relationships and communications
-- **Guest Management**: Manage guest list, RSVPs, and seating
-- **Budget Tracking**: View and update expenses and budget
-- **AI Assistant**: Chat with eydn for planning guidance
+- **Guest Management**: Manage guest list, RSVPs, and seating charts
+- **Budget Tracking**: View and update expenses and budget (Owner + Partner only)
+- **AI Assistant**: Chat with eydn for planning guidance (premium feature)
 - **Day-of Planning**: Create and update day-of timelines
+- **Mood Board**: Add and organize wedding inspiration
+- **File Uploads**: Upload and manage wedding documents (premium feature)
+- **Comments**: Collaborate on tasks, vendors, and other entities
 
 ### Role-Based Restrictions
 
