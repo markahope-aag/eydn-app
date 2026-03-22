@@ -33,34 +33,29 @@ function buildMockSupabase(overrides?: {
   purchaseError?: unknown;
   weddingData?: unknown;
   weddingError?: unknown;
+  collabData?: unknown;
 }) {
   const purchaseResult = { data: overrides?.purchaseData ?? null, error: overrides?.purchaseError ?? null };
   const weddingResult = { data: overrides?.weddingData ?? null, error: overrides?.weddingError ?? null };
+  const collabResult = { data: overrides?.collabData ?? null, error: null };
 
-  // subscriber_purchases chain: .from().select().eq().eq().limit().single()
-  function buildPurchaseChain() {
-    const single = vi.fn(() => purchaseResult);
-    const limit = vi.fn(() => ({ single }));
-    const eq2 = vi.fn(() => ({ limit }));
-    const eq1 = vi.fn(() => ({ eq: eq2 }));
-    const select = vi.fn(() => ({ eq: eq1 }));
-    return { select };
-  }
-
-  // weddings chain: .from().select().eq().single()
-  function buildWeddingChain() {
-    const single = vi.fn(() => weddingResult);
-    const eq1 = vi.fn(() => ({ single }));
-    const select = vi.fn(() => ({ eq: eq1 }));
-    return { select };
+  // Flexible chain that returns itself for any method, ending with single()
+  function buildChain(result: unknown) {
+    const obj: Record<string, unknown> = {};
+    for (const m of ["select", "eq", "limit", "single"]) {
+      obj[m] = vi.fn().mockReturnValue(obj);
+    }
+    obj.single = vi.fn().mockReturnValue(result);
+    return obj;
   }
 
   const mockFrom = vi.fn((table: string) => {
-    if (table === "subscriber_purchases") return buildPurchaseChain();
-    return buildWeddingChain();
+    if (table === "subscriber_purchases") return buildChain(purchaseResult);
+    if (table === "wedding_collaborators") return buildChain(collabResult);
+    return buildChain(weddingResult);
   });
 
-  return { from: mockFrom } as any as ReturnType<typeof createSupabaseAdmin>;
+  return { from: mockFrom } as any as ReturnType<typeof createSupabaseAdmin>; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 beforeEach(() => {
@@ -98,22 +93,23 @@ describe("getSubscriptionStatus", () => {
     });
   });
 
-  it("returns hasAccess=true, isTrialing=true when no wedding exists (new user)", async () => {
+  it("returns hasAccess=false when no owned wedding and no collaboration", async () => {
     mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
     const mockSupabase = buildMockSupabase({
       purchaseData: null,
       weddingData: null,
+      collabData: null,
     });
     mockCreateSupabaseAdmin.mockReturnValue(mockSupabase);
 
     const status = await getSubscriptionStatus();
 
     expect(status).toEqual({
-      hasAccess: true,
+      hasAccess: false,
       isPaid: false,
-      isTrialing: true,
-      trialDaysLeft: 14,
-      trialExpired: false,
+      isTrialing: false,
+      trialDaysLeft: 0,
+      trialExpired: true,
     });
   });
 
