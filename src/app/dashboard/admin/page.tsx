@@ -246,7 +246,7 @@ export default function AdminPage() {
             className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${
               tab === t
                 ? "border-violet text-violet"
-                : "border-transparent text-muted hover:text-plum"
+                : "border-transparent text-plum/60 hover:text-plum"
             }`}
           >
             {t === "data-security" ? "Data & Security" : t === "cron-jobs" ? "Cron Jobs" : t === "email" ? "Email" : t.charAt(0).toUpperCase() + t.slice(1)}

@@ -329,7 +329,7 @@ export default function WebsitePage() {
             className={`px-4 py-2 text-[15px] font-semibold rounded-t-[10px] transition ${
               tab === t.key
                 ? "text-violet bg-lavender border-b-2 border-violet"
-                : "text-muted hover:text-violet"
+                : "text-plum/60 hover:text-violet"
             }`}
           >
             {t.label}
