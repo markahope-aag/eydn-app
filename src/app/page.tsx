@@ -1570,6 +1570,7 @@ export default function HomePage() {
             <div style={{ display: "flex", gap: 24 }}>
               <Link href="/privacy" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)", textDecoration: "none" }}>Privacy</Link>
               <Link href="/terms" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)", textDecoration: "none" }}>Terms</Link>
+              <a href="#" className="termly-display-preferences" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)", textDecoration: "none" }}>Consent Preferences</a>
             </div>
           </div>
         </div>

@@ -37,6 +37,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.className} h-full antialiased`} suppressHydrationWarning>
       <head>
+        {/* Termly Consent Management — must load before GTM */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var s=document.createElement('script');s.type='text/javascript';s.src='https://app.termly.io/resource-blocker/910feb69-853c-4fca-9c47-300c9abfe07f?autoBlock=on';document.head.appendChild(s);})();`,
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');}})()`,

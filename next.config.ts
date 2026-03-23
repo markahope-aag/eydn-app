@@ -51,11 +51,11 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.clerk.accounts.dev https://www.googletagmanager.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.clerk.accounts.dev https://www.googletagmanager.com https://app.termly.io",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://pnclblivqpakijkerykn.supabase.co https://places.googleapis.com https://images.unsplash.com https://*.pinimg.com https://i.pravatar.cc https://img.clerk.com https://www.googletagmanager.com",
               "font-src 'self' data:",
-              "connect-src 'self' https://pnclblivqpakijkerykn.supabase.co https://*.clerk.accounts.dev https://api.stripe.com https://*.upstash.io https://www.googletagmanager.com https://www.google-analytics.com",
+              "connect-src 'self' https://pnclblivqpakijkerykn.supabase.co https://*.clerk.accounts.dev https://api.stripe.com https://*.upstash.io https://www.googletagmanager.com https://www.google-analytics.com https://app.termly.io",
               "frame-src 'self' https://js.stripe.com https://*.clerk.accounts.dev https://www.googletagmanager.com",
               "object-src 'none'",
               "base-uri 'self'",
