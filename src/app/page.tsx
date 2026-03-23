@@ -1573,6 +1573,7 @@ export default function HomePage() {
               <Link href="/cookies" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)", textDecoration: "none" }}>Cookie Policy</Link>
               <Link href="/disclaimer" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)", textDecoration: "none" }}>Disclaimer</Link>
               <Link href="/acceptable-use" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)", textDecoration: "none" }}>Acceptable Use</Link>
+              <Link href="/accessibility" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)", textDecoration: "none" }}>Accessibility</Link>
               <a href="#" className="termly-display-preferences" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)", textDecoration: "none" }}>Consent Preferences</a>
             </div>
           </div>
