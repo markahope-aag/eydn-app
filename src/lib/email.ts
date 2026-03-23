@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { escapeHtml } from "@/lib/validation";
+import { emailFooterHtml } from "@/lib/email-preferences";
 
 let client: Resend | null = null;
 
@@ -45,7 +46,7 @@ export async function sendEmail(params: EmailParams): Promise<{ success: boolean
  */
 export function getLifecycleEmail(
   emailType: string,
-  data: { partnerNames: string; weddingDate: string; daysUntilArchive?: number; exportUrl?: string }
+  data: { partnerNames: string; weddingDate: string; daysUntilArchive?: number; exportUrl?: string; unsubscribeToken?: string }
 ): { subject: string; html: string } | null {
   const partnerNames = escapeHtml(data.partnerNames);
   const dateFormatted = escapeHtml(
@@ -58,10 +59,13 @@ export function getLifecycleEmail(
     </div>
   `;
 
-  const footer = `
+  const footer = data.unsubscribeToken
+    ? emailFooterHtml(data.unsubscribeToken, "lifecycle")
+    : `
     <div style="padding: 24px; text-align: center; color: #6B6B6B; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
       <p>eydn — Your AI Wedding Planning Guide</p>
       <p style="margin-top: 8px;"><a href="https://eydn.app/dashboard" style="color: #2C3E2D;">Go to Dashboard</a></p>
+      <p style="margin-top: 8px;">Asymmetric Marketing Group LLC, 100 S Baldwin St Ste 304, Madison WI 53703</p>
     </div>
   `;
 

@@ -675,6 +675,44 @@ export type Database = {
           },
         ];
       };
+      email_preferences: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          unsubscribe_token: string;
+          marketing_emails: boolean;
+          deadline_reminders: boolean;
+          lifecycle_emails: boolean;
+          unsubscribed_all: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          wedding_id: string;
+          unsubscribe_token?: string;
+          marketing_emails?: boolean;
+          deadline_reminders?: boolean;
+          lifecycle_emails?: boolean;
+          unsubscribed_all?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          marketing_emails?: boolean;
+          deadline_reminders?: boolean;
+          lifecycle_emails?: boolean;
+          unsubscribed_all?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "email_preferences_wedding_id_fkey";
+            columns: ["wedding_id"];
+            isOneToOne: true;
+            referencedRelation: "weddings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       guide_responses: {
         Row: {
           id: string;

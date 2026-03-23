@@ -2,6 +2,7 @@ import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { calculatePhase, getEmailsDue } from "@/lib/lifecycle";
 import { logCronExecution } from "@/lib/cron-logger";
 import { sendEmail, getLifecycleEmail } from "@/lib/email";
+import { getEmailPreferences } from "@/lib/email-preferences";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -101,19 +102,25 @@ export async function POST(request: Request) {
             continue;
           }
 
-          // Send the actual email via Resend
+          // Send the actual email via Resend (check preferences first)
           try {
-            const partnerNames = `${wedding.partner1_name} & ${wedding.partner2_name}`;
-            const emailContent = getLifecycleEmail(emailType, {
-              partnerNames,
-              weddingDate: wedding.date!,
-            });
-            if (emailContent && wedding.user_id) {
-              const clerk = await clerkClient();
-              const user = await clerk.users.getUser(wedding.user_id);
-              const userEmail = user.emailAddresses[0]?.emailAddress;
-              if (userEmail) {
-                await sendEmail({ to: userEmail, ...emailContent });
+            const prefs = await getEmailPreferences(wedding.id);
+            if (prefs.unsubscribed_all || !prefs.lifecycle_emails) {
+              console.log(`[LIFECYCLE] Skipping ${emailType} for ${wedding.id} — unsubscribed`);
+            } else {
+              const partnerNames = `${wedding.partner1_name} & ${wedding.partner2_name}`;
+              const emailContent = getLifecycleEmail(emailType, {
+                partnerNames,
+                weddingDate: wedding.date!,
+                unsubscribeToken: prefs.unsubscribe_token,
+              });
+              if (emailContent && wedding.user_id) {
+                const clerk = await clerkClient();
+                const user = await clerk.users.getUser(wedding.user_id);
+                const userEmail = user.emailAddresses[0]?.emailAddress;
+                if (userEmail) {
+                  await sendEmail({ to: userEmail, ...emailContent });
+                }
               }
             }
           } catch (sendErr) {
