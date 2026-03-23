@@ -82,13 +82,13 @@
   --color-booked-text: var(--booked-text);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
-  --font-sans: "Nunito", Arial, sans-serif;
+  --font-sans: "DM Sans", Arial, sans-serif;
 }
 
 body {
   background: var(--whisper);
   color: var(--deep-plum);
-  font-family: "Nunito", Arial, sans-serif;
+  font-family: "DM Sans", Arial, sans-serif;
   font-size: 15px;
   font-weight: 400;
   line-height: 1.6;
@@ -218,7 +218,7 @@ select {
   border: 1px solid var(--border);
   padding: 8px 12px;
   font-size: 15px;
-  font-family: "Nunito", Arial, sans-serif;
+  font-family: "DM Sans", Arial, sans-serif;
   color: var(--deep-plum);
   outline: none;
   transition: border-color 150ms;

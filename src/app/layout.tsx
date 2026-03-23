@@ -4,14 +4,14 @@ import {
   Show,
   UserButton,
 } from "@clerk/nextjs";
-import { Nunito } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import Link from "next/link";
 import "./globals.css";
 
-const nunito = Nunito({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -34,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${nunito.className} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${dmSans.className} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
