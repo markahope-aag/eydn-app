@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { PremiumButton } from "@/components/PremiumGate";
+import { exportWeddingBinder } from "@/lib/export-binder";
 
 type TimelineItem = { time: string; event: string; notes: string; forGroup?: string };
 type VendorContact = { vendor: string; category: string; contact: string; phone: string };
@@ -129,6 +130,7 @@ export default function DayOfPage() {
   const attirePhotoRef = useRef<HTMLInputElement>(null);
   const attirePhotoIndex = useRef<number | null>(null);
   const [newPackingItem, setNewPackingItem] = useState("");
+  const [binderLoading, setBinderLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/day-of")
@@ -544,9 +546,28 @@ export default function DayOfPage() {
     <div className="max-w-3xl">
       <div className="flex items-center justify-between">
         <h1>Day-of Planner</h1>
-        <PremiumButton onClick={exportPDF} className="btn-primary btn-sm">
-          Export PDF
-        </PremiumButton>
+        <div className="flex items-center gap-2">
+          <PremiumButton onClick={exportPDF} className="btn-primary btn-sm">
+            Export PDF
+          </PremiumButton>
+          <PremiumButton
+            onClick={async () => {
+              setBinderLoading(true);
+              try {
+                await exportWeddingBinder();
+                toast.success("Wedding binder downloaded");
+              } catch {
+                toast.error("Failed to generate binder");
+              } finally {
+                setBinderLoading(false);
+              }
+            }}
+            className="btn-sm bg-[#2C3E2D] text-[#FAF6F1] border-[#2C3E2D] hover:bg-[#3a5240]"
+            disabled={binderLoading}
+          >
+            {binderLoading ? "Generating binder..." : "Export Full Binder"}
+          </PremiumButton>
+        </div>
       </div>
       <p className="mt-1 text-[15px] text-muted">
         Your complete wedding day plan. Click any field to edit.
