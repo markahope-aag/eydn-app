@@ -47,7 +47,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.svg" alt="eydn" className="h-7" />
       </Link>
-      <nav className="mt-8 flex flex-col gap-1 overflow-y-auto">
+      <nav role="navigation" aria-label="Dashboard navigation" className="mt-8 flex flex-col gap-1 overflow-y-auto">
         {navItems.map((item) => {
           const active = isActive(pathname, item.href);
           return (
@@ -137,7 +137,8 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
         type="button"
         onClick={() => setOpen(true)}
         className="md:hidden fixed top-4 left-4 z-50 rounded-[12px] bg-white border border-border p-2 shadow-sm"
-        aria-label="Open menu"
+        aria-label="Open navigation menu"
+        aria-expanded={open}
       >
         <svg
           width="24"
@@ -158,7 +159,10 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
 
       {/* Mobile overlay sidebar */}
       {open && (
-        <div className="md:hidden fixed inset-0 z-50">
+        <div
+          className="md:hidden fixed inset-0 z-50"
+          onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
+        >
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/40"

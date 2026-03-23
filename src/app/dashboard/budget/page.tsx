@@ -275,6 +275,7 @@ export default function BudgetPage() {
               value={budget || ""}
               onChange={(e) => handleBudgetChange(Number(e.target.value))}
               placeholder="0"
+              aria-label="Total budget"
               className="text-[26px] font-semibold text-plum w-full outline-none bg-transparent border-0"
             />
           </div>
@@ -297,7 +298,7 @@ export default function BudgetPage() {
 
       {/* Progress bar */}
       {budget > 0 && (
-        <div className="progress-track mt-4">
+        <div className="progress-track mt-4" role="progressbar" aria-valuenow={totalPaid} aria-valuemin={0} aria-valuemax={budget}>
           <div
             className={`progress-fill ${totalPaid > budget ? "!bg-error" : ""}`}
             style={{ width: `${Math.min((totalPaid / budget) * 100, 100)}%` }}
@@ -313,7 +314,7 @@ export default function BudgetPage() {
             <h2 className="text-[15px] font-semibold text-plum mb-4">Spend by Category</h2>
             {categoryTotals.length > 0 ? (
               <div className="flex items-center gap-6">
-                <svg width="140" height="140" viewBox="0 0 140 140" className="flex-shrink-0">
+                <svg width="140" height="140" viewBox="0 0 140 140" className="flex-shrink-0" role="img" aria-label="Donut chart showing spend by category">
                   {(() => {
                     const totalSpend = categoryTotals.reduce((s, c) => s + c.total, 0);
                     const cx = 70, cy = 70, r = 54;
@@ -437,12 +438,14 @@ export default function BudgetPage() {
           placeholder="Add a line item..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          aria-label="Add line item"
           className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
           required
         />
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
+          aria-label="Line item category"
           className="rounded-[10px] border-border px-3 py-2 text-[15px]"
         >
           {allCategories.map((c) => (
@@ -516,6 +519,7 @@ export default function BudgetPage() {
                         placeholder="0"
                         min="0"
                         step="0.01"
+                        aria-label={`Estimated cost for ${exp.description}`}
                         className="w-20 text-right text-[15px] font-semibold text-plum bg-transparent border-0 outline-none"
                       />
                     </div>
@@ -528,6 +532,7 @@ export default function BudgetPage() {
                         placeholder="0"
                         min="0"
                         step="0.01"
+                        aria-label={`Paid amount for ${exp.description}`}
                         className="w-20 text-right text-[15px] font-semibold text-violet bg-transparent border-0 outline-none"
                       />
                     </div>
@@ -540,11 +545,13 @@ export default function BudgetPage() {
                         placeholder="—"
                         min="0"
                         step="0.01"
+                        aria-label={`Final cost for ${exp.description}`}
                         className="w-20 text-right text-[15px] font-semibold text-plum bg-transparent border-0 outline-none"
                       />
                     </div>
                     <button
                       onClick={() => removeExpense(exp.id)}
+                      aria-label={`Remove ${exp.description}`}
                       className="text-[12px] text-error hover:opacity-80 text-right"
                     >
                       Remove

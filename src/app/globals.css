@@ -3,13 +3,13 @@
 :root {
   /* Brand Colors — Cream / Forest / Gold */
   --violet: #2C3E2D;          /* forest green — primary actions */
-  --soft-violet: #C9A84C;     /* gold — accent, hover */
+  --soft-violet: #8B7A30;     /* gold — accent, hover (darkened for WCAG AA contrast) */
   --blush-pink: #D4A5A5;      /* soft rose — highlights */
   --petal: #E8D5B7;           /* champagne — warm accent */
   --lavender-mist: #EDE7DF;   /* cream tint — panels */
   --whisper: #FAF6F1;         /* cream — background */
   --deep-plum: #1A1A2E;       /* charcoal — text */
-  --muted-plum: #6B6B6B;      /* muted text */
+  --muted-plum: #5A5A5A;      /* muted text (darkened for WCAG AA on cream backgrounds) */
   --border: #E8D5B7;          /* champagne — borders */
   --error: #A0204A;
 
@@ -31,7 +31,7 @@
 
 /* Dark theme overrides */
 [data-theme="dark"] {
-  --violet: #4A6B4D;
+  --violet: #6E9E72;
   --soft-violet: #E8C97A;
   --blush-pink: #C08080;
   --petal: #3A3020;
@@ -227,6 +227,20 @@ textarea { height: auto; }
 input:focus, textarea:focus, select:focus {
   border-color: var(--violet);
   border-width: 1.5px;
+}
+/* WCAG 2.4.7 — visible focus indicators */
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-ghost:focus-visible,
+.btn-destructive:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+}
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 1px;
 }
 input::placeholder, textarea::placeholder, select:invalid {
   color: var(--muted-plum);

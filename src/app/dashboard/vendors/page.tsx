@@ -202,6 +202,7 @@ export default function VendorsPage() {
               placeholder="Vendor name"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
+              aria-label="Vendor name"
               className="rounded-[10px] border-border px-3 py-2 text-[15px]"
               required
               autoFocus
@@ -209,6 +210,7 @@ export default function VendorsPage() {
             <select
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
+              aria-label="Vendor category"
               className="rounded-[10px] border-border px-3 py-2 text-[15px]"
             >
               {VENDOR_CATEGORIES.map((c) => (
@@ -220,6 +222,7 @@ export default function VendorsPage() {
               placeholder="Website (optional)"
               value={newWebsite}
               onChange={(e) => setNewWebsite(e.target.value)}
+              aria-label="Vendor website"
               className="rounded-[10px] border-border px-3 py-2 text-[15px]"
             />
             <div className="flex gap-2">
@@ -228,6 +231,7 @@ export default function VendorsPage() {
                 placeholder="City (optional)"
                 value={newCity}
                 onChange={(e) => setNewCity(e.target.value)}
+                aria-label="Vendor city"
                 className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
               />
               <input
@@ -235,6 +239,7 @@ export default function VendorsPage() {
                 placeholder="State"
                 value={newState}
                 onChange={(e) => setNewState(e.target.value)}
+                aria-label="Vendor state"
                 className="rounded-[10px] border-border px-3 py-2 text-[15px] w-20"
                 maxLength={2}
               />
@@ -273,6 +278,7 @@ export default function VendorsPage() {
                   <select
                     value={vendor.status}
                     onChange={(e) => updateStatus(vendor.id, e.target.value)}
+                    aria-label={`Status for ${vendor.name}`}
                     className={`rounded-full px-2 py-0.5 text-[12px] font-semibold border-0 ${
                       STATUS_COLORS[vendor.status] || ""
                     }`}

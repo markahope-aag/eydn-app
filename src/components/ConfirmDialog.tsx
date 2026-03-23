@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -21,17 +21,50 @@ export function ConfirmDialog({
   confirmLabel = "Delete",
   destructive = true,
 }: ConfirmDialogProps) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCancel();
+      if (e.key === "Escape") {
+        onCancel();
+        return;
+      }
+      // Focus trap
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
     },
     [onCancel]
   );
 
   useEffect(() => {
     if (open) {
+      // Focus the cancel button when dialog opens
+      cancelRef.current?.focus();
       document.addEventListener("keydown", handleKeyDown);
-      return () => document.removeEventListener("keydown", handleKeyDown);
+      // Prevent body scroll
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "";
+      };
     }
   }, [open, handleKeyDown]);
 
@@ -41,15 +74,25 @@ export function ConfirmDialog({
     <div
       className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
       onClick={onCancel}
+      aria-hidden="true"
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-message"
         className="bg-white rounded-[16px] shadow-2xl w-full max-w-sm p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-[18px] font-semibold text-plum">{title}</h2>
-        <p className="mt-2 text-[15px] text-muted">{message}</p>
+        <h2 id="confirm-dialog-title" className="text-[18px] font-semibold text-plum">
+          {title}
+        </h2>
+        <p id="confirm-dialog-message" className="mt-2 text-[15px] text-muted">
+          {message}
+        </p>
         <div className="mt-6 flex justify-end gap-3">
-          <button onClick={onCancel} className="btn-ghost">
+          <button ref={cancelRef} onClick={onCancel} className="btn-ghost">
             Cancel
           </button>
           <button

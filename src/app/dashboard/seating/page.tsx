@@ -247,12 +247,16 @@ export default function SeatingPage() {
         <h1>Seating Chart</h1>
         <div className="flex gap-1">
           <button
+            role="tab"
+            aria-selected={tab === "reception"}
             onClick={() => setTab("reception")}
             className={`px-4 py-2 text-[15px] font-semibold rounded-full transition ${tab === "reception" ? "bg-violet text-white" : "bg-lavender text-violet"}`}
           >
             Reception
           </button>
           <button
+            role="tab"
+            aria-selected={tab === "ceremony"}
             onClick={() => setTab("ceremony")}
             className={`px-4 py-2 text-[15px] font-semibold rounded-full transition ${tab === "ceremony" ? "bg-violet text-white" : "bg-lavender text-violet"}`}
           >
@@ -316,7 +320,7 @@ export default function SeatingPage() {
                         {tableGuests.map((g) => (
                           <div key={g.id} className="flex items-center justify-between text-[10px]">
                             <span className="text-muted truncate">{g.name}</span>
-                            <button onClick={(e) => { e.stopPropagation(); unassignGuest(g.id); }} className="text-error hover:opacity-80 ml-1">x</button>
+                            <button onClick={(e) => { e.stopPropagation(); unassignGuest(g.id); }} aria-label={`Remove guest ${g.name} from table`} className="text-error hover:opacity-80 ml-1">x</button>
                           </div>
                         ))}
                       </div>
@@ -361,6 +365,7 @@ export default function SeatingPage() {
                             <button
                               onClick={() => updateTable(table.id, { capacity: Math.max(1, table.capacity - 1) })}
                               disabled={table.capacity <= 1}
+                              aria-label="Decrease capacity"
                               className="w-7 h-7 rounded-full bg-lavender text-violet font-semibold text-[14px] flex items-center justify-center hover:bg-violet hover:text-white transition disabled:opacity-40"
                             >
                               -
@@ -368,6 +373,7 @@ export default function SeatingPage() {
                             <span className="text-[15px] font-semibold text-plum w-6 text-center">{table.capacity}</span>
                             <button
                               onClick={() => updateTable(table.id, { capacity: table.capacity + 1 })}
+                              aria-label="Increase capacity"
                               className="w-7 h-7 rounded-full bg-lavender text-violet font-semibold text-[14px] flex items-center justify-center hover:bg-violet hover:text-white transition"
                             >
                               +
@@ -385,6 +391,7 @@ export default function SeatingPage() {
 
                     <button
                       onClick={(e) => { e.stopPropagation(); setConfirmDeleteTable(table.id); }}
+                      aria-label={`Delete ${table.name || `Table ${table.table_number}`}`}
                       className="absolute -top-1 -right-1 w-4 h-4 bg-error text-white rounded-full text-[10px] flex items-center justify-center hover:opacity-80"
                     >
                       x
@@ -404,7 +411,7 @@ export default function SeatingPage() {
           {/* Guest sidebar */}
           <div className="w-56 flex-shrink-0">
             <h2 className="text-[15px] font-semibold text-muted mb-2">Unassigned ({unassignedGuests.length}) <Tooltip text="Drag a guest name and drop it onto a table to assign their seat." /></h2>
-            <div className="space-y-1 max-h-[500px] overflow-y-auto">
+            <div className="space-y-1 max-h-[500px] overflow-y-auto" aria-label="Unassigned guests — drag to a table or use the assign dropdown">
               {unassignedGuests.map((guest) => (
                 <div
                   key={guest.id}
@@ -440,7 +447,7 @@ export default function SeatingPage() {
                   <div key={p.id} className="flex items-center justify-center gap-2 mt-2">
                     <span className="text-[15px] font-semibold text-plum">{p.person_name}</span>
                     <span className="badge">{p.role || p.person_type}</span>
-                    <button onClick={() => removeCeremonyPosition(p.id)} className="text-[10px] text-error hover:opacity-80">x</button>
+                    <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name} from ceremony`} className="text-[10px] text-error hover:opacity-80">x</button>
                   </div>
                 ))}
               </div>
@@ -457,7 +464,7 @@ export default function SeatingPage() {
                       <span className="text-[12px] text-muted w-4">{i + 1}</span>
                       <span className="flex-1 text-[15px] text-plum">{p.person_name}</span>
                       {p.role && <span className="text-[12px] text-muted">{p.role}</span>}
-                      <button onClick={() => removeCeremonyPosition(p.id)} className="text-[10px] text-error hover:opacity-80">x</button>
+                      <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name} from left side`} className="text-[10px] text-error hover:opacity-80">x</button>
                     </div>
                   ))}
                   {leftSide.length === 0 && <p className="text-[13px] text-muted text-center py-4">No one added yet</p>}
@@ -473,7 +480,7 @@ export default function SeatingPage() {
                       <span className="text-[12px] text-muted w-4">{i + 1}</span>
                       <span className="flex-1 text-[15px] text-plum">{p.person_name}</span>
                       {p.role && <span className="text-[12px] text-muted">{p.role}</span>}
-                      <button onClick={() => removeCeremonyPosition(p.id)} className="text-[10px] text-error hover:opacity-80">x</button>
+                      <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name} from right side`} className="text-[10px] text-error hover:opacity-80">x</button>
                     </div>
                   ))}
                   {rightSide.length === 0 && <p className="text-[13px] text-muted text-center py-4">No one added yet</p>}

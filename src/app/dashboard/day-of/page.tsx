@@ -482,11 +482,13 @@ export default function DayOfPage() {
         </p>
         <div className="mt-6 card p-4 space-y-4">
           <div className="flex items-center gap-3">
-            <label className="text-[13px] font-semibold text-plum whitespace-nowrap">Ceremony time:</label>
+            <label className="text-[13px] font-semibold text-plum whitespace-nowrap" htmlFor="ceremony-time-initial">Ceremony time:</label>
             <input
+              id="ceremony-time-initial"
               type="time"
               value={ceremonyTime}
               onChange={(e) => setCeremonyTime(e.target.value)}
+              aria-label="Ceremony start time"
               className="rounded-[10px] border-border px-3 py-1.5 text-[15px] w-36"
             />
           </div>
@@ -579,11 +581,13 @@ export default function DayOfPage() {
 
       {/* Ceremony time */}
       <div className="mt-4 card p-4 flex flex-wrap items-center gap-3">
-        <label className="text-[13px] font-semibold text-plum whitespace-nowrap">Ceremony time: <Tooltip text="Set your ceremony start time and click Generate Timeline. All other events will be scheduled automatically, working backwards and forwards from this time." wide /></label>
+        <label className="text-[13px] font-semibold text-plum whitespace-nowrap" htmlFor="ceremony-time-main">Ceremony time: <Tooltip text="Set your ceremony start time and click Generate Timeline. All other events will be scheduled automatically, working backwards and forwards from this time." wide /></label>
         <input
+          id="ceremony-time-main"
           type="time"
           value={ceremonyTime}
           onChange={(e) => setCeremonyTime(e.target.value)}
+          aria-label="Ceremony start time"
           className="rounded-[10px] border-border px-3 py-1.5 text-[15px] w-36"
         />
         <button onClick={handleCeremonyTimeSet} className="btn-secondary btn-sm">
@@ -597,6 +601,8 @@ export default function DayOfPage() {
         {(["timeline", "ceremony", "music", "speeches", "setup", "attire", "vendors", "packing"] as Tab[]).map((t) => (
           <button
             key={t}
+            role="tab"
+            aria-selected={tab === t}
             onClick={() => setTab(t)}
             className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition whitespace-nowrap ${
               tab === t

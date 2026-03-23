@@ -49,6 +49,12 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-whisper text-plum">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg focus:text-plum"
+        >
+          Skip to main content
+        </a>
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-55H9SNZB"

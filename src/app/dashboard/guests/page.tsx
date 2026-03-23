@@ -516,11 +516,13 @@ export default function GuestsPage() {
       <div className="flex items-center justify-between">
         <h1>Guest List <Tooltip text="Manage your wedding guests, track RSVPs, assign roles, and organize guests into groups. Use filters to quickly find specific guests." wide /></h1>
         <div className="flex gap-2">
-          <input ref={fileInput} type="file" accept=".csv" onChange={importCSV} className="hidden" />
+          <input ref={fileInput} type="file" accept=".csv" onChange={importCSV} aria-label="Import CSV file" className="hidden" />
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
               disabled={guests.length === 0}
+              aria-expanded={showExportMenu}
+              aria-haspopup="menu"
               className="btn-secondary btn-sm disabled:opacity-50 inline-flex items-center gap-1"
             >
               Export
@@ -529,21 +531,24 @@ export default function GuestsPage() {
             {showExportMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />
-                <div className="absolute right-0 mt-1 z-20 bg-white border border-border rounded-[10px] shadow-lg py-1 w-40">
+                <div className="absolute right-0 mt-1 z-20 bg-white border border-border rounded-[10px] shadow-lg py-1 w-40" role="menu">
                   <button
                     onClick={() => { exportCSV(); setShowExportMenu(false); }}
+                    role="menuitem"
                     className="w-full text-left px-4 py-2 text-[14px] text-plum hover:bg-lavender transition"
                   >
                     Export as CSV
                   </button>
                   <button
                     onClick={() => { exportXLSX(); setShowExportMenu(false); }}
+                    role="menuitem"
                     className="w-full text-left px-4 py-2 text-[14px] text-plum hover:bg-lavender transition"
                   >
                     Export as Excel
                   </button>
                   <button
                     onClick={() => { guardAction(() => exportPDF()); setShowExportMenu(false); }}
+                    role="menuitem"
                     className="w-full text-left px-4 py-2 text-[14px] text-plum hover:bg-lavender transition"
                   >
                     Export as PDF
@@ -578,11 +583,11 @@ export default function GuestsPage() {
           />
           <span className="text-[13px] text-muted font-medium">Select all</span>
         </label>
-        <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} className="rounded-[10px] border-border px-3 py-1.5 text-[15px]">
+        <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} aria-label="Filter by role" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]">
           <option value="">All Roles</option>
           {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
         </select>
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="rounded-[10px] border-border px-3 py-1.5 text-[15px]">
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} aria-label="Filter by RSVP status" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]">
           <option value="">All Status</option>
           {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
@@ -592,8 +597,8 @@ export default function GuestsPage() {
       {/* Add guest */}
       <form onSubmit={addGuest} className="mt-6 card overflow-hidden">
         <div className="flex gap-3 px-4 py-3">
-          <input type="text" placeholder="Guest name" value={name} onChange={(e) => setName(e.target.value)} className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1" required />
-          <input type="email" placeholder="Email (optional)" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1" />
+          <input type="text" placeholder="Guest name" value={name} onChange={(e) => setName(e.target.value)} aria-label="Guest name" className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1" required />
+          <input type="email" placeholder="Email (optional)" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Guest email" className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1" />
           <button
             type="button"
             onClick={() => setShowAddFields(!showAddFields)}
@@ -665,11 +670,11 @@ export default function GuestsPage() {
               <div className="sm:col-span-2 lg:col-span-3">
                 <label className="text-[12px] font-semibold text-muted">Mailing Address</label>
                 <div className="mt-1 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                  <input type="text" value={newAddr1} onChange={(e) => setNewAddr1(e.target.value)} placeholder="Street address" className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
-                  <input type="text" value={newAddr2} onChange={(e) => setNewAddr2(e.target.value)} placeholder="Apt, suite, etc." className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
-                  <input type="text" value={newCity} onChange={(e) => setNewCity(e.target.value)} placeholder="City" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" />
-                  <input type="text" value={newState} onChange={(e) => setNewState(e.target.value)} placeholder="State" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={2} />
-                  <input type="text" value={newZip} onChange={(e) => setNewZip(e.target.value)} placeholder="ZIP" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={10} />
+                  <input type="text" value={newAddr1} onChange={(e) => setNewAddr1(e.target.value)} placeholder="Street address" aria-label="Street address" className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
+                  <input type="text" value={newAddr2} onChange={(e) => setNewAddr2(e.target.value)} placeholder="Apt, suite, etc." aria-label="Apartment, suite, etc." className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
+                  <input type="text" value={newCity} onChange={(e) => setNewCity(e.target.value)} placeholder="City" aria-label="City" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" />
+                  <input type="text" value={newState} onChange={(e) => setNewState(e.target.value)} placeholder="State" aria-label="State" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={2} />
+                  <input type="text" value={newZip} onChange={(e) => setNewZip(e.target.value)} placeholder="ZIP" aria-label="ZIP code" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={10} />
                 </div>
               </div>
             </div>
@@ -694,7 +699,10 @@ export default function GuestsPage() {
               {/* Main row */}
               <div
                 className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-lavender/20 transition"
+                role="button"
+                tabIndex={0}
                 onClick={() => setExpanded(isExpanded ? null : guest.id)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpanded(isExpanded ? null : guest.id); } }}
               >
                 <input
                   type="checkbox"
@@ -908,6 +916,8 @@ export default function GuestsPage() {
           <div className="relative">
             <button
               onClick={() => setBulkStatusOpen(!bulkStatusOpen)}
+              aria-expanded={bulkStatusOpen}
+              aria-haspopup="menu"
               className="btn-secondary btn-sm inline-flex items-center gap-1"
             >
               Change Status
@@ -916,11 +926,12 @@ export default function GuestsPage() {
             {bulkStatusOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setBulkStatusOpen(false)} />
-                <div className="absolute bottom-full mb-1 left-0 z-20 bg-white border border-border rounded-[10px] shadow-lg py-1 w-40">
+                <div className="absolute bottom-full mb-1 left-0 z-20 bg-white border border-border rounded-[10px] shadow-lg py-1 w-40" role="menu">
                   {Object.entries(STATUS_LABELS).map(([v, l]) => (
                     <button
                       key={v}
                       onClick={() => bulkChangeStatus(v)}
+                      role="menuitem"
                       className="w-full text-left px-4 py-2 text-[14px] text-plum hover:bg-lavender transition"
                     >
                       {l}

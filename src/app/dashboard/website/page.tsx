@@ -327,6 +327,8 @@ export default function WebsitePage() {
         {tabs.map((t) => (
           <button
             key={t.key}
+            role="tab"
+            aria-selected={tab === t.key}
             onClick={() => setTab(t.key)}
             className={`px-4 py-2 text-[15px] font-semibold rounded-t-[10px] transition ${
               tab === t.key
@@ -352,6 +354,7 @@ export default function WebsitePage() {
                 <input
                   type="text"
                   value={slug}
+                  aria-label="Wedding website URL slug"
                   onChange={(e) => {
                     const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
                     setSlug(val);
@@ -378,6 +381,8 @@ export default function WebsitePage() {
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
+                  role="switch"
+                  aria-checked={enabled}
                   checked={enabled}
                   onChange={(e) => {
                     setEnabled(e.target.checked);

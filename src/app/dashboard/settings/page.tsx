@@ -279,6 +279,7 @@ export default function SettingsPage() {
         </p>
         <textarea
           value={keyDecisions}
+          aria-label="Things eydn should know"
           onChange={(e) => setKeyDecisions(e.target.value)}
           onBlur={async () => {
             if (!weddingId) return;
@@ -368,6 +369,7 @@ export default function SettingsPage() {
             <input
               type="email"
               placeholder="Email address"
+              aria-label="Collaborator email address"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleInvite(); }}
@@ -375,6 +377,7 @@ export default function SettingsPage() {
             />
             <select
               value={inviteRole}
+              aria-label="Collaborator role"
               onChange={(e) => setInviteRole(e.target.value as "partner" | "coordinator")}
               className="rounded-[10px] border-border px-3 py-2 text-[15px]"
             >
