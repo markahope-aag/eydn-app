@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Show, SignUpButton } from "@clerk/nextjs";
 import { Cormorant_Garamond, DM_Sans, Great_Vibes } from "next/font/google";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /* ── Fonts ───────────────────────────────────────────────── */
 
@@ -27,12 +27,28 @@ const greatVibes = Great_Vibes({
 
 /* ── ScrollReveal ────────────────────────────────────────── */
 
-function ScrollReveal({ children, className = "" }: { children: ReactNode; className?: string }) {
+function ScrollReveal({
+  children,
+  className = "",
+  direction = "up",
+}: {
+  children: ReactNode;
+  className?: string;
+  direction?: "up" | "left" | "right";
+}) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+
+    // Respect reduced motion
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      el.style.opacity = "1";
+      el.style.transform = "none";
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -40,11 +56,18 @@ function ScrollReveal({ children, className = "" }: { children: ReactNode; class
           observer.unobserve(el);
         }
       },
-      { threshold: 0.12 }
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
     );
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  const initialTransform =
+    direction === "left"
+      ? "translateX(-40px)"
+      : direction === "right"
+        ? "translateX(40px)"
+        : "translateY(28px)";
 
   return (
     <div
@@ -52,7 +75,7 @@ function ScrollReveal({ children, className = "" }: { children: ReactNode; class
       className={`sr-reveal ${className}`}
       style={{
         opacity: 0,
-        transform: "translateY(28px)",
+        transform: initialTransform,
         transition: "opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1)",
       }}
     >
@@ -66,29 +89,279 @@ function ScrollReveal({ children, className = "" }: { children: ReactNode; class
 const keyframeCSS = `
 .sr-visible {
   opacity: 1 !important;
-  transform: translateY(0) !important;
+  transform: translate(0, 0) !important;
 }
-@keyframes float1 {
-  0%, 100% { transform: translateY(0px) rotate(-2deg); }
-  50% { transform: translateY(-14px) rotate(-2deg); }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes float1 {
+    0%, 100% { transform: translateY(0px) rotate(-2deg); }
+    50% { transform: translateY(-14px) rotate(-2deg); }
+  }
+  @keyframes float2 {
+    0%, 100% { transform: translateY(0px) rotate(1deg); }
+    50% { transform: translateY(-10px) rotate(1deg); }
+  }
+  @keyframes float3 {
+    0%, 100% { transform: translateY(0px) rotate(2deg); }
+    50% { transform: translateY(-18px) rotate(2deg); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
 }
-@keyframes float2 {
-  0%, 100% { transform: translateY(0px) rotate(1deg); }
-  50% { transform: translateY(-10px) rotate(1deg); }
-}
-@keyframes float3 {
-  0%, 100% { transform: translateY(0px) rotate(2deg); }
-  50% { transform: translateY(-18px) rotate(2deg); }
-}
-@keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+@media (prefers-reduced-motion: reduce) {
+  .sr-reveal { transition: none !important; }
+  .sr-visible { opacity: 1 !important; transform: none !important; transition: none !important; }
 }
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 `;
+
+/* ── Landing Nav ────────────────────────────────────────── */
+
+function LandingNav() {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const navLinks = [
+    { label: "Features", href: "/#features" },
+    { label: "How It Works", href: "/#how-it-works" },
+    { label: "Pricing", href: "/#pricing" },
+  ];
+
+  return (
+    <>
+      <nav
+        style={{
+          position: "fixed",
+          top: 0,
+          width: "100%",
+          zIndex: 100,
+          background: scrolled ? "rgba(250,246,241,0.96)" : "transparent",
+          backdropFilter: scrolled ? "blur(14px)" : "none",
+          WebkitBackdropFilter: scrolled ? "blur(14px)" : "none",
+          borderBottom: scrolled ? "1px solid var(--champagne, #E8D5B7)" : "1px solid transparent",
+          transition: "background 0.35s, border-bottom 0.35s, backdrop-filter 0.35s",
+          padding: "0 32px",
+          height: 60,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        {/* Logo */}
+        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="eydn" style={{ height: 24 }} />
+        </Link>
+
+        {/* Desktop links */}
+        <div
+          style={{ display: "flex", alignItems: "center", gap: 32 }}
+          className="max-md:!hidden"
+        >
+          {navLinks.map((l) => (
+            <Link
+              key={l.label}
+              href={l.href}
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: 13,
+                letterSpacing: "0.08em",
+                color: "#2A2018",
+                opacity: 0.75,
+                textDecoration: "none",
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.75"; }}
+            >
+              {l.label}
+            </Link>
+          ))}
+          <Show when="signed-out">
+            <Link
+              href="/sign-in"
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: 13,
+                letterSpacing: "0.08em",
+                color: "#2A2018",
+                opacity: 0.75,
+                textDecoration: "none",
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.75"; }}
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/sign-up"
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#FAF6F1",
+                background: "#2C3E2D",
+                borderRadius: 100,
+                padding: "8px 20px",
+                textDecoration: "none",
+                transition: "background 0.2s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#3A5240"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#2C3E2D"; }}
+            >
+              Start Free
+            </Link>
+          </Show>
+          <Show when="signed-in">
+            <Link
+              href="/dashboard"
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#FAF6F1",
+                background: "#2C3E2D",
+                borderRadius: 100,
+                padding: "8px 20px",
+                textDecoration: "none",
+              }}
+            >
+              Dashboard
+            </Link>
+          </Show>
+        </div>
+
+        {/* Mobile hamburger button */}
+        <button
+          className="md:!hidden"
+          onClick={() => setMobileMenuOpen(true)}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 8,
+            display: "flex",
+            flexDirection: "column",
+            gap: 5,
+          }}
+          aria-label="Open menu"
+        >
+          <span style={{ display: "block", width: 22, height: 2, background: "#2A2018", borderRadius: 2 }} />
+          <span style={{ display: "block", width: 22, height: 2, background: "#2A2018", borderRadius: 2 }} />
+          <span style={{ display: "block", width: 22, height: 2, background: "#2A2018", borderRadius: 2 }} />
+        </button>
+      </nav>
+
+      {/* Mobile overlay */}
+      {mobileMenuOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            background: "#2C3E2D",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 32,
+          }}
+        >
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              position: "absolute",
+              top: 20,
+              right: 24,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 8,
+            }}
+            aria-label="Close menu"
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" stroke="#FAF6F1" strokeWidth="2" strokeLinecap="round" fill="none">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+          {navLinks.map((l) => (
+            <Link
+              key={l.label}
+              href={l.href}
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 28,
+                color: "#FAF6F1",
+                textDecoration: "none",
+              }}
+            >
+              {l.label}
+            </Link>
+          ))}
+          <Show when="signed-out">
+            <Link
+              href="/sign-in"
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 28,
+                color: "#FAF6F1",
+                textDecoration: "none",
+              }}
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/sign-up"
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: 16,
+                fontWeight: 600,
+                color: "#2C3E2D",
+                background: "#FAF6F1",
+                borderRadius: 100,
+                padding: "14px 36px",
+                textDecoration: "none",
+                marginTop: 8,
+              }}
+            >
+              Start Free
+            </Link>
+          </Show>
+          <Show when="signed-in">
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 28,
+                color: "#FAF6F1",
+                textDecoration: "none",
+              }}
+            >
+              Dashboard
+            </Link>
+          </Show>
+        </div>
+      )}
+    </>
+  );
+}
 
 /* ── Botanical SVG Watermarks ────────────────────────────── */
 
@@ -480,6 +753,7 @@ export default function HomePage() {
       style={{ animation: "fadeIn 0.6s ease-out" }}
     >
       <style dangerouslySetInnerHTML={{ __html: keyframeCSS }} />
+      <LandingNav />
 
       {/* ─── HERO ─── */}
       <section style={{ minHeight: "100vh", display: "flex" }}>
@@ -738,7 +1012,7 @@ export default function HomePage() {
                 >
                   {num}
                 </span>
-                <ScrollReveal>
+                <ScrollReveal direction={isEven ? "right" : "left"}>
                   <div style={{ position: "relative", zIndex: 1 }}>
                     <p style={{ fontFamily: "var(--font-script)", fontSize: 26, color: scriptColor }}>{scriptLabel}</p>
                     <h3
@@ -781,7 +1055,7 @@ export default function HomePage() {
                 }}
                 className="max-lg:!order-none max-lg:!p-10"
               >
-                <ScrollReveal>
+                <ScrollReveal direction={isEven ? "left" : "right"}>
                   <VisualComponent />
                 </ScrollReveal>
               </div>
@@ -1154,6 +1428,19 @@ export default function HomePage() {
           </div>
         </section>
       </ScrollReveal>
+
+      {/* ─── FLORAL DIVIDER ─── */}
+      <div style={{ width: "100%", overflow: "hidden", lineHeight: 0, background: "#F7EDED" }}>
+        <svg viewBox="0 0 1200 60" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: 60 }}>
+          <path d="M0 30 Q150 0 300 30 T600 30 T900 30 T1200 30" stroke="#E8D5B7" strokeWidth="1" fill="none" />
+          <path d="M0 35 Q150 5 300 35 T600 35 T900 35 T1200 35" stroke="#D4A5A5" strokeWidth="0.5" fill="none" opacity="0.5" />
+          {/* Decorative dots at peaks */}
+          <circle cx="150" cy="15" r="3" fill="#C9A84C" opacity="0.6" />
+          <circle cx="450" cy="15" r="2" fill="#D4A5A5" opacity="0.5" />
+          <circle cx="750" cy="15" r="3" fill="#C9A84C" opacity="0.6" />
+          <circle cx="1050" cy="15" r="2" fill="#D4A5A5" opacity="0.5" />
+        </svg>
+      </div>
 
       {/* ─── FINAL CTA — WARM GRADIENT ─── */}
       <ScrollReveal>
