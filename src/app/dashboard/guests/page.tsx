@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { usePremium } from "@/components/PremiumGate";
 import { Tooltip } from "@/components/Tooltip";
+import { trackGuestAdded, trackGuestImport } from "@/lib/analytics";
 
 type Guest = {
   id: string;
@@ -144,6 +145,7 @@ export default function GuestsPage() {
       if (!res.ok) throw new Error();
       const saved = await res.json();
       setGuests((prev) => prev.map((g) => (g.id === tempId ? saved : g)));
+      trackGuestAdded();
       toast.success(`${newGuest.name} added to the guest list`);
     } catch {
       setGuests((prev) => prev.filter((g) => g.id !== tempId));
@@ -201,6 +203,7 @@ export default function GuestsPage() {
         throw new Error(err.error);
       }
       const { imported } = await res.json();
+      trackGuestImport(imported);
       toast.success(`Imported ${imported} guests`);
       const reload = await fetch("/api/guests");
       if (reload.ok) setGuests(await reload.json());

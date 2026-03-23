@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Tooltip } from "@/components/Tooltip";
+import { trackCollaboratorInvited, trackExport } from "@/lib/analytics";
 
 type Collaborator = {
   id: string;
@@ -176,6 +177,7 @@ export default function SettingsPage() {
       const saved = await res.json();
       setCollaborators((prev) => [...prev, saved]);
       setInviteEmail("");
+      trackCollaboratorInvited();
       toast.success(`Invitation sent to ${saved.email}`);
     } catch {
       toast.error("Failed to send invitation");
@@ -214,6 +216,7 @@ export default function SettingsPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      trackExport("json");
       toast.success("Data exported successfully");
     } catch {
       toast.error("Failed to export data");

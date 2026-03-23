@@ -1,0 +1,288 @@
+{
+  "exportFormatVersion": 2,
+  "exportTime": "2026-03-23",
+  "containerVersion": {
+    "tag": [
+      {
+        "name": "GA4 - Page View",
+        "type": "gaawc",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" }
+        ],
+        "firingTriggerId": ["2147483647"],
+        "tagFiringOption": "ONCE_PER_EVENT"
+      },
+      {
+        "name": "GA4 Event - Sign Up",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "sign_up" }
+        ],
+        "firingTriggerId": ["100"]
+      },
+      {
+        "name": "GA4 Event - Onboarding Complete",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "onboarding_complete" }
+        ],
+        "firingTriggerId": ["101"]
+      },
+      {
+        "name": "GA4 Event - Trial Start",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "trial_start" }
+        ],
+        "firingTriggerId": ["102"]
+      },
+      {
+        "name": "GA4 Event - Purchase",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "purchase" },
+          { "type": "LIST", "key": "eventParameters", "list": [
+            { "type": "MAP", "map": [
+              { "type": "TEMPLATE", "key": "name", "value": "value" },
+              { "type": "TEMPLATE", "key": "value", "value": "{{DLV - value}}" }
+            ]},
+            { "type": "MAP", "map": [
+              { "type": "TEMPLATE", "key": "name", "value": "currency" },
+              { "type": "TEMPLATE", "key": "value", "value": "{{DLV - currency}}" }
+            ]}
+          ]}
+        ],
+        "firingTriggerId": ["103"]
+      },
+      {
+        "name": "GA4 Event - Chat Message",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "chat_message" }
+        ],
+        "firingTriggerId": ["104"]
+      },
+      {
+        "name": "GA4 Event - Guest Added",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "guest_added" }
+        ],
+        "firingTriggerId": ["105"]
+      },
+      {
+        "name": "GA4 Event - Guest Import",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "guest_import" },
+          { "type": "LIST", "key": "eventParameters", "list": [
+            { "type": "MAP", "map": [
+              { "type": "TEMPLATE", "key": "name", "value": "guest_count" },
+              { "type": "TEMPLATE", "key": "value", "value": "{{DLV - guest_count}}" }
+            ]}
+          ]}
+        ],
+        "firingTriggerId": ["106"]
+      },
+      {
+        "name": "GA4 Event - Vendor Added",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "vendor_added" },
+          { "type": "LIST", "key": "eventParameters", "list": [
+            { "type": "MAP", "map": [
+              { "type": "TEMPLATE", "key": "name", "value": "vendor_category" },
+              { "type": "TEMPLATE", "key": "value", "value": "{{DLV - vendor_category}}" }
+            ]}
+          ]}
+        ],
+        "firingTriggerId": ["107"]
+      },
+      {
+        "name": "GA4 Event - Guide Complete",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "guide_complete" },
+          { "type": "LIST", "key": "eventParameters", "list": [
+            { "type": "MAP", "map": [
+              { "type": "TEMPLATE", "key": "name", "value": "guide_name" },
+              { "type": "TEMPLATE", "key": "value", "value": "{{DLV - guide_name}}" }
+            ]}
+          ]}
+        ],
+        "firingTriggerId": ["108"]
+      },
+      {
+        "name": "GA4 Event - Vendor Brief Generated",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "vendor_brief_generated" },
+          { "type": "LIST", "key": "eventParameters", "list": [
+            { "type": "MAP", "map": [
+              { "type": "TEMPLATE", "key": "name", "value": "guide_name" },
+              { "type": "TEMPLATE", "key": "value", "value": "{{DLV - guide_name}}" }
+            ]}
+          ]}
+        ],
+        "firingTriggerId": ["109"]
+      },
+      {
+        "name": "GA4 Event - Website Published",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "website_published" }
+        ],
+        "firingTriggerId": ["110"]
+      },
+      {
+        "name": "GA4 Event - RSVP Sent",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "rsvp_sent" },
+          { "type": "LIST", "key": "eventParameters", "list": [
+            { "type": "MAP", "map": [
+              { "type": "TEMPLATE", "key": "name", "value": "rsvp_count" },
+              { "type": "TEMPLATE", "key": "value", "value": "{{DLV - rsvp_count}}" }
+            ]}
+          ]}
+        ],
+        "firingTriggerId": ["111"]
+      },
+      {
+        "name": "GA4 Event - File Upload",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "file_upload" },
+          { "type": "LIST", "key": "eventParameters", "list": [
+            { "type": "MAP", "map": [
+              { "type": "TEMPLATE", "key": "name", "value": "entity_type" },
+              { "type": "TEMPLATE", "key": "value", "value": "{{DLV - entity_type}}" }
+            ]}
+          ]}
+        ],
+        "firingTriggerId": ["112"]
+      },
+      {
+        "name": "GA4 Event - Data Export",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "data_export" },
+          { "type": "LIST", "key": "eventParameters", "list": [
+            { "type": "MAP", "map": [
+              { "type": "TEMPLATE", "key": "name", "value": "export_format" },
+              { "type": "TEMPLATE", "key": "value", "value": "{{DLV - export_format}}" }
+            ]}
+          ]}
+        ],
+        "firingTriggerId": ["113"]
+      },
+      {
+        "name": "GA4 Event - Task Created",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "task_created" }
+        ],
+        "firingTriggerId": ["114"]
+      },
+      {
+        "name": "GA4 Event - Task Completed",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "task_completed" }
+        ],
+        "firingTriggerId": ["115"]
+      },
+      {
+        "name": "GA4 Event - Mood Board Add",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "mood_board_add" }
+        ],
+        "firingTriggerId": ["116"]
+      },
+      {
+        "name": "GA4 Event - Collaborator Invited",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "collaborator_invited" }
+        ],
+        "firingTriggerId": ["117"]
+      },
+      {
+        "name": "GA4 Event - Vendor Placement",
+        "type": "gaawe",
+        "parameter": [
+          { "type": "TEMPLATE", "key": "measurementId", "value": "{{GA4 Measurement ID}}" },
+          { "type": "TEMPLATE", "key": "eventName", "value": "vendor_placement" },
+          { "type": "LIST", "key": "eventParameters", "list": [
+            { "type": "MAP", "map": [
+              { "type": "TEMPLATE", "key": "name", "value": "tier" },
+              { "type": "TEMPLATE", "key": "value", "value": "{{DLV - tier}}" }
+            ]},
+            { "type": "MAP", "map": [
+              { "type": "TEMPLATE", "key": "name", "value": "value" },
+              { "type": "TEMPLATE", "key": "value", "value": "{{DLV - value}}" }
+            ]},
+            { "type": "MAP", "map": [
+              { "type": "TEMPLATE", "key": "name", "value": "currency" },
+              { "type": "TEMPLATE", "key": "value", "value": "{{DLV - currency}}" }
+            ]}
+          ]}
+        ],
+        "firingTriggerId": ["118"]
+      }
+    ],
+    "trigger": [
+      { "triggerId": "100", "name": "CE - sign_up", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "sign_up" }] }] },
+      { "triggerId": "101", "name": "CE - onboarding_complete", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "onboarding_complete" }] }] },
+      { "triggerId": "102", "name": "CE - trial_start", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "trial_start" }] }] },
+      { "triggerId": "103", "name": "CE - purchase", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "purchase" }] }] },
+      { "triggerId": "104", "name": "CE - chat_message", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "chat_message" }] }] },
+      { "triggerId": "105", "name": "CE - guest_added", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "guest_added" }] }] },
+      { "triggerId": "106", "name": "CE - guest_import", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "guest_import" }] }] },
+      { "triggerId": "107", "name": "CE - vendor_added", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "vendor_added" }] }] },
+      { "triggerId": "108", "name": "CE - guide_complete", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "guide_complete" }] }] },
+      { "triggerId": "109", "name": "CE - vendor_brief_generated", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "vendor_brief_generated" }] }] },
+      { "triggerId": "110", "name": "CE - website_published", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "website_published" }] }] },
+      { "triggerId": "111", "name": "CE - rsvp_sent", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "rsvp_sent" }] }] },
+      { "triggerId": "112", "name": "CE - file_upload", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "file_upload" }] }] },
+      { "triggerId": "113", "name": "CE - data_export", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "data_export" }] }] },
+      { "triggerId": "114", "name": "CE - task_created", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "task_created" }] }] },
+      { "triggerId": "115", "name": "CE - task_completed", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "task_completed" }] }] },
+      { "triggerId": "116", "name": "CE - mood_board_add", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "mood_board_add" }] }] },
+      { "triggerId": "117", "name": "CE - collaborator_invited", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "collaborator_invited" }] }] },
+      { "triggerId": "118", "name": "CE - vendor_placement", "type": "CUSTOM_EVENT", "customEventFilter": [{ "type": "EQUALS", "parameter": [{ "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" }, { "type": "TEMPLATE", "key": "arg1", "value": "vendor_placement" }] }] }
+    ],
+    "variable": [
+      { "name": "GA4 Measurement ID", "type": "c", "parameter": [{ "type": "TEMPLATE", "key": "value", "value": "G-75QMVEE2WY" }] },
+      { "name": "DLV - value", "type": "v", "parameter": [{ "type": "INTEGER", "key": "dataLayerVersion", "value": "2" }, { "type": "TEMPLATE", "key": "name", "value": "value" }] },
+      { "name": "DLV - currency", "type": "v", "parameter": [{ "type": "INTEGER", "key": "dataLayerVersion", "value": "2" }, { "type": "TEMPLATE", "key": "name", "value": "currency" }] },
+      { "name": "DLV - guest_count", "type": "v", "parameter": [{ "type": "INTEGER", "key": "dataLayerVersion", "value": "2" }, { "type": "TEMPLATE", "key": "name", "value": "guest_count" }] },
+      { "name": "DLV - vendor_category", "type": "v", "parameter": [{ "type": "INTEGER", "key": "dataLayerVersion", "value": "2" }, { "type": "TEMPLATE", "key": "name", "value": "vendor_category" }] },
+      { "name": "DLV - guide_name", "type": "v", "parameter": [{ "type": "INTEGER", "key": "dataLayerVersion", "value": "2" }, { "type": "TEMPLATE", "key": "name", "value": "guide_name" }] },
+      { "name": "DLV - rsvp_count", "type": "v", "parameter": [{ "type": "INTEGER", "key": "dataLayerVersion", "value": "2" }, { "type": "TEMPLATE", "key": "name", "value": "rsvp_count" }] },
+      { "name": "DLV - entity_type", "type": "v", "parameter": [{ "type": "INTEGER", "key": "dataLayerVersion", "value": "2" }, { "type": "TEMPLATE", "key": "name", "value": "entity_type" }] },
+      { "name": "DLV - export_format", "type": "v", "parameter": [{ "type": "INTEGER", "key": "dataLayerVersion", "value": "2" }, { "type": "TEMPLATE", "key": "name", "value": "export_format" }] },
+      { "name": "DLV - tier", "type": "v", "parameter": [{ "type": "INTEGER", "key": "dataLayerVersion", "value": "2" }, { "type": "TEMPLATE", "key": "name", "value": "tier" }] },
+      { "name": "DLV - section_name", "type": "v", "parameter": [{ "type": "INTEGER", "key": "dataLayerVersion", "value": "2" }, { "type": "TEMPLATE", "key": "name", "value": "section_name" }] }
+    ]
+  }
+}

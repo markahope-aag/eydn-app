@@ -6,6 +6,7 @@ import { SkeletonList } from "@/components/Skeleton";
 import { PremiumButton } from "@/components/PremiumGate";
 import { exportWeddingBinder } from "@/lib/export-binder";
 import { Tooltip } from "@/components/Tooltip";
+import { trackExport } from "@/lib/analytics";
 
 type TimelineItem = { time: string; event: string; notes: string; forGroup?: string };
 type VendorContact = { vendor: string; category: string; contact: string; phone: string };
@@ -464,6 +465,7 @@ export default function DayOfPage() {
     a.download = "day-of-plan.pdf";
     a.click();
     URL.revokeObjectURL(url);
+    trackExport("pdf");
     toast.success("PDF downloaded");
   }
 
@@ -556,6 +558,7 @@ export default function DayOfPage() {
               setBinderLoading(true);
               try {
                 await exportWeddingBinder();
+                trackExport("binder");
                 toast.success("Wedding binder downloaded");
               } catch {
                 toast.error("Failed to generate binder");

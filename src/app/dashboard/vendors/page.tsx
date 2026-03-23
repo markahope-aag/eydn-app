@@ -10,6 +10,7 @@ import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { VENDOR_CATEGORIES, VENDOR_STATUSES } from "@/lib/vendors/categories";
 import { Tooltip } from "@/components/Tooltip";
 import { EmailTemplate } from "./EmailTemplate";
+import { trackVendorAdded } from "@/lib/analytics";
 
 type Vendor = {
   id: string;
@@ -104,6 +105,7 @@ export default function VendorsPage() {
       setNewWebsite("");
       setNewCity("");
       setNewState("");
+      trackVendorAdded(vendor.category);
       toast.success("Vendor added");
     } catch {
       setVendors((prev) => prev.filter((v) => v.id !== tempId));

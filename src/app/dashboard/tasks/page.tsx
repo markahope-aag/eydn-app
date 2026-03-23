@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { TaskFilters } from "./TaskFilters";
 import { Tooltip } from "@/components/Tooltip";
+import { trackTaskCreated, trackTaskCompleted } from "@/lib/analytics";
 
 // Dynamic imports for heavy components (dnd-kit, react-pdf in detail)
 const TaskList = dynamic(() => import("./TaskList").then((m) => ({ default: m.TaskList })), {
@@ -141,6 +142,7 @@ export default function TasksPage() {
       if (!res.ok) throw new Error();
       const saved = await res.json();
       setTasks((prev) => prev.map((t) => (t.id === tempId ? saved : t)));
+      trackTaskCreated();
       toast.success("Task added");
     } catch {
       setTasks((prev) => prev.filter((t) => t.id !== tempId));
@@ -179,6 +181,7 @@ export default function TasksPage() {
       if (!res.ok) throw new Error();
 
       if (newStatus === "done") {
+        trackTaskCompleted();
         // Check if all tasks in this phase are now complete
         if (task.timeline_phase) {
           const phaseTasks = tasks.filter(

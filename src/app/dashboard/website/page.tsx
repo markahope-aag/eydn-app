@@ -5,6 +5,7 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { Tooltip } from "@/components/Tooltip";
+import { trackWebsitePublished } from "@/lib/analytics";
 
 type Tab = "setup" | "schedule" | "registry" | "rsvp" | "gallery";
 
@@ -378,7 +379,10 @@ export default function WebsitePage() {
                 <input
                   type="checkbox"
                   checked={enabled}
-                  onChange={(e) => setEnabled(e.target.checked)}
+                  onChange={(e) => {
+                    setEnabled(e.target.checked);
+                    if (e.target.checked) trackWebsitePublished();
+                  }}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-violet transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5" />

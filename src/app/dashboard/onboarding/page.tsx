@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { EdynMessage } from "@/components/EdynMessage";
+import { trackOnboardingComplete } from "@/lib/analytics";
 
 const VENDOR_CATEGORIES = [
   "Venue",
@@ -188,6 +189,7 @@ export default function OnboardingPage() {
       });
 
       if (res.ok) {
+        trackOnboardingComplete();
         toast.success("Your planning journey begins now!");
         router.push("/dashboard");
       } else {

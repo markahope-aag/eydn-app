@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { trackPurchase } from "@/lib/analytics";
 
 export default function PricingPage() {
   const [loading, setLoading] = useState(false);
@@ -19,6 +20,7 @@ export default function PricingPage() {
         throw new Error(data.error);
       }
       const { url } = await res.json();
+      trackPurchase();
       if (url) window.location.href = url;
     } catch {
       toast.error("Something went wrong. Try again.");

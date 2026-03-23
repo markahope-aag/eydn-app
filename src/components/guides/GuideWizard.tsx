@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import type { GuideDefinition } from "@/lib/guides/types";
 import { FieldRenderer } from "./FieldRenderer";
+import { trackGuideComplete, trackVendorBriefGenerated } from "@/lib/analytics";
 
 type SavedGuide = {
   section_index: number;
@@ -81,6 +82,7 @@ export function GuideWizard({ guide }: Props) {
       setCompleted(true);
       setSectionIndex(next);
       saveProgress(responses, next, true);
+      trackGuideComplete(guide.slug);
       toast.success(`${guide.title} complete!`);
     } else {
       setSectionIndex(next);
@@ -109,6 +111,7 @@ export function GuideWizard({ guide }: Props) {
       if (!res.ok) throw new Error();
       const brief = await res.json();
       setVendorBrief(brief);
+      trackVendorBriefGenerated(guide.slug);
       toast.success("Vendor brief generated!");
     } catch {
       toast.error("Failed to generate brief");

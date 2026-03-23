@@ -5,6 +5,7 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { SkeletonGrid } from "@/components/Skeleton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { trackMoodBoardAdd } from "@/lib/analytics";
 
 type MoodItem = {
   id: string;
@@ -82,6 +83,7 @@ export default function MoodBoardPage() {
       setCaption("");
       setLocation("");
       setShowAdd(false);
+      trackMoodBoardAdd();
       toast.success("Added to vision board");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add image");
@@ -119,6 +121,7 @@ export default function MoodBoardPage() {
       setCaption("");
       setLocation("");
       setShowAdd(false);
+      trackMoodBoardAdd();
       toast.success("Added to vision board");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to upload image");

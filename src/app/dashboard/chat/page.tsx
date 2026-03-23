@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Paywall } from "@/components/Paywall";
+import { trackChatMessage } from "@/lib/analytics";
 import { SkeletonList } from "@/components/Skeleton";
 
 type Message = {
@@ -57,6 +58,10 @@ export default function ChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg.content }),
       });
+
+      if (res.ok) {
+        trackChatMessage();
+      }
 
       if (res.status === 403) {
         toast.error("AI chat is a premium feature. Upgrade to continue.", {
