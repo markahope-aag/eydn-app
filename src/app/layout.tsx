@@ -16,8 +16,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "eydn — Your AI Wedding Planning Guide",
-  description: "Plan your perfect wedding with eydn. AI-powered task timeline, budget tracker, vendor management, guest RSVPs, seating chart, and a beautiful wedding website — all in one place.",
+  title: "Eydn — Your AI Wedding Planning Guide",
+  description: "Plan your perfect wedding with Eydn. AI-powered task timeline, budget tracker, vendor management, guest RSVPs, seating chart, and a beautiful wedding website — all in one place.",
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },

@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   }
 
   if ((pref as { unsubscribed_all: boolean }).unsubscribed_all) {
-    return new Response(renderPage("Already Unsubscribed", "You have already been unsubscribed from all eydn emails."), {
+    return new Response(renderPage("Already Unsubscribed", "You have already been unsubscribed from all Eydn emails."), {
       headers: { "Content-Type": "text/html" },
     });
   }
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
            Unsubscribe
          </button>
        </form>
-       <p style="margin-top:16px;font-size:13px;color:#6B6B6B;">You can also manage your email preferences in your <a href="https://eydn.app/dashboard/settings" style="color:#2C3E2D;">eydn dashboard</a>.</p>`
+       <p style="margin-top:16px;font-size:13px;color:#6B6B6B;">You can also manage your email preferences in your <a href="https://eydn.app/dashboard/settings" style="color:#2C3E2D;">Eydn dashboard</a>.</p>`
     ),
     { headers: { "Content-Type": "text/html" } }
   );
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
 function renderPage(title: string, body: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} — eydn</title></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} — Eydn</title></head>
 <body style="margin:0;padding:40px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAF6F1;color:#1A1A2E;">
   <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:40px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
     <img src="https://eydn.app/logo.svg" alt="eydn" style="height:28px;margin-bottom:24px;" />

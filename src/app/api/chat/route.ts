@@ -168,7 +168,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Claude API error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to get response from eydn" },
+      { error: error instanceof Error ? error.message : "Failed to get response from Eydn" },
       { status: 500 }
     );
   }

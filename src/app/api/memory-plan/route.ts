@@ -73,7 +73,7 @@ export async function POST() {
         price_data: {
           currency: "usd",
           product_data: {
-            name: "eydn Memory Plan",
+            name: "Eydn Memory Plan",
             description:
               "Keep your wedding website live and your data accessible after the wedding. Renews annually.",
           },

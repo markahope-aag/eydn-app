@@ -21,7 +21,7 @@ const navItems = [
   { href: "/dashboard/guides", label: "Planning Guides" },
   { href: "/dashboard/day-of", label: "Day-of Planner" },
   { href: "/dashboard/rehearsal-dinner", label: "Rehearsal Dinner" },
-  { href: "/dashboard/chat", label: "Ask eydn" },
+  { href: "/dashboard/chat", label: "Ask Eydn" },
   { href: "/dashboard/vendor-portal", label: "Vendor Portal" },
   { href: "/dashboard/website", label: "Wedding Website" },
   { href: "/dashboard/settings", label: "Settings" },

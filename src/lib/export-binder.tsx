@@ -496,7 +496,7 @@ export async function exportWeddingBinder(): Promise<void> {
         style={s.footerPage}
         render={({ pageNumber }: { pageNumber: number }) => `${pageNumber}`}
       />
-      <Text style={s.footerBrand}>eydn</Text>
+      <Text style={s.footerBrand}>Eydn</Text>
     </View>
   );
 
@@ -562,7 +562,7 @@ export async function exportWeddingBinder(): Promise<void> {
         {wedding.venue && <Text style={s.coverVenue}>{wedding.venue}</Text>}
         <View style={s.coverGoldLine} />
         <Text style={s.coverSubtitle}>Day-of Wedding Binder</Text>
-        <Text style={s.coverPowered}>Powered by eydn</Text>
+        <Text style={s.coverPowered}>Powered by Eydn</Text>
       </PdfPage>
 
       {/* ── PAGE 2: TABLE OF CONTENTS ──────────────────────────────────── */}

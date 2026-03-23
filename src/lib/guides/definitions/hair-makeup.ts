@@ -4,7 +4,7 @@ export const hairMakeupGuide: GuideDefinition = {
   slug: "hair-makeup",
   title: "Hair & Makeup",
   subtitle:
-    "Hair and makeup takes longer than most couples expect. This questionnaire helps eydn build an accurate getting-ready schedule, brief your artist, and make sure nothing falls through the cracks on the morning of your wedding.",
+    "Hair and makeup takes longer than most couples expect. This questionnaire helps Eydn build an accurate getting-ready schedule, brief your artist, and make sure nothing falls through the cracks on the morning of your wedding.",
   icon: "scissors",
   integrations: ["vendor-brief", "day-of-timeline", "chat-context"],
   sections: [
@@ -22,7 +22,7 @@ export const hairMakeupGuide: GuideDefinition = {
           label: "What time does your ceremony start?",
           field: { kind: "time" },
           required: true,
-          tip: "eydn works backwards from this to suggest a getting-ready schedule.",
+          tip: "Eydn works backwards from this to suggest a getting-ready schedule.",
         },
         {
           id: "q3",
@@ -91,7 +91,7 @@ export const hairMakeupGuide: GuideDefinition = {
           id: "q8",
           label: "When are you thinking of booking trials?",
           field: { kind: "text", placeholder: "Date or timeframe" },
-          tip: "eydn will add reminders.",
+          tip: "Eydn will add reminders.",
         },
       ],
     },
@@ -231,7 +231,7 @@ export const hairMakeupGuide: GuideDefinition = {
     {
       title: "Inspiration",
       description:
-        "eydn surfaces a curated hair and makeup inspiration board based on your answers. Save what feels right, skip what doesn't.",
+        "Eydn surfaces a curated hair and makeup inspiration board based on your answers. Save what feels right, skip what doesn't.",
       questions: [],
     },
   ],

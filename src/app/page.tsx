@@ -684,7 +684,7 @@ function SpotlightChat() {
     <div style={{ background: "#1E2340", borderRadius: 16, padding: 24, maxWidth: 420, boxShadow: "0 8px 40px rgba(0,0,0,0.3)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#C9A84C" }} />
-        <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#FAF6F1", fontWeight: 600 }}>eydn AI</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#FAF6F1", fontWeight: 600 }}>Eydn AI</span>
         <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "rgba(250,246,241,0.4)", marginLeft: "auto" }}>Online</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -705,7 +705,7 @@ function SpotlightChat() {
       </div>
       {/* Input bar */}
       <div style={{ marginTop: 16, background: "#1A1A2E", borderRadius: 100, padding: "10px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.3)", flex: 1 }}>Ask eydn anything...</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.3)", flex: 1 }}>Ask Eydn anything...</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8C97A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="22" y1="2" x2="11" y2="13" />
           <polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -919,7 +919,7 @@ export default function HomePage() {
         </div>
         <div style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", minWidth: 260, boxShadow: "0 8px 32px rgba(180,140,130,.2)" }}>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>AI Chat</p>
-          <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#2A2018" }}>Ask eydn anything</p>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#2A2018" }}>Ask Eydn anything</p>
         </div>
       </div>
 
@@ -1167,7 +1167,7 @@ export default function HomePage() {
                 An AI that remembers your wedding
               </h2>
               <p style={{ fontFamily: "var(--font-body)", fontSize: 16, color: "#8A7A6A", lineHeight: 1.7, marginTop: 20 }}>
-                Chat with eydn for personalized advice — it knows your style, allergies, budget priorities, and every decision you have made. Like a planner who never forgets.
+                Chat with Eydn for personalized advice — it knows your style, allergies, budget priorities, and every decision you have made. Like a planner who never forgets.
               </p>
               <ul style={{ marginTop: 24, listStyle: "none", padding: 0 }}>
                 {[
@@ -1566,7 +1566,7 @@ export default function HomePage() {
             </div>
           </div>
           <div style={{ marginTop: 64, paddingTop: 32, borderTop: "1px solid rgba(250,246,241,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
-            <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)" }}>&copy; {new Date().getFullYear()} eydn. All rights reserved.</p>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)" }}>&copy; {new Date().getFullYear()} Eydn. All rights reserved.</p>
             <div style={{ display: "flex", gap: 24 }}>
               <Link href="/privacy" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)", textDecoration: "none" }}>Privacy</Link>
               <Link href="/terms" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.3)", textDecoration: "none" }}>Terms</Link>
@@ -1589,15 +1589,15 @@ const features = [
   { title: "Wedding website", description: "A beautiful public page for your guests with schedule, travel info, registry links, photo gallery, and RSVP." },
   { title: "Complete day-of binder", description: "Timeline, ceremony script, music lists, speeches, setup assignments, attire details, vendor contacts, and packing checklist — all exportable as a beautiful branded PDF." },
   { title: "Your data, protected", description: "Daily encrypted backups, soft-delete recovery, full data export, and audit logging. Your wedding plans are never at risk." },
-  { title: "AI assistant that remembers you", description: "Chat with eydn for personalized advice — it knows your style, allergies, budget priorities, and every decision you've made. Like a planner who never forgets." },
+  { title: "AI assistant that remembers you", description: "Chat with Eydn for personalized advice — it knows your style, allergies, budget priorities, and every decision you've made. Like a planner who never forgets." },
   { title: "Seating chart", description: "Drag-and-drop tables for your reception. Ceremony layout for who stands where at the altar." },
   { title: "Photo gallery", description: "Guests upload their photos to a shared album right from your wedding website. No app download needed." },
 ];
 
 const steps = [
-  { title: "Tell us about your wedding", description: "Complete a quick 11-step guided setup. eydn learns your date, budget, style, and what you've already booked." },
-  { title: "Get your personalized plan", description: "eydn generates 50+ tasks with real deadlines, a pre-built budget with line items, and a custom planning timeline." },
-  { title: "Plan with confidence", description: "Track vendors, manage guests, build your seating chart, and chat with eydn whenever you need advice." },
+  { title: "Tell us about your wedding", description: "Complete a quick 11-step guided setup. Eydn learns your date, budget, style, and what you've already booked." },
+  { title: "Get your personalized plan", description: "Eydn generates 50+ tasks with real deadlines, a pre-built budget with line items, and a custom planning timeline." },
+  { title: "Plan with confidence", description: "Track vendors, manage guests, build your seating chart, and chat with Eydn whenever you need advice." },
 ];
 
 const memoryPlanFeatures = [
@@ -1630,7 +1630,7 @@ const pricingFeatures = [
 
 const testimonials = [
   {
-    quote: "We were overwhelmed before eydn. Having everything — tasks, budget, vendors, guests — in one place with an AI that actually remembered our preferences changed everything.",
+    quote: "We were overwhelmed before Eydn. Having everything — tasks, budget, vendors, guests — in one place with an AI that actually remembered our preferences changed everything.",
     names: "Priya & James",
     detail: "Married June 2025 \u00B7 Chicago, IL",
   },
@@ -1640,7 +1640,7 @@ const testimonials = [
     detail: "Married Sept 2025 \u00B7 Austin, TX",
   },
   {
-    quote: "I almost spent $3,000 on a wedding planner. eydn did everything I needed for $79. I cannot believe this is a one-time payment.",
+    quote: "I almost spent $3,000 on a wedding planner. Eydn did everything I needed for $79. I cannot believe this is a one-time payment.",
     names: "Lauren & Chris",
     detail: "Married May 2025 \u00B7 Denver, CO",
   },

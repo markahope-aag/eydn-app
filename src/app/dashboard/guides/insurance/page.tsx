@@ -154,7 +154,7 @@ export default function InsuranceGuidePage() {
           </div>
           <div className="mt-4 card p-4 bg-violet/5 border-violet/20">
             <p className="text-[13px] text-violet font-semibold">
-              eydn tip: Get quotes from at least three providers before buying. Coverage and pricing
+              Eydn tip: Get quotes from at least three providers before buying. Coverage and pricing
               vary more than you&apos;d expect.
             </p>
           </div>
@@ -196,7 +196,7 @@ export default function InsuranceGuidePage() {
           </ol>
           <div className="mt-4 card p-4 bg-violet/5 border-violet/20">
             <p className="text-[13px] text-violet font-semibold">
-              eydn tip: Store all your supplier contracts, COIs, and payment receipts in eydn.
+              Eydn tip: Store all your supplier contracts, COIs, and payment receipts in Eydn.
               If you ever need to make a claim, everything is in one place.
             </p>
           </div>

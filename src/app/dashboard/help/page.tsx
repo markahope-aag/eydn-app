@@ -6,17 +6,17 @@ import Link from "next/link";
 type Tab = "guide" | "faq" | "shortcuts";
 
 const FAQ = [
-  { q: "Can I change my wedding date after setting up my timeline?", a: "Yes! Go to Settings → Review Questionnaire Answers to update your date. eydn will automatically regenerate your task timeline with adjusted deadlines." },
+  { q: "Can I change my wedding date after setting up my timeline?", a: "Yes! Go to Settings → Review Questionnaire Answers to update your date. Eydn will automatically regenerate your task timeline with adjusted deadlines." },
   { q: "How do I invite my partner or coordinator?", a: "Go to Settings → Collaborators. Enter their email and choose their role (Partner or Coordinator). When they sign up with that email, they'll automatically get access to your wedding." },
   { q: "What happens after my 14-day trial?", a: "Your dashboard becomes read-only. You can still view and export all your data. To restore full access, upgrade for $79 (one-time, forever). No data is ever deleted during this period." },
   { q: "How do I export my data?", a: "Go to Settings → Your Data → Download My Data. This exports everything — guests, vendors, tasks, budget, chat history, and more — as a JSON file." },
   { q: "Can I restore something I accidentally deleted?", a: "Yes! Go to Settings → Recently Deleted. All deleted items are kept for 30 days and can be restored with one click." },
-  { q: "How does the AI assistant remember my preferences?", a: "Go to Settings → Things eydn should know. Add your style, allergies, priorities, and key decisions. eydn uses this context in every conversation, plus the last 50 messages of chat history." },
+  { q: "How does the AI assistant remember my preferences?", a: "Go to Settings → Things Eydn should know. Add your style, allergies, priorities, and key decisions. Eydn uses this context in every conversation, plus the last 50 messages of chat history." },
   { q: "How do I set up my wedding website?", a: "Go to Wedding Website → Setup. Choose a URL slug, toggle the site on, upload a cover image, and add your story. Share the link (eydn.app/w/your-slug) with guests." },
-  { q: "Can I use eydn for my rehearsal dinner?", a: "Yes! There's a dedicated Rehearsal Dinner page in the sidebar where you can plan the venue, timeline, and guest list separately." },
+  { q: "Can I use Eydn for my rehearsal dinner?", a: "Yes! There's a dedicated Rehearsal Dinner page in the sidebar where you can plan the venue, timeline, and guest list separately." },
   { q: "How do I generate the day-of timeline?", a: "Go to Day-of Planner → enter your ceremony time → click Generate Timeline. It creates 18 events working backwards from your ceremony. You can then customize each event." },
   { q: "What's the Memory Plan?", a: "After 12 months post-wedding, your account becomes read-only. The Memory Plan ($29/year) keeps your wedding website live and your data fully accessible indefinitely." },
-  { q: "How do I add vendor photos and reviews?", a: "Click into any vendor's detail page. eydn automatically looks up their Google Business profile to show their photo, rating, reviews, and contact info." },
+  { q: "How do I add vendor photos and reviews?", a: "Click into any vendor's detail page. Eydn automatically looks up their Google Business profile to show their photo, rating, reviews, and contact info." },
   { q: "Can multiple people edit at the same time?", a: "Yes! Collaborators (partner or coordinator) can edit simultaneously. All changes sync in real-time. Use the Comments feature on tasks and vendors to coordinate." },
 ];
 
@@ -28,7 +28,7 @@ const GUIDE_SECTIONS = [
       { label: "Set your budget", desc: "36 line items are pre-populated. Go to Budget and fill in your estimated costs." },
       { label: "Create your guest list", desc: "Add guests manually or import via CSV. Set RSVP statuses, meals, and groups." },
       { label: "Invite your partner", desc: "Settings → Collaborators → enter their email as Partner role." },
-      { label: "Chat with eydn", desc: "Ask eydn anything about wedding planning. It knows your date, budget, vendors, and preferences." },
+      { label: "Chat with Eydn", desc: "Ask Eydn anything about wedding planning. It knows your date, budget, vendors, and preferences." },
     ],
   },
   {
@@ -87,7 +87,7 @@ export default function HelpPage() {
     <div className="max-w-3xl">
       <h1>Help & Support</h1>
       <p className="mt-1 text-[15px] text-muted">
-        Everything you need to make the most of eydn
+        Everything you need to make the most of Eydn
       </p>
 
       {/* Tabs */}
@@ -174,11 +174,11 @@ export default function HelpPage() {
       <div className="mt-12 card p-6 text-center">
         <h2 className="text-[18px] font-semibold text-plum">Still need help?</h2>
         <p className="mt-2 text-[14px] text-muted">
-          Chat with eydn for instant answers, or reach out to our support team.
+          Chat with Eydn for instant answers, or reach out to our support team.
         </p>
         <div className="mt-4 flex items-center justify-center gap-3">
           <Link href="/dashboard/chat" className="btn-primary btn-sm">
-            Chat with eydn
+            Chat with Eydn
           </Link>
           <a href="mailto:support@eydn.app" className="btn-ghost btn-sm">
             Email Support

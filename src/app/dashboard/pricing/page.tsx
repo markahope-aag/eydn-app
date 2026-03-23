@@ -31,7 +31,7 @@ export default function PricingPage() {
 
   return (
     <div className="max-w-lg mx-auto text-center">
-      <h1>Unlock eydn</h1>
+      <h1>Unlock Eydn</h1>
       <p className="mt-2 text-[15px] text-muted">
         Your free trial has ended. Get full access to plan your perfect wedding.
       </p>
@@ -50,7 +50,7 @@ export default function PricingPage() {
         <p className="mt-2 text-[15px] text-muted">One-time payment. 1 wedding. Forever.</p>
 
         <div className="mt-6 text-left space-y-3">
-          <Feature text="AI wedding assistant (Ask eydn)" />
+          <Feature text="AI wedding assistant (Ask Eydn)" />
           <Feature text="PDF day-of plan export" />
           <Feature text="File attachments on tasks and vendors" />
           <Feature text="Unlimited tasks, guests, and vendors" />

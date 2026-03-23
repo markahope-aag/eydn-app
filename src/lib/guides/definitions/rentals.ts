@@ -4,7 +4,7 @@ const rentals: GuideDefinition = {
   slug: "rentals",
   title: "Rentals",
   subtitle:
-    "Tables, chairs, linens, glassware, dance floors — rental logistics can get complicated fast. This questionnaire helps eydn build a complete rentals list with quantities so you can get accurate quotes and avoid the stress of forgotten items.",
+    "Tables, chairs, linens, glassware, dance floors — rental logistics can get complicated fast. This questionnaire helps Eydn build a complete rentals list with quantities so you can get accurate quotes and avoid the stress of forgotten items.",
   icon: "chair",
   integrations: ["vendor-brief", "chat-context"],
   outcome:

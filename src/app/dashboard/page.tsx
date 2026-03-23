@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   if (!wedding) {
     return (
       <div className="max-w-lg">
-        <h1>Welcome to eydn</h1>
+        <h1>Welcome to Eydn</h1>
         <p className="mt-2 text-[15px] text-muted">
           You haven&apos;t set up your wedding yet. Let&apos;s get started.
         </p>

@@ -20,7 +20,7 @@ const commands: Command[] = [
   { label: "Seating Chart", href: "/dashboard/seating", category: "Navigation" },
   { label: "Vision Board", href: "/dashboard/mood-board", category: "Navigation" },
   { label: "Day-of Planner", href: "/dashboard/day-of", category: "Navigation" },
-  { label: "Ask eydn", href: "/dashboard/chat", category: "Navigation" },
+  { label: "Ask Eydn", href: "/dashboard/chat", category: "Navigation" },
   { label: "Wedding Website", href: "/dashboard/website", category: "Navigation" },
   { label: "Settings", href: "/dashboard/settings", category: "Navigation" },
 
@@ -28,7 +28,7 @@ const commands: Command[] = [
   { label: "Add Guest", href: "/dashboard/guests", category: "Actions" },
   { label: "Add Vendor", href: "/dashboard/vendors", category: "Actions" },
   { label: "Add Task", href: "/dashboard/tasks", category: "Actions" },
-  { label: "Chat with eydn", href: "/dashboard/chat", category: "Actions" },
+  { label: "Chat with Eydn", href: "/dashboard/chat", category: "Actions" },
   { label: "Export Guest List", href: "/dashboard/guests", category: "Actions" },
   { label: "View Wedding Website", href: "/dashboard/website", category: "Actions" },
 ];

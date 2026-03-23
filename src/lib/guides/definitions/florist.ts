@@ -4,11 +4,11 @@ const florist: GuideDefinition = {
   slug: "florist",
   title: "Florist Booking",
   subtitle:
-    "Flowers touch almost every part of your day — ceremony, portraits, reception, and cake. This questionnaire helps eydn build a complete florist brief so you can approach vendors with clarity and get accurate quotes from the start.",
+    "Flowers touch almost every part of your day — ceremony, portraits, reception, and cake. This questionnaire helps Eydn build a complete florist brief so you can approach vendors with clarity and get accurate quotes from the start.",
   icon: "flower",
   integrations: ["vendor-brief", "chat-context"],
   outcome:
-    "Generates a vendor brief you can copy or send directly. If you haven't completed the Colors & Theme questionnaire, eydn will prompt you to do so for more accurate style matching.",
+    "Generates a vendor brief you can copy or send directly. If you haven't completed the Colors & Theme questionnaire, Eydn will prompt you to do so for more accurate style matching.",
   sections: [
     {
       title: "Basics",
@@ -46,7 +46,7 @@ const florist: GuideDefinition = {
               { value: "not-confirmed", label: "Not confirmed yet" },
             ],
           },
-          tip: "Outdoor ceremonies affect flower choice — some blooms wilt quickly in heat or direct sun. eydn will flag this when suggesting arrangements.",
+          tip: "Outdoor ceremonies affect flower choice — some blooms wilt quickly in heat or direct sun. Eydn will flag this when suggesting arrangements.",
         },
       ],
     },

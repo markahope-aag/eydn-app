@@ -4,7 +4,7 @@ export const decorGuide: GuideDefinition = {
   slug: "decor",
   title: "Decor Planning",
   subtitle:
-    "Decor is how your wedding becomes unmistakably yours. This questionnaire helps eydn understand the look you're going for, identify what you need, and flag anything that might be restricted by your venue before you get too attached to a vision.",
+    "Decor is how your wedding becomes unmistakably yours. This questionnaire helps Eydn understand the look you're going for, identify what you need, and flag anything that might be restricted by your venue before you get too attached to a vision.",
   icon: "lamp",
   integrations: ["mood-board", "vendor-brief", "chat-context"],
   sections: [
@@ -189,10 +189,10 @@ export const decorGuide: GuideDefinition = {
     {
       title: "Inspiration",
       description:
-        "eydn surfaces a curated decor inspiration board based on your answers. Save what feels right, skip what doesn't, and eydn refines as it learns your taste.",
+        "Eydn surfaces a curated decor inspiration board based on your answers. Save what feels right, skip what doesn't, and Eydn refines as it learns your taste.",
       questions: [],
     },
   ],
   outcome:
-    "Saves your decor profile and flags any potential venue conflicts. If you have a decorator booked, eydn generates a style brief they can work from. If you're DIYing, eydn adds relevant tasks and timelines to your planning checklist.",
+    "Saves your decor profile and flags any potential venue conflicts. If you have a decorator booked, Eydn generates a style brief they can work from. If you're DIYing, Eydn adds relevant tasks and timelines to your planning checklist.",
 };

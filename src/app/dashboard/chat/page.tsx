@@ -94,7 +94,7 @@ export default function ChatPage() {
         }
       }
     } catch {
-      toast.error("Failed to get response from eydn");
+      toast.error("Failed to get response from Eydn");
       setMessages((prev) => prev.filter((m) => m.id !== assistantId));
     } finally {
       setStreaming(false);
@@ -106,10 +106,10 @@ export default function ChatPage() {
   }
 
   return (
-    <Paywall feature="Ask eydn">
+    <Paywall feature="Ask Eydn">
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       <h1 className="flex-shrink-0">
-        Ask eydn
+        Ask Eydn
       </h1>
       <p className="mt-1 text-[15px] text-muted flex-shrink-0">
         Your AI wedding planning assistant
@@ -124,7 +124,7 @@ export default function ChatPage() {
             </div>
             <div className="bg-lavender rounded-[16px] rounded-tl-sm px-4 py-3 max-w-lg">
               <p className="text-[15px] text-muted">
-                Hi! I&apos;m eydn, your wedding guide. Ask me anything about
+                Hi! I&apos;m Eydn, your wedding guide. Ask me anything about
                 your wedding planning — I know your timeline, budget, vendors,
                 and guests!
               </p>
@@ -180,7 +180,7 @@ export default function ChatPage() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask eydn anything about your wedding..."
+          placeholder="Ask Eydn anything about your wedding..."
           className="flex-1 rounded-[10px] border-border px-4 py-2.5 text-[15px]"
           disabled={streaming}
         />

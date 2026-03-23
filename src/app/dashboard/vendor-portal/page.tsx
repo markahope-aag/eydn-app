@@ -154,9 +154,9 @@ function RegistrationForm({ onSuccess }: { onSuccess: (a: VendorAccount) => void
 
   return (
     <div className="max-w-lg">
-      <h1>Become an eydn Vendor</h1>
+      <h1>Become an Eydn Vendor</h1>
       <p className="mt-2 text-[15px] text-muted">
-        Join the eydn vendor network to get featured to couples planning their weddings.
+        Join the Eydn vendor network to get featured to couples planning their weddings.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">

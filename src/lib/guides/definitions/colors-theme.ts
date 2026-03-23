@@ -4,7 +4,7 @@ const colorsTheme: GuideDefinition = {
   slug: "colors-theme",
   title: "Wedding Colors & Theme",
   subtitle:
-    "Before you start booking vendors or pinning inspiration, it helps to have a shared sense of the look and feel you're going for. This questionnaire helps eydn understand your aesthetic so it can surface the right inspiration, guide vendor conversations, and keep your whole wedding visually consistent.",
+    "Before you start booking vendors or pinning inspiration, it helps to have a shared sense of the look and feel you're going for. This questionnaire helps Eydn understand your aesthetic so it can surface the right inspiration, guide vendor conversations, and keep your whole wedding visually consistent.",
   icon: "palette",
   integrations: ["mood-board", "chat-context"],
   outcome:
@@ -225,12 +225,12 @@ const colorsTheme: GuideDefinition = {
     {
       title: "Inspiration Images",
       description:
-        "Based on your answers, eydn surfaces a curated board of inspiration images tagged by vibe, color palette, and style. No input needed — just react.",
+        "Based on your answers, Eydn surfaces a curated board of inspiration images tagged by vibe, color palette, and style. No input needed — just react.",
       questions: [
         {
           id: "q15",
           label:
-            "From the images eydn shows you, which ones feel right?",
+            "From the images Eydn shows you, which ones feel right?",
           field: {
             kind: "select",
             options: [

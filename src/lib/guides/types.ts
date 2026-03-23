@@ -38,6 +38,6 @@ export type GuideDefinition = {
   icon: string;
   sections: Section[];
   integrations: GuideIntegration[];
-  /** What eydn does after the guide is completed */
+  /** What Eydn does after the guide is completed */
   outcome: string;
 };

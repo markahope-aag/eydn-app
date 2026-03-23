@@ -4,7 +4,7 @@ export const speechesGuide: GuideDefinition = {
   slug: "speeches",
   title: "Speeches",
   subtitle:
-    "Speeches are one of the most memorable parts of the day — for better or worse. This questionnaire helps eydn track who's speaking, keep things running on time, and make sure your speakers have everything they need well before the wedding day.",
+    "Speeches are one of the most memorable parts of the day — for better or worse. This questionnaire helps Eydn track who's speaking, keep things running on time, and make sure your speakers have everything they need well before the wedding day.",
   icon: "mic",
   integrations: ["day-of-timeline", "chat-context"],
   sections: [
@@ -40,7 +40,7 @@ export const speechesGuide: GuideDefinition = {
           id: "q3",
           label: "How many speeches are you planning?",
           field: { kind: "number", min: 0 },
-          tip: "eydn will use this to suggest a per-speaker time guide.",
+          tip: "Eydn will use this to suggest a per-speaker time guide.",
         },
       ],
     },
@@ -89,7 +89,7 @@ export const speechesGuide: GuideDefinition = {
               { value: "no", label: "No" },
             ],
           },
-          tip: "eydn can help with speech structure, opening lines, and tone — just ask in the chat.",
+          tip: "Eydn can help with speech structure, opening lines, and tone — just ask in the chat.",
         },
       ],
     },
@@ -117,7 +117,7 @@ export const speechesGuide: GuideDefinition = {
           field: {
             kind: "textarea",
             placeholder:
-              "This is for your reference and eydn's, not shared with speakers unless you choose to",
+              "This is for your reference and Eydn's, not shared with speakers unless you choose to",
             rows: 3,
           },
         },
@@ -199,10 +199,10 @@ export const speechesGuide: GuideDefinition = {
     {
       title: "Outreach Summary",
       description:
-        "eydn adds your speeches lineup to the day-of timeline and sends confirmed speakers a reminder as the wedding approaches.",
+        "Eydn adds your speeches lineup to the day-of timeline and sends confirmed speakers a reminder as the wedding approaches.",
       questions: [],
     },
   ],
   outcome:
-    "Adds each confirmed speaker to your day-of timeline with their allocated time slot. Flags any speakers who haven't confirmed yet. If anyone needs help with their speech, eydn's chat is ready to assist with structure, tone, and ideas.",
+    "Adds each confirmed speaker to your day-of timeline with their allocated time slot. Flags any speakers who haven't confirmed yet. If anyone needs help with their speech, Eydn's chat is ready to assist with structure, tone, and ideas.",
 };

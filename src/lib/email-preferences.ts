@@ -56,7 +56,7 @@ export function emailFooterHtml(unsubscribeToken: string, type: "marketing" | "d
 
   return `
     <div style="margin-top:32px;padding-top:16px;border-top:1px solid #EDE7DF;text-align:center;font-size:12px;color:#6B6B6B;line-height:1.6;">
-      <p>eydn — Your AI Wedding Planning Guide</p>
+      <p>Eydn — Your AI Wedding Planning Guide</p>
       <p style="margin-top:8px;">
         <a href="${unsubUrl}" style="color:#6B6B6B;text-decoration:underline;">Unsubscribe from these emails</a>
         &nbsp;·&nbsp;

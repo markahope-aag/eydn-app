@@ -273,13 +273,13 @@ export default function SettingsPage() {
 
       {/* Things eydn should know */}
       <div className="mt-6">
-        <h2 className="text-[18px] font-semibold text-plum">Things eydn should know <Tooltip text="Anything you write here is included as context every time you chat with eydn. Use it to store key decisions so you don't have to repeat yourself." wide /></h2>
+        <h2 className="text-[18px] font-semibold text-plum">Things Eydn should know <Tooltip text="Anything you write here is included as context every time you chat with Eydn. Use it to store key decisions so you don't have to repeat yourself." wide /></h2>
         <p className="mt-1 text-[12px] text-muted">
-          Key decisions and preferences that eydn will remember across all conversations. Add anything important — theme, allergies, must-haves, cultural traditions, etc.
+          Key decisions and preferences that Eydn will remember across all conversations. Add anything important — theme, allergies, must-haves, cultural traditions, etc.
         </p>
         <textarea
           value={keyDecisions}
-          aria-label="Things eydn should know"
+          aria-label="Things Eydn should know"
           onChange={(e) => setKeyDecisions(e.target.value)}
           onBlur={async () => {
             if (!weddingId) return;
@@ -290,7 +290,7 @@ export default function SettingsPage() {
                 body: JSON.stringify({ key_decisions: keyDecisions || null }),
               });
               if (!res.ok) throw new Error();
-              toast.success("Saved — eydn will remember this");
+              toast.success("Saved — Eydn will remember this");
             } catch {
               toast.error("Failed to save");
             }

@@ -11,7 +11,7 @@ function getResend(): Resend {
   return client;
 }
 
-const FROM = process.env.RESEND_FROM_EMAIL || "eydn <hello@eydn.app>";
+const FROM = process.env.RESEND_FROM_EMAIL || "Eydn <hello@eydn.app>";
 
 type EmailParams = {
   to: string;
@@ -55,7 +55,7 @@ export function getLifecycleEmail(
 
   const header = `
     <div style="background: linear-gradient(135deg, #2C3E2D, #D4A5A5); padding: 32px; text-align: center; border-radius: 16px 16px 0 0;">
-      <h1 style="color: white; font-size: 24px; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">eydn</h1>
+      <h1 style="color: white; font-size: 24px; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">Eydn</h1>
     </div>
   `;
 
@@ -67,7 +67,7 @@ export function getLifecycleEmail(
     ? emailFooterHtml(data.unsubscribeToken, "marketing")
     : `
     <div style="padding: 24px; text-align: center; color: #6B6B6B; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-      <p>eydn — Your AI Wedding Planning Guide</p>
+      <p>Eydn — Your AI Wedding Planning Guide</p>
       <p style="margin-top: 8px;"><a href="https://eydn.app/dashboard" style="color: #2C3E2D;">Go to Dashboard</a></p>
       <p style="margin-top: 8px;">Eydn App, 2921 Landmark Place, Suite 215, Madison, WI 53713</p>
     </div>
@@ -90,7 +90,7 @@ export function getLifecycleEmail(
         html: wrap(`
           <h2 style="color: #1A1A2E; font-size: 22px;">Congratulations!</h2>
           <p>Your wedding day has arrived (or just passed) — we hope it was everything you dreamed of.</p>
-          <p>Your eydn account will remain fully active for the next <strong>12 months</strong> so you can:</p>
+          <p>Your Eydn account will remain fully active for the next <strong>12 months</strong> so you can:</p>
           <ul style="padding-left: 20px;">
             <li>Download your complete guest list and vendor contacts</li>
             <li>Keep your wedding website live for guests to revisit photos</li>
@@ -102,10 +102,10 @@ export function getLifecycleEmail(
 
     case "download_reminder_1mo":
       return {
-        subject: `${partnerNames} — Your wedding data is safe with eydn`,
+        subject: `${partnerNames} — Your wedding data is safe with Eydn`,
         html: wrap(`
           <h2 style="color: #1A1A2E; font-size: 22px;">1 month post-wedding</h2>
-          <p>Hi ${partnerNames.split(" &amp; ")[0]}! Just a friendly reminder that all your wedding planning data is still available in your eydn dashboard.</p>
+          <p>Hi ${partnerNames.split(" &amp; ")[0]}! Just a friendly reminder that all your wedding planning data is still available in your Eydn dashboard.</p>
           <p>Now is a great time to:</p>
           <ul style="padding-left: 20px;">
             <li><strong>Export your guest list</strong> — perfect for thank-you card addresses</li>
@@ -124,7 +124,7 @@ export function getLifecycleEmail(
         html: wrap(`
           <h2 style="color: #1A1A2E; font-size: 22px;">Happy half-anniversary!</h2>
           <p>6 months since ${dateFormatted} — time flies!</p>
-          <p>Your eydn account is still fully active for another 6 months. After that, it will move to read-only mode.</p>
+          <p>Your Eydn account is still fully active for another 6 months. After that, it will move to read-only mode.</p>
           <p>We recommend downloading a backup of your data while everything is fresh:</p>
           <p style="text-align: center; margin-top: 24px;">
             <a href="https://eydn.app/dashboard/settings" style="display: inline-block; background: linear-gradient(135deg, #2C3E2D, #D4A5A5); color: white; padding: 12px 28px; border-radius: 999px; text-decoration: none; font-weight: 600;">Download My Data</a>
@@ -137,7 +137,7 @@ export function getLifecycleEmail(
         subject: `${partnerNames} — 3 months until your account archives`,
         html: wrap(`
           <h2 style="color: #1A1A2E; font-size: 22px;">Heads up — archiving in 3 months</h2>
-          <p>Your eydn account will move to <strong>read-only mode</strong> in about 3 months (12 months after your wedding on ${dateFormatted}).</p>
+          <p>Your Eydn account will move to <strong>read-only mode</strong> in about 3 months (12 months after your wedding on ${dateFormatted}).</p>
           <p>Before that happens, make sure to:</p>
           <ul style="padding-left: 20px;">
             <li>Download your complete wedding data</li>
@@ -156,7 +156,7 @@ export function getLifecycleEmail(
         subject: `${partnerNames} — Keep your wedding website alive`,
         html: wrap(`
           <h2 style="color: #1A1A2E; font-size: 22px;">Your wedding website doesn't have to go offline</h2>
-          <p>Your eydn account is approaching its 12-month post-wedding mark. Soon, your dashboard will become read-only and your wedding website will eventually go offline.</p>
+          <p>Your Eydn account is approaching its 12-month post-wedding mark. Soon, your dashboard will become read-only and your wedding website will eventually go offline.</p>
           <p>With the <strong>Memory Plan ($29/year)</strong>, you get:</p>
           <ul style="padding-left: 20px;">
             <li>Wedding website stays live — guests can always revisit it</li>
@@ -172,10 +172,10 @@ export function getLifecycleEmail(
 
     case "archive_notice":
       return {
-        subject: `${partnerNames} — Your eydn account is now read-only`,
+        subject: `${partnerNames} — Your Eydn account is now read-only`,
         html: wrap(`
           <h2 style="color: #1A1A2E; font-size: 22px;">Your account has been archived</h2>
-          <p>It's been 12 months since your wedding on ${dateFormatted}. Your eydn account is now in <strong>read-only mode</strong>.</p>
+          <p>It's been 12 months since your wedding on ${dateFormatted}. Your Eydn account is now in <strong>read-only mode</strong>.</p>
           <p>You can still:</p>
           <ul style="padding-left: 20px;">
             <li>View all your wedding data</li>
@@ -192,10 +192,10 @@ export function getLifecycleEmail(
 
     case "sunset_warning_21mo":
       return {
-        subject: `${partnerNames} — Your eydn data will be deleted in 3 months`,
+        subject: `${partnerNames} — Your Eydn data will be deleted in 3 months`,
         html: wrap(`
           <h2 style="color: #1A1A2E; font-size: 22px;">Important: Data deletion in 3 months</h2>
-          <p>Your eydn account data from your wedding on ${dateFormatted} will be <strong>permanently deleted in approximately 3 months</strong> (24 months post-wedding).</p>
+          <p>Your Eydn account data from your wedding on ${dateFormatted} will be <strong>permanently deleted in approximately 3 months</strong> (24 months post-wedding).</p>
           <p><strong>Please download your data now</strong> if you haven't already:</p>
           <p style="text-align: center; margin-top: 24px;">
             <a href="https://eydn.app/dashboard/settings" style="display: inline-block; background: #1A1A2E; color: white; padding: 12px 28px; border-radius: 999px; text-decoration: none; font-weight: 600;">Download My Data Now</a>
@@ -209,10 +209,10 @@ export function getLifecycleEmail(
 
     case "sunset_final":
       return {
-        subject: `${partnerNames} — Final notice: eydn data deletion`,
+        subject: `${partnerNames} — Final notice: Eydn data deletion`,
         html: wrap(`
           <h2 style="color: #1A1A2E; font-size: 22px;">Final notice</h2>
-          <p>Your eydn account data will be <strong>permanently deleted within the next few days</strong>.</p>
+          <p>Your Eydn account data will be <strong>permanently deleted within the next few days</strong>.</p>
           <p>This is your last chance to download your wedding planning data, guest list, vendor contacts, and photos.</p>
           <p style="text-align: center; margin-top: 24px;">
             <a href="https://eydn.app/dashboard/settings" style="display: inline-block; background: #A0204A; color: white; padding: 12px 28px; border-radius: 999px; text-decoration: none; font-weight: 600;">Download My Data Immediately</a>

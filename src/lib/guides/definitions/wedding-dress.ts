@@ -4,7 +4,7 @@ const weddingDress: GuideDefinition = {
   slug: "wedding-dress",
   title: "Wedding Dress",
   subtitle:
-    "Finding your dress is one of the most personal parts of wedding planning. This questionnaire helps eydn understand your style, narrow the options, and surface inspiration so that when you walk into a boutique, you already have a clear sense of what you're looking for.",
+    "Finding your dress is one of the most personal parts of wedding planning. This questionnaire helps Eydn understand your style, narrow the options, and surface inspiration so that when you walk into a boutique, you already have a clear sense of what you're looking for.",
   icon: "sparkles",
   integrations: ["mood-board", "chat-context"],
   outcome:
@@ -37,7 +37,7 @@ const weddingDress: GuideDefinition = {
           id: "q3",
           label: "When do you need the dress by?",
           field: { kind: "date" },
-          tip: "eydn will flag if your timeline is tight, most dresses take 4–6 months to order and alter.",
+          tip: "Eydn will flag if your timeline is tight, most dresses take 4–6 months to order and alter.",
         },
       ],
     },

@@ -62,7 +62,7 @@ export async function POST() {
         price_data: {
           currency: "usd",
           product_data: {
-            name: "eydn Wedding Planner",
+            name: "Eydn Wedding Planner",
             description: "Full access to all features for 1 wedding — AI chat, PDF exports, file attachments, and more.",
           },
           unit_amount: SUBSCRIPTION_PRICE * 100,

@@ -4,7 +4,7 @@ export const musicGuide: GuideDefinition = {
   slug: "music",
   title: "Music",
   subtitle:
-    "Music shapes the emotional arc of your whole day — the moment you walk down the aisle, the energy on the dance floor, the last song everyone sings together. This questionnaire helps eydn build a song shortlist, identify what to brief your DJ or band on, and make sure nothing important gets missed.",
+    "Music shapes the emotional arc of your whole day — the moment you walk down the aisle, the energy on the dance floor, the last song everyone sings together. This questionnaire helps Eydn build a song shortlist, identify what to brief your DJ or band on, and make sure nothing important gets missed.",
   icon: "music",
   integrations: ["vendor-brief", "day-of-timeline", "chat-context"],
   sections: [
@@ -207,10 +207,10 @@ export const musicGuide: GuideDefinition = {
     {
       title: "Outreach Summary",
       description:
-        "eydn compiles your answers into a ready-to-send brief covering budget, vibe, must-play and do-not-play lists, venue restrictions, and curfew.",
+        "Eydn compiles your answers into a ready-to-send brief covering budget, vibe, must-play and do-not-play lists, venue restrictions, and curfew.",
       questions: [],
     },
   ],
   outcome:
-    "Builds a song shortlist using the specific songs from your answers — a running list in the app you can add to, reorder, and share directly with your DJ or band. Generates a vendor brief you can copy or send straight from eydn — no reformatting needed. Adds a curfew reminder to your planning timeline if you flagged one.",
+    "Builds a song shortlist using the specific songs from your answers — a running list in the app you can add to, reorder, and share directly with your DJ or band. Generates a vendor brief you can copy or send straight from Eydn — no reformatting needed. Adds a curfew reminder to your planning timeline if you flagged one.",
 };

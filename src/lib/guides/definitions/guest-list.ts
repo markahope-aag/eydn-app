@@ -4,11 +4,11 @@ const guestList: GuideDefinition = {
   slug: "guest-list",
   title: "Guest List",
   subtitle:
-    "Let's figure out who's going to be there. This questionnaire helps eydn build your guest list, flag any capacity issues early, and keep track of who's confirmed, who's a maybe, and who shouldn't be seated next to each other.",
+    "Let's figure out who's going to be there. This questionnaire helps Eydn build your guest list, flag any capacity issues early, and keep track of who's confirmed, who's a maybe, and who shouldn't be seated next to each other.",
   icon: "clipboard",
   integrations: ["guest-list", "chat-context"],
   outcome:
-    "Your answers populate the guest list tab with groups and priority tiers. eydn flags any capacity issues and prompts you to review your maybe list if you're over the limit. Accessibility notes are saved to individual guest profiles.",
+    "Your answers populate the guest list tab with groups and priority tiers. Eydn flags any capacity issues and prompts you to review your maybe list if you're over the limit. Accessibility notes are saved to individual guest profiles.",
   sections: [
     {
       title: "Capacity & Ground Rules",
@@ -92,7 +92,7 @@ const guestList: GuideDefinition = {
     {
       title: "Build Your List",
       description:
-        "Don't worry about exact names yet — just think in groups. eydn will help you organise them.",
+        "Don't worry about exact names yet — just think in groups. Eydn will help you organise them.",
       questions: [
         {
           id: "q8",
@@ -141,7 +141,7 @@ const guestList: GuideDefinition = {
             min: 0,
             placeholder: "Estimated total guests",
           },
-          tip: "Auto-calculated by eydn where possible.",
+          tip: "Auto-calculated by Eydn where possible.",
         },
         {
           id: "q14",
@@ -154,7 +154,7 @@ const guestList: GuideDefinition = {
               { value: "at", label: "At capacity" },
             ],
           },
-          tip: "Auto-flagged by eydn based on venue capacity and estimated total.",
+          tip: "Auto-flagged by Eydn based on venue capacity and estimated total.",
         },
       ],
     },

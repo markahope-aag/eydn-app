@@ -411,7 +411,7 @@ export default async function WeddingWebsitePage({
         <p className="text-[11px] text-muted/40 pt-4">
           Made with love using{" "}
           <Link href="/" className="text-violet/60 hover:underline">
-            eydn
+            Eydn
           </Link>
         </p>
       </footer>

@@ -25,7 +25,7 @@ export default function SignInPage() {
         <div style={{ position: "absolute", inset: 0, opacity: 0.08, backgroundImage: "radial-gradient(circle at 30% 20%, #C9A84C 0%, transparent 50%), radial-gradient(circle at 70% 80%, #C9A84C 0%, transparent 50%)" }} />
         <div style={{ position: "relative", zIndex: 1 }}>
           <Link href="/" className={cormorant.className} style={{ fontSize: 28, fontWeight: 600, color: "#FAF6F1", textDecoration: "none" }}>
-            eydn
+            Eydn
           </Link>
           <p className={greatVibes.className} style={{ fontSize: 24, color: "#C9A84C", marginTop: 48 }}>
             Welcome back
@@ -63,7 +63,7 @@ export default function SignInPage() {
         {/* Mobile logo */}
         <div className="lg:hidden" style={{ marginBottom: 32, textAlign: "center" }}>
           <Link href="/" className={cormorant.className} style={{ fontSize: 24, fontWeight: 600, color: "#2C3E2D", textDecoration: "none" }}>
-            eydn
+            Eydn
           </Link>
         </div>
 

@@ -325,7 +325,7 @@ export default function GuestsPage() {
         <PdfPage size="A4" orientation="landscape" style={s.page}>
           <View style={s.header}>
             <Text style={s.title}>Guest List</Text>
-            <Text style={s.subtitle}>eydn wedding planner</Text>
+            <Text style={s.subtitle}>Eydn wedding planner</Text>
           </View>
           <View style={s.statsRow}>
             <Text style={s.stat}>Total: <Text style={s.statBold}>{guests.length}</Text></Text>

@@ -20,7 +20,7 @@ type TourStep = { title: string; description: string };
 
 const STEPS: TourStep[] = [
   {
-    title: "Welcome to eydn!",
+    title: "Welcome to Eydn!",
     description: "Your personal wedding planning assistant. We'll walk you through the key features to help you plan your perfect day.",
   },
   {
@@ -28,7 +28,7 @@ const STEPS: TourStep[] = [
     description: "Your planning timeline lives here. Tasks are organized by phase so you always know what to tackle next — from booking the venue to final details.",
   },
   {
-    title: "Ask eydn",
+    title: "Ask Eydn",
     description: "Have a question? Our AI assistant can help with vendor recommendations, etiquette advice, timeline suggestions, and more.",
   },
   {
@@ -37,7 +37,7 @@ const STEPS: TourStep[] = [
   },
   {
     title: "You're all set!",
-    description: "You're ready to start planning. Explore the dashboard, add your wedding details, and let eydn guide you every step of the way.",
+    description: "You're ready to start planning. Explore the dashboard, add your wedding details, and let Eydn guide you every step of the way.",
   },
 ];
 
