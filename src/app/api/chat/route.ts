@@ -67,16 +67,32 @@ export async function POST(request: Request) {
     .limit(50);
 
   // Get wedding context for system prompt
-  const [{ count: taskTotal }, { count: taskCompleted }, { count: vendorCount }, { count: guestCount }, { data: expenses }] =
+  const [{ count: taskTotal }, { count: taskCompleted }, { count: vendorCount }, { count: guestCount }, { data: expenses }, { data: guideData }] =
     await Promise.all([
       supabase.from("tasks").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id),
       supabase.from("tasks").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).eq("completed", true),
       supabase.from("vendors").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id),
       supabase.from("guests").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id),
       supabase.from("expenses").select("amount_paid").eq("wedding_id", wedding.id),
+      supabase.from("guide_responses").select("guide_slug, responses, completed").eq("wedding_id", wedding.id).eq("completed", true),
     ]);
 
   const budgetSpent = (expenses || []).reduce((sum: number, e: { amount_paid: number }) => sum + (e.amount_paid || 0), 0);
+
+  // Build guide summary for AI context
+  let guidesSummary: string | undefined;
+  if (guideData && guideData.length > 0) {
+    const lines: string[] = [];
+    for (const g of guideData as Array<{ guide_slug: string; responses: Record<string, unknown> }>) {
+      const r = g.responses;
+      const entries = Object.entries(r).filter(([, v]) => v != null && v !== "" && !(Array.isArray(v) && v.length === 0));
+      if (entries.length > 0) {
+        const summary = entries.slice(0, 8).map(([, v]) => Array.isArray(v) ? v.join(", ") : String(v)).join(" | ");
+        lines.push(`- ${g.guide_slug}: ${summary}`);
+      }
+    }
+    if (lines.length > 0) guidesSummary = lines.join("\n");
+  }
 
   const systemPrompt = buildEdynSystemPrompt({
     wedding,
@@ -84,6 +100,7 @@ export async function POST(request: Request) {
     vendorCount: vendorCount ?? 0,
     guestCount: guestCount ?? 0,
     budgetSpent,
+    guidesSummary,
   });
 
   // Build messages for Claude

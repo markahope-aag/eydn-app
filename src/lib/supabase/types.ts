@@ -675,6 +675,47 @@ export type Database = {
           },
         ];
       };
+      guide_responses: {
+        Row: {
+          id: string;
+          wedding_id: string;
+          guide_slug: string;
+          section_index: number;
+          responses: Record<string, unknown>;
+          completed: boolean;
+          vendor_brief: Record<string, unknown> | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          wedding_id: string;
+          guide_slug: string;
+          section_index?: number;
+          responses?: Record<string, unknown>;
+          completed?: boolean;
+          vendor_brief?: Record<string, unknown> | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          section_index?: number;
+          responses?: Record<string, unknown>;
+          completed?: boolean;
+          vendor_brief?: Record<string, unknown> | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "guide_responses_wedding_id_fkey";
+            columns: ["wedding_id"];
+            isOneToOne: false;
+            referencedRelation: "weddings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_roles: {
         Row: {
           id: string;

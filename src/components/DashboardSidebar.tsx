@@ -18,6 +18,7 @@ const navItems = [
   { href: "/dashboard/wedding-party", label: "Wedding Party" },
   { href: "/dashboard/seating", label: "Seating Chart" },
   { href: "/dashboard/mood-board", label: "Vision Board" },
+  { href: "/dashboard/guides", label: "Planning Guides" },
   { href: "/dashboard/day-of", label: "Day-of Planner" },
   { href: "/dashboard/rehearsal-dinner", label: "Rehearsal Dinner" },
   { href: "/dashboard/chat", label: "Ask eydn" },

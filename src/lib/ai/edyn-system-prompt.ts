@@ -8,6 +8,7 @@ type WeddingContext = {
   vendorCount: number;
   guestCount: number;
   budgetSpent: number;
+  guidesSummary?: string;
 };
 
 export function buildEdynSystemPrompt(ctx: WeddingContext): string {
@@ -49,6 +50,9 @@ ${wedding.style_description ? `- Style: ${wedding.style_description}` : ""}
 ${wedding.key_decisions ? `
 ## Key Decisions & Preferences
 ${wedding.key_decisions}
+` : ""}${ctx.guidesSummary ? `
+## Planning Guide Answers
+${ctx.guidesSummary}
 ` : ""}
 ## Guidelines
 - Use the wedding context to give personalized advice
