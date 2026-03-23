@@ -65,7 +65,7 @@ export function getLifecycleEmail(
     <div style="padding: 24px; text-align: center; color: #6B6B6B; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
       <p>eydn — Your AI Wedding Planning Guide</p>
       <p style="margin-top: 8px;"><a href="https://eydn.app/dashboard" style="color: #2C3E2D;">Go to Dashboard</a></p>
-      <p style="margin-top: 8px;">Asymmetric Marketing Group LLC, 100 S Baldwin St Ste 304, Madison WI 53703</p>
+      <p style="margin-top: 8px;">Eydn App, 2921 Landmark Place, Suite 215, Madison, WI 53713</p>
     </div>
   `;
 

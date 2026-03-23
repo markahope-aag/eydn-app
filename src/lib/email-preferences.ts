@@ -64,7 +64,7 @@ export function emailFooterHtml(unsubscribeToken: string, type: "marketing" | "d
         &nbsp;·&nbsp;
         <a href="https://eydn.app/dashboard/settings" style="color:#6B6B6B;text-decoration:underline;">Manage preferences</a>
       </p>
-      <p style="margin-top:8px;">Asymmetric Marketing Group LLC, 100 S Baldwin St Ste 304, Madison WI 53703</p>
+      <p style="margin-top:8px;">Eydn App, 2921 Landmark Place, Suite 215, Madison, WI 53713</p>
     </div>
   `;
 }
