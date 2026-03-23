@@ -30,6 +30,9 @@ function SectionDivider() {
   );
 }
 
+// Revalidate public wedding websites every 5 minutes
+export const revalidate = 300;
+
 export default async function WeddingWebsitePage({
   params,
   searchParams,

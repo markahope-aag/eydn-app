@@ -65,5 +65,7 @@ export async function GET(request: Request) {
     supabase.from("vendor_analytics").insert(vendorAccountIds).then(() => {});
   }
 
-  return NextResponse.json(sorted);
+  return NextResponse.json(sorted, {
+    headers: { "Cache-Control": "private, max-age=300, stale-while-revalidate=600" },
+  });
 }

@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, invalidateWeddingCache } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { pickFields, safeParseJSON, isParseError } from "@/lib/validation";
 
@@ -15,7 +15,7 @@ export async function PATCH(
 ) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
-  const { wedding, supabase } = result;
+  const { wedding, supabase, userId } = result;
 
   const { id } = await ctx.params;
 
@@ -45,6 +45,9 @@ export async function PATCH(
   if (error) {
     console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+
+  // Invalidate cached wedding data so subsequent requests get fresh data
+  invalidateWeddingCache(userId);
 
   return NextResponse.json(data);
 }

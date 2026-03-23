@@ -58,5 +58,7 @@ export async function GET() {
     onboarding_completed: onboardingCompleted ?? 0,
     conversion_rate: conversionRate,
     total_ai_chats: totalChatMessages ?? 0,
+  }, {
+    headers: { "Cache-Control": "private, max-age=60, stale-while-revalidate=120" },
   });
 }

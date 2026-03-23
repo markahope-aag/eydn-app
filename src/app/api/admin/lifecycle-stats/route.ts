@@ -69,5 +69,7 @@ export async function GET() {
     memory_plan_subscribers: memoryPlanCount ?? 0,
     emails_sent: emailCounts,
     upcoming_sunsets: sunsetList,
+  }, {
+    headers: { "Cache-Control": "private, max-age=60, stale-while-revalidate=120" },
   });
 }

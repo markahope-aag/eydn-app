@@ -17,6 +17,17 @@ type AuthError = {
   error: NextResponse;
 };
 
+// ─── In-memory cache for wedding lookups ─────────────────────────────────────
+// Avoids hitting the DB on every API call for the same user within 60 seconds.
+type CachedResult = { wedding: Wedding; role: "owner" | "partner" | "coordinator"; expiresAt: number };
+const weddingCache = new Map<string, CachedResult>();
+const CACHE_TTL = 60_000; // 60 seconds
+
+/** Clear cached wedding data for a user (call after wedding updates). */
+export function invalidateWeddingCache(userId: string) {
+  weddingCache.delete(userId);
+}
+
 export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
   const { userId } = await auth();
   if (!userId) {
@@ -24,6 +35,12 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
   }
 
   const supabase = createSupabaseAdmin();
+
+  // Check cache first
+  const cached = weddingCache.get(userId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return { wedding: cached.wedding, supabase, userId, role: cached.role };
+  }
 
   // 1. Try direct ownership
   const { data: owned } = await supabase
@@ -33,6 +50,7 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
     .single();
 
   if (owned) {
+    weddingCache.set(userId, { wedding: owned as Wedding, role: "owner", expiresAt: Date.now() + CACHE_TTL });
     return { wedding: owned as Wedding, supabase, userId, role: "owner" };
   }
 
@@ -52,12 +70,9 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
       .single();
 
     if (wedding) {
-      return {
-        wedding: wedding as Wedding,
-        supabase,
-        userId,
-        role: collab.role as "partner" | "coordinator",
-      };
+      const role = collab.role as "partner" | "coordinator";
+      weddingCache.set(userId, { wedding: wedding as Wedding, role, expiresAt: Date.now() + CACHE_TTL });
+      return { wedding: wedding as Wedding, supabase, userId, role };
     }
   }
 
@@ -89,12 +104,9 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
           .single();
 
         if (wedding) {
-          return {
-            wedding: wedding as Wedding,
-            supabase,
-            userId,
-            role: pending.role as "partner" | "coordinator",
-          };
+          const role = pending.role as "partner" | "coordinator";
+          weddingCache.set(userId, { wedding: wedding as Wedding, role, expiresAt: Date.now() + CACHE_TTL });
+          return { wedding: wedding as Wedding, supabase, userId, role };
         }
       }
     }
