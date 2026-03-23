@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
 import { sendEmail, getLifecycleEmail } from "@/lib/email";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -69,8 +70,11 @@ export async function POST(request: Request) {
   const result = await requireAdmin();
   if ("error" in result) return result.error;
 
-  const body = await request.json();
-  const { to, templateType } = body;
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+  const to = body.to as string | undefined;
+  const templateType = body.templateType as string | undefined;
 
   if (!to || !templateType) {
     return NextResponse.json({ error: "to and templateType are required" }, { status: 400 });

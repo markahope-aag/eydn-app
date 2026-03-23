@@ -30,6 +30,17 @@ export async function PATCH(request: Request) {
   if (isParseError(parsed)) return parsed;
   const body = parsed;
 
+  // Validate slug format
+  if (body.slug !== undefined && body.slug !== null) {
+    const slug = body.slug as string;
+    if (!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(slug)) {
+      return NextResponse.json(
+        { error: "URL must be 3-50 characters, lowercase letters, numbers, and hyphens only" },
+        { status: 400 }
+      );
+    }
+  }
+
   // If slug is being set/changed, check uniqueness
   if (body.slug && body.slug !== wedding.website_slug) {
     const { data: existing } = await supabase
@@ -65,7 +76,7 @@ export async function PATCH(request: Request) {
     .eq("id", wedding.id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

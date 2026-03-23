@@ -1,6 +1,52 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
+/** Strip leading characters that trigger formula execution in Excel/Sheets. */
+function sanitizeCell(value: string): string {
+  let s = value.trim();
+  // Remove wrapping quotes
+  if (s.length >= 2 && s[0] === '"' && s[s.length - 1] === '"') {
+    s = s.slice(1, -1).replace(/""/g, '"');
+  }
+  // Strip formula-triggering prefixes
+  while (s.length > 0 && "=+@-".includes(s[0])) {
+    s = s.slice(1);
+  }
+  return s.trim();
+}
+
+/** Parse a CSV line respecting quoted fields (handles commas inside quotes). */
+function parseCsvLine(line: string): string[] {
+  const fields: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (i + 1 < line.length && line[i + 1] === '"') {
+          current += '"';
+          i++; // skip escaped quote
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ",") {
+      fields.push(current);
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  fields.push(current);
+  return fields.map(sanitizeCell);
+}
+
 export async function POST(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
@@ -20,7 +66,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "CSV must have a header row and at least one data row" }, { status: 400 });
   }
 
-  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+  const headers = parseCsvLine(lines[0]).map((h) => h.toLowerCase());
   const nameIdx = headers.findIndex((h) => h === "name");
   const emailIdx = headers.findIndex((h) => h === "email");
   const groupIdx = headers.findIndex((h) => h === "group" || h === "group_name");
@@ -31,7 +77,7 @@ export async function POST(request: Request) {
 
   const guests = [];
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(",").map((c) => c.trim());
+    const cols = parseCsvLine(lines[i]);
     const name = cols[nameIdx];
     if (!name) continue;
 
@@ -50,7 +96,8 @@ export async function POST(request: Request) {
   const { error } = await supabase.from("guests").insert(guests);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[IMPORT] Insert failed:", error.message);
+    return NextResponse.json({ error: "Failed to import guests" }, { status: 500 });
   }
 
   return NextResponse.json({ imported: guests.length }, { status: 201 });

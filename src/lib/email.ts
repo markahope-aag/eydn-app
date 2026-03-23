@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { escapeHtml } from "@/lib/validation";
 
 let client: Resend | null = null;
 
@@ -46,8 +47,10 @@ export function getLifecycleEmail(
   emailType: string,
   data: { partnerNames: string; weddingDate: string; daysUntilArchive?: number; exportUrl?: string }
 ): { subject: string; html: string } | null {
-  const { partnerNames, weddingDate } = data;
-  const dateFormatted = new Date(weddingDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const partnerNames = escapeHtml(data.partnerNames);
+  const dateFormatted = escapeHtml(
+    new Date(data.weddingDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+  );
 
   const header = `
     <div style="background: linear-gradient(135deg, #2C3E2D, #D4A5A5); padding: 32px; text-align: center; border-radius: 16px 16px 0 0;">
@@ -89,12 +92,12 @@ export function getLifecycleEmail(
         `),
       };
 
-    case "download_reminder_3mo":
+    case "download_reminder_1mo":
       return {
         subject: `${partnerNames} — Your wedding data is safe with eydn`,
         html: wrap(`
-          <h2 style="color: #1A1A2E; font-size: 22px;">3 months post-wedding</h2>
-          <p>Hi ${partnerNames.split(" & ")[0]}! Just a friendly reminder that all your wedding planning data is still available in your eydn dashboard.</p>
+          <h2 style="color: #1A1A2E; font-size: 22px;">1 month post-wedding</h2>
+          <p>Hi ${partnerNames.split(" &amp; ")[0]}! Just a friendly reminder that all your wedding planning data is still available in your eydn dashboard.</p>
           <p>Now is a great time to:</p>
           <ul style="padding-left: 20px;">
             <li><strong>Export your guest list</strong> — perfect for thank-you card addresses</li>

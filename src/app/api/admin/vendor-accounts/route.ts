@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -22,7 +23,7 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data);
@@ -33,8 +34,12 @@ export async function PATCH(request: Request) {
   if ("error" in result) return result.error;
   const { supabase } = result;
 
-  const body = await request.json();
-  const { id, status, is_preferred } = body;
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+  const id = body.id as string | undefined;
+  const status = body.status as string | undefined;
+  const is_preferred = body.is_preferred as boolean | undefined;
 
   if (!id) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
@@ -56,7 +61,7 @@ export async function PATCH(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data);

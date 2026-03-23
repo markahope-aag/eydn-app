@@ -8,16 +8,30 @@ export async function GET() {
   const { supabase } = result;
 
   const client = await clerkClient();
-  const clerkUsers = await client.users.getUserList({ limit: 100 });
 
-  // Signups in last 7 days
+  // Paginate through all Clerk users to get accurate counts
+  const allUsers: Array<{ createdAt: number; lastSignInAt: number | null }> = [];
+  let offset = 0;
+  const pageSize = 500;
+  let totalCount = 0;
+
+  let hasMore = true;
+  while (hasMore) {
+    const page = await client.users.getUserList({ limit: pageSize, offset });
+    totalCount = page.totalCount;
+    for (const u of page.data) {
+      allUsers.push({ createdAt: u.createdAt, lastSignInAt: u.lastSignInAt });
+    }
+    if (allUsers.length >= totalCount || page.data.length < pageSize) {
+      hasMore = false;
+    } else {
+      offset += pageSize;
+    }
+  }
+
   const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const recentSignups = clerkUsers.data.filter(
-    (u) => u.createdAt > sevenDaysAgo
-  ).length;
-
-  // Active in last 7 days (signed in)
-  const activeRecently = clerkUsers.data.filter(
+  const recentSignups = allUsers.filter((u) => u.createdAt > sevenDaysAgo).length;
+  const activeRecently = allUsers.filter(
     (u) => u.lastSignInAt && u.lastSignInAt > sevenDaysAgo
   ).length;
 
@@ -31,14 +45,13 @@ export async function GET() {
     supabase.from("questionnaire_responses").select("*", { count: "exact", head: true }).eq("completed", true),
   ]);
 
-  const totalSubscribers = clerkUsers.data.length;
   const withEvents = totalEvents ?? 0;
-  const conversionRate = totalSubscribers > 0
-    ? Math.round((withEvents / totalSubscribers) * 100)
+  const conversionRate = totalCount > 0
+    ? Math.round((withEvents / totalCount) * 100)
     : 0;
 
   return NextResponse.json({
-    total_subscribers: totalSubscribers,
+    total_subscribers: totalCount,
     new_signups_7d: recentSignups,
     active_users_7d: activeRecently,
     total_events: withEvents,

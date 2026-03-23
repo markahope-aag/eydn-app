@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
-import { pickFields } from "@/lib/validation";
+import { pickFields, safeParseJSON, isParseError } from "@/lib/validation";
 
 const ALLOWED_FIELDS = [
   "name", "category", "description", "website", "phone", "email",
@@ -17,7 +17,9 @@ export async function PATCH(
   const { supabase } = result;
 
   const { id } = await ctx.params;
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
   const updates = pickFields(body, ALLOWED_FIELDS);
 
   const { data, error } = await supabase
@@ -28,7 +30,7 @@ export async function PATCH(
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data);
@@ -50,7 +52,7 @@ export async function DELETE(
     .eq("id", id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

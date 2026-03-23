@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -13,7 +14,7 @@ export async function GET() {
     .order("name", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data);
@@ -24,29 +25,31 @@ export async function POST(request: Request) {
   if ("error" in result) return result.error;
   const { supabase } = result;
 
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
   const { data, error } = await supabase
     .from("suggested_vendors")
     .insert({
-      name: body.name,
-      category: body.category,
-      description: body.description || null,
-      website: body.website || null,
-      phone: body.phone || null,
-      email: body.email || null,
-      address: body.address || null,
-      city: body.city,
-      state: body.state,
-      zip: body.zip || null,
-      country: body.country || "US",
-      price_range: body.price_range || null,
-      featured: body.featured || false,
+      name: body.name as string,
+      category: body.category as string,
+      description: (body.description as string) || null,
+      website: (body.website as string) || null,
+      phone: (body.phone as string) || null,
+      email: (body.email as string) || null,
+      address: (body.address as string) || null,
+      city: body.city as string,
+      state: body.state as string,
+      zip: (body.zip as string) || null,
+      country: (body.country as string) || "US",
+      price_range: (body.price_range as "$" | "$$" | "$$$" | "$$$$") || null,
+      featured: (body.featured as boolean) || false,
     })
     .select()
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data, { status: 201 });

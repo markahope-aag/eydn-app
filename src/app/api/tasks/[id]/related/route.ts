@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function GET(
   _request: Request,
@@ -17,7 +18,7 @@ export async function GET(
     .eq("task_id", id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data);
@@ -32,18 +33,20 @@ export async function POST(
   const { supabase } = result;
 
   const { id } = await ctx.params;
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
 
   // Create bidirectional link
   const { error } = await supabase
     .from("related_tasks")
     .insert([
-      { task_id: id, related_task_id: body.related_task_id },
-      { task_id: body.related_task_id, related_task_id: id },
+      { task_id: id, related_task_id: body.related_task_id as string },
+      { task_id: body.related_task_id as string, related_task_id: id },
     ]);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true }, { status: 201 });

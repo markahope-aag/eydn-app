@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -12,7 +13,7 @@ export async function GET() {
     .order("price_monthly", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data);
@@ -23,25 +24,29 @@ export async function POST(request: Request) {
   if ("error" in result) return result.error;
   const { supabase } = result;
 
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+
+  const priceMonthly = body.price_monthly as number;
 
   const { data, error } = await supabase
     .from("placement_tiers")
     .insert({
-      name: body.name,
-      description: body.description || null,
-      price_monthly: body.price_monthly,
-      price_quarterly: body.price_quarterly ?? Math.round(body.price_monthly * 3 * 0.9),
-      price_annual: body.price_annual ?? Math.round(body.price_monthly * 12 * 0.8),
-      features: body.features || [],
-      sort_order: body.sort_order ?? 0,
+      name: body.name as string,
+      description: (body.description as string) || null,
+      price_monthly: priceMonthly,
+      price_quarterly: (body.price_quarterly as number) ?? Math.round(priceMonthly * 3 * 0.9),
+      price_annual: (body.price_annual as number) ?? Math.round(priceMonthly * 12 * 0.8),
+      features: (body.features as string[]) || [],
+      sort_order: (body.sort_order as number) ?? 0,
       active: body.active !== false,
     })
     .select()
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data, { status: 201 });
@@ -52,8 +57,10 @@ export async function PATCH(request: Request) {
   if ("error" in result) return result.error;
   const { supabase } = result;
 
-  const body = await request.json();
-  const { id, ...updates } = body;
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+  const { id, ...updates } = body as Record<string, unknown> & { id?: string };
 
   if (!id) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
@@ -89,7 +96,7 @@ export async function PATCH(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data);

@@ -46,6 +46,21 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.clerk.accounts.dev",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://pnclblivqpakijkerykn.supabase.co https://places.googleapis.com https://images.unsplash.com https://*.pinimg.com https://i.pravatar.cc https://img.clerk.com",
+              "font-src 'self' data:",
+              "connect-src 'self' https://pnclblivqpakijkerykn.supabase.co https://*.clerk.accounts.dev https://api.stripe.com https://*.upstash.io",
+              "frame-src 'self' https://js.stripe.com https://*.clerk.accounts.dev",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join("; "),
+          },
         ],
       },
     ];

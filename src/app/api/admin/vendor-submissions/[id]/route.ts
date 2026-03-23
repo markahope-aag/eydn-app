@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function PATCH(
   request: Request,
@@ -10,7 +11,9 @@ export async function PATCH(
   const { supabase } = result;
 
   const { id } = await ctx.params;
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
 
   // If approving, also add to suggested_vendors
   if (body.status === "approved") {
@@ -36,11 +39,11 @@ export async function PATCH(
 
   const { error } = await supabase
     .from("vendor_submissions")
-    .update({ status: body.status })
+    .update({ status: body.status as "pending" | "approved" | "rejected" })
     .eq("id", id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

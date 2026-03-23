@@ -93,10 +93,10 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceData | null
     if (!res.ok) return null;
     const place = await res.json();
 
-    // Get first photo URL if available
+    // Store photo reference — proxied through /api/places-photo to avoid exposing API key
     let photoUrl: string | null = null;
     if (place.photos?.[0]?.name) {
-      photoUrl = `${BASE_URL}/${place.photos[0].name}/media?maxWidthPx=400&key=${API_KEY}`;
+      photoUrl = `/api/places-photo?ref=${encodeURIComponent(place.photos[0].name)}`;
     }
 
     return {

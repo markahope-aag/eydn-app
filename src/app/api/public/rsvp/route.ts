@@ -23,6 +23,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
+  const ALLOWED_RSVP = ["accepted", "declined", "maybe", "pending"];
+  if (!ALLOWED_RSVP.includes(rsvp_status)) {
+    return NextResponse.json({ error: "Invalid RSVP status" }, { status: 400 });
+  }
+
+  if (meal_preference && (typeof meal_preference !== "string" || meal_preference.length > 200)) {
+    return NextResponse.json({ error: "Meal preference too long" }, { status: 400 });
+  }
+
+  if (plus_one_name && (typeof plus_one_name !== "string" || plus_one_name.length > 200)) {
+    return NextResponse.json({ error: "Plus-one name too long" }, { status: 400 });
+  }
+
   // Look up token
   const { data: rsvpTokenRaw, error: tokenError } = await supabase
     .from("rsvp_tokens")
@@ -47,7 +60,8 @@ export async function POST(request: Request) {
     .eq("id", rsvpToken.guest_id);
 
   if (guestError) {
-    return NextResponse.json({ error: guestError.message }, { status: 500 });
+    console.error("[RSVP] Guest update failed:", guestError.message);
+    return NextResponse.json({ error: "Failed to save RSVP" }, { status: 500 });
   }
 
   // Mark token as responded
@@ -60,7 +74,8 @@ export async function POST(request: Request) {
     .eq("id", rsvpToken.id);
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
+    console.error("[RSVP] Token update failed:", updateError.message);
+    return NextResponse.json({ error: "Failed to save RSVP" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

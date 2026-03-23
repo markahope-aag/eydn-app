@@ -2,6 +2,7 @@ import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { requirePremium } from "@/lib/subscription";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 import { getClaudeClient } from "@/lib/ai/claude-client";
 import { buildEdynSystemPrompt } from "@/lib/ai/edyn-system-prompt";
 import type { Database } from "@/lib/supabase/types";
@@ -38,11 +39,16 @@ export async function POST(request: Request) {
   const { wedding: weddingData, supabase } = result;
 
   const wedding = weddingData as Wedding;
-  const body = await request.json();
-  const userMessage = body.message;
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const userMessage = parsed.message as string | undefined;
 
   if (!userMessage?.trim()) {
     return NextResponse.json({ error: "Message required" }, { status: 400 });
+  }
+
+  if (typeof userMessage !== "string" || userMessage.length > 10000) {
+    return NextResponse.json({ error: "Message too long (max 10,000 characters)" }, { status: 400 });
   }
 
   // Save user message

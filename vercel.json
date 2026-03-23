@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/lifecycle",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/storage-cleanup",
+      "schedule": "0 5 * * 0"
     }
   ]
 }

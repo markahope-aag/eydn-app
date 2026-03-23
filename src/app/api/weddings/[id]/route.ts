@@ -1,6 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { pickFields } from "@/lib/validation";
+import { pickFields, safeParseJSON, isParseError } from "@/lib/validation";
 
 const ALLOWED_FIELDS = [
   "partner1_name", "partner2_name", "date", "venue", "budget",
@@ -23,7 +23,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
   const updates = pickFields(body, ALLOWED_FIELDS);
 
   if (Object.keys(updates).length === 0) {
@@ -41,7 +43,7 @@ export async function PATCH(
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data);

@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function POST(request: Request) {
   const { userId } = await auth();
@@ -29,8 +30,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json();
-  const { tier_id, billing_period } = body;
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+  const tier_id = body.tier_id as string | undefined;
+  const billing_period = body.billing_period as string | undefined;
 
   if (!tier_id || !billing_period) {
     return NextResponse.json(

@@ -67,10 +67,22 @@ export async function GET(request: Request) {
   const { data, error } = await query.order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  // Generate signed URLs (1 hour expiry) for each attachment
+  const withUrls = await Promise.all(
+    ((data || []) as Array<{ file_url: string; [key: string]: unknown }>).map(async (a) => {
+      // If file_url is already a full URL (legacy public bucket), pass through
+      if (a.file_url.startsWith("http")) return a;
+      const { data: signed } = await supabase.storage
+        .from("attachments")
+        .createSignedUrl(a.file_url, 3600);
+      return { ...a, file_url: signed?.signedUrl || a.file_url };
+    })
+  );
+
+  return NextResponse.json(withUrls);
 }
 
 export async function POST(request: Request) {
@@ -129,7 +141,7 @@ export async function POST(request: Request) {
 
   // If bucket doesn't exist, create it and retry
   if (uploadError?.message?.includes("not found") || uploadError?.message?.includes("Bucket")) {
-    await supabase.storage.createBucket("attachments", { public: true });
+    await supabase.storage.createBucket("attachments", { public: false });
     const retry = await supabase.storage
       .from("attachments")
       .upload(fileName, fileBuffer, {
@@ -144,9 +156,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Upload failed: ${uploadError.message}` }, { status: 500 });
   }
 
-  const { data: urlData } = supabase.storage
-    .from("attachments")
-    .getPublicUrl(fileName);
+  // Store the storage path (not a public URL) — signed URLs are generated on demand
+  const storagePath = fileName;
 
   const { data, error } = await supabase
     .from("attachments")
@@ -155,7 +166,7 @@ export async function POST(request: Request) {
       entity_type: entityType as "task" | "vendor",
       entity_id: entityId,
       file_name: file.name,
-      file_url: urlData.publicUrl,
+      file_url: storagePath,
       file_size: file.size,
       mime_type: file.type || null,
     })
@@ -163,8 +174,16 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
-  return NextResponse.json(data, { status: 201 });
+  // Return a signed URL so callers (mood board, website) can use it immediately
+  const { data: signed } = await supabase.storage
+    .from("attachments")
+    .createSignedUrl(storagePath, 3600);
+
+  return NextResponse.json(
+    { ...data, file_url: signed?.signedUrl || storagePath },
+    { status: 201 }
+  );
 }

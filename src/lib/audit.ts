@@ -30,7 +30,9 @@ export function logActivity(
       entity_name: params.entityName || null,
       details: params.details || null,
     })
-    .then(() => {});
+    .then(({ error }) => {
+      if (error) console.error("[AUDIT] Failed to log activity:", error.message);
+    });
 }
 
 /**

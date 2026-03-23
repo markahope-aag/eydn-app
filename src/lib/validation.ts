@@ -47,6 +47,33 @@ export function isValidUrl(value: unknown): boolean {
   }
 }
 
+/** Check that a URL is safe for server-side fetching (no SSRF). */
+export function isSafeExternalUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return false;
+
+    const hostname = url.hostname.toLowerCase();
+
+    // Block localhost and loopback
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") return false;
+
+    // Block private/internal IP ranges
+    if (hostname.startsWith("10.") || hostname.startsWith("192.168.")) return false;
+    if (/^172\.(1[6-9]|2\d|3[01])\./.test(hostname)) return false;
+
+    // Block link-local and metadata endpoints
+    if (hostname.startsWith("169.254.") || hostname === "metadata.google.internal") return false;
+
+    // Block 0.0.0.0
+    if (hostname === "0.0.0.0") return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Validate a number is finite and optionally within a range. */
 export function isValidNumber(value: unknown, min?: number, max?: number): value is number {
   if (typeof value !== "number" || !isFinite(value)) return false;
@@ -64,6 +91,16 @@ export function isValidDate(value: unknown): boolean {
 /** Validate a boolean. */
 export function isValidBoolean(value: unknown): value is boolean {
   return typeof value === "boolean";
+}
+
+/** Escape a string for safe interpolation into HTML. */
+export function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /** Return a 400 error response for validation failures. */

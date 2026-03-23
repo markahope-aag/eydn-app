@@ -1,6 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { isValidUrl } from "@/lib/validation";
+import { isValidUrl, isSafeExternalUrl, safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -16,7 +16,7 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data);
@@ -27,12 +27,17 @@ export async function POST(request: Request) {
   if ("error" in result) return result.error;
   const { wedding, supabase } = result;
 
-  const body = await request.json();
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
 
   // Support both image upload URL and direct URL
-  const { image_url, caption, category, location } = body;
+  const image_url = body.image_url as string | undefined;
+  const caption = body.caption as string | undefined;
+  const category = body.category as string | undefined;
+  const location = body.location as string | undefined;
 
-  if (!image_url || !isValidUrl(image_url) || !image_url.startsWith("https://")) {
+  if (!image_url || !isValidUrl(image_url) || !image_url.startsWith("https://") || !isSafeExternalUrl(image_url)) {
     return NextResponse.json({ error: "Valid HTTPS URL required" }, { status: 400 });
   }
 
@@ -80,7 +85,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data, { status: 201 });

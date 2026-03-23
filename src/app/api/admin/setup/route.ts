@@ -4,9 +4,14 @@ import { NextResponse } from "next/server";
 
 /**
  * One-time setup: makes the current user an admin if no admins exist yet.
- * This is the bootstrap endpoint — call it once after first deploy.
+ * Gated behind ADMIN_SETUP_ENABLED=true — must be explicitly enabled,
+ * then disabled again after use.
  */
 export async function POST() {
+  if (process.env.ADMIN_SETUP_ENABLED !== "true") {
+    return NextResponse.json({ error: "Admin setup is disabled" }, { status: 404 });
+  }
+
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -34,7 +39,7 @@ export async function POST() {
     .upsert({ user_id: userId, role: "admin" });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true, message: "You are now an admin." });

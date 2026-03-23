@@ -26,8 +26,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "date must be in YYYY-MM-DD format" }, { status: 400 });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const b = body as any;
+  const partner1_name = body.partner1_name as string;
+  const partner2_name = body.partner2_name as string;
+  const date = (body.date as string) || null;
+  const venue = (body.venue as string) || null;
+  const budget = (body.budget as number) || null;
+  const guest_count_estimate = (body.guest_count_estimate as number) || null;
+  const style_description = (body.style_description as string) || null;
+  const has_wedding_party = (body.has_wedding_party as boolean) ?? null;
+  const wedding_party_count = (body.wedding_party_count as number) || null;
+  const has_pre_wedding_events = (body.has_pre_wedding_events as boolean) ?? null;
+  const has_honeymoon = (body.has_honeymoon as boolean) ?? null;
+  const responses = (body.responses as Record<string, unknown>) || {};
+  const booked_vendors = (body.booked_vendors as string[]) || [];
 
   // Upsert wedding with onboarding data
   const { data: existingWedding } = await supabase
@@ -43,40 +54,40 @@ export async function POST(request: Request) {
     const { error } = await supabase
       .from("weddings")
       .update({
-        partner1_name: b.partner1_name,
-        partner2_name: b.partner2_name,
-        date: b.date || null,
-        venue: b.venue || null,
-        budget: b.budget || null,
-        guest_count_estimate: b.guest_count_estimate || null,
-        style_description: b.style_description || null,
-        has_wedding_party: b.has_wedding_party ?? null,
-        wedding_party_count: b.wedding_party_count || null,
-        has_pre_wedding_events: b.has_pre_wedding_events ?? null,
-        has_honeymoon: b.has_honeymoon ?? null,
+        partner1_name,
+        partner2_name,
+        date,
+        venue,
+        budget,
+        guest_count_estimate,
+        style_description,
+        has_wedding_party,
+        wedding_party_count,
+        has_pre_wedding_events,
+        has_honeymoon,
         updated_at: new Date().toISOString(),
       })
       .eq("id", weddingId);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
   } else {
     const { data: newWedding, error } = await supabase
       .from("weddings")
       .insert({
         user_id: userId,
-        partner1_name: b.partner1_name,
-        partner2_name: b.partner2_name,
-        date: b.date || null,
-        venue: b.venue || null,
-        budget: b.budget || null,
-        guest_count_estimate: b.guest_count_estimate || null,
-        style_description: b.style_description || null,
-        has_wedding_party: b.has_wedding_party ?? null,
-        wedding_party_count: b.wedding_party_count || null,
-        has_pre_wedding_events: b.has_pre_wedding_events ?? null,
-        has_honeymoon: b.has_honeymoon ?? null,
+        partner1_name,
+        partner2_name,
+        date,
+        venue,
+        budget,
+        guest_count_estimate,
+        style_description,
+        has_wedding_party,
+        wedding_party_count,
+        has_pre_wedding_events,
+        has_honeymoon,
       })
       .select("id")
       .single();
@@ -92,13 +103,13 @@ export async function POST(request: Request) {
     .from("questionnaire_responses")
     .upsert({
       wedding_id: weddingId,
-      responses: b.responses || {},
+      responses,
       completed: true,
       updated_at: new Date().toISOString(),
     });
 
   // Generate tasks only if wedding date is set
-  if (b.date) {
+  if (date) {
     // Delete any existing system-generated tasks
     await supabase
       .from("tasks")
@@ -108,11 +119,11 @@ export async function POST(request: Request) {
 
     const tasks = generateTasks({
       weddingId,
-      weddingDate: b.date,
-      hasWeddingParty: b.has_wedding_party ?? false,
-      hasPreWeddingEvents: b.has_pre_wedding_events ?? false,
-      hasHoneymoon: b.has_honeymoon ?? false,
-      bookedVendors: b.booked_vendors || [],
+      weddingDate: date,
+      hasWeddingParty: has_wedding_party ?? false,
+      hasPreWeddingEvents: has_pre_wedding_events ?? false,
+      hasHoneymoon: has_honeymoon ?? false,
+      bookedVendors: booked_vendors,
     });
 
     // Insert tasks in batches (Supabase has limits)
@@ -133,7 +144,7 @@ export async function POST(request: Request) {
     const budgetItems = BUDGET_TEMPLATE
       .filter((item) => {
         // Skip honeymoon items if no honeymoon planned
-        if (item.category === "Honeymoon" && !b.has_honeymoon) return false;
+        if (item.category === "Honeymoon" && !has_honeymoon) return false;
         return true;
       })
       .map((item) => ({

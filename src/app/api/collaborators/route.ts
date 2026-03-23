@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -17,7 +18,7 @@ export async function GET() {
     .order("created_at", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data);
@@ -32,8 +33,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Only the wedding owner can invite collaborators" }, { status: 403 });
   }
 
-  const body = await request.json();
-  const { email, role: collabRole } = body;
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+  const email = body.email as string | undefined;
+  const collabRole = body.role as "partner" | "coordinator" | undefined;
 
   if (!email || !collabRole) {
     return NextResponse.json({ error: "Email and role are required" }, { status: 400 });
@@ -58,7 +62,7 @@ export async function POST(request: Request) {
     if (error.code === "23505") {
       return NextResponse.json({ error: "This person has already been invited" }, { status: 409 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data, { status: 201 });

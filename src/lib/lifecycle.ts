@@ -41,8 +41,8 @@ export function getEmailsDue(
   if (monthsSince >= 0 && !alreadySent.includes("post_wedding_welcome")) {
     due.push("post_wedding_welcome");
   }
-  if (monthsSince >= 3 && !alreadySent.includes("download_reminder_3mo")) {
-    due.push("download_reminder_3mo");
+  if (monthsSince >= 1 && !alreadySent.includes("download_reminder_1mo")) {
+    due.push("download_reminder_1mo");
   }
   if (monthsSince >= 6 && !alreadySent.includes("download_reminder_6mo")) {
     due.push("download_reminder_6mo");

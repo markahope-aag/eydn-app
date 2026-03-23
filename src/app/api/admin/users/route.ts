@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -46,11 +47,19 @@ export async function PATCH(request: Request) {
   if ("error" in result) return result.error;
   const { supabase } = result;
 
-  const body = await request.json();
-  const { user_id, role } = body;
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+  const user_id = body.user_id as string | undefined;
+  const role = body.role as "admin" | "user" | undefined;
 
   if (!user_id || !role) {
     return NextResponse.json({ error: "user_id and role required" }, { status: 400 });
+  }
+
+  const ALLOWED_ROLES = ["admin", "user"];
+  if (!ALLOWED_ROLES.includes(role)) {
+    return NextResponse.json({ error: "role must be one of: admin, user" }, { status: 400 });
   }
 
   const { error } = await supabase
@@ -58,7 +67,7 @@ export async function PATCH(request: Request) {
     .upsert({ user_id, role });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

@@ -3,6 +3,7 @@ import { logCronExecution } from "@/lib/cron-logger";
 import { sendEmail } from "@/lib/email";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { escapeHtml } from "@/lib/validation";
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -88,14 +89,14 @@ export async function GET(request: Request) {
         const userEmail = user.emailAddresses[0]?.emailAddress;
         if (!userEmail) continue;
 
-        const partnerNames = `${wedding.partner1_name} & ${wedding.partner2_name}`;
+        const escapedName = escapeHtml(wedding.partner1_name);
         const taskListHtml = weddingTasks
-          .map((t) => `<li><strong>${t.title}</strong> — due ${t.due_date}</li>`)
+          .map((t) => `<li><strong>${escapeHtml(t.title)}</strong> — due ${escapeHtml(t.due_date)}</li>`)
           .join("");
 
         await sendEmail({
           to: userEmail,
-          subject: `${partnerNames} — ${weddingTasks.length} task${weddingTasks.length > 1 ? "s" : ""} due this week`,
+          subject: `${wedding.partner1_name} & ${wedding.partner2_name} — ${weddingTasks.length} task${weddingTasks.length > 1 ? "s" : ""} due this week`,
           html: `
             <div style="max-width: 560px; margin: 0 auto; background: #FAF6F1; border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
               <div style="background: linear-gradient(135deg, #2C3E2D, #D4A5A5); padding: 32px; text-align: center; border-radius: 16px 16px 0 0;">
@@ -103,7 +104,7 @@ export async function GET(request: Request) {
               </div>
               <div style="padding: 32px; color: #1A1A2E; font-size: 15px; line-height: 1.7;">
                 <h2 style="color: #1A1A2E; font-size: 20px;">Upcoming deadlines this week</h2>
-                <p>Hi ${wedding.partner1_name}! You have ${weddingTasks.length} task${weddingTasks.length > 1 ? "s" : ""} coming up:</p>
+                <p>Hi ${escapedName}! You have ${weddingTasks.length} task${weddingTasks.length > 1 ? "s" : ""} coming up:</p>
                 <ul style="padding-left: 20px;">${taskListHtml}</ul>
                 <p style="text-align: center; margin-top: 24px;">
                   <a href="https://eydn.app/dashboard/tasks" style="display: inline-block; background: linear-gradient(135deg, #2C3E2D, #D4A5A5); color: white; padding: 12px 28px; border-radius: 999px; text-decoration: none; font-weight: 600;">View Tasks</a>

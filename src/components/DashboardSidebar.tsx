@@ -71,7 +71,8 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
               onClick={() => setOpen(false)}
               className={`rounded-[12px] px-3 py-2 text-[15px] font-semibold transition mt-2 ${
                 isActive(pathname, "/dashboard/admin") &&
-                !pathname.startsWith("/dashboard/admin/placements")
+                !pathname.startsWith("/dashboard/admin/placements") &&
+                !pathname.startsWith("/dashboard/admin/lifecycle")
                   ? "bg-lavender text-violet"
                   : "text-violet bg-lavender hover:bg-petal"
               }`}
@@ -88,6 +89,17 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
               }`}
             >
               Placements
+            </Link>
+            <Link
+              href="/dashboard/admin/lifecycle"
+              onClick={() => setOpen(false)}
+              className={`rounded-[12px] px-3 py-2 text-[13px] transition ${
+                isActive(pathname, "/dashboard/admin/lifecycle")
+                  ? "bg-lavender text-violet font-semibold"
+                  : "font-normal text-violet hover:bg-lavender"
+              }`}
+            >
+              Account Lifecycle
             </Link>
           </>
         )}

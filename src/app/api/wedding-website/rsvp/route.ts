@@ -1,6 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+import { randomBytes } from "crypto";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -14,7 +14,7 @@ export async function GET() {
     .order("created_at", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json(data);
@@ -49,7 +49,7 @@ export async function POST() {
     .map((g) => ({
       guest_id: g.id,
       wedding_id: wedding.id,
-      token: randomUUID().replace(/-/g, "").slice(0, 12),
+      token: randomBytes(16).toString("hex"),
     }));
 
   if (newTokens.length === 0) {
@@ -59,7 +59,7 @@ export async function POST() {
   const { error } = await supabase.from("rsvp_tokens").insert(newTokens);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ message: `Created ${newTokens.length} RSVP tokens`, created: newTokens.length });

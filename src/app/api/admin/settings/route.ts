@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
+import { safeParseJSON, isParseError } from "@/lib/validation";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -11,7 +12,7 @@ export async function GET() {
     .select("key, value");
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   // Convert array to object
@@ -28,8 +29,11 @@ export async function PATCH(request: Request) {
   if ("error" in result) return result.error;
   const { supabase } = result;
 
-  const body = await request.json();
-  const { key, value } = body;
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+  const key = body.key as string | undefined;
+  const value = body.value as Record<string, unknown>;
 
   if (!key) {
     return NextResponse.json({ error: "key required" }, { status: 400 });
@@ -40,7 +44,7 @@ export async function PATCH(request: Request) {
     .upsert({ key, value, updated_at: new Date().toISOString() });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

@@ -254,6 +254,7 @@ async function softDeleteWeddingData(
     "tasks",
     "vendors",
     "guests",
+    "attachments",
     "questionnaire_responses",
     "day_of_plans",
   ] as const;

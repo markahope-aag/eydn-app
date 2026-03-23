@@ -38,10 +38,7 @@ export async function POST(request: Request) {
 
     if (weddingsError) throw new Error(`Failed to fetch weddings: ${weddingsError.message}`);
 
-    const backups: Array<{ weddingId: string; data: Record<string, unknown> }> = [];
-
-    for (const wedding of weddings || []) {
-      // Fetch all data for this wedding in parallel
+    async function backupWedding(wedding: { id: string; partner1_name: string; partner2_name: string }) {
       const [
         { data: guests },
         { data: vendors },
@@ -65,7 +62,7 @@ export async function POST(request: Request) {
         supabase.from("expenses").select("*").eq("wedding_id", wedding.id),
         supabase.from("wedding_party").select("*").eq("wedding_id", wedding.id),
         supabase.from("seating_tables").select("*").eq("wedding_id", wedding.id),
-        supabase.from("seat_assignments").select("*"),
+        supabase.from("seat_assignments").select("*, seating_tables!inner(wedding_id)").eq("seating_tables.wedding_id", wedding.id),
         supabase.from("ceremony_positions").select("*").eq("wedding_id", wedding.id),
         supabase.from("chat_messages").select("*").eq("wedding_id", wedding.id),
         supabase.from("questionnaire_responses").select("*").eq("wedding_id", wedding.id).single(),
@@ -76,7 +73,7 @@ export async function POST(request: Request) {
         supabase.from("activity_log").select("*").eq("wedding_id", wedding.id).order("created_at", { ascending: false }).limit(500),
       ]);
 
-      backups.push({
+      return {
         weddingId: wedding.id,
         data: {
           metadata: {
@@ -103,7 +100,18 @@ export async function POST(request: Request) {
           collaborators: collaborators || [],
           activityLog: activityLog || [],
         },
-      });
+      };
+    }
+
+    // Process weddings in concurrent batches of 5
+    const BATCH_SIZE = 5;
+    const allWeddings = weddings || [];
+    const backups: Array<{ weddingId: string; data: Record<string, unknown> }> = [];
+
+    for (let i = 0; i < allWeddings.length; i += BATCH_SIZE) {
+      const batch = allWeddings.slice(i, i + BATCH_SIZE);
+      const results = await Promise.all(batch.map(backupWedding));
+      backups.push(...results);
     }
 
     // Build the backup payload
