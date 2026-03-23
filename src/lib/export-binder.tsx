@@ -191,10 +191,29 @@ export async function exportWeddingBinder(): Promise<void> {
   ]);
 
   const wedding = weddingData || { partner1_name: "Partner 1", partner2_name: "Partner 2", date: null, venue: null, budget: null };
-  const dayOf: DayOfPlan = (dayOfRaw?.content as DayOfPlan) || {
-    ceremonyTime: "", timeline: [], vendorContacts: [], partyAssignments: [],
-    packingChecklist: [], ceremonyScript: "", processionalOrder: [], officiantNotes: "",
-    music: [], speeches: [], setupTasks: [], attire: [],
+  const rawDayOf = (dayOfRaw?.content as DayOfPlan) || {} as Partial<DayOfPlan>;
+
+  // Migrate old string[] packing checklist to { item, notes }[]
+  let packingChecklist = rawDayOf.packingChecklist || [];
+  if (packingChecklist.length > 0 && typeof packingChecklist[0] === "string") {
+    packingChecklist = (packingChecklist as unknown as string[]).map(
+      (item) => ({ item, notes: "" })
+    );
+  }
+
+  const dayOf: DayOfPlan = {
+    ceremonyTime: rawDayOf.ceremonyTime || "",
+    timeline: rawDayOf.timeline || [],
+    vendorContacts: rawDayOf.vendorContacts || [],
+    partyAssignments: rawDayOf.partyAssignments || [],
+    packingChecklist,
+    ceremonyScript: rawDayOf.ceremonyScript || "",
+    processionalOrder: rawDayOf.processionalOrder || [],
+    officiantNotes: rawDayOf.officiantNotes || "",
+    music: rawDayOf.music || [],
+    speeches: rawDayOf.speeches || [],
+    setupTasks: rawDayOf.setupTasks || [],
+    attire: rawDayOf.attire || [],
   };
   const vendorList = vendors || [];
   const partyList = weddingParty || [];

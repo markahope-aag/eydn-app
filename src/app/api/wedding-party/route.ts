@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `${missing} is required` }, { status: 400 });
   }
 
-  const allowed = pickFields(body, ["email", "phone", "job_assignment", "sort_order"]);
+  const allowed = pickFields(body, ["email", "phone", "job_assignment", "attire", "sort_order"]);
   const { data, error } = await supabase
     .from("wedding_party")
     .insert({

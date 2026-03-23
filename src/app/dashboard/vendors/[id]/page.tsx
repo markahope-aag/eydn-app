@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { VENDOR_STATUSES } from "@/lib/vendors/categories";
 import { EmailTemplate } from "../EmailTemplate";
 import { Comments } from "@/components/Comments";
 import { VendorCard } from "@/components/VendorCard";
+import { FileUpload } from "@/components/FileUpload";
+
+type Attachment = {
+  id: string;
+  file_name: string;
+  file_url: string;
+  file_size: number;
+  mime_type: string | null;
+  created_at: string;
+};
 
 type Vendor = {
   id: string;
@@ -43,6 +53,14 @@ export default function VendorDetailPage({
   const [loading, setLoading] = useState(true);
   const [showEmail, setShowEmail] = useState(false);
   const [vendorId, setVendorId] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+
+  const loadAttachments = useCallback((vid: string) => {
+    fetch(`/api/attachments?entity_type=vendor&entity_id=${vid}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setAttachments)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     params.then((p) => {
@@ -55,8 +73,20 @@ export default function VendorDetailPage({
         })
         .catch(() => toast.error("Failed to load vendor"))
         .finally(() => setLoading(false));
+      loadAttachments(p.id);
     });
-  }, [params]);
+  }, [params, loadAttachments]);
+
+  async function deleteAttachment(id: string) {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
+    try {
+      const res = await fetch(`/api/attachments/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+    } catch {
+      if (vendorId) loadAttachments(vendorId);
+      toast.error("Failed to delete file");
+    }
+  }
 
   async function updateField(field: string, value: string | number | null) {
     if (!vendorId) return;
@@ -273,6 +303,52 @@ export default function VendorDetailPage({
           rows={4}
           className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
         />
+      </div>
+
+      {/* Contracts & Documents */}
+      <div className="mt-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[15px] font-semibold text-plum">Contracts &amp; Documents</h2>
+          <FileUpload
+            entityType="vendor"
+            entityId={vendor.id}
+            onUpload={() => loadAttachments(vendor.id)}
+          />
+        </div>
+        {attachments.length > 0 ? (
+          <div className="mt-3 space-y-2">
+            {attachments.map((a) => (
+              <div key={a.id} className="flex items-center gap-3 px-3 py-2 rounded-[10px] bg-lavender/20 border border-border">
+                <span className="text-[16px]">
+                  {a.mime_type?.includes("pdf") ? "\u{1F4C4}" : a.mime_type?.startsWith("image/") ? "\u{1F5BC}" : "\u{1F4CE}"}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <a
+                    href={a.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[14px] font-semibold text-violet hover:text-soft-violet truncate block"
+                  >
+                    {a.file_name}
+                  </a>
+                  <p className="text-[11px] text-muted">
+                    {(a.file_size / 1024).toFixed(0)} KB · {new Date(a.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <button
+                  onClick={() => deleteAttachment(a.id)}
+                  className="text-[12px] text-error hover:opacity-80"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-2 text-[13px] text-muted">
+            No files yet. Upload contracts, proposals, or invoices.
+          </p>
+        )}
       </div>
 
       {/* Email template */}

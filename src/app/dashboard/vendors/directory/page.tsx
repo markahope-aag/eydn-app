@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { toast } from "sonner";
 import { VENDOR_CATEGORIES } from "@/lib/vendors/categories";
 
@@ -18,11 +19,52 @@ type SuggestedVendor = {
   featured: boolean;
 };
 
+type PlaceData = {
+  placeId: string;
+  name: string;
+  formattedAddress: string | null;
+  rating: number | null;
+  userRatingCount: number | null;
+  websiteUri: string | null;
+  nationalPhoneNumber: string | null;
+  googleMapsUri: string | null;
+  photoUrl: string | null;
+  businessStatus: string | null;
+  editorialSummary: string | null;
+  reviews: Array<{
+    authorName: string;
+    rating: number;
+    text: string;
+    relativeTime: string;
+  }>;
+};
+
+function StarRating({ rating }: { rating: number }) {
+  const full = Math.floor(rating);
+  const hasHalf = rating - full >= 0.3;
+  return (
+    <span className="inline-flex items-center gap-0.5">
+      {Array.from({ length: 5 }, (_, i) => (
+        <span
+          key={i}
+          className={`text-[14px] ${
+            i < full ? "text-yellow-400" : i === full && hasHalf ? "text-yellow-300" : "text-gray-300"
+          }`}
+        >
+          ★
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export default function VendorDirectoryPage() {
   const [vendors, setVendors] = useState<SuggestedVendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCategory, setFilterCategory] = useState("");
   const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [gmbCache, setGmbCache] = useState<Record<string, PlaceData | "loading" | "error">>({});
 
   useEffect(() => {
     fetch("/api/suggested-vendors")
@@ -31,6 +73,29 @@ export default function VendorDirectoryPage() {
       .catch(() => toast.error("Failed to load directory"))
       .finally(() => setLoading(false));
   }, []);
+
+  function toggleDetails(vendorId: string) {
+    if (expandedId === vendorId) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(vendorId);
+    // Fetch GMB data if not cached
+    if (!gmbCache[vendorId]) {
+      setGmbCache((prev) => ({ ...prev, [vendorId]: "loading" }));
+      fetch(`/api/suggested-vendors/${vendorId}/gmb`)
+        .then((r) => {
+          if (!r.ok) return r.json().then((d) => { throw new Error(d.error || "Not found"); });
+          return r.json();
+        })
+        .then((data: PlaceData) => {
+          setGmbCache((prev) => ({ ...prev, [vendorId]: data }));
+        })
+        .catch(() => {
+          setGmbCache((prev) => ({ ...prev, [vendorId]: "error" }));
+        });
+    }
+  }
 
   async function addToMyVendors(vendor: SuggestedVendor) {
     try {
@@ -104,7 +169,14 @@ export default function VendorDirectoryPage() {
           <h2>Featured</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {featured.map((v) => (
-              <VendorCard key={v.id} vendor={v} onAdd={addToMyVendors} />
+              <FeaturedCard
+                key={v.id}
+                vendor={v}
+                onAdd={addToMyVendors}
+                expanded={expandedId === v.id}
+                gmbState={gmbCache[v.id]}
+                onToggle={() => toggleDetails(v.id)}
+              />
             ))}
           </div>
         </div>
@@ -115,25 +187,14 @@ export default function VendorDirectoryPage() {
         {featured.length > 0 && <h2>All vendors</h2>}
         <div className="mt-3 space-y-2">
           {regular.map((v) => (
-            <div key={v.id} className="card-list flex items-center gap-3 px-4 py-3">
-              <div className="flex-1">
-                <span className="text-[15px] font-semibold text-plum">{v.name}</span>
-                <p className="text-[12px] text-muted">
-                  {v.category} · {v.city}, {v.state} {v.price_range && `· ${v.price_range}`}
-                </p>
-                {v.description && (
-                  <p className="text-[13px] text-muted mt-1">{v.description}</p>
-                )}
-              </div>
-              {v.website && (
-                <a href={v.website} target="_blank" rel="noopener noreferrer" className="text-[12px] text-violet hover:text-soft-violet">
-                  Website
-                </a>
-              )}
-              <button onClick={() => addToMyVendors(v)} className="btn-secondary btn-sm">
-                Add
-              </button>
-            </div>
+            <VendorRow
+              key={v.id}
+              vendor={v}
+              onAdd={addToMyVendors}
+              expanded={expandedId === v.id}
+              gmbState={gmbCache[v.id]}
+              onToggle={() => toggleDetails(v.id)}
+            />
           ))}
         </div>
 
@@ -147,7 +208,146 @@ export default function VendorDirectoryPage() {
   );
 }
 
-function VendorCard({ vendor, onAdd }: { vendor: SuggestedVendor; onAdd: (v: SuggestedVendor) => void }) {
+// ─── GMB Highlight Card (shared between featured and regular) ─────────────
+
+function GmbHighlightCard({ state }: { state: PlaceData | "loading" | "error" | undefined }) {
+  if (state === "loading") {
+    return (
+      <div className="animate-pulse space-y-3 pt-3">
+        <div className="flex gap-4">
+          <div className="w-24 h-24 rounded-[12px] bg-lavender flex-shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 bg-lavender rounded w-3/4" />
+            <div className="h-3 bg-lavender rounded w-1/2" />
+            <div className="h-3 bg-lavender rounded w-2/3" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (state === "error" || !state) {
+    return (
+      <p className="text-[12px] text-muted pt-3">
+        Could not load Google Business profile for this vendor.
+      </p>
+    );
+  }
+
+  const data = state;
+
+  return (
+    <div className="pt-3 space-y-3">
+      {/* Photo + core info */}
+      <div className="flex gap-4">
+        {data.photoUrl && (
+          <div className="w-24 h-24 rounded-[12px] overflow-hidden flex-shrink-0 relative">
+            <Image
+              src={data.photoUrl}
+              alt={data.name}
+              fill
+              className="object-cover"
+            />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          {data.rating != null && (
+            <div className="flex items-center gap-2">
+              <StarRating rating={data.rating} />
+              <span className="text-[13px] font-semibold text-plum">{data.rating}</span>
+              {data.userRatingCount != null && (
+                <span className="text-[12px] text-muted">({data.userRatingCount} reviews)</span>
+              )}
+            </div>
+          )}
+          {data.formattedAddress && (
+            <p className="text-[12px] text-muted mt-1">{data.formattedAddress}</p>
+          )}
+          {data.nationalPhoneNumber && (
+            <p className="text-[12px] text-muted mt-0.5">{data.nationalPhoneNumber}</p>
+          )}
+          {data.businessStatus && data.businessStatus !== "OPERATIONAL" && (
+            <span className="inline-block mt-1 text-[11px] font-semibold text-error bg-red-50 px-2 py-0.5 rounded-full">
+              {data.businessStatus.replace(/_/g, " ")}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Editorial summary */}
+      {data.editorialSummary && (
+        <p className="text-[13px] text-muted leading-relaxed">{data.editorialSummary}</p>
+      )}
+
+      {/* Action links */}
+      <div className="flex flex-wrap gap-2">
+        {data.nationalPhoneNumber && (
+          <a
+            href={`tel:${data.nationalPhoneNumber}`}
+            className="inline-flex items-center gap-1 text-[12px] font-semibold text-violet bg-lavender px-2.5 py-1 rounded-full hover:bg-violet hover:text-white transition"
+          >
+            Call
+          </a>
+        )}
+        {data.websiteUri && (
+          <a
+            href={data.websiteUri}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[12px] font-semibold text-violet bg-lavender px-2.5 py-1 rounded-full hover:bg-violet hover:text-white transition"
+          >
+            Website
+          </a>
+        )}
+        {data.googleMapsUri && (
+          <a
+            href={data.googleMapsUri}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[12px] font-semibold text-violet bg-lavender px-2.5 py-1 rounded-full hover:bg-violet hover:text-white transition"
+          >
+            Directions
+          </a>
+        )}
+      </div>
+
+      {/* Reviews */}
+      {data.reviews.length > 0 && (
+        <div className="space-y-2 pt-1">
+          <p className="text-[12px] font-semibold text-plum">Google Reviews</p>
+          {data.reviews.map((r, i) => (
+            <div key={i} className="bg-lavender/30 rounded-[10px] p-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] font-semibold text-plum">{r.authorName}</span>
+                <StarRating rating={r.rating} />
+                <span className="text-[11px] text-muted">{r.relativeTime}</span>
+              </div>
+              <p className="text-[12px] text-muted mt-0.5 leading-relaxed">
+                {r.text.length > 200 ? `${r.text.slice(0, 200)}...` : r.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Featured Card ─────────────────────────────────────────────────────────
+
+function FeaturedCard({
+  vendor,
+  onAdd,
+  expanded,
+  gmbState,
+  onToggle,
+}: {
+  vendor: SuggestedVendor;
+  onAdd: (v: SuggestedVendor) => void;
+  expanded: boolean;
+  gmbState: PlaceData | "loading" | "error" | undefined;
+  onToggle: () => void;
+}) {
   return (
     <div className="card-summary p-4">
       <div className="flex items-start justify-between">
@@ -168,12 +368,59 @@ function VendorCard({ vendor, onAdd }: { vendor: SuggestedVendor; onAdd: (v: Sug
         <button onClick={() => onAdd(vendor)} className="btn-primary btn-sm">
           Add to my vendors
         </button>
+        <button onClick={onToggle} className="btn-secondary btn-sm">
+          {expanded ? "Hide Details" : "Details"}
+        </button>
         {vendor.website && (
           <a href={vendor.website} target="_blank" rel="noopener noreferrer" className="btn-ghost btn-sm">
             Visit website
           </a>
         )}
       </div>
+      {expanded && <GmbHighlightCard state={gmbState} />}
+    </div>
+  );
+}
+
+// ─── Regular Vendor Row ────────────────────────────────────────────────────
+
+function VendorRow({
+  vendor,
+  onAdd,
+  expanded,
+  gmbState,
+  onToggle,
+}: {
+  vendor: SuggestedVendor;
+  onAdd: (v: SuggestedVendor) => void;
+  expanded: boolean;
+  gmbState: PlaceData | "loading" | "error" | undefined;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="rounded-[16px] border border-border bg-white overflow-hidden">
+      <div className="flex items-center gap-3 px-4 py-3">
+        <div className="flex-1 min-w-0">
+          <span className="text-[15px] font-semibold text-plum">{vendor.name}</span>
+          <p className="text-[12px] text-muted">
+            {vendor.category} · {vendor.city}, {vendor.state} {vendor.price_range && `· ${vendor.price_range}`}
+          </p>
+          {vendor.description && (
+            <p className="text-[13px] text-muted mt-1">{vendor.description}</p>
+          )}
+        </div>
+        <button onClick={onToggle} className="btn-secondary btn-sm">
+          {expanded ? "Hide" : "Details"}
+        </button>
+        <button onClick={() => onAdd(vendor)} className="btn-primary btn-sm">
+          Add
+        </button>
+      </div>
+      {expanded && (
+        <div className="border-t border-border px-4 py-3 bg-lavender/10">
+          <GmbHighlightCard state={gmbState} />
+        </div>
+      )}
     </div>
   );
 }

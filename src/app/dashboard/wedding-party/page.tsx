@@ -39,6 +39,8 @@ export default function WeddingPartyPage() {
   const [role, setRole] = useState("Bridesmaid");
   const [newEmail, setNewEmail] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [newJobAssignment, setNewJobAssignment] = useState("");
+  const [newAttire, setNewAttire] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null);
@@ -64,9 +66,9 @@ export default function WeddingPartyPage() {
       role,
       email: newEmail.trim() || null,
       phone: newPhone.trim() || null,
-      job_assignment: null,
+      job_assignment: newJobAssignment.trim() || null,
       photo_url: null,
-      attire: null,
+      attire: newAttire.trim() || null,
       sort_order: members.length,
     };
 
@@ -74,6 +76,8 @@ export default function WeddingPartyPage() {
     setName("");
     setNewEmail("");
     setNewPhone("");
+    setNewJobAssignment("");
+    setNewAttire("");
     setShowAdd(false);
     setShowAddDetails(false);
 
@@ -86,6 +90,8 @@ export default function WeddingPartyPage() {
           role: member.role,
           email: member.email,
           phone: member.phone,
+          job_assignment: member.job_assignment,
+          attire: member.attire,
           sort_order: member.sort_order,
         }),
       });
@@ -230,6 +236,26 @@ export default function WeddingPartyPage() {
                     value={newPhone}
                     onChange={(e) => setNewPhone(e.target.value)}
                     placeholder="(555) 123-4567"
+                    className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-[12px] font-semibold text-muted">Day-of Job Assignment</label>
+                  <input
+                    type="text"
+                    value={newJobAssignment}
+                    onChange={(e) => setNewJobAssignment(e.target.value)}
+                    placeholder="e.g. Carry rings, hold bouquet during vows"
+                    className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-[12px] font-semibold text-muted">Attire</label>
+                  <input
+                    type="text"
+                    value={newAttire}
+                    onChange={(e) => setNewAttire(e.target.value)}
+                    placeholder="e.g. Navy suit, blush bridesmaid dress, accessories..."
                     className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                   />
                 </div>

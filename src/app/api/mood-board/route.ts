@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
   // If the URL is not a direct image, try to extract og:image from the page
   let finalImageUrl = image_url as string;
-  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".avif"];
+  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".avif", ".bmp", ".tiff", ".heic"];
   const isDirectImage = imageExtensions.some((ext) => (image_url as string).toLowerCase().split("?")[0].endsWith(ext));
 
   if (!isDirectImage) {
