@@ -307,7 +307,7 @@ export default function SeatingPage() {
                         </p>
                         <button
                           onClick={(e) => { e.stopPropagation(); setEditingTable(editingTable === table.id ? null : table.id); }}
-                          className={`mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full transition ${
+                          className={`mt-1 text-[11px] font-semibold px-3 py-1 rounded-full transition min-h-6 ${
                             editingTable === table.id
                               ? "bg-violet text-white"
                               : "bg-lavender text-violet hover:bg-violet hover:text-white"
@@ -320,7 +320,7 @@ export default function SeatingPage() {
                         {tableGuests.map((g) => (
                           <div key={g.id} className="flex items-center justify-between text-[10px]">
                             <span className="text-muted truncate">{g.name}</span>
-                            <button onClick={(e) => { e.stopPropagation(); unassignGuest(g.id); }} aria-label={`Remove guest ${g.name} from table`} className="text-error hover:opacity-80 ml-1">x</button>
+                            <button onClick={(e) => { e.stopPropagation(); unassignGuest(g.id); }} aria-label={`Remove guest ${g.name} from table`} className="w-5 h-5 flex items-center justify-center text-error hover:opacity-80 ml-1 text-[10px]">x</button>
                           </div>
                         ))}
                       </div>
@@ -392,7 +392,7 @@ export default function SeatingPage() {
                     <button
                       onClick={(e) => { e.stopPropagation(); setConfirmDeleteTable(table.id); }}
                       aria-label={`Delete ${table.name || `Table ${table.table_number}`}`}
-                      className="absolute -top-1 -right-1 w-4 h-4 bg-error text-white rounded-full text-[10px] flex items-center justify-center hover:opacity-80"
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full text-[12px] flex items-center justify-center hover:opacity-80"
                     >
                       x
                     </button>
@@ -411,16 +411,31 @@ export default function SeatingPage() {
           {/* Guest sidebar */}
           <div className="w-56 flex-shrink-0">
             <h2 className="text-[15px] font-semibold text-muted mb-2">Unassigned ({unassignedGuests.length}) <Tooltip text="Drag a guest name and drop it onto a table to assign their seat." /></h2>
-            <div className="space-y-1 max-h-[500px] overflow-y-auto" aria-label="Unassigned guests — drag to a table or use the assign dropdown">
+            <div className="space-y-1 max-h-[500px] overflow-y-auto" aria-label="Unassigned guests — drag to a table or use the dropdown to assign">
               {unassignedGuests.map((guest) => (
                 <div
                   key={guest.id}
                   draggable
                   onDragStart={(e) => { e.dataTransfer.setData("text/plain", guest.id); setDraggingGuest(guest.id); }}
                   onDragEnd={() => setDraggingGuest(null)}
-                  className={`rounded-[10px] border border-border px-3 py-1.5 text-[15px] cursor-grab active:cursor-grabbing ${draggingGuest === guest.id ? "border-violet bg-lavender" : "bg-white hover:bg-lavender"}`}
+                  className={`rounded-[10px] border border-border px-3 py-1.5 text-[13px] flex items-center gap-1 cursor-grab active:cursor-grabbing ${draggingGuest === guest.id ? "border-violet bg-lavender" : "bg-white hover:bg-lavender"}`}
                 >
-                  {guest.name}
+                  <span className="flex-1 truncate">{guest.name}</span>
+                  <select
+                    aria-label={`Assign ${guest.name} to table`}
+                    value=""
+                    onChange={(e) => { if (e.target.value) assignGuest(guest.id, e.target.value); }}
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="text-[11px] text-violet bg-transparent border-0 cursor-pointer p-0 min-h-6"
+                  >
+                    <option value="">Table...</option>
+                    {tables.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name || `Table ${t.table_number}`}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               ))}
               {unassignedGuests.length === 0 && <p className="text-[12px] text-muted">All guests assigned.</p>}
@@ -447,7 +462,7 @@ export default function SeatingPage() {
                   <div key={p.id} className="flex items-center justify-center gap-2 mt-2">
                     <span className="text-[15px] font-semibold text-plum">{p.person_name}</span>
                     <span className="badge">{p.role || p.person_type}</span>
-                    <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name} from ceremony`} className="text-[10px] text-error hover:opacity-80">x</button>
+                    <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name} from ceremony`} className="w-6 h-6 flex items-center justify-center text-[12px] text-error hover:opacity-80 rounded-full">x</button>
                   </div>
                 ))}
               </div>
@@ -464,7 +479,7 @@ export default function SeatingPage() {
                       <span className="text-[12px] text-muted w-4">{i + 1}</span>
                       <span className="flex-1 text-[15px] text-plum">{p.person_name}</span>
                       {p.role && <span className="text-[12px] text-muted">{p.role}</span>}
-                      <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name} from left side`} className="text-[10px] text-error hover:opacity-80">x</button>
+                      <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name} from left side`} className="w-6 h-6 flex items-center justify-center text-[12px] text-error hover:opacity-80 rounded-full">x</button>
                     </div>
                   ))}
                   {leftSide.length === 0 && <p className="text-[13px] text-muted text-center py-4">No one added yet</p>}
@@ -480,7 +495,7 @@ export default function SeatingPage() {
                       <span className="text-[12px] text-muted w-4">{i + 1}</span>
                       <span className="flex-1 text-[15px] text-plum">{p.person_name}</span>
                       {p.role && <span className="text-[12px] text-muted">{p.role}</span>}
-                      <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name} from right side`} className="text-[10px] text-error hover:opacity-80">x</button>
+                      <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name} from right side`} className="w-6 h-6 flex items-center justify-center text-[12px] text-error hover:opacity-80 rounded-full">x</button>
                     </div>
                   ))}
                   {rightSide.length === 0 && <p className="text-[13px] text-muted text-center py-4">No one added yet</p>}

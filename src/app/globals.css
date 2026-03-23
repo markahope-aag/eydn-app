@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* WCAG 2.4.11 — prevent sticky header from obscuring focused elements */
+html {
+  scroll-padding-top: 64px;
+}
+
 :root {
   /* Brand Colors — Cream / Forest / Gold */
   --violet: #2C3E2D;          /* forest green — primary actions */
@@ -226,7 +231,7 @@ select {
 textarea { height: auto; }
 input:focus, textarea:focus, select:focus {
   border-color: var(--violet);
-  border-width: 1.5px;
+  border-width: 2px;
 }
 /* WCAG 2.4.7 — visible focus indicators */
 .btn-primary:focus-visible,
