@@ -1,5 +1,4 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
 
 /**
  * Public unsubscribe endpoint — no authentication required (CAN-SPAM compliance).

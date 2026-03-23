@@ -59,8 +59,12 @@ export function getLifecycleEmail(
     </div>
   `;
 
-  const footer = data.unsubscribeToken
-    ? emailFooterHtml(data.unsubscribeToken, "lifecycle")
+  // Marketing emails get unsubscribe links; transactional emails get address only
+  const MARKETING_EMAILS = ["memory_plan_offer", "download_reminder_9mo", "archive_notice"];
+  const isMarketing = MARKETING_EMAILS.includes(emailType);
+
+  const footer = isMarketing && data.unsubscribeToken
+    ? emailFooterHtml(data.unsubscribeToken, "marketing")
     : `
     <div style="padding: 24px; text-align: center; color: #6B6B6B; font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
       <p>eydn — Your AI Wedding Planning Guide</p>

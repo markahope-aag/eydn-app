@@ -1,7 +1,6 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { logCronExecution } from "@/lib/cron-logger";
 import { sendEmail } from "@/lib/email";
-import { getEmailPreferences, emailFooterHtml } from "@/lib/email-preferences";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { escapeHtml } from "@/lib/validation";
@@ -85,10 +84,6 @@ export async function GET(request: Request) {
 
         if (!wedding?.user_id) continue;
 
-        // Check email preferences
-        const prefs = await getEmailPreferences(weddingId);
-        if (prefs.unsubscribed_all || !prefs.deadline_reminders) continue;
-
         const clerk = await clerkClient();
         const user = await clerk.users.getUser(wedding.user_id);
         const userEmail = user.emailAddresses[0]?.emailAddress;
@@ -115,7 +110,10 @@ export async function GET(request: Request) {
                   <a href="https://eydn.app/dashboard/tasks" style="display: inline-block; background: linear-gradient(135deg, #2C3E2D, #D4A5A5); color: white; padding: 12px 28px; border-radius: 999px; text-decoration: none; font-weight: 600;">View Tasks</a>
                 </p>
               </div>
-              ${emailFooterHtml(prefs.unsubscribe_token, "deadlines")}
+              <div style="padding: 24px; text-align: center; color: #6B6B6B; font-size: 12px;">
+                <p>eydn — Your AI Wedding Planning Guide</p>
+                <p style="margin-top: 8px;">Eydn App, 2921 Landmark Place, Suite 215, Madison, WI 53713</p>
+              </div>
             </div>
           `,
         });

@@ -105,8 +105,12 @@ export async function POST(request: Request) {
           // Send the actual email via Resend (check preferences first)
           try {
             const prefs = await getEmailPreferences(wedding.id);
-            if (prefs.unsubscribed_all || !prefs.lifecycle_emails) {
-              console.log(`[LIFECYCLE] Skipping ${emailType} for ${wedding.id} — unsubscribed`);
+            const MARKETING_EMAILS = ["memory_plan_offer", "download_reminder_9mo", "archive_notice"];
+            const isMarketing = MARKETING_EMAILS.includes(emailType);
+
+            // Only check unsubscribe for marketing emails; transactional always send
+            if (isMarketing && (prefs.unsubscribed_all || !prefs.marketing_emails)) {
+              console.log(`[LIFECYCLE] Skipping marketing email ${emailType} for ${wedding.id} — unsubscribed`);
             } else {
               const partnerNames = `${wedding.partner1_name} & ${wedding.partner2_name}`;
               const emailContent = getLifecycleEmail(emailType, {
