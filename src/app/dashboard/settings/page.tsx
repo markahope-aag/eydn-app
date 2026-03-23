@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Tooltip } from "@/components/Tooltip";
 
 type Collaborator = {
   id: string;
@@ -269,7 +270,7 @@ export default function SettingsPage() {
 
       {/* Things eydn should know */}
       <div className="mt-6">
-        <h2 className="text-[18px] font-semibold text-plum">Things eydn should know</h2>
+        <h2 className="text-[18px] font-semibold text-plum">Things eydn should know <Tooltip text="Anything you write here is included as context every time you chat with eydn. Use it to store key decisions so you don't have to repeat yourself." wide /></h2>
         <p className="mt-1 text-[12px] text-muted">
           Key decisions and preferences that eydn will remember across all conversations. Add anything important — theme, allergies, must-haves, cultural traditions, etc.
         </p>
@@ -329,7 +330,7 @@ export default function SettingsPage() {
 
         <div>
           <label className="text-[15px] font-semibold text-muted">
-            Remind me before deadline
+            Remind me before deadline <Tooltip text="You'll receive an email notification this many days before each task's due date, so you have time to complete it." wide />
           </label>
           <select
             value={reminderDays}
@@ -354,7 +355,7 @@ export default function SettingsPage() {
       {/* Collaborators */}
       {isOwner && (
         <div className="mt-10">
-          <h2 className="text-[18px] font-semibold text-plum">Collaborators</h2>
+          <h2 className="text-[18px] font-semibold text-plum">Collaborators <Tooltip text="Partner: full access to view, edit, and manage everything. Coordinator: can view and edit tasks, vendors, and guests, but cannot delete the wedding or manage billing." wide /></h2>
           <p className="mt-1 text-[12px] text-muted">
             Invite your partner or a wedding coordinator to share access to your wedding
           </p>
@@ -443,7 +444,7 @@ export default function SettingsPage() {
 
       {/* Your Data */}
       <div className="mt-10">
-        <h2 className="text-[18px] font-semibold text-plum">Your Data</h2>
+        <h2 className="text-[18px] font-semibold text-plum">Your Data <Tooltip text="Downloads a JSON file containing all your wedding data: guests, tasks, vendors, budget, seating charts, timeline, and settings." wide /></h2>
         <p className="mt-1 text-[12px] text-muted">
           Download a complete backup of all your wedding planning data
         </p>

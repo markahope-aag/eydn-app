@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
+import { Tooltip } from "@/components/Tooltip";
 import { BUDGET_CATEGORIES, BUDGET_TEMPLATE } from "@/lib/budget/budget-template";
 
 type Expense = {
@@ -266,7 +267,7 @@ export default function BudgetPage() {
       {/* Budget overview */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="card-summary p-5">
-          <p className="text-[13px] font-semibold text-muted">Total Budget</p>
+          <p className="text-[13px] font-semibold text-muted">Total Budget <Tooltip text="Your overall wedding budget. All spending is tracked against this number. You can update it anytime." /></p>
           <div className="mt-1 flex items-center gap-1">
             <span className="text-muted">$</span>
             <input
@@ -279,15 +280,15 @@ export default function BudgetPage() {
           </div>
         </div>
         <div className="card-summary p-5">
-          <p className="text-[13px] font-semibold text-muted">Estimated</p>
+          <p className="text-[13px] font-semibold text-muted">Estimated <Tooltip text="The total of all your estimated costs across every category. Use this for planning before you have final numbers." /></p>
           <p className="mt-1 text-[26px] font-semibold text-plum">${totalEstimated.toLocaleString()}</p>
         </div>
         <div className="card-summary p-5">
-          <p className="text-[13px] font-semibold text-muted">Paid</p>
+          <p className="text-[13px] font-semibold text-muted">Paid <Tooltip text="The total amount you've actually paid so far, including deposits and partial payments." /></p>
           <p className="mt-1 text-[26px] font-semibold text-violet">${totalPaid.toLocaleString()}</p>
         </div>
         <div className="card-summary p-5">
-          <p className="text-[13px] font-semibold text-muted">Remaining</p>
+          <p className="text-[13px] font-semibold text-muted">Remaining <Tooltip text="Budget minus total paid. If this goes negative, you're over budget." /></p>
           <p className={`mt-1 text-[26px] font-semibold ${remaining < 0 ? "text-error" : "text-violet"}`}>
             ${remaining.toLocaleString()}
           </p>
@@ -476,9 +477,9 @@ export default function BudgetPage() {
               {/* Column headers */}
               <div className="grid grid-cols-[1fr_100px_100px_100px_60px] gap-2 px-4 py-2 border-b border-border text-[12px] font-semibold text-muted">
                 <span>Item</span>
-                <span className="text-right">Estimated</span>
-                <span className="text-right">Paid</span>
-                <span className="text-right">Final Cost</span>
+                <span className="text-right">Estimated <Tooltip text="Your best guess at the cost. Update as you get quotes." /></span>
+                <span className="text-right">Paid <Tooltip text="Amount paid so far — deposits, installments, or full payment." /></span>
+                <span className="text-right">Final Cost <Tooltip text="The actual final amount after the service. Leave blank until you have the final invoice." /></span>
                 <span></span>
               </div>
 

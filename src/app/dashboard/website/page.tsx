@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
+import { Tooltip } from "@/components/Tooltip";
 
 type Tab = "setup" | "schedule" | "registry" | "rsvp" | "gallery";
 
@@ -343,7 +344,7 @@ export default function WebsitePage() {
           <div className="max-w-lg space-y-6">
             <div>
               <label className="text-[13px] font-semibold text-muted block mb-1">
-                Website URL
+                Website URL <Tooltip text="This is the public link to your wedding website. Share it with guests so they can view details, RSVP, and upload photos." wide />
               </label>
               <div className="flex items-center gap-2">
                 <span className="text-[13px] text-muted">eydn.app/w/</span>
@@ -383,7 +384,7 @@ export default function WebsitePage() {
                 <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-violet transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5" />
               </label>
               <span className="text-[15px] text-plum font-semibold">
-                Website {enabled ? "Enabled" : "Disabled"}
+                Website {enabled ? "Enabled" : "Disabled"} <Tooltip text="When enabled, your wedding website is publicly visible at the URL above. Guests can view the schedule, RSVP, and browse the photo gallery." wide />
               </span>
             </div>
 
@@ -661,7 +662,7 @@ export default function WebsitePage() {
                 {generatingTokens ? "Generating..." : "Generate RSVP Links"}
               </button>
               <p className="text-[13px] text-muted">
-                Creates unique RSVP links for all guests who don&apos;t have one yet
+                Creates unique RSVP links for all guests who don&apos;t have one yet <Tooltip text="Each guest gets a unique link they can use to RSVP, select a meal preference, and add a plus-one. Responses update your guest list automatically." wide />
               </p>
             </div>
 

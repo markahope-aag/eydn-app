@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { PremiumButton } from "@/components/PremiumGate";
 import { exportWeddingBinder } from "@/lib/export-binder";
+import { Tooltip } from "@/components/Tooltip";
 
 type TimelineItem = { time: string; event: string; notes: string; forGroup?: string };
 type VendorContact = { vendor: string; category: string; contact: string; phone: string };
@@ -575,7 +576,7 @@ export default function DayOfPage() {
 
       {/* Ceremony time */}
       <div className="mt-4 card p-4 flex flex-wrap items-center gap-3">
-        <label className="text-[13px] font-semibold text-plum whitespace-nowrap">Ceremony time:</label>
+        <label className="text-[13px] font-semibold text-plum whitespace-nowrap">Ceremony time: <Tooltip text="Set your ceremony start time and click Generate Timeline. All other events will be scheduled automatically, working backwards and forwards from this time." wide /></label>
         <input
           type="time"
           value={ceremonyTime}
@@ -619,6 +620,7 @@ export default function DayOfPage() {
       {/* TIMELINE TAB */}
       {tab === "timeline" && (
         <div className="mt-4">
+          <p className="text-[12px] text-muted mb-2">Events are scheduled working backwards and forwards from your ceremony time. <Tooltip text="Hair and makeup, photos, and arrival times are calculated by counting backwards from the ceremony. Reception events like dinner, speeches, and dancing are scheduled forward." wide /></p>
           {/* Group filter */}
           <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1">
             {["All", ...TIMELINE_GROUPS].map((g) => (
@@ -759,6 +761,7 @@ export default function DayOfPage() {
       {/* PACKING CHECKLIST TAB */}
       {tab === "packing" && (
         <div className="mt-4">
+          <p className="text-[12px] text-muted mb-3">Check off items as you pack them. <Tooltip text="This checklist is included when you export the day-of PDF, so you can print it out for the wedding day." wide /></p>
           <div className="space-y-2">
             {plan.packingChecklist.map((p, i) => (
               <div
@@ -830,7 +833,7 @@ export default function DayOfPage() {
 
           {/* Processional Order */}
           <div>
-            <h2 className="text-[15px] font-semibold text-plum mb-2">Processional Order</h2>
+            <h2 className="text-[15px] font-semibold text-plum mb-2">Processional Order <Tooltip text="The order people walk down the aisle before the ceremony. Typically: officiant, grandparents, parents, wedding party (paired or single), ring bearer/flower girl, then the bride or couple." wide /></h2>
             <p className="text-[12px] text-muted mb-3">Drag to reorder, or use the arrows. Names appear in order of entry.</p>
             <div className="space-y-1">
               {plan.processionalOrder.map((name, i) => (
@@ -919,7 +922,7 @@ export default function DayOfPage() {
             <table className="w-full text-[15px]">
               <thead className="border-b border-border bg-lavender">
                 <tr>
-                  <th className="px-4 py-2 text-left font-semibold text-muted">Moment</th>
+                  <th className="px-4 py-2 text-left font-semibold text-muted">Moment <Tooltip text="Each moment is a specific point during your wedding when music plays -- e.g. Processional (walking down the aisle), Recessional (walking back up), First Dance, etc." wide /></th>
                   <th className="px-4 py-2 text-left font-semibold text-muted">Song</th>
                   <th className="px-4 py-2 text-left font-semibold text-muted">Artist</th>
                   <th className="px-4 py-2 w-10"></th>

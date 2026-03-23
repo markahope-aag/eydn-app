@@ -6,6 +6,7 @@ import { SkeletonList } from "@/components/Skeleton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { usePremium } from "@/components/PremiumGate";
+import { Tooltip } from "@/components/Tooltip";
 
 type Guest = {
   id: string;
@@ -510,7 +511,7 @@ export default function GuestsPage() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1>Guest List</h1>
+        <h1>Guest List <Tooltip text="Manage your wedding guests, track RSVPs, assign roles, and organize guests into groups. Use filters to quickly find specific guests." wide /></h1>
         <div className="flex gap-2">
           <input ref={fileInput} type="file" accept=".csv" onChange={importCSV} className="hidden" />
           <div className="relative">
@@ -551,6 +552,7 @@ export default function GuestsPage() {
           <button onClick={() => fileInput.current?.click()} className="btn-ghost btn-sm">
             Import CSV
           </button>
+          <Tooltip text="Upload a CSV file to bulk-import guests. The file must have a &quot;name&quot; column. Optional columns: &quot;email&quot; and &quot;group&quot;." wide />
         </div>
       </div>
 
@@ -581,6 +583,7 @@ export default function GuestsPage() {
           <option value="">All Status</option>
           {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
+        <Tooltip text="RSVP pipeline: Not Invited → Invite Sent → Pending → Accepted or Declined. Update each guest's status as responses come in." wide />
       </div>
 
       {/* Add guest */}
@@ -607,7 +610,7 @@ export default function GuestsPage() {
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div>
-                <label className="text-[12px] font-semibold text-muted">Role</label>
+                <label className="text-[12px] font-semibold text-muted">Role <Tooltip text="Categorize guests as Family, Friend, Wedding Party, Coworker, Plus One, or Other. Roles help you filter and organize your guest list." wide /></label>
                 <select
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
@@ -617,7 +620,7 @@ export default function GuestsPage() {
                 </select>
               </div>
               <div>
-                <label className="text-[12px] font-semibold text-muted">Meal Preference</label>
+                <label className="text-[12px] font-semibold text-muted">Meal Preference <Tooltip text="Record dietary needs or meal choices for each guest. This integrates with your catering planning to ensure accurate headcounts per meal type." wide /></label>
                 <input
                   type="text"
                   value={newMeal}
@@ -647,7 +650,7 @@ export default function GuestsPage() {
                 />
               </div>
               <div>
-                <label className="text-[12px] font-semibold text-muted">Group</label>
+                <label className="text-[12px] font-semibold text-muted">Group <Tooltip text="Use groups to organize related guests together, such as family units, friend circles, or work colleagues. Groups make it easy to manage seating and send batch updates." wide /></label>
                 <input
                   type="text"
                   value={newGroup}

@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { VENDOR_CATEGORIES, VENDOR_STATUSES } from "@/lib/vendors/categories";
+import { Tooltip } from "@/components/Tooltip";
 import { EmailTemplate } from "./EmailTemplate";
 
 type Vendor = {
@@ -169,7 +170,7 @@ export default function VendorsPage() {
       <Confetti />
       <div className="flex items-center justify-between">
         <div>
-          <h1>Vendors</h1>
+          <h1>Vendors <Tooltip text="Track every vendor through your booking pipeline — from initial search to final payment. Each vendor moves through stages so you always know where things stand." wide /></h1>
           <p className="mt-1 text-[15px] text-muted">
             {bookedCount} booked / {vendors.length} total
           </p>
@@ -191,6 +192,7 @@ export default function VendorsPage() {
         <form onSubmit={addVendor} className="mt-4 card p-4 space-y-3">
           <p className="text-[13px] text-muted">
             Add a vendor you&apos;ve found. We&apos;ll also save their info to help other couples.
+            <Tooltip text="Only the vendor name and category are required. Website, city, and state are optional but help other couples discover this vendor in our directory." wide />
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <input
@@ -279,6 +281,7 @@ export default function VendorsPage() {
                       </option>
                     ))}
                   </select>
+                  <Tooltip text="Pipeline stages: Searching (researching options) → Contacted (reached out) → Quote Received (got pricing) → Booked (confirmed!) → Deposit Paid → Paid in Full." wide />
                   {vendor.amount !== null && (
                     <span className="text-[12px] text-muted">
                       ${vendor.amount.toLocaleString()}

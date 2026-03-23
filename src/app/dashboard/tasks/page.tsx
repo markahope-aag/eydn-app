@@ -7,6 +7,7 @@ import { SkeletonList } from "@/components/Skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { TaskFilters } from "./TaskFilters";
+import { Tooltip } from "@/components/Tooltip";
 
 // Dynamic imports for heavy components (dnd-kit, react-pdf in detail)
 const TaskList = dynamic(() => import("./TaskList").then((m) => ({ default: m.TaskList })), {
@@ -364,6 +365,9 @@ export default function TasksPage() {
 
       {/* Filters */}
       <div className="mt-4">
+        <p className="text-[12px] text-muted mb-2">
+          Filter by status <Tooltip text="Not Started: haven't begun yet. In Progress: currently working on it. Done: completed. Use this workflow to track each task through to completion." wide /> or priority to focus on what matters most.
+        </p>
         <TaskFilters
           categories={allCategories}
           phases={allPhases}
@@ -379,7 +383,8 @@ export default function TasksPage() {
       </div>
 
       {/* Add task form */}
-      <form onSubmit={addTask} className="mt-4 flex flex-wrap gap-3">
+      <form onSubmit={addTask} className="mt-4 flex flex-wrap gap-3 items-center">
+        <Tooltip text="Tasks marked with a timeline phase were auto-generated from your onboarding answers. You can also add your own custom tasks here." wide />
         <input
           type="text"
           placeholder="Add a custom task..."
@@ -399,15 +404,18 @@ export default function TasksPage() {
             </option>
           ))}
         </select>
-        <select
-          value={priority}
-          onChange={(e) => setPriority(e.target.value as "high" | "medium" | "low")}
-          className="rounded-[10px] border-border px-3 py-2 text-[15px]"
-        >
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
+        <div className="flex items-center gap-1">
+          <select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as "high" | "medium" | "low")}
+            className="rounded-[10px] border-border px-3 py-2 text-[15px]"
+          >
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <Tooltip text="High: time-sensitive or critical (e.g. booking vendors). Medium: important but flexible. Low: nice-to-have or far-off tasks." wide />
+        </div>
         <input
           type="date"
           value={dueDate}

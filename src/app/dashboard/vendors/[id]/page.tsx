@@ -8,6 +8,7 @@ import { EmailTemplate } from "../EmailTemplate";
 import { Comments } from "@/components/Comments";
 import { VendorCard } from "@/components/VendorCard";
 import { FileUpload } from "@/components/FileUpload";
+import { Tooltip } from "@/components/Tooltip";
 
 type Attachment = {
   id: string;
@@ -140,13 +141,17 @@ export default function VendorDetailPage({
 
       {/* Google Business Profile */}
       <div className="mt-4">
+        <div className="flex items-center gap-1 mb-1">
+          <span className="text-[12px] font-semibold text-muted">Google Business Profile</span>
+          <Tooltip text="If this vendor has a Google Business listing, their rating, reviews, and contact info will appear here automatically." wide />
+        </div>
         <VendorCard vendorId={vendor.id} />
       </div>
 
       {/* Status pipeline */}
       <div className="mt-6">
         <label className="text-[12px] font-semibold text-muted uppercase">
-          Status
+          Status <Tooltip text="Click any stage to update this vendor's progress. Stages: Searching (researching) → Contacted (reached out) → Quote Received (got pricing) → Booked (confirmed!) → Deposit Paid (partial payment) → Paid in Full (complete)." wide />
         </label>
         <div className="mt-2 flex gap-1">
           {VENDOR_STATUSES.map((s, i) => (
@@ -169,7 +174,7 @@ export default function VendorDetailPage({
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <div>
           <label className="text-[12px] font-semibold text-muted">
-            Contact Name
+            Contact Name <Tooltip text="Your point of contact (POC) at this vendor — the person you communicate with for quotes, contracts, and day-of coordination." wide />
           </label>
           <input
             type="text"
@@ -205,7 +210,7 @@ export default function VendorDetailPage({
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div>
           <label className="text-[12px] font-semibold text-muted">
-            Total Amount
+            Total Amount <Tooltip text="The full contracted price for this vendor. This feeds into your overall budget tracker." />
           </label>
           <div className="mt-1 flex items-center gap-1">
             <span className="text-muted">$</span>
@@ -227,7 +232,7 @@ export default function VendorDetailPage({
         </div>
         <div>
           <label className="text-[12px] font-semibold text-muted">
-            Amount Paid
+            Amount Paid <Tooltip text="Track deposits and installments here. Update this as you make payments so you can see the remaining balance at a glance." wide />
           </label>
           <div className="mt-1 flex items-center gap-1">
             <span className="text-muted">$</span>
@@ -251,7 +256,7 @@ export default function VendorDetailPage({
 
       {/* Day-of Details */}
       <div className="mt-6">
-        <h2 className="text-[15px] font-semibold text-plum mb-3">Day-of Details</h2>
+        <h2 className="text-[15px] font-semibold text-plum mb-3">Day-of Details <Tooltip text="Logistics for the wedding day: when the vendor arrives, whether they need a vendor meal, and if they've submitted required liability insurance to your venue." wide /></h2>
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
             <label className="text-[12px] font-semibold text-muted">Arrival Time</label>
@@ -308,7 +313,7 @@ export default function VendorDetailPage({
       {/* Contracts & Documents */}
       <div className="mt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-[15px] font-semibold text-plum">Contracts &amp; Documents</h2>
+          <h2 className="text-[15px] font-semibold text-plum">Contracts &amp; Documents <Tooltip text="Upload contracts, proposals, invoices, or insurance certificates. Supported file types: PDF, images (JPG, PNG), and common document formats." wide /></h2>
           <FileUpload
             entityType="vendor"
             entityId={vendor.id}

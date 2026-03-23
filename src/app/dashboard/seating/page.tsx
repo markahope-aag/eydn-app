@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Tooltip } from "@/components/Tooltip";
 
 type Table = {
   id: string;
@@ -338,7 +339,7 @@ export default function SeatingPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-muted">Shape</label>
+                          <label className="text-[11px] font-semibold text-muted">Shape <Tooltip text="Round tables seat guests evenly around the perimeter. Rectangle tables seat more guests but can make cross-table conversation harder." wide /></label>
                           <div className="flex gap-1 mt-0.5">
                             <button
                               onClick={() => updateTable(table.id, { shape: "round" })}
@@ -402,7 +403,7 @@ export default function SeatingPage() {
 
           {/* Guest sidebar */}
           <div className="w-56 flex-shrink-0">
-            <h2 className="text-[15px] font-semibold text-muted mb-2">Unassigned ({unassignedGuests.length})</h2>
+            <h2 className="text-[15px] font-semibold text-muted mb-2">Unassigned ({unassignedGuests.length}) <Tooltip text="Drag a guest name and drop it onto a table to assign their seat." /></h2>
             <div className="space-y-1 max-h-[500px] overflow-y-auto">
               {unassignedGuests.map((guest) => (
                 <div
@@ -424,7 +425,7 @@ export default function SeatingPage() {
       {/* CEREMONY TAB */}
       {tab === "ceremony" && (
         <div>
-          <p className="text-[13px] text-muted mb-6">Arrange who stands at the altar during the ceremony.</p>
+          <p className="text-[13px] text-muted mb-6">Arrange who stands at the altar during the ceremony. <Tooltip text="Left and Right are from the guests' perspective facing the altar. Center is for the officiant and couple at the altar itself." wide /></p>
 
           {/* Altar visualization */}
           <div className="bg-white rounded-[16px] border border-border p-8">
