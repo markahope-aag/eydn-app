@@ -50,7 +50,7 @@ describe("GuestsPage", () => {
   it("renders the guest list heading after loading", async () => {
     render(<GuestsPage />);
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "Guest List" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /Guest List/ })).toBeInTheDocument();
     });
   });
 

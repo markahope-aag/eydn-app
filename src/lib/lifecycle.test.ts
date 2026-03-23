@@ -74,24 +74,24 @@ describe("getEmailsDue", () => {
   it("returns post_wedding_welcome right after wedding", () => {
     const due = getEmailsDue(monthsAgo(0.5), "post_wedding", []);
     expect(due).toContain("post_wedding_welcome");
-    expect(due).not.toContain("download_reminder_3mo");
+    expect(due).not.toContain("download_reminder_1mo");
   });
 
-  it("returns download reminders at 3, 6, 9 months", () => {
-    const due3 = getEmailsDue(monthsAgo(3.5), "post_wedding", ["post_wedding_welcome"]);
-    expect(due3).toContain("download_reminder_3mo");
-    expect(due3).not.toContain("download_reminder_6mo");
+  it("returns download reminders at 1, 6, 9 months", () => {
+    const due1 = getEmailsDue(monthsAgo(1.5), "post_wedding", ["post_wedding_welcome"]);
+    expect(due1).toContain("download_reminder_1mo");
+    expect(due1).not.toContain("download_reminder_6mo");
 
     const due6 = getEmailsDue(monthsAgo(6.5), "post_wedding", [
       "post_wedding_welcome",
-      "download_reminder_3mo",
+      "download_reminder_1mo",
     ]);
     expect(due6).toContain("download_reminder_6mo");
     expect(due6).not.toContain("download_reminder_9mo");
 
     const due9 = getEmailsDue(monthsAgo(9.5), "post_wedding", [
       "post_wedding_welcome",
-      "download_reminder_3mo",
+      "download_reminder_1mo",
       "download_reminder_6mo",
     ]);
     expect(due9).toContain("download_reminder_9mo");
@@ -100,7 +100,7 @@ describe("getEmailsDue", () => {
   it("returns memory_plan_offer at 11 months", () => {
     const due = getEmailsDue(monthsAgo(11.5), "post_wedding", [
       "post_wedding_welcome",
-      "download_reminder_3mo",
+      "download_reminder_1mo",
       "download_reminder_6mo",
       "download_reminder_9mo",
     ]);
@@ -110,7 +110,7 @@ describe("getEmailsDue", () => {
   it("returns archive_notice at 12 months", () => {
     const due = getEmailsDue(monthsAgo(12.5), "archived", [
       "post_wedding_welcome",
-      "download_reminder_3mo",
+      "download_reminder_1mo",
       "download_reminder_6mo",
       "download_reminder_9mo",
       "memory_plan_offer",
@@ -121,7 +121,7 @@ describe("getEmailsDue", () => {
   it("returns sunset warnings at 21 and 23.5 months", () => {
     const due21 = getEmailsDue(monthsAgo(21.5), "archived", [
       "post_wedding_welcome",
-      "download_reminder_3mo",
+      "download_reminder_1mo",
       "download_reminder_6mo",
       "download_reminder_9mo",
       "memory_plan_offer",
@@ -132,7 +132,7 @@ describe("getEmailsDue", () => {
 
     const due24 = getEmailsDue(monthsAgo(24), "sunset", [
       "post_wedding_welcome",
-      "download_reminder_3mo",
+      "download_reminder_1mo",
       "download_reminder_6mo",
       "download_reminder_9mo",
       "memory_plan_offer",
@@ -145,7 +145,7 @@ describe("getEmailsDue", () => {
   it("does not return emails that were already sent", () => {
     const due = getEmailsDue(monthsAgo(24), "sunset", [
       "post_wedding_welcome",
-      "download_reminder_3mo",
+      "download_reminder_1mo",
       "download_reminder_6mo",
       "download_reminder_9mo",
       "memory_plan_offer",
@@ -160,7 +160,7 @@ describe("getEmailsDue", () => {
     const due = getEmailsDue(monthsAgo(24), "sunset", []);
     expect(due).toEqual([
       "post_wedding_welcome",
-      "download_reminder_3mo",
+      "download_reminder_1mo",
       "download_reminder_6mo",
       "download_reminder_9mo",
       "memory_plan_offer",

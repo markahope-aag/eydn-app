@@ -57,8 +57,8 @@ function createMockSupabase(overrides: {
     storage: {
       from: vi.fn(() => ({
         upload: vi.fn(() => ({ error: uploadError })),
-        getPublicUrl: vi.fn(() => ({
-          data: { publicUrl: "https://storage.example.com/photo.jpg" },
+        createSignedUrl: vi.fn(() => ({
+          data: { signedUrl: "https://storage.example.com/photo.jpg?token=abc" },
         })),
       })),
     },
@@ -117,7 +117,7 @@ describe("GET /api/attachments", () => {
   });
 
   it("returns attachment list", async () => {
-    const attachments = [{ id: "a1", file_name: "photo.jpg" }];
+    const attachments = [{ id: "a1", file_name: "photo.jpg", file_url: "https://storage.example.com/photo.jpg" }];
     mockSupabase = createMockSupabase({ selectData: attachments });
     vi.mocked(getWeddingForUser).mockResolvedValue({
       wedding: mockWedding as any,
