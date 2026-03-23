@@ -6,6 +6,7 @@ import {
 } from "@clerk/nextjs";
 import { DM_Sans } from "next/font/google";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/next";
 import Link from "next/link";
 import "./globals.css";
 
@@ -77,6 +78,7 @@ export default function RootLayout({
           {children}
           <Toaster richColors position="top-right" />
         </ClerkProvider>
+        <Analytics />
       </body>
     </html>
   );
