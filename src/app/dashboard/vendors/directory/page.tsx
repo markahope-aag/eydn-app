@@ -138,10 +138,17 @@ export default function VendorDirectoryPage() {
 
   return (
     <div>
-      <h1>Vendor Directory</h1>
-      <p className="mt-1 text-[15px] text-muted">
-        Browse recommended vendors in your area. Add any to your vendor list.
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1>Vendor Directory</h1>
+          <p className="mt-1 text-[15px] text-muted">
+            Browse recommended vendors in your area. Add any to your vendor list.
+          </p>
+        </div>
+        <a href="/dashboard/vendors" className="btn-secondary">
+          My Vendors
+        </a>
+      </div>
 
       {/* Search + filters */}
       <div className="mt-4 flex gap-3">
