@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 
+// Revalidate blog listing every 5 minutes
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   title: "The Playbook — Wedding Planning Tips & Guides",
   description:

@@ -3,6 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 
+// Revalidate blog posts every 10 minutes
+export const revalidate = 600;
+
 type Post = {
   id: string;
   slug: string;
