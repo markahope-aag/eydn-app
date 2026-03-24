@@ -302,6 +302,12 @@ export default function VendorsPage() {
                       ${vendor.amount.toLocaleString()}
                     </span>
                   )}
+                  <a
+                    href={`/dashboard/vendors/${vendor.id}`}
+                    className="btn-secondary btn-sm"
+                  >
+                    Details
+                  </a>
                   <button
                     onClick={() => setConfirmDelete(vendor.id)}
                     className="text-[12px] text-error hover:opacity-80"
