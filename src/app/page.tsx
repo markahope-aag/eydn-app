@@ -478,11 +478,11 @@ function HeroAIChatCard() {
   return (
     <div
       style={{
-        background: "#fff",
+        background: "#1A1A2E",
         borderRadius: 12,
         padding: "18px 20px",
         width: 280,
-        boxShadow: "0 8px 32px rgba(180,140,130,.2)",
+        boxShadow: "0 12px 40px rgba(0,0,0,.3)",
         transform: "rotate(2deg)",
         animation: "float3 7s ease-in-out infinite",
         position: "absolute",
@@ -490,13 +490,17 @@ function HeroAIChatCard() {
         right: "8%",
       }}
     >
-      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>AI Assistant</p>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <div style={{ width: 20, height: 20, borderRadius: "50%", background: "linear-gradient(135deg, #C08080, #C9A84C)" }} />
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>eydn AI</span>
+        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ADE80", marginLeft: "auto" }} />
+      </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={{ alignSelf: "flex-end", background: "#2C3E2D", color: "#FAF6F1", borderRadius: "12px 12px 4px 12px", padding: "8px 12px", maxWidth: "80%", fontFamily: "var(--font-body)", fontSize: 12.5 }}>
           What should I prioritize this month?
         </div>
-        <div style={{ alignSelf: "flex-start", background: "#FAF6F1", color: "#2A2018", borderRadius: "12px 12px 12px 4px", padding: "8px 12px", maxWidth: "85%", fontFamily: "var(--font-body)", fontSize: 12.5, lineHeight: 1.45 }}>
-          Focus on booking your photographer and finalizing the guest list. Both have March deadlines.
+        <div style={{ alignSelf: "flex-start", background: "#252B45", color: "rgba(250,246,241,0.85)", borderRadius: "12px 12px 12px 4px", padding: "8px 12px", maxWidth: "85%", fontFamily: "var(--font-body)", fontSize: 12.5, lineHeight: 1.45 }}>
+          Focus on booking your <span style={{ color: "#E8C97A", fontWeight: 600 }}>photographer</span> and finalizing the <span style={{ color: "#E8C97A", fontWeight: 600 }}>guest list</span>. Both have March deadlines.
         </div>
       </div>
     </div>
