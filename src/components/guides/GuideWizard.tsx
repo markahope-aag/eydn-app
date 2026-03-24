@@ -13,6 +13,12 @@ type SavedGuide = {
   vendor_brief: Record<string, unknown> | null;
 };
 
+type ColorPalette = {
+  name: string;
+  description: string;
+  colors: { hex: string; name: string }[];
+};
+
 type Props = {
   guide: GuideDefinition;
 };
@@ -25,6 +31,8 @@ export function GuideWizard({ guide }: Props) {
   const [saving, setSaving] = useState(false);
   const [vendorBrief, setVendorBrief] = useState<Record<string, unknown> | null>(null);
   const [briefLoading, setBriefLoading] = useState(false);
+  const [palettes, setPalettes] = useState<ColorPalette[]>([]);
+  const [palettesLoading, setPalettesLoading] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
   // Load saved progress
@@ -37,6 +45,14 @@ export function GuideWizard({ guide }: Props) {
           setSectionIndex(data.completed ? guide.sections.length : data.section_index);
           setCompleted(data.completed);
           setVendorBrief(data.vendor_brief);
+
+          // Load palettes for completed colors-theme guide
+          if (data.completed && guide.slug === "colors-theme") {
+            fetch("/api/guides/colors-theme/generate", { method: "POST" })
+              .then((r) => r.ok ? r.json() : null)
+              .then((d) => { if (d?.palettes) setPalettes(d.palettes); })
+              .catch(() => {});
+          }
         }
       })
       .catch(() => {})
@@ -119,6 +135,22 @@ export function GuideWizard({ guide }: Props) {
           // Integration failed silently — guide data is still saved
         }
       }
+
+      // Generate color palettes for colors-theme guide
+      if (guide.slug === "colors-theme") {
+        setPalettesLoading(true);
+        try {
+          const res = await fetch("/api/guides/colors-theme/generate", { method: "POST" });
+          if (res.ok) {
+            const data = await res.json();
+            setPalettes((data as { palettes: ColorPalette[] }).palettes || []);
+          }
+        } catch {
+          // Palette generation failed — not critical
+        } finally {
+          setPalettesLoading(false);
+        }
+      }
     } else {
       setSectionIndex(next);
       saveProgress(responses, next, false);
@@ -187,6 +219,97 @@ export function GuideWizard({ guide }: Props) {
             )}
           </div>
         </div>
+
+        {/* Color palettes */}
+        {palettesLoading && (
+          <div className="mt-8 text-center">
+            <p className="text-[15px] text-muted animate-pulse">Generating your color palettes...</p>
+          </div>
+        )}
+        {palettes.length > 0 && (
+          <div className="mt-8 space-y-6">
+            <h2 className="text-[18px] font-semibold text-plum">Your Color Palettes</h2>
+            {palettes.map((palette, pi) => (
+              <div key={pi} className="card p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <h3 className="text-[15px] font-semibold text-plum">{palette.name}</h3>
+                    <p className="text-[12px] text-muted">{palette.description}</p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      // Save palette as a mood board item
+                      try {
+                        // Create an SVG palette image as a data URL
+                        const svgWidth = 500;
+                        const swatchWidth = svgWidth / palette.colors.length;
+                        const rects = palette.colors.map((c, i) =>
+                          `<rect x="${i * swatchWidth}" y="0" width="${swatchWidth}" height="100" fill="${c.hex}"/>` +
+                          `<text x="${i * swatchWidth + swatchWidth / 2}" y="130" text-anchor="middle" font-size="11" font-family="sans-serif" fill="#333">${c.name}</text>`
+                        ).join("");
+                        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="150">${rects}</svg>`;
+                        const dataUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
+
+                        const res = await fetch("/api/mood-board", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            image_url: dataUrl,
+                            caption: `${palette.name}: ${palette.colors.map((c) => c.name).join(", ")}`,
+                            category: "Colors & Palette",
+                          }),
+                        });
+                        if (res.ok) {
+                          toast.success(`${palette.name} saved to mood board!`);
+                        } else {
+                          throw new Error();
+                        }
+                      } catch {
+                        toast.error("Failed to save palette");
+                      }
+                    }}
+                    className="btn-secondary btn-sm flex-shrink-0"
+                  >
+                    Save to Mood Board
+                  </button>
+                </div>
+                <div className="flex gap-1 mt-3">
+                  {palette.colors.map((color, ci) => (
+                    <div key={ci} className="flex-1 text-center">
+                      <div
+                        className="w-full h-16 rounded-[10px] border border-border"
+                        style={{ backgroundColor: color.hex }}
+                      />
+                      <p className="mt-1 text-[11px] text-muted">{color.name}</p>
+                      <p className="text-[10px] text-muted/60 font-mono">{color.hex}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={async () => {
+                setPalettesLoading(true);
+                try {
+                  const res = await fetch("/api/guides/colors-theme/generate", { method: "POST" });
+                  if (res.ok) {
+                    const data = await res.json();
+                    setPalettes((data as { palettes: ColorPalette[] }).palettes || []);
+                    toast.success("New palettes generated!");
+                  }
+                } catch {
+                  toast.error("Failed to regenerate");
+                } finally {
+                  setPalettesLoading(false);
+                }
+              }}
+              disabled={palettesLoading}
+              className="btn-ghost btn-sm"
+            >
+              {palettesLoading ? "Generating..." : "Regenerate Palettes"}
+            </button>
+          </div>
+        )}
 
         {/* Vendor brief display */}
         {vendorBrief && (
