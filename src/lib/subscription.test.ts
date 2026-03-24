@@ -48,7 +48,10 @@ function buildMockSupabase(overrides?: {
     return obj;
   }
 
+  const adminResult = { data: null, error: null };
+
   const mockFrom = vi.fn((table: string) => {
+    if (table === "user_roles") return buildChain(adminResult);
     if (table === "subscriber_purchases") return buildChain(purchaseResult);
     if (table === "wedding_collaborators") return buildChain(collabResult);
     return buildChain(weddingResult);

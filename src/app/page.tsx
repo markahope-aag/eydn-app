@@ -694,18 +694,16 @@ function SpotlightChat() {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ alignSelf: "flex-end", background: "#2C3E2D", color: "#FAF6F1", borderRadius: "14px 14px 4px 14px", padding: "10px 16px", maxWidth: "78%", fontFamily: "var(--font-body)", fontSize: 13 }}>
-          Can you suggest a timeline for DIY centerpieces?
+          Find me florists near Madison under $3,000
         </div>
         <div style={{ alignSelf: "flex-start", background: "#252B45", color: "#E8D5B7", borderRadius: "14px 14px 14px 4px", padding: "10px 16px", maxWidth: "85%", fontFamily: "var(--font-body)", fontSize: 13, lineHeight: 1.55 }}>
-          Based on your <span style={{ color: "#E8C97A" }}>150-guest wedding</span>, I recommend starting 8 weeks out. Order supplies by <span style={{ color: "#E8C97A" }}>April 1</span>, do a trial run April 15, then assemble May 10-12.
+          I found 3 great options! <span style={{ color: "#E8C97A" }}>Bloom & Petal</span> starts at $2,200 with amazing reviews. Want me to add them to your vendor list?
         </div>
         <div style={{ alignSelf: "flex-end", background: "#2C3E2D", color: "#FAF6F1", borderRadius: "14px 14px 4px 14px", padding: "10px 16px", maxWidth: "78%", fontFamily: "var(--font-body)", fontSize: 13 }}>
-          What about the budget for materials?
+          Yes, add them and mark as contacted
         </div>
-        <div style={{ alignSelf: "flex-start", display: "flex", gap: 4, padding: "10px 16px" }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#E8C97A", animation: "float1 1s ease-in-out infinite" }} />
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#E8C97A", animation: "float2 1s ease-in-out infinite 0.2s" }} />
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#E8C97A", animation: "float3 1s ease-in-out infinite 0.4s" }} />
+        <div style={{ alignSelf: "flex-start", background: "#252B45", color: "#E8D5B7", borderRadius: "14px 14px 14px 4px", padding: "10px 16px", maxWidth: "85%", fontFamily: "var(--font-body)", fontSize: 13, lineHeight: 1.55 }}>
+          Done! <span style={{ color: "#7BC67E" }}>✓</span> Added Bloom &amp; Petal to your vendors <span style={{ color: "#7BC67E" }}>✓</span> Status set to contacted
         </div>
       </div>
       {/* Input bar */}
@@ -1169,17 +1167,18 @@ export default function HomePage() {
                 style={{ fontFamily: "var(--font-display)", fontSize: 48, fontWeight: 600, color: "#2A2018", lineHeight: 1.1, marginTop: 8 }}
                 className="max-lg:!text-[36px]"
               >
-                An AI that remembers your wedding
+                An AI planner that actually does things
               </h2>
               <p style={{ fontFamily: "var(--font-body)", fontSize: 16, color: "#8A7A6A", lineHeight: 1.7, marginTop: 20 }}>
-                Chat with Eydn for personalized advice — it knows your style, allergies, budget priorities, and every decision you have made. Like a planner who never forgets.
+                Eydn isn&apos;t just a chatbot. It sees your full wedding — every guest, vendor, task, and budget line — and takes action when you ask. Add guests, book vendors, search for venues, and get personalized advice, all through conversation.
               </p>
               <ul style={{ marginTop: 24, listStyle: "none", padding: 0 }}>
                 {[
-                  "Remembers your style, budget, and decisions",
-                  "Personalized advice based on your full wedding data",
-                  "Vendor outreach tips and etiquette guidance",
-                  "Natural conversation with 50-message memory",
+                  "Takes real actions — adds guests, updates vendors, completes tasks",
+                  "Searches the web for vendors, venues, and pricing in your area",
+                  "Knows your full wedding data — budget, timeline, guest list, preferences",
+                  "Proactive nudges — surfaces what needs attention before you ask",
+                  "Generates vendor briefs from your planning guide answers",
                 ].map((b) => (
                   <li key={b} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
                     <span style={{ color: "#C9A84C", fontSize: 14, flexShrink: 0, marginTop: 2 }}>&#10022;</span>
@@ -1599,7 +1598,7 @@ const features = [
   { title: "Wedding website", description: "A beautiful public page for your guests with schedule, travel info, registry links, photo gallery, and RSVP." },
   { title: "Complete day-of binder", description: "Timeline, ceremony script, music lists, speeches, setup assignments, attire details, vendor contacts, and packing checklist — all exportable as a beautiful branded PDF." },
   { title: "Your data, protected", description: "Daily encrypted backups, soft-delete recovery, full data export, and audit logging. Your wedding plans are never at risk." },
-  { title: "AI assistant that remembers you", description: "Chat with Eydn for personalized advice — it knows your style, allergies, budget priorities, and every decision you've made. Like a planner who never forgets." },
+  { title: "AI planner that takes action", description: "Eydn sees your full wedding data and actually does things — adds guests, books vendors, searches the web for venues and pricing, generates vendor briefs, and proactively tells you what needs attention." },
   { title: "Seating chart", description: "Drag-and-drop tables for your reception. Ceremony layout for who stands where at the altar." },
   { title: "Photo gallery", description: "Guests upload their photos to a shared album right from your wedding website. No app download needed." },
 ];
@@ -1607,7 +1606,7 @@ const features = [
 const steps = [
   { title: "Tell us about your wedding", description: "Complete a quick 11-step guided setup. Eydn learns your date, budget, style, and what you've already booked." },
   { title: "Get your personalized plan", description: "Eydn generates 50+ tasks with real deadlines, a pre-built budget with line items, and a custom planning timeline." },
-  { title: "Plan with confidence", description: "Track vendors, manage guests, build your seating chart, and chat with Eydn whenever you need advice." },
+  { title: "Plan with confidence", description: "Track vendors, manage guests, build your seating chart, and let Eydn handle the rest — it searches for vendors, takes actions, and tells you what needs attention." },
 ];
 
 const memoryPlanFeatures = [
@@ -1618,7 +1617,7 @@ const memoryPlanFeatures = [
 ];
 
 const pricingFeatures = [
-  "AI assistant that remembers your vision",
+  "AI planner that takes action and searches the web",
   "50+ auto-generated tasks with smart timeline",
   "Budget tracker with 36 pre-built line items",
   "Guest management with RSVP links",
