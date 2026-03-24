@@ -1,0 +1,20 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms and Conditions",
+  description:
+    "Terms and conditions for using Eydn, the AI-powered wedding planning platform.",
+  openGraph: {
+    title: "Terms and Conditions",
+    description:
+      "Terms and conditions for using Eydn, the AI-powered wedding planning platform.",
+  },
+};
+
+export default function TermsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return children;
+}

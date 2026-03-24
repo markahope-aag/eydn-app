@@ -12,9 +12,20 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600"],
 });
 
+const SITE_URL = "https://eydn.app";
+const SITE_NAME = "Eydn";
+const DEFAULT_DESCRIPTION = "Plan your perfect wedding with Eydn. AI-powered task timeline, budget tracker, vendor management, guest RSVPs, seating chart, and a beautiful wedding website — all in one place.";
+
 export const metadata: Metadata = {
-  title: "Eydn — Your AI Wedding Planning Guide",
-  description: "Plan your perfect wedding with Eydn. AI-powered task timeline, budget tracker, vendor management, guest RSVPs, seating chart, and a beautiful wedding website — all in one place.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Eydn — Your AI Wedding Planning Guide",
+    template: "%s | Eydn",
+  },
+  description: DEFAULT_DESCRIPTION,
+  keywords: ["wedding planning", "wedding planner app", "AI wedding planner", "guest list app", "wedding budget tracker", "wedding timeline", "RSVP", "seating chart", "wedding website builder"],
+  authors: [{ name: SITE_NAME, url: SITE_URL }],
+  creator: SITE_NAME,
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
@@ -24,6 +35,32 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.json",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: "Eydn — Your AI Wedding Planning Guide",
+    description: DEFAULT_DESCRIPTION,
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Eydn — AI-powered wedding planning",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Eydn — Your AI Wedding Planning Guide",
+    description: DEFAULT_DESCRIPTION,
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   other: {
     "p:domain_verify": "e7c997f6eed9a7af061aae0214b63544",
   },
