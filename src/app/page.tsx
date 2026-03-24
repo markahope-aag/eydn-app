@@ -158,50 +158,56 @@ function LandingNav() {
           justifyContent: "space-between",
         }}
       >
-        {/* Logo */}
-        <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="eydn" style={{ height: 24 }} />
-        </Link>
+        {/* Logo + Nav links (left) */}
+        <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="eydn" style={{ height: 24 }} />
+          </Link>
+          <nav
+            style={{ display: "flex", alignItems: "center", gap: 24 }}
+            className="max-md:!hidden"
+          >
+            {navLinks.map((l) => (
+              <Link
+                key={l.label}
+                href={l.href}
+                style={{
+                  fontFamily: "var(--font-body)",
+                  fontSize: 13,
+                  letterSpacing: "0.08em",
+                  color: "#2A2018",
+                  opacity: 0.75,
+                  textDecoration: "none",
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.75"; }}
+              >
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
-        {/* Desktop links */}
+        {/* Sign In / Dashboard (right) */}
         <div
-          style={{ display: "flex", alignItems: "center", gap: 32 }}
+          style={{ display: "flex", alignItems: "center", gap: 16 }}
           className="max-md:!hidden"
         >
-          {navLinks.map((l) => (
-            <Link
-              key={l.label}
-              href={l.href}
-              style={{
-                fontFamily: "var(--font-body)",
-                fontSize: 13,
-                letterSpacing: "0.08em",
-                color: "#2A2018",
-                opacity: 0.75,
-                textDecoration: "none",
-                transition: "opacity 0.2s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.75"; }}
-            >
-              {l.label}
-            </Link>
-          ))}
           <Show when="signed-out">
             <Link
               href="/sign-in"
               style={{
                 fontFamily: "var(--font-body)",
                 fontSize: 13,
-                letterSpacing: "0.08em",
+                fontWeight: 600,
                 color: "#2A2018",
-                opacity: 0.75,
                 textDecoration: "none",
                 transition: "opacity 0.2s",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.75"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
             >
               Sign In
             </Link>
@@ -238,7 +244,42 @@ function LandingNav() {
                 textDecoration: "none",
               }}
             >
+              Go to Dashboard
+            </Link>
+          </Show>
+        </div>
+
+        {/* Mobile: always show Sign In link (hamburger is separate) */}
+        <div className="md:!hidden flex items-center gap-3">
+          <Show when="signed-in">
+            <Link
+              href="/dashboard"
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#FAF6F1",
+                background: "#2C3E2D",
+                borderRadius: 100,
+                padding: "6px 16px",
+                textDecoration: "none",
+              }}
+            >
               Dashboard
+            </Link>
+          </Show>
+          <Show when="signed-out">
+            <Link
+              href="/sign-in"
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#2A2018",
+                textDecoration: "none",
+              }}
+            >
+              Sign In
             </Link>
           </Show>
         </div>
