@@ -114,7 +114,7 @@ export default function ChatPage() {
 
   return (
     <Paywall feature="Ask Eydn">
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div className="flex flex-col h-[calc(100vh-10rem)] md:h-[calc(100vh-7rem)]">
       <h1 className="flex-shrink-0">
         Ask Eydn
       </h1>
