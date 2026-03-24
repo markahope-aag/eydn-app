@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
-import {
-  ClerkProvider,
-  Show,
-  UserButton,
-} from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import { DM_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/next";
-import Link from "next/link";
+import { GlobalHeader } from "@/components/GlobalHeader";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -70,36 +66,7 @@ export default function RootLayout({
           />
         </noscript>
         <ClerkProvider>
-          <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-white/95 backdrop-blur px-6 py-3">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.svg" alt="eydn" className="h-7" />
-              </Link>
-              <Show when="signed-out">
-                <nav className="hidden sm:flex items-center gap-6">
-                  <Link href="/#features" className="text-[15px] text-muted hover:text-plum transition">Features</Link>
-                  <Link href="/#how-it-works" className="text-[15px] text-muted hover:text-plum transition">How It Works</Link>
-                  <Link href="/#pricing" className="text-[15px] text-muted hover:text-plum transition">Pricing</Link>
-                </nav>
-              </Show>
-            </div>
-            <div className="flex items-center gap-3">
-              <Show when="signed-out">
-                <Link href="/sign-in" className="btn-ghost btn-sm">Sign In</Link>
-                <Link href="/sign-up" className="btn-primary btn-sm">Start Free Trial</Link>
-              </Show>
-              <Show when="signed-in">
-                <Link
-                  href="/dashboard"
-                  className="text-[15px] font-semibold text-violet hover:text-soft-violet transition"
-                >
-                  Dashboard
-                </Link>
-                <UserButton />
-              </Show>
-            </div>
-          </header>
+          <GlobalHeader />
           {children}
           <Toaster richColors position="top-right" />
         </ClerkProvider>
