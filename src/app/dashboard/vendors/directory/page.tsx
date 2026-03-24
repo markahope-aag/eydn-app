@@ -122,9 +122,10 @@ export default function VendorDirectoryPage() {
     if (search) {
       const q = search.toLowerCase();
       return (
-        v.name.toLowerCase().includes(q) ||
-        v.city.toLowerCase().includes(q) ||
-        v.state.toLowerCase().includes(q)
+        (v.name || "").toLowerCase().includes(q) ||
+        (v.city || "").toLowerCase().includes(q) ||
+        (v.state || "").toLowerCase().includes(q) ||
+        (v.description || "").toLowerCase().includes(q)
       );
     }
     return true;
