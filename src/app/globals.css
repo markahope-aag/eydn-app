@@ -34,35 +34,6 @@ html {
   --surface-raised: #FFFFFF;
 }
 
-/* Dark theme overrides */
-[data-theme="dark"] {
-  --violet: #6E9E72;
-  --soft-violet: #E8C97A;
-  --blush-pink: #C08080;
-  --petal: #3A3020;
-  --lavender-mist: #1E1E2A;
-  --whisper: #121218;
-  --deep-plum: #E8E0D8;
-  --muted-plum: #9A9A9A;
-  --border: #2A2A36;
-  --error: #F87171;
-
-  --confirmed-bg: #1A3D2A;
-  --confirmed-text: #6EE7A0;
-  --pending-bg: #3D3010;
-  --pending-text: #FCD34D;
-  --declined-bg: #3D1A2A;
-  --declined-text: #F87171;
-  --booked-bg: #1E2E1F;
-  --booked-text: #7EBF82;
-
-  --background: var(--whisper);
-  --foreground: var(--deep-plum);
-  --surface: #1A1A24;
-  --surface-raised: #222230;
-
-  color-scheme: dark;
-}
 
 @theme inline {
   --color-background: var(--background);
@@ -310,25 +281,6 @@ input, textarea, select, select option {
   animation: slide-in 200ms ease-out;
 }
 
-/* Dark mode: override Tailwind bg-white utility */
-[data-theme="dark"] .bg-white {
-  background-color: var(--surface) !important;
-}
-[data-theme="dark"] .bg-white\/95 {
-  background-color: color-mix(in srgb, var(--surface) 95%, transparent) !important;
-}
-[data-theme="dark"] .text-white {
-  /* Keep text-white as-is; only override where it's used on surface backgrounds */
-}
-[data-theme="dark"] .btn-destructive {
-  background: var(--declined-bg);
-}
-[data-theme="dark"] .shadow-sm {
-  --tw-shadow-color: rgba(0, 0, 0, 0.3);
-}
-[data-theme="dark"] .shadow-xl {
-  --tw-shadow-color: rgba(0, 0, 0, 0.5);
-}
 
 /* Blog content typography */
 .blog-content {

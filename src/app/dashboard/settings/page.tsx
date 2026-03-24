@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Tooltip } from "@/components/Tooltip";
 import { trackCollaboratorInvited, trackExport } from "@/lib/analytics";
 
@@ -299,17 +298,6 @@ export default function SettingsPage() {
           rows={6}
           className="mt-3 w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
         />
-      </div>
-
-      {/* Theme */}
-      <div className="mt-8">
-        <h2 className="text-[18px] font-semibold text-plum">Theme</h2>
-        <p className="mt-1 text-[12px] text-muted">
-          Choose between light and dark appearance
-        </p>
-        <div className="mt-3">
-          <ThemeToggle />
-        </div>
       </div>
 
       <div className="mt-8 space-y-6">

@@ -67,7 +67,6 @@ const GUIDE_SECTIONS = [
       { label: "Restore deleted items", desc: "Settings → Recently Deleted. 30-day recovery window for all deleted items." },
       { label: "Activity log", desc: "Settings → Activity Log. See every create, update, delete, and restore action." },
       { label: "Daily backups", desc: "Your data is backed up every night to redundant off-site servers." },
-      { label: "Dark mode", desc: "Settings → Theme. Toggle between light and dark mode." },
     ],
   },
 ];
