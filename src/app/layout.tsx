@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { DM_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/next";
+import Script from "next/script";
 import { GlobalHeader } from "@/components/GlobalHeader";
 import "./globals.css";
 
@@ -35,19 +36,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${dmSans.className} h-full antialiased`} suppressHydrationWarning>
-      <head>
-        {/* Termly Consent Management — must load before GTM */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){var s=document.createElement('script');s.type='text/javascript';s.src='https://app.termly.io/resource-blocker/910feb69-853c-4fca-9c47-300c9abfe07f?autoBlock=on';document.head.appendChild(s);})();`,
-          }}
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-55H9SNZB');`,
-          }}
-        />
-      </head>
+      <head />
+      {/* Termly + GTM loaded via next/script to avoid hydration conflicts */}
+      <Script
+        id="termly-consent"
+        strategy="beforeInteractive"
+        src="https://app.termly.io/resource-blocker/910feb69-853c-4fca-9c47-300c9abfe07f?autoBlock=on"
+      />
+      <Script
+        id="gtm-script"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-55H9SNZB');`,
+        }}
+      />
       <body className="min-h-full flex flex-col bg-whisper text-plum" suppressHydrationWarning>
         <a
           href="#main-content"
