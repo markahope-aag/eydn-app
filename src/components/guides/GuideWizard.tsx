@@ -120,19 +120,34 @@ export function GuideWizard({ guide }: Props) {
       trackGuideComplete(guide.slug);
       toast.success(`${guide.title} complete!`);
 
-      // Run integrations (add guests to guest list, speeches to day-of, etc.)
-      if (guide.integrations.includes("guest-list") || guide.integrations.includes("day-of-timeline")) {
+      // Run integrations for all guide types
+      try {
+        const res = await fetch(`/api/guides/${guide.slug}/integrate`, { method: "POST" });
+        if (res.ok) {
+          const data = await res.json();
+          const results = (data as { results: string[] }).results;
+          for (const msg of results) {
+            toast.success(msg);
+          }
+        }
+      } catch {
+        // Integration failed silently — guide data is still saved
+      }
+
+      // Auto-generate vendor brief if applicable
+      if (guide.integrations.includes("vendor-brief")) {
+        setBriefLoading(true);
         try {
-          const res = await fetch(`/api/guides/${guide.slug}/integrate`, { method: "POST" });
+          const res = await fetch(`/api/guides/${guide.slug}/brief`, { method: "POST" });
           if (res.ok) {
-            const data = await res.json();
-            const results = (data as { results: string[] }).results;
-            for (const msg of results) {
-              toast.success(msg);
-            }
+            const brief = await res.json();
+            setVendorBrief(brief);
+            toast.success("Vendor brief generated — ready to send!");
           }
         } catch {
-          // Integration failed silently — guide data is still saved
+          // Brief generation failed — user can retry manually
+        } finally {
+          setBriefLoading(false);
         }
       }
 

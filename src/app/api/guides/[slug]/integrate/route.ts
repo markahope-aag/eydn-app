@@ -188,5 +188,112 @@ export async function POST(
     }
   }
 
+  if (slug === "music") {
+    // Add music entries to day-of planner
+    const { data: planRow } = await supabase
+      .from("day_of_plans")
+      .select("content")
+      .eq("wedding_id", wedding.id)
+      .single();
+
+    if (planRow) {
+      const content = (planRow as { content: Record<string, unknown> }).content || {};
+      const existingMusic = (content.music as Array<{ moment: string; song: string }>) || [];
+
+      // Build music entries from specific songs mentioned
+      const newMusic: { moment: string; song: string; artist: string }[] = [];
+      const firstDance = responses.q8 as string;
+      const otherSongs = responses.q9 as string;
+
+      if (firstDance && firstDance !== "no" && firstDance !== "still-deciding") {
+        if (!existingMusic.some((m) => m.moment === "First Dance")) {
+          newMusic.push({ moment: "First Dance", song: firstDance, artist: "" });
+        }
+      }
+
+      if (otherSongs) {
+        const songs = otherSongs.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
+        for (const song of songs) {
+          const parts = song.split(/\s*[—–-]\s*/);
+          const moment = parts[0] || "Reception";
+          const songName = parts[1] || parts[0] || "";
+          if (!existingMusic.some((m) => m.song === songName)) {
+            newMusic.push({ moment, song: songName, artist: "" });
+          }
+        }
+      }
+
+      if (newMusic.length > 0) {
+        await supabase
+          .from("day_of_plans")
+          .update({
+            content: { ...content, music: [...existingMusic, ...newMusic] },
+            edited_at: new Date().toISOString(),
+          })
+          .eq("wedding_id", wedding.id);
+        results.push(`Added ${newMusic.length} song${newMusic.length > 1 ? "s" : ""} to your day-of music list`);
+      }
+    }
+  }
+
+  if (slug === "hair-makeup") {
+    // Update day-of planner with getting-ready schedule info
+    const ceremonyTime = responses.q2 as string;
+    const peopleCount = responses.q3 as number;
+
+    if (ceremonyTime && peopleCount) {
+      results.push(`Getting-ready schedule: ${peopleCount} people need hair & makeup before ${ceremonyTime} ceremony`);
+    }
+
+    // Add trial reminders
+    const hairTrial = responses.q6 as string;
+    const makeupTrial = responses.q7 as string;
+    if (hairTrial === "yes" || makeupTrial === "yes") {
+      results.push("Trial appointments noted — check your task timeline for reminders");
+    }
+  }
+
+  if (slug === "colors-theme") {
+    // Save style description to wedding if not already set
+    const vibes = (responses.q1 as string[]) || [];
+    const colors = (responses.q5 as string[]) || [];
+
+    if (vibes.length > 0 || colors.length > 0) {
+      const styleDesc = [
+        vibes.length > 0 ? vibes.join(", ") : "",
+        colors.length > 0 ? `Colors: ${colors.join(", ")}` : "",
+      ].filter(Boolean).join(" | ");
+
+      const { data: currentWedding } = await supabase
+        .from("weddings")
+        .select("style_description")
+        .eq("id", wedding.id)
+        .single();
+
+      if (currentWedding && !(currentWedding as { style_description: string | null }).style_description) {
+        await supabase
+          .from("weddings")
+          .update({ style_description: styleDesc, updated_at: new Date().toISOString() })
+          .eq("id", wedding.id);
+        results.push("Saved your style profile to your wedding details");
+      }
+    }
+  }
+
+  if (slug === "florist" || slug === "rentals" || slug === "decor" || slug === "hair-makeup" || slug === "music") {
+    results.push("Vendor brief generated — copy it from below and send to vendors");
+  }
+
+  if (slug === "wedding-dress") {
+    const budget = responses.q1 as number;
+    const needBy = responses.q3 as string;
+    if (budget) {
+      results.push(`Dress budget: $${budget.toLocaleString()}`);
+    }
+    if (needBy) {
+      results.push(`Dress needed by: ${new Date(needBy + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`);
+    }
+  }
+
   return NextResponse.json({ results });
 }
