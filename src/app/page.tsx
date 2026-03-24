@@ -558,9 +558,10 @@ function MiniBudgetTracker() {
           </div>
         ))}
       </div>
-      <div style={{ borderTop: "1px solid rgba(250,246,241,0.15)", paddingTop: 10, display: "flex", justifyContent: "space-between" }}>
-        <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.5)" }}>Subtotal</span>
-        <span style={{ fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600, color: "#E8C97A" }}>$9,600 / $26,500</span>
+      <div style={{ borderTop: "1px solid rgba(250,246,241,0.15)", paddingTop: 10, display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0 16px", fontFamily: "var(--font-body)", fontSize: 12 }}>
+        <span style={{ color: "rgba(250,246,241,0.5)" }}>Total</span>
+        <span style={{ color: "rgba(250,246,241,0.7)", fontWeight: 600 }}>$26,500</span>
+        <span style={{ color: "#E8C97A", fontWeight: 600 }}>$9,600</span>
       </div>
     </div>
   );
