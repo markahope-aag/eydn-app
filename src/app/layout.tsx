@@ -94,11 +94,7 @@ export default function RootLayout({
           src="https://analytics.ahrefs.com/analytics.js"
           data-key="N0UcdeuFPyyC4uaXyXmywA"
         />
-        <Script
-          id="termly-consent"
-          strategy="afterInteractive"
-          src="https://app.termly.io/resource-blocker/910feb69-853c-4fca-9c47-300c9abfe07f?autoBlock=on"
-        />
+        {/* Termly consent banner disabled for beta launch — re-enable for EU/GDPR expansion */}
         <Script
           id="gtm-script"
           strategy="afterInteractive"
