@@ -408,7 +408,7 @@ export default function WebsitePage() {
               </label>
               {coverUrl && (
                 <div className="mb-3 rounded-[16px] overflow-hidden h-40 relative">
-                  <Image src={coverUrl} alt="Cover" className="object-cover" fill unoptimized />
+                  <Image src={coverUrl} alt="Wedding cover photo" className="object-cover" fill unoptimized />
                 </div>
               )}
               <input
@@ -436,7 +436,7 @@ export default function WebsitePage() {
               </p>
               {couplePhotoUrl && (
                 <div className="mb-3 w-32 h-32 rounded-full overflow-hidden border-2 border-border relative">
-                  <Image src={couplePhotoUrl} alt="Couple" className="object-cover" fill unoptimized />
+                  <Image src={couplePhotoUrl} alt="Couple photo" className="object-cover" fill unoptimized />
                 </div>
               )}
               <input

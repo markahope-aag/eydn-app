@@ -133,7 +133,7 @@ export default async function WeddingWebsitePage({
           <div className="relative h-[80vh] min-h-[520px]">
             <Image
               src={wedding.website_cover_url}
-              alt="Wedding cover"
+              alt={`${coupleNames} wedding cover photo`}
               className="object-cover"
               fill
               priority

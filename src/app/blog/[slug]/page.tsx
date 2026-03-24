@@ -133,7 +133,7 @@ export default async function BlogPostPage({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={p.cover_image}
-            alt=""
+            alt={p.title}
             style={{ width: "100%", height: 480, objectFit: "cover" }}
           />
         </div>
@@ -272,7 +272,7 @@ export default async function BlogPostPage({
                 >
                   {r.cover_image && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.cover_image} alt="" style={{ width: "100%", height: 180, objectFit: "cover" }} />
+                    <img src={r.cover_image} alt={r.title} style={{ width: "100%", height: 180, objectFit: "cover" }} />
                   )}
                   <div style={{ padding: "20px 16px" }}>
                     <h3

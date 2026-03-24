@@ -186,7 +186,7 @@ export default async function BlogListingPage({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={featured.cover_image}
-                alt=""
+                alt={featured.title}
                 style={{ width: "100%", height: "100%", objectFit: "cover", minHeight: 300 }}
               />
             )}
@@ -295,7 +295,7 @@ function BlogCard({ post }: { post: Post }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={post.cover_image}
-          alt=""
+          alt={post.title}
           style={{ width: "100%", height: 200, objectFit: "cover" }}
         />
       )}
