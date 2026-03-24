@@ -273,51 +273,96 @@ export async function POST(request: Request) {
       content: m.content,
     }));
 
-  // Stream response
+  // Call Claude with tool use
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
   }
 
   try {
     const claude = getClaudeClient();
+    const { EYDN_TOOLS, executeTool } = await import("@/lib/ai/chat-tools");
 
-    const stream = await claude.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages,
-      stream: true,
+    // Tool use loop — Claude may call tools, then we feed results back
+    type MessageParam = { role: "user" | "assistant"; content: unknown };
+    let currentMessages: MessageParam[] = [...messages];
+    let finalText = "";
+    const actionsTaken: string[] = [];
+    let iterations = 0;
+    const MAX_ITERATIONS = 5;
+
+    while (iterations < MAX_ITERATIONS) {
+      iterations++;
+
+      const response = await claude.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: currentMessages as Parameters<typeof claude.messages.create>[0]["messages"],
+        tools: EYDN_TOOLS,
+      });
+
+      // Collect text and tool use blocks
+      let hasToolUse = false;
+
+      for (const block of response.content) {
+        if (block.type === "text") {
+          finalText += block.text;
+        } else if (block.type === "tool_use") {
+          hasToolUse = true;
+          const result = await executeTool(
+            block.name,
+            block.input as Record<string, unknown>,
+            supabase,
+            wedding.id
+          );
+          actionsTaken.push(result);
+
+          // Add the assistant's response and tool result to continue the loop
+          currentMessages = [
+            ...currentMessages,
+            { role: "assistant", content: response.content },
+            {
+              role: "user",
+              content: [{ type: "tool_result", tool_use_id: block.id, content: result }],
+            },
+          ];
+        }
+      }
+
+      // If no tool was called, we're done
+      if (!hasToolUse || response.stop_reason === "end_turn") {
+        break;
+      }
+    }
+
+    // If actions were taken but no final text, add a summary
+    if (actionsTaken.length > 0 && !finalText.trim()) {
+      finalText = "Done! " + actionsTaken.join(" ");
+    }
+
+    // Save assistant response
+    const savedContent = actionsTaken.length > 0
+      ? `${finalText}\n\n_Actions taken: ${actionsTaken.join("; ")}_`
+      : finalText;
+
+    await supabase.from("chat_messages").insert({
+      wedding_id: wedding.id,
+      role: "assistant" as const,
+      content: savedContent,
     });
 
-    // Collect full response while streaming
-    let fullResponse = "";
-
+    // Return the response with action confirmations
+    const encoder = new TextEncoder();
     const readableStream = new ReadableStream({
-      async start(controller) {
-        try {
-          const encoder = new TextEncoder();
-          for await (const event of stream) {
-            if (
-              event.type === "content_block_delta" &&
-              event.delta.type === "text_delta"
-            ) {
-              fullResponse += event.delta.text;
-              controller.enqueue(encoder.encode(event.delta.text));
-            }
+      start(controller) {
+        controller.enqueue(encoder.encode(finalText));
+        if (actionsTaken.length > 0) {
+          controller.enqueue(encoder.encode("\n\n---\n"));
+          for (const action of actionsTaken) {
+            controller.enqueue(encoder.encode(`✓ ${action}\n`));
           }
-
-          // Save assistant response
-          await supabase.from("chat_messages").insert({
-            wedding_id: wedding.id,
-            role: "assistant" as const,
-            content: fullResponse,
-          });
-
-          controller.close();
-        } catch (streamError) {
-          console.error("Stream error:", streamError);
-          controller.close();
         }
+        controller.close();
       },
     });
 
