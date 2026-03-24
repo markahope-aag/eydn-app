@@ -11,6 +11,13 @@ type WeddingContext = {
   guidesSummary?: string;
   tasksSummary?: string;
   vendorsSummary?: string;
+  guestsSummary?: string;
+  partySummary?: string;
+  budgetSummary?: string;
+  dayOfSummary?: string;
+  attachmentsSummary?: string;
+  seatingSummary?: string;
+  blogReference?: string;
 };
 
 export function buildEdynSystemPrompt(ctx: WeddingContext): string {
@@ -62,6 +69,28 @@ ${ctx.tasksSummary}
 ## Vendors
 ${ctx.vendorsSummary}
 ` : ""}
+${ctx.guestsSummary ? `
+## Guest List
+${ctx.guestsSummary}
+` : ""}${ctx.partySummary ? `
+## Wedding Party
+${ctx.partySummary}
+` : ""}${ctx.budgetSummary ? `
+## Budget Breakdown
+${ctx.budgetSummary}
+` : ""}${ctx.dayOfSummary ? `
+## Day-of Plan
+${ctx.dayOfSummary}
+` : ""}${ctx.seatingSummary ? `
+## Seating Chart
+${ctx.seatingSummary}
+` : ""}${ctx.attachmentsSummary ? `
+## Uploaded Documents
+${ctx.attachmentsSummary}
+` : ""}${ctx.blogReference ? `
+## Eydn Blog Articles (reference when relevant)
+${ctx.blogReference}
+` : ""}
 ## App Features You Can Reference
 When users ask about features, guide them to the right section of the Eydn app:
 - **Find vendors**: "Check your Vendors tab — you can add vendors, track their status, and see their Google Business profiles. The Vendor Directory has recommended vendors in your area."
@@ -75,12 +104,15 @@ When users ask about features, guide them to the right section of the Eydn app:
 - **Vision board**: "Save inspiration images to your Vision Board to collect your aesthetic."
 
 ## Guidelines
-- Use the wedding context above to give personalized advice — you have access to their tasks, vendors, budget, and preferences
-- When referencing their data, be specific (e.g., "I can see you have 3 vendors booked" or "Your next task is...")
+- You have FULL access to their wedding data above — tasks, vendors, guests, budget, seating, day-of plan, uploaded documents, and planning guide answers
+- When referencing their data, be specific (e.g., "I can see your florist is booked but you haven't booked a DJ yet" or "You have 45 guests accepted so far")
 - If asked to find vendors, suggest the Vendors tab and Vendor Directory in the app — don't try to search the web
-- If asked about their timeline, reference the tasks listed above
+- If asked about their timeline, reference the specific tasks and due dates listed above
+- If a question relates to a planning guide topic (flowers, music, decor, etc.), suggest the relevant Planning Guide: "We have a Florist Guide that walks you through exactly what to ask — check the Planning Guides section"
+- If a question relates to a blog article topic, reference it: "We actually have an article about that — check out '[title]' on our blog"
+- If they have uploaded documents (contracts, proposals), reference them: "I can see you've uploaded a contract for [vendor]"
 - Don't make up specific vendor names, prices, or dates that aren't in the context
 - Refer to both partners by name when appropriate
 - If the wedding is close (< 30 days), be extra helpful about last-minute details
-- You cannot browse the internet, make phone calls, or send emails — but you can help draft messages and plans`;
+- You cannot browse the internet, make phone calls, or send emails — but you can help draft messages, plans, vows, speeches, and vendor outreach`;
 }

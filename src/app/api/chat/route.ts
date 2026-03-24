@@ -66,22 +66,34 @@ export async function POST(request: Request) {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  // Get wedding context for system prompt
-  const [{ count: taskTotal }, { count: taskCompleted }, { count: vendorCount }, { count: guestCount }, { data: expenses }, { data: guideData }, { data: upcomingTasks }, { data: vendorList }] =
-    await Promise.all([
-      supabase.from("tasks").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).is("deleted_at", null),
-      supabase.from("tasks").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).eq("completed", true).is("deleted_at", null),
-      supabase.from("vendors").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).is("deleted_at", null),
-      supabase.from("guests").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).is("deleted_at", null),
-      supabase.from("expenses").select("amount_paid").eq("wedding_id", wedding.id),
-      supabase.from("guide_responses").select("guide_slug, responses, completed").eq("wedding_id", wedding.id).eq("completed", true),
-      supabase.from("tasks").select("title, due_date, completed, category").eq("wedding_id", wedding.id).is("deleted_at", null).eq("completed", false).order("due_date", { ascending: true }).limit(15),
-      supabase.from("vendors").select("name, category, status, poc_name, poc_phone, amount, amount_paid").eq("wedding_id", wedding.id).is("deleted_at", null).limit(20),
-    ]);
+  // Get ALL wedding context for system prompt
+  const [
+    { count: taskTotal }, { count: taskCompleted },
+    { data: expenses }, { data: guideData },
+    { data: allTasks }, { data: allVendors },
+    { data: allGuests }, { data: weddingParty },
+    { data: expensesFull }, { data: dayOfPlan },
+    { data: attachments }, { data: blogPosts },
+    { data: seatingTables },
+  ] = await Promise.all([
+    supabase.from("tasks").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).is("deleted_at", null),
+    supabase.from("tasks").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).eq("completed", true).is("deleted_at", null),
+    supabase.from("expenses").select("amount_paid").eq("wedding_id", wedding.id).is("deleted_at", null),
+    supabase.from("guide_responses").select("guide_slug, responses, completed").eq("wedding_id", wedding.id).eq("completed", true),
+    supabase.from("tasks").select("title, due_date, completed, category, notes").eq("wedding_id", wedding.id).is("deleted_at", null).order("due_date", { ascending: true }).limit(50),
+    supabase.from("vendors").select("name, category, status, poc_name, poc_email, poc_phone, amount, amount_paid, notes, arrival_time, meal_needed").eq("wedding_id", wedding.id).is("deleted_at", null),
+    supabase.from("guests").select("name, rsvp_status, meal_preference, role, group_name, plus_one_name").eq("wedding_id", wedding.id).is("deleted_at", null).order("name").limit(100),
+    supabase.from("wedding_party").select("name, role, job_assignment, attire").eq("wedding_id", wedding.id).is("deleted_at", null).order("sort_order"),
+    supabase.from("expenses").select("description, category, estimated, amount_paid, final_cost, paid").eq("wedding_id", wedding.id).is("deleted_at", null).order("category"),
+    supabase.from("day_of_plans").select("content").eq("wedding_id", wedding.id).single(),
+    supabase.from("attachments").select("file_name, entity_type, entity_id, mime_type, created_at").eq("wedding_id", wedding.id).order("created_at", { ascending: false }).limit(20),
+    supabase.from("blog_posts").select("title, slug, excerpt").eq("status", "published").order("published_at", { ascending: false }).limit(10),
+    supabase.from("seating_tables").select("table_number, name, shape, capacity").eq("wedding_id", wedding.id).is("deleted_at", null).order("table_number"),
+  ]);
 
   const budgetSpent = (expenses || []).reduce((sum: number, e: { amount_paid: number }) => sum + (e.amount_paid || 0), 0);
 
-  // Build guide summary for AI context
+  // Build guide summary
   let guidesSummary: string | undefined;
   if (guideData && guideData.length > 0) {
     const lines: string[] = [];
@@ -96,33 +108,161 @@ export async function POST(request: Request) {
     if (lines.length > 0) guidesSummary = lines.join("\n");
   }
 
-  // Build task summary for AI context
+  // Build task summary
   let tasksSummary: string | undefined;
-  if (upcomingTasks && upcomingTasks.length > 0) {
-    const lines = (upcomingTasks as Array<{ title: string; due_date: string | null; category: string }>)
-      .map((t) => `- ${t.title} (${t.category})${t.due_date ? ` — due ${t.due_date}` : ""}`)
-      .join("\n");
-    tasksSummary = `Upcoming incomplete tasks:\n${lines}`;
+  if (allTasks && allTasks.length > 0) {
+    type TaskRow = { title: string; due_date: string | null; completed: boolean; category: string; notes: string | null };
+    const incomplete = (allTasks as TaskRow[]).filter((t) => !t.completed);
+    const completed = (allTasks as TaskRow[]).filter((t) => t.completed);
+    const lines: string[] = [];
+    if (incomplete.length > 0) {
+      lines.push("Upcoming:");
+      for (const t of incomplete.slice(0, 20)) {
+        lines.push(`- ${t.title} (${t.category})${t.due_date ? ` — due ${t.due_date}` : ""}${t.notes ? ` [note: ${t.notes.slice(0, 80)}]` : ""}`);
+      }
+      if (incomplete.length > 20) lines.push(`  ...and ${incomplete.length - 20} more`);
+    }
+    lines.push(`Completed: ${completed.length} tasks done`);
+    tasksSummary = lines.join("\n");
   }
 
-  // Build vendor summary for AI context
+  // Build vendor summary
   let vendorsSummary: string | undefined;
-  if (vendorList && vendorList.length > 0) {
-    const lines = (vendorList as Array<{ name: string; category: string; status: string; poc_name: string | null; amount: number | null }>)
-      .map((v) => `- ${v.name} (${v.category}) — ${v.status}${v.poc_name ? `, contact: ${v.poc_name}` : ""}${v.amount ? `, $${v.amount}` : ""}`)
-      .join("\n");
-    vendorsSummary = lines;
+  if (allVendors && allVendors.length > 0) {
+    type VendorRow = { name: string; category: string; status: string; poc_name: string | null; poc_email: string | null; poc_phone: string | null; amount: number | null; amount_paid: number | null; notes: string | null; arrival_time: string | null; meal_needed: boolean };
+    const lines = (allVendors as VendorRow[]).map((v) => {
+      let line = `- ${v.name} (${v.category}) — ${v.status}`;
+      if (v.poc_name) line += `, contact: ${v.poc_name}`;
+      if (v.poc_phone) line += ` ${v.poc_phone}`;
+      if (v.poc_email) line += ` ${v.poc_email}`;
+      if (v.amount) line += `, total: $${v.amount}`;
+      if (v.amount_paid) line += `, paid: $${v.amount_paid}`;
+      if (v.arrival_time) line += `, arrives: ${v.arrival_time}`;
+      if (v.notes) line += ` [note: ${v.notes.slice(0, 60)}]`;
+      return line;
+    });
+    vendorsSummary = lines.join("\n");
+  }
+
+  // Build guest summary
+  let guestsSummary: string | undefined;
+  if (allGuests && allGuests.length > 0) {
+    type GuestRow = { name: string; rsvp_status: string; meal_preference: string | null; role: string | null; group_name: string | null; plus_one_name: string | null };
+    const guests = allGuests as GuestRow[];
+    const accepted = guests.filter((g) => g.rsvp_status === "accepted").length;
+    const declined = guests.filter((g) => g.rsvp_status === "declined").length;
+    const pending = guests.filter((g) => !["accepted", "declined"].includes(g.rsvp_status)).length;
+    const lines = [`Total: ${guests.length} (accepted: ${accepted}, declined: ${declined}, pending: ${pending})`];
+    // List guests with notable info
+    for (const g of guests.slice(0, 40)) {
+      let line = `- ${g.name} (${g.rsvp_status})`;
+      if (g.role) line += ` [${g.role}]`;
+      if (g.group_name) line += ` group: ${g.group_name}`;
+      if (g.meal_preference) line += ` meal: ${g.meal_preference}`;
+      if (g.plus_one_name) line += ` +1: ${g.plus_one_name}`;
+      lines.push(line);
+    }
+    if (guests.length > 40) lines.push(`  ...and ${guests.length - 40} more guests`);
+    guestsSummary = lines.join("\n");
+  }
+
+  // Build wedding party summary
+  let partySummary: string | undefined;
+  if (weddingParty && weddingParty.length > 0) {
+    type PartyRow = { name: string; role: string; job_assignment: string | null; attire: string | null };
+    partySummary = (weddingParty as PartyRow[]).map((p) => {
+      let line = `- ${p.name} (${p.role})`;
+      if (p.job_assignment) line += ` — job: ${p.job_assignment}`;
+      if (p.attire) line += ` — attire: ${p.attire}`;
+      return line;
+    }).join("\n");
+  }
+
+  // Build budget summary
+  let budgetSummary: string | undefined;
+  if (expensesFull && expensesFull.length > 0) {
+    type ExpenseRow = { description: string; category: string; estimated: number; amount_paid: number; final_cost: number | null; paid: boolean };
+    const rows = expensesFull as ExpenseRow[];
+    const totalEstimated = rows.reduce((s, e) => s + (e.estimated || 0), 0);
+    const totalPaid = rows.reduce((s, e) => s + (e.amount_paid || 0), 0);
+    const lines = [`Total estimated: $${totalEstimated.toLocaleString()}, paid: $${totalPaid.toLocaleString()}`];
+    // Group by category
+    const cats = new Map<string, { estimated: number; paid: number }>();
+    for (const e of rows) {
+      const c = cats.get(e.category) || { estimated: 0, paid: 0 };
+      c.estimated += e.estimated || 0;
+      c.paid += e.amount_paid || 0;
+      cats.set(e.category, c);
+    }
+    for (const [cat, vals] of cats) {
+      lines.push(`- ${cat}: estimated $${vals.estimated.toLocaleString()}, paid $${vals.paid.toLocaleString()}`);
+    }
+    budgetSummary = lines.join("\n");
+  }
+
+  // Build day-of plan summary
+  let dayOfSummary: string | undefined;
+  if (dayOfPlan) {
+    const content = (dayOfPlan as { content: Record<string, unknown> }).content || {};
+    const parts: string[] = [];
+    const timeline = content.timeline as Array<{ time: string; event: string }> | undefined;
+    if (timeline && timeline.length > 0) {
+      parts.push("Timeline: " + timeline.map((t) => `${t.time} ${t.event}`).join(", "));
+    }
+    const speeches = content.speeches as Array<{ speaker: string; role: string }> | undefined;
+    if (speeches && speeches.length > 0) {
+      parts.push("Speeches: " + speeches.map((s) => `${s.speaker} (${s.role})`).join(", "));
+    }
+    const music = content.music as Array<{ moment: string; song: string }> | undefined;
+    if (music && music.length > 0) {
+      parts.push("Music: " + music.map((m) => `${m.moment}: ${m.song}`).join(", "));
+    }
+    if (parts.length > 0) dayOfSummary = parts.join("\n");
+  }
+
+  // Build attachments summary
+  let attachmentsSummary: string | undefined;
+  if (attachments && attachments.length > 0) {
+    type AttRow = { file_name: string; entity_type: string; entity_id: string; mime_type: string | null };
+    attachmentsSummary = (attachments as AttRow[]).map((a) =>
+      `- ${a.file_name} (${a.entity_type}/${a.entity_id})${a.mime_type?.includes("pdf") ? " [PDF]" : ""}`
+    ).join("\n");
+  }
+
+  // Build seating summary
+  let seatingSummary: string | undefined;
+  if (seatingTables && seatingTables.length > 0) {
+    type TableRow = { table_number: number; name: string | null; shape: string; capacity: number };
+    seatingSummary = (seatingTables as TableRow[]).map((t) =>
+      `- ${t.name || `Table ${t.table_number}`} (${t.shape}, seats ${t.capacity})`
+    ).join("\n");
+  }
+
+  // Build blog reference
+  let blogReference: string | undefined;
+  if (blogPosts && blogPosts.length > 0) {
+    type BlogRow = { title: string; slug: string; excerpt: string | null };
+    blogReference = (blogPosts as BlogRow[]).map((b) =>
+      `- "${b.title}" — /blog/${b.slug}${b.excerpt ? `: ${b.excerpt.slice(0, 80)}` : ""}`
+    ).join("\n");
   }
 
   const systemPrompt = buildEdynSystemPrompt({
     wedding,
     taskStats: { total: taskTotal ?? 0, completed: taskCompleted ?? 0 },
-    vendorCount: vendorCount ?? 0,
-    guestCount: guestCount ?? 0,
+    vendorCount: allVendors?.length ?? 0,
+    guestCount: allGuests?.length ?? 0,
     budgetSpent,
     guidesSummary,
     tasksSummary,
     vendorsSummary,
+    guestsSummary,
+    partySummary,
+    budgetSummary,
+    dayOfSummary,
+    attachmentsSummary,
+    seatingSummary,
+    blogReference,
   });
 
   // Build messages for Claude
