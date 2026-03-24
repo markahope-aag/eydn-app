@@ -44,14 +44,6 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <noscript>
-          <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-55H9SNZB"
-            height="0"
-            width="0"
-            style={{ display: "none", visibility: "hidden" }}
-          />
-        </noscript>
         <ClerkProvider>
           <GlobalHeader />
           {children}
