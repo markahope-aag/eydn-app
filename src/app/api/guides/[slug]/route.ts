@@ -42,7 +42,7 @@ export async function PATCH(
       {
         wedding_id: wedding.id,
         guide_slug: slug,
-        responses: (body.responses as Record<string, unknown>) || {},
+        responses: ((body.responses as Record<string, unknown>) || {}) as import("@/lib/supabase/types").Json,
         section_index: (body.section_index as number) ?? 0,
         completed: (body.completed as boolean) ?? false,
         updated_at: new Date().toISOString(),

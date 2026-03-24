@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   const wedding_party_count = (body.wedding_party_count as number) || null;
   const has_pre_wedding_events = (body.has_pre_wedding_events as boolean) ?? null;
   const has_honeymoon = (body.has_honeymoon as boolean) ?? null;
-  const responses = (body.responses as Record<string, unknown>) || {};
+  const responses = ((body.responses as Record<string, unknown>) || {}) as import("@/lib/supabase/types").Json;
   const booked_vendors = (body.booked_vendors as string[]) || [];
 
   // Upsert wedding with onboarding data

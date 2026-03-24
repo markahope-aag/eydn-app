@@ -53,7 +53,7 @@ export async function POST(
   // Save the brief
   await supabase
     .from("guide_responses")
-    .update({ vendor_brief: brief as unknown as Record<string, unknown>, updated_at: new Date().toISOString() })
+    .update({ vendor_brief: brief as import("@/lib/supabase/types").Json, updated_at: new Date().toISOString() })
     .eq("wedding_id", wedding.id)
     .eq("guide_slug", slug);
 

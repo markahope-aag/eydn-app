@@ -195,14 +195,14 @@ async function RecentActivity({ weddingId }: { weddingId: string }) {
     feed.push({
       type: "activity",
       text: `${a.action === "create" ? "Added" : a.action === "update" ? "Updated" : a.action === "delete" ? "Removed" : "Restored"} ${a.entity_type.replace(/_/g, " ")}${a.entity_name ? `: ${a.entity_name}` : ""}`,
-      time: a.created_at,
+      time: a.created_at ?? new Date().toISOString(),
     });
   }
   for (const c of commentsData || []) {
     feed.push({
       type: "comment",
       text: `${c.user_name} commented on ${c.entity_type}: "${(c.content as string).slice(0, 60)}${(c.content as string).length > 60 ? "..." : ""}"`,
-      time: c.created_at,
+      time: c.created_at ?? new Date().toISOString(),
     });
   }
 

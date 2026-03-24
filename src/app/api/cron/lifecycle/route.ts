@@ -166,7 +166,7 @@ export async function POST(request: Request) {
       jobName: "lifecycle",
       status: "success",
       durationMs: Date.now() - startTime,
-      details: results as unknown as Record<string, unknown>,
+      details: results as unknown as import("@/lib/supabase/types").Json,
     });
 
     return NextResponse.json({

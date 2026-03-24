@@ -34,7 +34,7 @@ export async function PATCH(request: Request) {
     .from("questionnaire_responses")
     .upsert({
       wedding_id: wedding.id,
-      responses: body.responses as Record<string, unknown>,
+      responses: body.responses as import("@/lib/supabase/types").Json,
       completed: (body.completed as boolean) ?? false,
       updated_at: new Date().toISOString(),
     })

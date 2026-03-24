@@ -1554,6 +1554,7 @@ export default function HomePage() {
                 <Link href="/#features" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>Features</Link>
                 <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>Pricing</Link>
                 <Link href="/#how-it-works" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>How It Works</Link>
+                <Link href="/blog" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#E8C97A", textDecoration: "none" }}>The Playbook</Link>
               </div>
             </div>
             <div>

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Show, UserButton } from "@clerk/nextjs";
 
 /** Pages that have their own nav — hide the global header on these */
-const PAGES_WITH_OWN_NAV = ["/", "/sign-in", "/sign-up"];
+const PAGES_WITH_OWN_NAV = ["/", "/sign-in", "/sign-up", "/blog"];
 
 export function GlobalHeader() {
   const pathname = usePathname();
@@ -13,7 +13,7 @@ export function GlobalHeader() {
   // Don't render on pages that have their own navigation
   if (PAGES_WITH_OWN_NAV.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     // Exception: /sign-in/[[...sign-in]] and /sign-up/[[...sign-up]] need to match
-    if (pathname === "/" || pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up")) {
+    if (pathname === "/" || pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up") || pathname.startsWith("/blog")) {
       return null;
     }
   }

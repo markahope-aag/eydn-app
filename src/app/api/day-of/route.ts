@@ -43,7 +43,7 @@ export async function PUT(request: Request) {
     .from("day_of_plans")
     .upsert({
       wedding_id: wedding.id,
-      content: body.content as Record<string, unknown>,
+      content: body.content as import("@/lib/supabase/types").Json,
       edited_at: new Date().toISOString(),
     })
     .select()

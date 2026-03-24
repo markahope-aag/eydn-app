@@ -52,7 +52,7 @@ export async function POST(
     .from("vendors")
     .update({
       gmb_place_id: placeData.placeId,
-      gmb_data: placeData as unknown as Record<string, unknown>,
+      gmb_data: placeData as unknown as import("@/lib/supabase/types").Json,
       gmb_fetched_at: new Date().toISOString(),
     })
     .eq("id", id)

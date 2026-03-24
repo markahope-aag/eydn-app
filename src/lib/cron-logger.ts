@@ -7,7 +7,7 @@ export async function logCronExecution(params: {
   jobName: string;
   status: "success" | "error";
   durationMs: number;
-  details?: Record<string, unknown>;
+  details?: import("@/lib/supabase/types").Json;
   errorMessage?: string;
 }) {
   const supabase = createSupabaseAdmin();
@@ -17,7 +17,7 @@ export async function logCronExecution(params: {
       job_name: params.jobName,
       status: params.status,
       duration_ms: params.durationMs,
-      details: params.details || null,
+      details: (params.details ?? null) as import("@/lib/supabase/types").Json,
       error_message: params.errorMessage || null,
     })
     .then(() => {});

@@ -28,7 +28,7 @@ export function logActivity(
       entity_type: params.entityType,
       entity_id: params.entityId,
       entity_name: params.entityName || null,
-      details: params.details || null,
+      details: (params.details || null) as import("@/lib/supabase/types").Json,
     })
     .then(({ error }) => {
       if (error) console.error("[AUDIT] Failed to log activity:", error.message);
