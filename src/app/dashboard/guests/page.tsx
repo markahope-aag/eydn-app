@@ -179,10 +179,13 @@ export default function GuestsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [field]: value }),
       });
-      if (!res.ok) throw new Error();
-    } catch {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || `Update failed (${res.status})`);
+      }
+    } catch (err) {
       setGuests(prev);
-      toast.error("Failed to update guest");
+      toast.error(err instanceof Error ? err.message : "Failed to update guest");
     }
   }
 
@@ -795,7 +798,11 @@ export default function GuestsPage() {
                     <input
                       type="text"
                       defaultValue={guest.plus_one_name || ""}
-                      onBlur={(e) => updateGuest(guest.id, "plus_one_name", e.target.value || null)}
+                      onBlur={(e) => {
+                        const val = e.target.value || null;
+                        updateGuest(guest.id, "plus_one_name", val);
+                        updateGuest(guest.id, "plus_one", !!val);
+                      }}
                       placeholder="Their guest's name"
                       className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                     />
