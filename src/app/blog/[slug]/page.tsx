@@ -127,18 +127,6 @@ export default async function BlogPostPage({
         </Link>
       </nav>
 
-      {/* Cover image */}
-      {p.cover_image && (
-        <div style={{ maxHeight: 480, overflow: "hidden" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={p.cover_image}
-            alt={p.title}
-            style={{ width: "100%", height: 480, objectFit: "cover" }}
-          />
-        </div>
-      )}
-
       {/* Article */}
       <article style={{ maxWidth: 720, margin: "0 auto", padding: "60px 24px 80px" }}>
         {/* Category & meta */}
