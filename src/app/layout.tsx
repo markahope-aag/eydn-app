@@ -10,6 +10,7 @@ import "./globals.css";
 const dmSans = DM_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+  display: "swap",
 });
 
 const SITE_URL = "https://eydn.app";

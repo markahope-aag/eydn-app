@@ -10,18 +10,21 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["400", "600"],
+  display: "swap",
   variable: "--font-display",
 });
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+  display: "swap",
   variable: "--font-body",
 });
 
 const greatVibes = Great_Vibes({
   subsets: ["latin"],
   weight: ["400"],
+  display: "swap",
   variable: "--font-script",
 });
 
@@ -41,6 +44,14 @@ function ScrollReveal({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+
+    // Skip animation for above-fold content — render immediately
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight) {
+      el.style.opacity = "1";
+      el.style.transform = "none";
+      return;
+    }
 
     // Respect reduced motion
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -163,7 +174,7 @@ function LandingNav() {
         <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
           <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="eydn" style={{ height: 24 }} />
+            <img src="/logo.svg" alt="eydn" decoding="async" style={{ height: 24 }} />
           </Link>
           <nav
             style={{ display: "flex", alignItems: "center", gap: 24 }}
@@ -970,6 +981,8 @@ export default function HomePage() {
                   alt=""
                   width={36}
                   height={36}
+                  loading="lazy"
+                  decoding="async"
                   style={{
                     width: 36,
                     height: 36,
@@ -1569,7 +1582,7 @@ export default function HomePage() {
           >
             <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-white.svg" alt="eydn" style={{ height: 28 }} />
+              <img src="/logo-white.svg" alt="eydn" loading="lazy" decoding="async" style={{ height: 28 }} />
               <p style={{ fontFamily: "var(--font-script)", fontSize: 16, color: "rgba(212,165,165,0.7)", marginTop: 8 }}>
                 From engagement to &ldquo;I do.&rdquo;
               </p>
