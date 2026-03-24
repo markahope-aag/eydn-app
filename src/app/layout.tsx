@@ -23,6 +23,9 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.json",
+  other: {
+    "p:domain_verify": "e7c997f6eed9a7af061aae0214b63544",
+  },
 };
 
 export default function RootLayout({
