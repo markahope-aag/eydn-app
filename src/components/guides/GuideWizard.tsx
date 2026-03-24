@@ -75,15 +75,50 @@ export function GuideWizard({ guide }: Props) {
     saveProgress(updated, sectionIndex, false);
   }
 
-  function goNext() {
+  async function goNext() {
     const next = sectionIndex + 1;
     if (next >= guide.sections.length) {
       // Complete
+
+      // Auto-calculate guest total for guest-list guide
+      let finalResponses = responses;
+      if (guide.slug === "guest-list") {
+        const textFields = ["q8", "q9", "q10", "q11"];
+        let estimatedTotal = 0;
+        for (const key of textFields) {
+          const text = responses[key] as string;
+          if (text?.trim()) {
+            const names = text.split(/[\n,]+/).flatMap((n) => n.trim().split(/\s+and\s+/i)).filter((n) => n.trim().length > 1);
+            estimatedTotal += names.length;
+          }
+        }
+        if (estimatedTotal > 0 && !responses.q13) {
+          finalResponses = { ...responses, q13: estimatedTotal };
+          setResponses(finalResponses);
+        }
+      }
+
       setCompleted(true);
       setSectionIndex(next);
-      saveProgress(responses, next, true);
+      saveProgress(finalResponses, next, true);
       trackGuideComplete(guide.slug);
       toast.success(`${guide.title} complete!`);
+
+      // Run integrations (add guests to guest list, etc.)
+      if (guide.integrations.includes("guest-list")) {
+        try {
+          const res = await fetch(`/api/guides/${guide.slug}/integrate`, { method: "POST" });
+          if (res.ok) {
+            const data = await res.json();
+            const results = (data as { results: string[] }).results;
+            if (results.length > 0) {
+              toast.success(results[0]);
+            }
+          }
+        } catch {
+          // Integration failed silently — guide data is still saved
+        }
+      }
     } else {
       setSectionIndex(next);
       saveProgress(responses, next, false);
