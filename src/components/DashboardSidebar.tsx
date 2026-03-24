@@ -125,6 +125,17 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
             >
               Promo Codes
             </Link>
+            <Link
+              href="/dashboard/admin/waitlist"
+              onClick={() => setOpen(false)}
+              className={`rounded-[12px] px-3 py-2 text-[13px] transition ${
+                isActive(pathname, "/dashboard/admin/waitlist")
+                  ? "bg-lavender text-violet font-semibold"
+                  : "font-normal text-violet hover:bg-lavender"
+              }`}
+            >
+              Waitlist
+            </Link>
           </>
         )}
       </nav>

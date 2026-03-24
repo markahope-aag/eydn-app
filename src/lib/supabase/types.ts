@@ -356,6 +356,30 @@ export type Database = {
           },
         ]
       }
+      waitlist: {
+        Row: {
+          id: string;
+          name: string;
+          email: string;
+          source: string;
+          discount_code_sent: boolean;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          email: string;
+          source?: string;
+          discount_code_sent?: boolean;
+          notes?: string | null;
+        };
+        Update: {
+          discount_code_sent?: boolean;
+          notes?: string | null;
+        };
+        Relationships: [];
+      };
       promo_codes: {
         Row: {
           id: string;

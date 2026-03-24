@@ -1,0 +1,197 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { toast } from "sonner";
+
+type BetaStatus = {
+  beta_available: boolean;
+  slots_remaining: number;
+  total_slots: number;
+  slots_taken: number;
+};
+
+export default function BetaPage() {
+  const [status, setStatus] = useState<BetaStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Waitlist form
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    fetch("/api/public/beta")
+      .then((r) => r.json())
+      .then(setStatus)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function joinWaitlist(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const res = await fetch("/api/public/beta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setSubmitted(true);
+      setSuccessMessage(data.message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-whisper flex flex-col">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4">
+        <Link href="/">
+          <img src="/logo.svg" alt="eydn" className="h-7" />
+        </Link>
+        <Link href="/sign-up" className="btn-primary btn-sm">
+          Sign Up
+        </Link>
+      </header>
+
+      {/* Hero */}
+      <div className="flex-1 flex items-center justify-center px-6 py-16">
+        <div className="max-w-lg w-full text-center">
+          <div className="inline-block bg-violet/10 text-violet text-[13px] font-semibold px-4 py-1.5 rounded-full mb-6">
+            {loading ? "Loading..." : status?.beta_available ? `${status.slots_remaining} beta spots left` : "Beta is full — join the waitlist"}
+          </div>
+
+          <h1 className="text-[36px] font-semibold text-plum leading-tight">
+            {status?.beta_available
+              ? "Join the Eydn Beta"
+              : "Eydn Beta Waitlist"}
+          </h1>
+          <p className="mt-4 text-[17px] text-muted leading-relaxed max-w-md mx-auto">
+            {status?.beta_available
+              ? "Be one of the first to plan your wedding with Eydn — completely free. Limited to 50 couples."
+              : "Our beta is full, but you can join the waitlist and get an exclusive 20% discount when we launch."}
+          </p>
+
+          {/* Beta available — show code + sign up CTA */}
+          {status?.beta_available && !loading && (
+            <div className="mt-8 card-summary p-8">
+              <p className="text-[13px] font-semibold text-muted mb-2">Your free beta access code:</p>
+              <div className="bg-plum text-whisper font-mono text-[28px] font-bold tracking-[4px] py-3 px-6 rounded-[12px] inline-block">
+                BETA50
+              </div>
+              <p className="mt-4 text-[14px] text-muted">
+                Use this code when you sign up to get full access — completely free.
+              </p>
+              <Link
+                href="/sign-up"
+                className="btn-primary w-full mt-6 block text-center"
+              >
+                Start Planning — Free
+              </Link>
+              <p className="mt-3 text-[12px] text-muted">
+                {status.slots_remaining} of {status.total_slots} spots remaining
+              </p>
+            </div>
+          )}
+
+          {/* Beta full — waitlist form */}
+          {!status?.beta_available && !loading && !submitted && (
+            <form onSubmit={joinWaitlist} className="mt-8 card-summary p-8 text-left">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center gap-2 bg-lavender px-4 py-2 rounded-full">
+                  <span className="text-[13px] font-semibold text-violet">
+                    {status?.total_slots || 50}/{status?.total_slots || 50} beta spots taken
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[12px] font-semibold text-muted">Your Name</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Jane Smith"
+                    required
+                    className="mt-1 w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[12px] font-semibold text-muted">Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="jane@example.com"
+                    required
+                    className="mt-1 w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="btn-primary w-full mt-6 disabled:opacity-50"
+              >
+                {submitting ? "Joining..." : "Join Waitlist & Get 20% Off"}
+              </button>
+
+              <p className="mt-3 text-[12px] text-muted text-center">
+                You&apos;ll receive an exclusive 20% discount code via email immediately.
+              </p>
+            </form>
+          )}
+
+          {/* Success state */}
+          {submitted && (
+            <div className="mt-8 card-summary p-8 text-center">
+              <div className="text-[48px] mb-4">🎉</div>
+              <h2 className="text-[20px] font-semibold text-plum">{successMessage}</h2>
+              <p className="mt-3 text-[15px] text-muted">
+                Check your inbox for your exclusive discount code. We&apos;ll notify you as soon as we launch.
+              </p>
+              <Link href="/" className="btn-secondary mt-6 inline-block">
+                Back to Home
+              </Link>
+            </div>
+          )}
+
+          {/* Features preview */}
+          <div className="mt-12 grid gap-4 sm:grid-cols-3 text-left">
+            {[
+              { icon: "🤖", title: "AI Wedding Guide", desc: "Chat with Eydn for personalized planning advice" },
+              { icon: "📋", title: "Smart Timeline", desc: "50+ auto-generated tasks with real deadlines" },
+              { icon: "💰", title: "Budget Tracker", desc: "Track every dollar with vendor-linked expenses" },
+            ].map((f) => (
+              <div key={f.title} className="card p-4">
+                <span className="text-[24px]">{f.icon}</span>
+                <h3 className="mt-2 text-[14px] font-semibold text-plum">{f.title}</h3>
+                <p className="mt-1 text-[12px] text-muted">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="text-center py-6 text-[12px] text-muted">
+        <p>&copy; {new Date().getFullYear()} Eydn. All rights reserved.</p>
+        <div className="mt-2 flex justify-center gap-4">
+          <Link href="/privacy" className="hover:text-plum">Privacy</Link>
+          <Link href="/terms" className="hover:text-plum">Terms</Link>
+        </div>
+      </footer>
+    </div>
+  );
+}
