@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
@@ -24,6 +25,7 @@ type Vendor = {
   notes: string | null;
   amount: number | null;
   amount_paid: number | null;
+  gmb_data: { photoUrl?: string; rating?: number; userRatingCount?: number; formattedAddress?: string } | null;
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -76,6 +78,7 @@ export default function VendorsPage() {
       notes: null,
       amount: null,
       amount_paid: null,
+      gmb_data: null,
     };
 
     setVendors((prev) => [...prev, vendor]);
@@ -276,11 +279,37 @@ export default function VendorsPage() {
                   key={vendor.id}
                   className="flex items-center gap-3 rounded-[16px] border-border bg-white px-4 py-3"
                 >
+                  {/* Vendor photo */}
+                  <a href={`/dashboard/vendors/${vendor.id}`} className="flex-shrink-0">
+                    {vendor.gmb_data?.photoUrl ? (
+                      <div className="w-12 h-12 rounded-[10px] overflow-hidden relative">
+                        <Image
+                          src={vendor.gmb_data.photoUrl}
+                          alt={vendor.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-[10px] bg-lavender flex items-center justify-center">
+                        <span className="text-[18px] font-semibold text-violet">{vendor.name.charAt(0)}</span>
+                      </div>
+                    )}
+                  </a>
                   <a
                     href={`/dashboard/vendors/${vendor.id}`}
-                    className="flex-1 text-[15px] font-semibold text-plum hover:text-violet"
+                    className="flex-1 min-w-0"
                   >
-                    {vendor.name}
+                    <span className="text-[15px] font-semibold text-plum hover:text-violet block truncate">{vendor.name}</span>
+                    {vendor.gmb_data?.rating && (
+                      <span className="text-[12px] text-muted">
+                        {"★".repeat(Math.round(vendor.gmb_data.rating))} {vendor.gmb_data.rating}
+                        {vendor.gmb_data.userRatingCount ? ` (${vendor.gmb_data.userRatingCount})` : ""}
+                      </span>
+                    )}
+                    {!vendor.gmb_data?.rating && vendor.poc_name && (
+                      <span className="text-[12px] text-muted">{vendor.poc_name}</span>
+                    )}
                   </a>
                   <select
                     value={vendor.status}
