@@ -66,6 +66,16 @@ export const speechesGuide: GuideDefinition = {
           },
         },
         {
+          id: "q4b",
+          label:
+            "If you selected 'Other' — who else is giving a speech? (names and roles)",
+          field: {
+            kind: "textarea",
+            placeholder: "e.g. Uncle Tom — family toast, Sarah — college friend",
+            rows: 3,
+          },
+        },
+        {
           id: "q5",
           label:
             "For each speaker — have they confirmed they're doing it?",

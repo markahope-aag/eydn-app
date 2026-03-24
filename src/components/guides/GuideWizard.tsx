@@ -120,15 +120,15 @@ export function GuideWizard({ guide }: Props) {
       trackGuideComplete(guide.slug);
       toast.success(`${guide.title} complete!`);
 
-      // Run integrations (add guests to guest list, etc.)
-      if (guide.integrations.includes("guest-list")) {
+      // Run integrations (add guests to guest list, speeches to day-of, etc.)
+      if (guide.integrations.includes("guest-list") || guide.integrations.includes("day-of-timeline")) {
         try {
           const res = await fetch(`/api/guides/${guide.slug}/integrate`, { method: "POST" });
           if (res.ok) {
             const data = await res.json();
             const results = (data as { results: string[] }).results;
-            if (results.length > 0) {
-              toast.success(results[0]);
+            for (const msg of results) {
+              toast.success(msg);
             }
           }
         } catch {
