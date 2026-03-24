@@ -34,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.className} h-full antialiased`}>
+    <html lang="en" className={`${dmSans.className} h-full antialiased`} suppressHydrationWarning>
       <head>
         {/* Termly Consent Management — must load before GTM */}
         <script
@@ -48,7 +48,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-whisper text-plum">
+      <body className="min-h-full flex flex-col bg-whisper text-plum" suppressHydrationWarning>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg focus:text-plum"
