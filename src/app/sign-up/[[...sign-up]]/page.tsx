@@ -1,6 +1,7 @@
 import { SignUp } from "@clerk/nextjs";
 import Link from "next/link";
 import { Cormorant_Garamond, DM_Sans, Great_Vibes } from "next/font/google";
+import { ClerkFallback } from "@/components/ClerkFallback";
 
 const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "600"] });
 const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500"] });
@@ -76,6 +77,7 @@ export default function SignUpPage() {
           <p style={{ fontSize: 14, color: "#6B6B6B", marginTop: 4 }}>Start your 14-day free trial</p>
         </div>
 
+        <div id="clerk-signup-wrapper">
         <SignUp
           appearance={{
             variables: {
@@ -101,6 +103,8 @@ export default function SignUpPage() {
             },
           }}
         />
+        <ClerkFallback />
+        </div>
 
         <p style={{ marginTop: 32, fontSize: 13, color: "#6B6B6B", textAlign: "center" }}>
           Already have an account?{" "}
