@@ -89,6 +89,12 @@ export default function RootLayout({
         </ClerkProvider>
         <Analytics />
         <Script
+          id="ahrefs-analytics"
+          strategy="afterInteractive"
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="N0UcdeuFPyyC4uaXyXmywA"
+        />
+        <Script
           id="termly-consent"
           strategy="afterInteractive"
           src="https://app.termly.io/resource-blocker/910feb69-853c-4fca-9c47-300c9abfe07f?autoBlock=on"
