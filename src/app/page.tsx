@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Show, SignUpButton } from "@clerk/nextjs";
+import { Show, SignUpButton, useAuth } from "@clerk/nextjs";
 import { Cormorant_Garamond, DM_Sans, Great_Vibes } from "next/font/google";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -124,6 +124,7 @@ const keyframeCSS = `
 function LandingNav() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isSignedIn } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -190,59 +191,85 @@ function LandingNav() {
           </nav>
         </div>
 
-        {/* Sign In + CTA (right, desktop) — no Clerk dependency, always visible */}
+        {/* Right side: auth-aware buttons */}
         <div
           style={{ display: "flex", alignItems: "center", gap: 16 }}
           className="max-md:!hidden"
         >
-          <Link
-            href="/sign-in"
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#2A2018",
-              textDecoration: "none",
-              transition: "opacity 0.2s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/sign-up"
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#FAF6F1",
-              background: "#2C3E2D",
-              borderRadius: 100,
-              padding: "8px 20px",
-              textDecoration: "none",
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#3A5240"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "#2C3E2D"; }}
-          >
-            Start Free
-          </Link>
+          {isSignedIn ? (
+            <Link
+              href="/dashboard"
+              style={{
+                fontFamily: "var(--font-body)",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#FAF6F1",
+                background: "#2C3E2D",
+                borderRadius: 100,
+                padding: "8px 20px",
+                textDecoration: "none",
+                transition: "background 0.2s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#3A5240"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#2C3E2D"; }}
+            >
+              Go to Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/sign-in"
+                style={{
+                  fontFamily: "var(--font-body)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#2A2018",
+                  textDecoration: "none",
+                  transition: "opacity 0.2s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                style={{
+                  fontFamily: "var(--font-body)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#FAF6F1",
+                  background: "#2C3E2D",
+                  borderRadius: 100,
+                  padding: "8px 20px",
+                  textDecoration: "none",
+                  transition: "background 0.2s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#3A5240"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#2C3E2D"; }}
+              >
+                Start Free
+              </Link>
+            </>
+          )}
         </div>
 
-        {/* Mobile: Sign In always visible next to hamburger */}
+        {/* Mobile right side */}
         <div className="md:!hidden flex items-center gap-3">
           <Link
-            href="/sign-in"
+            href={isSignedIn ? "/dashboard" : "/sign-in"}
             style={{
               fontFamily: "var(--font-body)",
               fontSize: 13,
               fontWeight: 600,
-              color: "#2A2018",
+              color: isSignedIn ? "#FAF6F1" : "#2A2018",
+              background: isSignedIn ? "#2C3E2D" : "transparent",
+              borderRadius: 100,
+              padding: isSignedIn ? "6px 16px" : "0",
               textDecoration: "none",
             }}
           >
-            Sign In
+            {isSignedIn ? "Dashboard" : "Sign In"}
           </Link>
         </div>
 
