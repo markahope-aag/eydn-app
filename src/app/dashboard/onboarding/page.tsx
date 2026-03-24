@@ -76,7 +76,45 @@ const STEPS = [
   "anything_else",
 ] as const;
 
-
+/** Yes/Not yet toggle button pair */
+function YesNotYet({
+  value,
+  onChange,
+  yesLabel = "Yes",
+  noLabel = "Not yet",
+}: {
+  value: boolean | null;
+  onChange: (v: boolean) => void;
+  yesLabel?: string;
+  noLabel?: string;
+}) {
+  return (
+    <div className="flex gap-3">
+      <button
+        type="button"
+        onClick={() => onChange(true)}
+        className={`flex-1 rounded-[10px] border-border px-4 py-2.5 text-[15px] font-semibold transition ${
+          value === true
+            ? "border-violet bg-lavender text-violet"
+            : "hover:bg-lavender"
+        }`}
+      >
+        {yesLabel}
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(false)}
+        className={`flex-1 rounded-[10px] border-border px-4 py-2.5 text-[15px] font-semibold transition ${
+          value === false
+            ? "border-violet bg-lavender text-violet"
+            : "hover:bg-lavender"
+        }`}
+      >
+        {noLabel}
+      </button>
+    </div>
+  );
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -100,10 +138,8 @@ export default function OnboardingPage() {
           const saved = data.responses as Partial<FormData>;
           setForm((prev) => ({ ...prev, ...saved }));
           if (data.completed) {
-            // Re-editing: start at step 0 so user can review from the beginning
             setStep(0);
           } else {
-            // Resuming incomplete: jump to last filled step
             const lastStep = (saved as Record<string, unknown>).last_step;
             if (typeof lastStep === "number") setStep(lastStep);
           }
@@ -133,19 +169,13 @@ export default function OnboardingPage() {
         responses: { ...form, last_step: step },
         completed: false,
       }),
-    }).catch(() => {}); // silent save
+    }).catch(() => {});
   }
 
   function canProceed(): boolean {
     switch (currentStep) {
       case "names":
         return !!form.partner1_name.trim() && !!form.partner2_name.trim();
-      case "date":
-        return true; // optional
-      case "venue":
-        return true; // optional
-      case "guests":
-        return true; // optional
       default:
         return true;
     }
@@ -219,33 +249,32 @@ export default function OnboardingPage() {
       </div>
 
       <div className="space-y-6">
+        {/* STEP: Names */}
         {currentStep === "names" && (
           <>
-            <EdynMessage message="Hey! Let's get started with the basics so we can plan your perfect day. Let's start with yours and your partner's names." />
+            <EdynMessage message="Hey! Let's get started with the basics so we can plan your perfect day. What are your names?" />
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-[15px] font-semibold text-muted">
-                  Your Name
-                </label>
+                <label className="block text-[15px] font-semibold text-muted">Your Name</label>
                 <input
                   type="text"
                   value={form.partner1_name}
                   onChange={(e) => update("partner1_name", e.target.value)}
-                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
                   placeholder="First name"
+                  aria-label="Your name"
                   required
                 />
               </div>
               <div>
-                <label className="block text-[15px] font-semibold text-muted">
-                  Partner&apos;s Name
-                </label>
+                <label className="block text-[15px] font-semibold text-muted">Partner&apos;s Name</label>
                 <input
                   type="text"
                   value={form.partner2_name}
                   onChange={(e) => update("partner2_name", e.target.value)}
-                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
                   placeholder="First name"
+                  aria-label="Partner's name"
                   required
                 />
               </div>
@@ -253,290 +282,264 @@ export default function OnboardingPage() {
           </>
         )}
 
+        {/* STEP: Date */}
         {currentStep === "date" && (
           <>
-            <EdynMessage
-              message={`Great, excited to work with you ${form.partner1_name}! Let's get into it. What's your wedding date?`}
+            <EdynMessage message={`Great to meet you, ${form.partner1_name}! Do you have a wedding date set?`} />
+            <YesNotYet
+              value={form.has_date ? true : form.has_date === false && !form.date ? false : null}
+              onChange={(v) => { update("has_date", v); if (!v) update("date", ""); }}
+              yesLabel="We have a date"
+              noLabel="Not yet"
             />
-            <div>
-              <label className="flex items-center gap-2 text-[15px]">
-                <input
-                  type="checkbox"
-                  checked={form.has_date}
-                  onChange={(e) => update("has_date", e.target.checked)}
-                  className="accent-violet"
-                />
-                We have a date picked
-              </label>
-              {form.has_date && (
+            {form.has_date && (
+              <>
+                <EdynMessage message="Wonderful! When is the big day?" />
                 <input
                   type="date"
                   value={form.date}
                   onChange={(e) => update("date", e.target.value)}
-                  className="mt-3 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                  aria-label="Wedding date"
+                  className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
                 />
-              )}
-            </div>
+              </>
+            )}
+            {form.has_date === false && (
+              <EdynMessage message="No worries! We'll help you plan around a flexible timeline." />
+            )}
           </>
         )}
 
+        {/* STEP: Venue */}
         {currentStep === "venue" && (
           <>
-            <EdynMessage message="Awesome! And where's the big day happening?" />
-            <div>
-              <label className="flex items-center gap-2 text-[15px]">
-                <input
-                  type="checkbox"
-                  checked={form.has_venue}
-                  onChange={(e) => update("has_venue", e.target.checked)}
-                  className="accent-violet"
-                />
-                We have a venue booked
-              </label>
-              {form.has_venue && (
+            <EdynMessage message="Do you have a venue booked?" />
+            <YesNotYet
+              value={form.has_venue ? true : form.has_venue === false && !form.venue ? false : null}
+              onChange={(v) => { update("has_venue", v); if (!v) update("venue", ""); }}
+              yesLabel="We have one"
+              noLabel="Still looking"
+            />
+            {form.has_venue && (
+              <>
+                <EdynMessage message="Love it! What's the venue called?" />
                 <input
                   type="text"
                   value={form.venue}
                   onChange={(e) => update("venue", e.target.value)}
                   placeholder="e.g. The Grand Ballroom"
-                  className="mt-3 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                  aria-label="Venue name"
+                  className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
                 />
-              )}
-            </div>
+              </>
+            )}
+            {form.has_venue === false && (
+              <EdynMessage message="No problem! We'll add venue research to your task list." />
+            )}
           </>
         )}
 
+        {/* STEP: Guests */}
         {currentStep === "guests" && (
           <>
-            <EdynMessage message="Got it. How many guests are you thinking of inviting? This helps us plan seating, catering, and everything else." />
-            <div>
-              <label className="flex items-center gap-2 text-[15px]">
-                <input
-                  type="checkbox"
-                  checked={form.has_guest_estimate}
-                  onChange={(e) =>
-                    update("has_guest_estimate", e.target.checked)
-                  }
-                  className="accent-violet"
-                />
-                We have a rough estimate
-              </label>
-              {form.has_guest_estimate && (
+            <EdynMessage message="How about your guest list — do you have a rough idea of how many people you're inviting?" />
+            <YesNotYet
+              value={form.has_guest_estimate ? true : form.has_guest_estimate === false && !form.guest_count_estimate ? false : null}
+              onChange={(v) => { update("has_guest_estimate", v); if (!v) update("guest_count_estimate", ""); }}
+              yesLabel="We have an estimate"
+              noLabel="Not sure yet"
+            />
+            {form.has_guest_estimate && (
+              <>
+                <EdynMessage message="Great! Roughly how many guests are you thinking?" />
                 <input
                   type="number"
                   value={form.guest_count_estimate}
-                  onChange={(e) =>
-                    update("guest_count_estimate", e.target.value)
-                  }
+                  onChange={(e) => update("guest_count_estimate", e.target.value)}
                   placeholder="e.g. 150"
                   min="1"
-                  className="mt-3 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                  aria-label="Estimated guest count"
+                  className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
                 />
-              )}
-            </div>
+              </>
+            )}
+            {form.has_guest_estimate === false && (
+              <EdynMessage message="That's totally fine! The guest list tool will help you figure it out." />
+            )}
           </>
         )}
 
+        {/* STEP: Style */}
         {currentStep === "style" && (
           <>
-            <EdynMessage message="Now, let's talk vibes. How would you describe your wedding style in a few words?" />
+            <EdynMessage message="Now for the fun part — how would you describe your wedding vibe in a few words?" />
             <input
               type="text"
               value={form.style_description}
               onChange={(e) => update("style_description", e.target.value)}
               placeholder="e.g. Rustic, elegant, outdoor"
-              className="w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+              aria-label="Wedding style description"
+              className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
             />
           </>
         )}
 
+        {/* STEP: Wedding Party */}
         {currentStep === "wedding_party" && (
           <>
-            <EdynMessage message="Perfect! Do you already have a wedding party lined up?" />
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => update("has_wedding_party", true)}
-                className={`flex-1 rounded-[10px] border-border px-4 py-2 text-[15px] font-semibold transition ${
-                  form.has_wedding_party === true
-                    ? "border-violet bg-lavender text-violet"
-                    : "hover:bg-lavender"
-                }`}
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                onClick={() => update("has_wedding_party", false)}
-                className={`flex-1 rounded-[10px] border-border px-4 py-2 text-[15px] font-semibold transition ${
-                  form.has_wedding_party === false
-                    ? "border-violet bg-lavender text-violet"
-                    : "hover:bg-lavender"
-                }`}
-              >
-                Not yet
-              </button>
-            </div>
+            <EdynMessage message="Do you already have a wedding party lined up?" />
+            <YesNotYet
+              value={form.has_wedding_party}
+              onChange={(v) => { update("has_wedding_party", v); if (!v) update("wedding_party_count", ""); }}
+            />
             {form.has_wedding_party === true && (
               <>
                 <EdynMessage message="Great! How many people will be in your wedding party total?" />
                 <input
                   type="number"
                   value={form.wedding_party_count}
-                  onChange={(e) =>
-                    update("wedding_party_count", e.target.value)
-                  }
+                  onChange={(e) => update("wedding_party_count", e.target.value)}
                   placeholder="e.g. 8"
                   min="1"
-                  className="w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                  aria-label="Wedding party count"
+                  className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
                 />
               </>
             )}
             {form.has_wedding_party === false && (
-              <EdynMessage message="No worries, we can help you plan who to ask later!" />
+              <EdynMessage message="No worries! We can help you plan who to ask later." />
             )}
           </>
         )}
 
+        {/* STEP: Vendors */}
         {currentStep === "vendors" && (
           <>
-            <EdynMessage message="Time to see where you're at with vendors. Which of these have you already booked?" />
+            <EdynMessage message="Let's see where you're at with vendors. Which of these have you already booked?" />
             <div className="grid gap-2 sm:grid-cols-2">
               {VENDOR_CATEGORIES.map((vendor) => (
-                <label
+                <button
                   key={vendor}
-                  className={`flex items-center gap-2 rounded-[10px] border-border px-3 py-2 text-[15px] cursor-pointer transition ${
+                  type="button"
+                  onClick={() => toggleVendor(vendor)}
+                  className={`flex items-center gap-2 rounded-[10px] border-border px-3 py-2.5 text-[15px] text-left transition ${
                     form.booked_vendors.includes(vendor)
-                      ? "border-violet bg-lavender"
+                      ? "border-violet bg-lavender text-violet font-semibold"
                       : "hover:bg-lavender"
                   }`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={form.booked_vendors.includes(vendor)}
-                    onChange={() => toggleVendor(vendor)}
-                    className="accent-violet"
-                  />
+                  <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition ${
+                    form.booked_vendors.includes(vendor)
+                      ? "border-violet bg-violet"
+                      : "border-border"
+                  }`}>
+                    {form.booked_vendors.includes(vendor) && (
+                      <span className="text-white text-[10px]">✓</span>
+                    )}
+                  </span>
                   {vendor}
-                </label>
+                </button>
               ))}
             </div>
+            {form.booked_vendors.length === 0 && (
+              <EdynMessage message="No vendors booked yet? That's completely normal! We'll help you find and manage them." />
+            )}
+            {form.booked_vendors.length > 0 && (
+              <EdynMessage message={`Nice — ${form.booked_vendors.length} vendor${form.booked_vendors.length > 1 ? "s" : ""} already locked in!`} />
+            )}
           </>
         )}
 
+        {/* STEP: Budget */}
         {currentStep === "budget" && (
           <>
-            <EdynMessage message="Perfect. Knowing this helps us suggest what to focus on next. And roughly, what's your wedding budget?" />
-            <div>
-              <label className="flex items-center gap-2 text-[15px]">
-                <input
-                  type="checkbox"
-                  checked={form.has_budget}
-                  onChange={(e) => update("has_budget", e.target.checked)}
-                  className="accent-violet"
-                />
-                We have a budget in mind
-              </label>
-              {form.has_budget && (
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="text-muted">$</span>
+            <EdynMessage message="Do you have a wedding budget in mind?" />
+            <YesNotYet
+              value={form.has_budget ? true : form.has_budget === false && !form.budget ? false : null}
+              onChange={(v) => { update("has_budget", v); if (!v) update("budget", ""); }}
+              yesLabel="We have a budget"
+              noLabel="Not sure yet"
+            />
+            {form.has_budget && (
+              <>
+                <EdynMessage message="Smart! What's the total budget you're working with?" />
+                <div className="flex items-center gap-2">
+                  <span className="text-muted text-[18px]">$</span>
                   <input
                     type="number"
                     value={form.budget}
                     onChange={(e) => update("budget", e.target.value)}
-                    placeholder="e.g. 25000"
+                    placeholder="e.g. 25,000"
                     min="0"
                     step="500"
-                    className="w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                    aria-label="Wedding budget"
+                    className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
                   />
                 </div>
-              )}
-            </div>
+              </>
+            )}
+            {form.has_budget === false && (
+              <EdynMessage message="No problem! The budget tracker will help you figure out what to allocate where." />
+            )}
           </>
         )}
 
+        {/* STEP: Pre-wedding Events */}
         {currentStep === "pre_wedding" && (
           <>
-            <EdynMessage message="Are you planning any pre-wedding celebrations like a bridal shower or bachelor/bachelorette parties?" />
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => update("has_pre_wedding_events", true)}
-                className={`flex-1 rounded-[10px] border-border px-4 py-2 text-[15px] font-semibold transition ${
-                  form.has_pre_wedding_events === true
-                    ? "border-violet bg-lavender text-violet"
-                    : "hover:bg-lavender"
-                }`}
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                onClick={() => update("has_pre_wedding_events", false)}
-                className={`flex-1 rounded-[10px] border-border px-4 py-2 text-[15px] font-semibold transition ${
-                  form.has_pre_wedding_events === false
-                    ? "border-violet bg-lavender text-violet"
-                    : "hover:bg-lavender"
-                }`}
-              >
-                Not yet
-              </button>
-            </div>
+            <EdynMessage message="Are you planning any pre-wedding celebrations — bridal shower, bachelor/bachelorette parties?" />
+            <YesNotYet
+              value={form.has_pre_wedding_events}
+              onChange={(v) => update("has_pre_wedding_events", v)}
+              yesLabel="Yes, we are"
+              noLabel="Not at this point"
+            />
+            {form.has_pre_wedding_events === true && (
+              <EdynMessage message="Fun! We'll add those to your planning timeline." />
+            )}
+            {form.has_pre_wedding_events === false && (
+              <EdynMessage message="That's totally fine! Less to plan means more time to enjoy the journey." />
+            )}
           </>
         )}
 
+        {/* STEP: Honeymoon */}
         {currentStep === "honeymoon" && (
           <>
-            <EdynMessage message="Fun! And what about a honeymoon? Have you started planning that yet?" />
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => update("has_honeymoon", true)}
-                className={`flex-1 rounded-[10px] border-border px-4 py-2 text-[15px] font-semibold transition ${
-                  form.has_honeymoon === true
-                    ? "border-violet bg-lavender text-violet"
-                    : "hover:bg-lavender"
-                }`}
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                onClick={() => update("has_honeymoon", false)}
-                className={`flex-1 rounded-[10px] border-border px-4 py-2 text-[15px] font-semibold transition ${
-                  form.has_honeymoon === false
-                    ? "border-violet bg-lavender text-violet"
-                    : "hover:bg-lavender"
-                }`}
-              >
-                Not yet
-              </button>
-            </div>
-            {form.has_honeymoon === false && (
-              <EdynMessage message="No problem! We can add a honeymoon planning checklist for you." />
-            )}
+            <EdynMessage message="What about a honeymoon — are you planning one?" />
+            <YesNotYet
+              value={form.has_honeymoon}
+              onChange={(v) => update("has_honeymoon", v)}
+              yesLabel="Yes!"
+              noLabel="Not yet"
+            />
             {form.has_honeymoon === true && (
-              <EdynMessage message="Great! Let's keep track of bookings, flights, and packing reminders." />
+              <EdynMessage message="Exciting! We'll keep track of bookings, flights, and packing reminders for you." />
+            )}
+            {form.has_honeymoon === false && (
+              <EdynMessage message="No worries! If you decide to later, we can add a honeymoon planning checklist." />
             )}
           </>
         )}
 
+        {/* STEP: Anything Else */}
         {currentStep === "anything_else" && (
           <>
-            <EdynMessage message="Now we have a great starting point. Anything else you would like me to know before I start to help you plan?" />
+            <EdynMessage message="We've got a great starting point! Is there anything else you'd like me to know before we dive in?" />
             <textarea
               value={form.anything_else}
               onChange={(e) => update("anything_else", e.target.value)}
               placeholder="Share any other details, preferences, or concerns..."
               rows={4}
-              className="w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
+              aria-label="Additional details"
+              className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px] resize-none"
             />
           </>
         )}
       </div>
 
       {/* Navigation */}
-      <div className="mt-8 flex gap-3">
+      <div className="mt-8 flex items-center">
         {step > 0 && (
           <button
             type="button"
@@ -546,30 +549,32 @@ export default function OnboardingPage() {
             Back
           </button>
         )}
-        {currentStep !== "names" && !isLast && (
+        <div className="ml-auto flex items-center gap-3">
+          {currentStep !== "names" && !isLast && (
+            <button
+              type="button"
+              onClick={async () => {
+                await saveProgress();
+                setStep((s) => s + 1);
+              }}
+              className="text-[15px] text-muted hover:text-plum transition"
+            >
+              Skip for now
+            </button>
+          )}
           <button
             type="button"
-            onClick={async () => {
-              await saveProgress();
-              setStep((s) => s + 1);
-            }}
-            className="text-[15px] text-muted hover:text-plum transition ml-auto mr-3"
+            onClick={handleNext}
+            disabled={!canProceed() || submitting}
+            className="btn-primary disabled:opacity-50"
           >
-            Skip for now
+            {submitting
+              ? "Setting up..."
+              : isLast
+              ? "Start Planning!"
+              : "Continue"}
           </button>
-        )}
-        <button
-          type="button"
-          onClick={handleNext}
-          disabled={!canProceed() || submitting}
-          className={`btn-primary disabled:opacity-50 ${currentStep === "names" || isLast ? "ml-auto" : ""}`}
-        >
-          {submitting
-            ? "Setting up..."
-            : isLast
-            ? "Start Planning!"
-            : "Continue"}
-        </button>
+        </div>
       </div>
 
       <p className="mt-4 text-center text-[12px] text-muted">
