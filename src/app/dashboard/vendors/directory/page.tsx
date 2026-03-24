@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { toast } from "sonner";
 import { VENDOR_CATEGORIES } from "@/lib/vendors/categories";
 
@@ -145,9 +146,9 @@ export default function VendorDirectoryPage() {
             Browse recommended vendors in your area. Add any to your vendor list.
           </p>
         </div>
-        <a href="/dashboard/vendors" className="btn-secondary">
+        <Link href="/dashboard/vendors" className="btn-secondary">
           My Vendors
-        </a>
+        </Link>
       </div>
 
       {/* Search + filters */}
