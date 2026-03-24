@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatDueDate } from "@/lib/date-utils";
+import { TASK_GUIDE_MAP } from "@/lib/tasks/task-guide-map";
 import {
   DndContext,
   closestCenter,
@@ -157,6 +158,11 @@ function SortableTaskItem({
       {task.category && (
         <span className="badge">
           {task.category}
+        </span>
+      )}
+      {TASK_GUIDE_MAP[task.title] && (
+        <span className="text-[10px] font-semibold text-violet bg-violet/10 px-1.5 py-0.5 rounded-full">
+          Guide
         </span>
       )}
       {dueDateInfo && (

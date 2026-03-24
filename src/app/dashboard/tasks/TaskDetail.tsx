@@ -7,6 +7,8 @@ import { FileUpload } from "@/components/FileUpload";
 import { VENDOR_EMAIL_TEMPLATES } from "@/lib/vendors/email-templates";
 import { formatDueDate } from "@/lib/date-utils";
 import { Comments } from "@/components/Comments";
+import Link from "next/link";
+import { TASK_GUIDE_MAP } from "@/lib/tasks/task-guide-map";
 
 // Map task categories to email template vendor categories
 const TASK_TO_EMAIL_CATEGORY: Record<string, string> = {
@@ -322,6 +324,26 @@ export function TaskDetail({
           {task.edyn_message && (
             <div className="mt-4">
               <EdynMessage message={task.edyn_message} />
+            </div>
+          )}
+
+          {/* Planning guide callout */}
+          {TASK_GUIDE_MAP[task.title] && (
+            <div className="mt-4 bg-violet/5 border border-violet/20 rounded-[12px] px-4 py-3 flex items-center justify-between">
+              <div>
+                <p className="text-[13px] font-semibold text-violet">Planning Guide Available</p>
+                <p className="text-[12px] text-muted">
+                  Our {TASK_GUIDE_MAP[task.title].label} walks you through this step by step
+                </p>
+              </div>
+              <Link
+                href={TASK_GUIDE_MAP[task.title].slug === "insurance"
+                  ? "/dashboard/guides/insurance"
+                  : `/dashboard/guides/${TASK_GUIDE_MAP[task.title].slug}`}
+                className="btn-secondary btn-sm flex-shrink-0"
+              >
+                Open Guide
+              </Link>
             </div>
           )}
 

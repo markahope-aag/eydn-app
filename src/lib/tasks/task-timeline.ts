@@ -17,6 +17,8 @@ export type TaskDefinition = {
   notes?: string;
   subTasks?: { title: string; monthsBefore: number; edynMessage?: string }[];
   conditional?: "has_honeymoon" | "has_pre_wedding_events" | "has_wedding_party";
+  /** Link to a planning guide that helps with this task */
+  guideSlug?: string;
 };
 
 export const TASK_TIMELINE: TaskDefinition[] = [
@@ -41,6 +43,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "12 Months Before",
     monthsBefore: 12,
     edynMessage: "Time to think about your VIPs! Start with a draft guest list—family, friends, plus-ones. You can always tweak it later.",
+    guideSlug: "guest-list",
   },
   {
     title: "Choose Wedding Party",
@@ -95,6 +98,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "12 Months Before",
     monthsBefore: 12,
     edynMessage: "Time to get grooving! Choose music you love and chat about the vibe you want all night.",
+    guideSlug: "music",
   },
   {
     title: "Book Officiant",
@@ -123,6 +127,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "9-12 Months Before",
     monthsBefore: 10,
     edynMessage: "Tie everything together with colors and theme—attire, flowers, invitations, and decor.",
+    guideSlug: "colors-theme",
   },
   {
     title: "Book Florist",
@@ -130,6 +135,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "9-12 Months Before",
     monthsBefore: 10,
     edynMessage: "Flowers make everything magical. Pick bouquets, centerpieces, and ceremony decor that match your style.",
+    guideSlug: "florist",
     subTasks: [
       { title: "Confirm quantity, style, and placement", monthsBefore: 4 },
     ],
@@ -140,6 +146,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "9-12 Months Before",
     monthsBefore: 10,
     edynMessage: "Tables, chairs, linens, lighting…oh my! Make sure everything is reserved before it's gone.",
+    guideSlug: "rentals",
   },
   {
     title: "Buy Wedding Dress",
@@ -147,6 +154,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "9-12 Months Before",
     monthsBefore: 10,
     edynMessage: "Time to find the one! Shop early, try lots of styles, and schedule fittings so your dress is perfect.",
+    guideSlug: "wedding-dress",
   },
   {
     title: "Book Hair Stylist",
@@ -154,6 +162,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "9-12 Months Before",
     monthsBefore: 10,
     edynMessage: "Time to glam up! Book your stylist and show them your inspo pics.",
+    guideSlug: "hair-makeup",
   },
   {
     title: "Book Makeup Artist",
@@ -161,6 +170,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "9-12 Months Before",
     monthsBefore: 10,
     edynMessage: "Time to glam up! Book your makeup artist and show them your inspo pics.",
+    guideSlug: "hair-makeup",
   },
   {
     title: "Book Transportation",
@@ -221,6 +231,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "6-9 Months Before",
     monthsBefore: 7,
     edynMessage: "Lighting, signage, tables, and fun touches. Make it your dream aesthetic!",
+    guideSlug: "decor",
   },
   {
     title: "Plan Flowers and Centerpieces",
@@ -228,6 +239,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "6-9 Months Before",
     monthsBefore: 7,
     edynMessage: "Work with your florist to finalize bouquets, boutonnieres, and centerpiece designs.",
+    guideSlug: "florist",
   },
   {
     title: "Send Save-the-Dates",
@@ -263,6 +275,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "4-6 Months Before",
     monthsBefore: 5,
     edynMessage: "Pick meaningful songs for processional, recessional, and your first dance!",
+    guideSlug: "music",
   },
   {
     title: "Book Rehearsal Dinner Location",
@@ -277,6 +290,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "4-6 Months Before",
     monthsBefore: 5,
     edynMessage: "Quick but important: Ensure wedding insurance for peace of mind.",
+    guideSlug: "insurance",
   },
   {
     title: "Order Invitations",
@@ -300,6 +314,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "3-4 Months Before",
     monthsBefore: 3,
     edynMessage: "Book your beauty trial. Test your wedding-day hair and makeup look.",
+    guideSlug: "hair-makeup",
   },
   {
     title: "Plan Seating Chart Draft",
@@ -314,6 +329,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     phase: "3-4 Months Before",
     monthsBefore: 3,
     edynMessage: "Who's dropping the mic? Coordinate speeches with your wedding party.",
+    guideSlug: "speeches",
   },
   {
     title: "Plan Favors",
