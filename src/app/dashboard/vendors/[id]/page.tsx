@@ -89,7 +89,7 @@ export default function VendorDetailPage({
     }
   }
 
-  async function updateField(field: string, value: string | number | null) {
+  async function updateField(field: string, value: boolean | string | number | null) {
     if (!vendorId) return;
     const prev = vendor;
     setVendor((v) => (v ? { ...v, [field]: value } : v));
@@ -274,7 +274,7 @@ export default function VendorDetailPage({
                 <input
                   type="checkbox"
                   checked={vendor.meal_needed}
-                  onChange={(e) => updateField("meal_needed", e.target.checked as unknown as string)}
+                  onChange={(e) => updateField("meal_needed", e.target.checked)}
                   className="accent-violet"
                 />
                 <span className="text-[14px] text-plum">Yes, needs a meal</span>
@@ -288,7 +288,7 @@ export default function VendorDetailPage({
                 <input
                   type="checkbox"
                   checked={vendor.insurance_submitted}
-                  onChange={(e) => updateField("insurance_submitted", e.target.checked as unknown as string)}
+                  onChange={(e) => updateField("insurance_submitted", e.target.checked)}
                   className="accent-violet"
                 />
                 <span className="text-[14px] text-plum">Yes, submitted</span>

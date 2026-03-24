@@ -127,18 +127,9 @@ export async function POST(request: Request) {
       final_amount: 0,
     });
 
-    // Increment usage counter
-    const { data: currentCode } = await supabase
-      .from("promo_codes")
-      .select("current_uses")
-      .eq("id", promoId)
-      .single();
-    if (currentCode) {
-      await supabase
-        .from("promo_codes")
-        .update({ current_uses: (currentCode as { current_uses: number }).current_uses + 1 })
-        .eq("id", promoId);
-    }
+    // Atomic increment usage counter
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).rpc("increment_promo_uses", { code_id: promoId });
 
     return NextResponse.json({
       purchased: true,

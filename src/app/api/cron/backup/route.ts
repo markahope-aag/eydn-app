@@ -134,7 +134,7 @@ export async function POST(request: Request) {
 
     if (!sftpHost || !sftpUser) {
       // No SFTP configured — log the backup locally and return
-      console.log(`[BACKUP] ${filename}: ${backups.length} weddings, ${backupJson.length} bytes (SFTP not configured)`);
+      console.info(`[BACKUP] ${filename}: ${backups.length} weddings, ${backupJson.length} bytes (SFTP not configured)`);
       return NextResponse.json({
         success: true,
         filename,
@@ -171,7 +171,7 @@ export async function POST(request: Request) {
       await sftp.end();
       sftpUploaded = true;
 
-      console.log(`[BACKUP] ${filename}: ${backups.length} weddings, ${backupJson.length} bytes → ${sftpHost}:${remotePath}`);
+      console.info(`[BACKUP] ${filename}: ${backups.length} weddings, ${backupJson.length} bytes → ${sftpHost}:${remotePath}`);
     } catch (sftpError) {
       console.error("[BACKUP] SFTP upload failed:", sftpError instanceof Error ? sftpError.message : sftpError);
       // Don't fail the whole request — backup data was still generated

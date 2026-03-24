@@ -54,18 +54,9 @@ export async function POST(request: Request) {
             final_amount: session.amount_total ? session.amount_total / 100 : 79,
           });
 
-          // Increment promo code usage
-          const { data: currentCode } = await supabase
-            .from("promo_codes")
-            .select("current_uses")
-            .eq("id", meta.promo_code_id)
-            .single();
-          if (currentCode) {
-            await supabase
-              .from("promo_codes")
-              .update({ current_uses: (currentCode as { current_uses: number }).current_uses + 1 })
-              .eq("id", meta.promo_code_id);
-          }
+          // Atomic increment promo code usage
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase as any).rpc("increment_promo_uses", { code_id: meta.promo_code_id });
         }
         break;
       }

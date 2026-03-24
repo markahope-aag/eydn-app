@@ -73,7 +73,7 @@ export async function POST(request: Request) {
             to: newPhase,
           });
 
-          console.log(
+          console.info(
             `[LIFECYCLE] Wedding ${wedding.id} (${wedding.partner1_name} & ${wedding.partner2_name}): ${oldPhase} → ${newPhase}`
           );
         }
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
 
             // Only check unsubscribe for marketing emails; transactional always send
             if (isMarketing && (prefs.unsubscribed_all || !prefs.marketing_emails)) {
-              console.log(`[LIFECYCLE] Skipping marketing email ${emailType} for ${wedding.id} — unsubscribed`);
+              console.info(`[LIFECYCLE] Skipping marketing email ${emailType} for ${wedding.id} — unsubscribed`);
             } else {
               const partnerNames = `${wedding.partner1_name} & ${wedding.partner2_name}`;
               const emailContent = getLifecycleEmail(emailType, {
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
             emailType,
           });
 
-          console.log(`[LIFECYCLE] Email recorded: ${emailType} for wedding ${wedding.id}`);
+          console.info(`[LIFECYCLE] Email recorded: ${emailType} for wedding ${wedding.id}`);
         }
 
         // Handle sunset: soft-delete data for weddings without memory plan
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
           try {
             await softDeleteWeddingData(supabase, wedding.id);
             results.sunsetted.push(wedding.id);
-            console.log(`[LIFECYCLE] Sunset: soft-deleted data for wedding ${wedding.id}`);
+            console.info(`[LIFECYCLE] Sunset: soft-deleted data for wedding ${wedding.id}`);
           } catch (sunsetError) {
             results.errors.push(
               `Sunset failed for ${wedding.id}: ${sunsetError instanceof Error ? sunsetError.message : String(sunsetError)}`
@@ -158,7 +158,7 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log(
+    console.info(
       `[LIFECYCLE] Complete: ${results.processed} processed, ${results.phaseChanges.length} phase changes, ${results.emailsRecorded.length} emails, ${results.sunsetted.length} sunsetted, ${results.errors.length} errors`
     );
 
@@ -247,7 +247,7 @@ async function softDeleteWeddingData(
     },
   };
 
-  console.log(
+  console.info(
     `[LIFECYCLE] Final backup for sunset wedding ${weddingId}: ${JSON.stringify(backupPayload).length} bytes`
   );
 

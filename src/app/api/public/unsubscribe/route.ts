@@ -1,4 +1,6 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { escapeHtml } from "@/lib/validation";
+import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 
 /**
  * Public unsubscribe endpoint — no authentication required (CAN-SPAM compliance).
@@ -7,11 +9,17 @@ import { createSupabaseAdmin } from "@/lib/supabase/server";
  */
 
 export async function GET(request: Request) {
+  const ip = getClientIP(request);
+  const rl = await checkRateLimit(`unsub:${ip}`, RATE_LIMITS.public);
+  if (rl.limited) {
+    return new Response("Too many requests", { status: 429 });
+  }
+
   const url = new URL(request.url);
   const token = url.searchParams.get("token");
   const type = url.searchParams.get("type") || "all";
 
-  if (!token) {
+  if (!token || !/^[a-f0-9]+$/.test(token)) {
     return new Response(renderPage("Invalid Link", "This unsubscribe link is invalid or has expired."), {
       headers: { "Content-Type": "text/html" },
     });
@@ -44,10 +52,10 @@ export async function GET(request: Request) {
   return new Response(
     renderPage(
       "Unsubscribe",
-      `<p>Click below to unsubscribe from <strong>${typeLabel}</strong>.</p>
+      `<p>Click below to unsubscribe from <strong>${escapeHtml(typeLabel)}</strong>.</p>
        <form method="POST" action="/api/public/unsubscribe">
-         <input type="hidden" name="token" value="${token}" />
-         <input type="hidden" name="type" value="${type}" />
+         <input type="hidden" name="token" value="${escapeHtml(token)}" />
+         <input type="hidden" name="type" value="${escapeHtml(type)}" />
          <button type="submit" style="background:#2C3E2D;color:#fff;border:none;padding:12px 28px;border-radius:999px;font-size:15px;font-weight:600;cursor:pointer;margin-top:16px;">
            Unsubscribe
          </button>
@@ -59,6 +67,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const ip = getClientIP(request);
+  const rl = await checkRateLimit(`unsub:${ip}`, RATE_LIMITS.public);
+  if (rl.limited) {
+    return new Response("Too many requests", { status: 429 });
+  }
+
   const formData = await request.formData();
   const token = formData.get("token") as string;
   const type = formData.get("type") as string || "all";

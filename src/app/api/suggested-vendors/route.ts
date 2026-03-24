@@ -62,7 +62,7 @@ export async function GET(request: Request) {
     }));
 
   if (vendorAccountIds.length > 0) {
-    supabase.from("vendor_analytics").insert(vendorAccountIds).then(() => {});
+    supabase.from("vendor_analytics").insert(vendorAccountIds).then(({ error }) => { if (error) console.error("[ANALYTICS]", error.message); });
   }
 
   return NextResponse.json(sorted, {

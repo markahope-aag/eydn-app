@@ -20,5 +20,5 @@ export async function logCronExecution(params: {
       details: (params.details ?? null) as import("@/lib/supabase/types").Json,
       error_message: params.errorMessage || null,
     })
-    .then(() => {});
+    .then(({ error }) => { if (error) console.error("[CRON-LOG]", error.message); });
 }

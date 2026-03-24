@@ -7,21 +7,11 @@ export async function GET() {
   if ("error" in result) return result.error;
   const { wedding, supabase } = result;
 
-  // Get all assignments for this wedding's tables
-  const { data: tables } = await supabase
-    .from("seating_tables")
-    .select("id")
-    .eq("wedding_id", wedding.id);
-
-  if (!tables || tables.length === 0) {
-    return NextResponse.json([]);
-  }
-
-  const tableIds = tables.map((t: { id: string }) => t.id);
+  // Get all assignments for this wedding's tables (single join query)
   const { data, error } = await supabase
     .from("seat_assignments")
-    .select()
-    .in("seating_table_id", tableIds);
+    .select("*, seating_tables!inner(wedding_id)")
+    .eq("seating_tables.wedding_id", wedding.id);
 
   if (error) {
     console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });

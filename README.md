@@ -30,7 +30,7 @@
 
 - **Framework**: Next.js 16.2.0 with App Router
 - **Frontend**: React 19.2.4, TypeScript 5, Tailwind CSS 4
-- **Authentication**: Clerk 7.0.5 with middleware protection
+- **Authentication**: Clerk 7.0.5 with Next.js 16 proxy pattern
 - **Database**: Supabase 2.99.2 (PostgreSQL) with Row Level Security
 - **AI**: Anthropic Claude SDK 0.80.0 for wedding planning assistance
 - **Payments**: Stripe 20.4.1 with webhook integration
@@ -172,10 +172,13 @@ docs/                   # Product and technical documentation
 
 ## 🧪 Testing
 
+The project has comprehensive test coverage with 388 tests across 35 test files.
+
 Run the test suite:
 ```bash
-npm run test        # Run once
+npm run test        # Run once (388 tests)
 npm run test:watch  # Watch mode
+npm run security-check # Run security audit + TypeScript + ESLint
 ```
 
 ## 📚 Documentation

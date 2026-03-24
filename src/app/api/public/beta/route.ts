@@ -8,7 +8,13 @@ const BETA_CODE = "BETA50";
 const WAITLIST_CODE = "WAITLIST20";
 
 /** GET: Check beta availability */
-export async function GET() {
+export async function GET(request: Request) {
+  const ip = getClientIP(request);
+  const rl = await checkRateLimit(`beta-get:${ip}`, RATE_LIMITS.public);
+  if (rl.limited) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+  }
+
   const supabase = createSupabaseAdmin();
 
   const { data: betaCode } = await supabase

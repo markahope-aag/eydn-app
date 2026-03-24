@@ -59,7 +59,8 @@ export async function POST(request: Request) {
     });
 
   if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    console.error("[PHOTO-UPLOAD]", uploadError.message);
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 
   const { data: urlData } = supabase.storage
@@ -79,7 +80,8 @@ export async function POST(request: Request) {
     });
 
   if (photoError) {
-    return NextResponse.json({ error: photoError.message }, { status: 500 });
+    console.error("[PHOTO-UPLOAD]", photoError.message);
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true }, { status: 201 });

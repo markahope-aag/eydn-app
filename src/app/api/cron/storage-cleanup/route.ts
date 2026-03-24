@@ -96,7 +96,7 @@ export async function POST(request: Request) {
             errors.push(`Failed to delete ${filePath}: ${delError.message}`);
           } else {
             orphansDeleted++;
-            console.log(`[STORAGE-CLEANUP] Deleted orphan: ${filePath}`);
+            console.info(`[STORAGE-CLEANUP] Deleted orphan: ${filePath}`);
           }
         }
       }

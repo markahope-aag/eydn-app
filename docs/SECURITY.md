@@ -26,7 +26,7 @@ eydn implements defense-in-depth security architecture with multiple layers of p
 
 #### Authentication Flow
 ```
-User Request → Clerk Middleware → Session Validation → API Authorization
+User Request → Next.js Proxy → Clerk Authentication → Rate Limiting → API Authorization
 ```
 
 ### Role-Based Access Control (RBAC)

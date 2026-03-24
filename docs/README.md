@@ -72,12 +72,12 @@ Welcome to the comprehensive documentation for eydn, the AI-powered wedding plan
 ### Recent Updates (March 2026)
 - ✅ **Complete documentation overhaul** - Updated all docs to reflect current eydn platform
 - ✅ **Technical stack updates** - Next.js 16.2.0, React 19.2.4, Tailwind CSS 4
-- ✅ **New feature documentation** - Collaboration system, mood boards, premium enforcement
-- ✅ **API documentation refresh** - Updated with current endpoints and authentication flow
-- ✅ **Architecture updates** - 36-table database schema, role-based access control
+- ✅ **Authentication architecture** - Updated to reflect Next.js 16 proxy pattern
+- ✅ **Monitoring documentation** - Comprehensive monitoring stack (Sentry, Vercel Analytics, Ahrefs, GTM+GA4, UptimeRobot)
+- ✅ **Test coverage documentation** - 388 tests across 35 test files, all passing
+- ✅ **Font corrections** - Updated from Nunito to DM Sans (actual implementation)
 - ✅ **Security documentation** - Premium enforcement, rate limiting, audit trails
 - ✅ **Development guide updates** - Current setup instructions and deployment processes
-- ✅ **Business model updates** - Subscription enforcement and vendor marketplace
 
 ### Planned Updates
 - **User Guides** - Step-by-step user guides for key features

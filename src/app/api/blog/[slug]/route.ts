@@ -14,6 +14,7 @@ export async function GET(
     .from("blog_posts")
     .select("*")
     .eq("slug", slug)
+    .eq("status", "published")
     .single();
 
   if (error || !data) {

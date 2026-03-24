@@ -33,7 +33,7 @@ eydn follows a modern, serverless architecture built on Next.js 16 with a focus 
 - **React 19.2.4**: Latest React with concurrent features and improved hydration
 - **TypeScript 5**: Type-safe development with strict configuration
 - **Tailwind CSS 4**: Utility-first CSS framework with modern features
-- **Nunito Font**: Custom Google Font for brand consistency
+- **DM Sans Font**: Custom Google Font for brand consistency
 - **Sonner 2.0.7**: Toast notification system with rich colors
 
 ### Backend Layer
@@ -410,11 +410,11 @@ create table public.comments (
 ### Authentication Flow
 
 ```
-User Request → Clerk Middleware → API Route → getWeddingForUser() → Database
+User Request → Next.js Proxy → Clerk Authentication → API Route → getWeddingForUser() → Database
 ```
 
-1. **Clerk Authentication**: All requests authenticated via Clerk session tokens
-2. **Middleware Protection**: `clerkMiddleware()` in `src/proxy.ts` protects routes
+1. **Next.js 16 Proxy**: Modern proxy pattern in `src/proxy.ts` handles edge-level authentication
+2. **Clerk Authentication**: All requests authenticated via Clerk session tokens with rate limiting
 3. **API Authorization**: `getWeddingForUser()` resolves user access with role-based permissions
 4. **Row Level Security**: Database-level protection via Supabase RLS policies
 
@@ -628,16 +628,17 @@ supabase db push --include-all
 ## Monitoring and Observability
 
 ### Application Monitoring
-- **Vercel Analytics**: Performance and usage metrics
-- **Error Tracking**: Built-in error boundaries and logging
-- **API Monitoring**: Response times and error rates
-- **User Analytics**: Feature usage and engagement tracking
+- **Sentry**: Error tracking, performance monitoring, session replay, release tracking
+- **Vercel Analytics**: Core Web Vitals (LCP, CLS, INP) and performance metrics
+- **Ahrefs Analytics**: SEO analytics and search performance
+- **Google Tag Manager + GA4**: User behavior, conversions, and events
+- **UptimeRobot**: Availability and uptime monitoring
 
 ### Database Monitoring
-- **Supabase Dashboard**: Query performance and usage
+- **Supabase Dashboard**: Query performance, database metrics, connection pool monitoring
 - **Connection Monitoring**: Active connections and pool usage
 - **Storage Monitoring**: File storage usage and limits
-- **Backup Verification**: Automated backup health checks
+- **Backup Verification**: Automated backup health checks via cron jobs
 
 ### Business Metrics
 - **Conversion Tracking**: Trial to paid conversion rates
