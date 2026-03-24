@@ -190,98 +190,60 @@ function LandingNav() {
           </nav>
         </div>
 
-        {/* Sign In / Dashboard (right) */}
+        {/* Sign In + CTA (right, desktop) — no Clerk dependency, always visible */}
         <div
           style={{ display: "flex", alignItems: "center", gap: 16 }}
           className="max-md:!hidden"
         >
-          <Show when="signed-out">
-            <Link
-              href="/sign-in"
-              style={{
-                fontFamily: "var(--font-body)",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#2A2018",
-                textDecoration: "none",
-                transition: "opacity 0.2s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              style={{
-                fontFamily: "var(--font-body)",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#FAF6F1",
-                background: "#2C3E2D",
-                borderRadius: 100,
-                padding: "8px 20px",
-                textDecoration: "none",
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#3A5240"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#2C3E2D"; }}
-            >
-              Start Free
-            </Link>
-          </Show>
-          <Show when="signed-in">
-            <Link
-              href="/dashboard"
-              style={{
-                fontFamily: "var(--font-body)",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#FAF6F1",
-                background: "#2C3E2D",
-                borderRadius: 100,
-                padding: "8px 20px",
-                textDecoration: "none",
-              }}
-            >
-              Go to Dashboard
-            </Link>
-          </Show>
+          <Link
+            href="/sign-in"
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#2A2018",
+              textDecoration: "none",
+              transition: "opacity 0.2s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/sign-up"
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#FAF6F1",
+              background: "#2C3E2D",
+              borderRadius: 100,
+              padding: "8px 20px",
+              textDecoration: "none",
+              transition: "background 0.2s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#3A5240"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#2C3E2D"; }}
+          >
+            Start Free
+          </Link>
         </div>
 
-        {/* Mobile: always show Sign In link (hamburger is separate) */}
+        {/* Mobile: Sign In always visible next to hamburger */}
         <div className="md:!hidden flex items-center gap-3">
-          <Show when="signed-in">
-            <Link
-              href="/dashboard"
-              style={{
-                fontFamily: "var(--font-body)",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#FAF6F1",
-                background: "#2C3E2D",
-                borderRadius: 100,
-                padding: "6px 16px",
-                textDecoration: "none",
-              }}
-            >
-              Dashboard
-            </Link>
-          </Show>
-          <Show when="signed-out">
-            <Link
-              href="/sign-in"
-              style={{
-                fontFamily: "var(--font-body)",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#2A2018",
-                textDecoration: "none",
-              }}
-            >
-              Sign In
-            </Link>
-          </Show>
+          <Link
+            href="/sign-in"
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#2A2018",
+              textDecoration: "none",
+            }}
+          >
+            Sign In
+          </Link>
         </div>
 
         {/* Mobile hamburger button */}
