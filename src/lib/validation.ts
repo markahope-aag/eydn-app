@@ -56,7 +56,7 @@ export function isSafeExternalUrl(value: string): boolean {
     const hostname = url.hostname.toLowerCase();
 
     // Block localhost and loopback
-    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") return false;
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1" || hostname === "[::1]") return false;
 
     // Block private/internal IP ranges
     if (hostname.startsWith("10.") || hostname.startsWith("192.168.")) return false;

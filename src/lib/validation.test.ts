@@ -13,6 +13,9 @@ import {
   requireFields,
   safeParseJSON,
   isParseError,
+  escapeHtml,
+  isSafeExternalUrl,
+  validationError,
 } from "./validation";
 
 function mockRequest(body: string) {
@@ -286,5 +289,141 @@ describe("isParseError", () => {
 
   it("returns false for a plain object", () => {
     expect(isParseError({ name: "test" })).toBe(false);
+  });
+});
+
+// ─── escapeHtml ─────────────────────────────────────────────────────────────
+
+describe("escapeHtml", () => {
+  it("escapes ampersands", () => {
+    expect(escapeHtml("Tom & Jerry")).toBe("Tom &amp; Jerry");
+  });
+
+  it("escapes less-than and greater-than", () => {
+    expect(escapeHtml("<script>")).toBe("&lt;script&gt;");
+  });
+
+  it("escapes double quotes", () => {
+    expect(escapeHtml('She said "hello"')).toBe("She said &quot;hello&quot;");
+  });
+
+  it("escapes single quotes", () => {
+    expect(escapeHtml("it's")).toBe("it&#39;s");
+  });
+
+  it("escapes a full XSS payload", () => {
+    const xss = '<img src=x onerror="alert(1)">';
+    const escaped = escapeHtml(xss);
+    expect(escaped).not.toContain("<");
+    expect(escaped).not.toContain(">");
+    expect(escaped).not.toContain('"');
+    expect(escaped).toBe('&lt;img src=x onerror=&quot;alert(1)&quot;&gt;');
+  });
+
+  it("handles script injection with single quotes", () => {
+    expect(escapeHtml("<script>alert('xss')</script>")).toBe(
+      "&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;"
+    );
+  });
+
+  it("returns empty string for empty input", () => {
+    expect(escapeHtml("")).toBe("");
+  });
+
+  it("leaves normal text unchanged", () => {
+    expect(escapeHtml("Hello World 123")).toBe("Hello World 123");
+  });
+
+  it("handles multiple entities in one string", () => {
+    expect(escapeHtml("a & b < c > d")).toBe("a &amp; b &lt; c &gt; d");
+  });
+
+  it("handles strings with only special characters", () => {
+    expect(escapeHtml("<>&\"'")).toBe("&lt;&gt;&amp;&quot;&#39;");
+  });
+});
+
+// ─── isSafeExternalUrl ──────────────────────────────────────────────────────
+
+describe("isSafeExternalUrl", () => {
+  it("accepts valid HTTPS URLs", () => {
+    expect(isSafeExternalUrl("https://example.com")).toBe(true);
+    expect(isSafeExternalUrl("https://cdn.example.com/image.png")).toBe(true);
+    expect(isSafeExternalUrl("https://subdomain.example.co.uk/path?q=1")).toBe(true);
+  });
+
+  it("rejects HTTP URLs", () => {
+    expect(isSafeExternalUrl("http://example.com")).toBe(false);
+  });
+
+  it("rejects localhost", () => {
+    expect(isSafeExternalUrl("https://localhost")).toBe(false);
+    expect(isSafeExternalUrl("https://localhost:3000")).toBe(false);
+  });
+
+  it("rejects 127.0.0.1 (loopback)", () => {
+    expect(isSafeExternalUrl("https://127.0.0.1")).toBe(false);
+  });
+
+  it("rejects ::1 (IPv6 loopback)", () => {
+    expect(isSafeExternalUrl("https://[::1]")).toBe(false);
+  });
+
+  it("rejects 10.x private IPs", () => {
+    expect(isSafeExternalUrl("https://10.0.0.1")).toBe(false);
+    expect(isSafeExternalUrl("https://10.255.255.255")).toBe(false);
+  });
+
+  it("rejects 192.168.x private IPs", () => {
+    expect(isSafeExternalUrl("https://192.168.0.1")).toBe(false);
+    expect(isSafeExternalUrl("https://192.168.1.100")).toBe(false);
+  });
+
+  it("rejects 172.16-31.x private IPs", () => {
+    expect(isSafeExternalUrl("https://172.16.0.1")).toBe(false);
+    expect(isSafeExternalUrl("https://172.20.10.5")).toBe(false);
+    expect(isSafeExternalUrl("https://172.31.255.255")).toBe(false);
+  });
+
+  it("allows 172.15.x (not in private range)", () => {
+    expect(isSafeExternalUrl("https://172.15.0.1")).toBe(true);
+  });
+
+  it("allows 172.32.x (not in private range)", () => {
+    expect(isSafeExternalUrl("https://172.32.0.1")).toBe(true);
+  });
+
+  it("rejects 169.254.x (link-local / cloud metadata)", () => {
+    expect(isSafeExternalUrl("https://169.254.169.254")).toBe(false);
+    expect(isSafeExternalUrl("https://169.254.0.1")).toBe(false);
+  });
+
+  it("rejects 0.0.0.0", () => {
+    expect(isSafeExternalUrl("https://0.0.0.0")).toBe(false);
+  });
+
+  it("rejects metadata.google.internal", () => {
+    expect(isSafeExternalUrl("https://metadata.google.internal")).toBe(false);
+  });
+
+  it("rejects invalid URLs", () => {
+    expect(isSafeExternalUrl("not-a-url")).toBe(false);
+    expect(isSafeExternalUrl("")).toBe(false);
+  });
+
+  it("rejects ftp protocol", () => {
+    expect(isSafeExternalUrl("ftp://example.com")).toBe(false);
+  });
+
+  it("rejects javascript: protocol", () => {
+    expect(isSafeExternalUrl("javascript:alert(1)")).toBe(false);
+  });
+});
+
+// ─── validationError ────────────────────────────────────────────────────────
+
+describe("validationError", () => {
+  it("returns object with error message", () => {
+    expect(validationError("bad input")).toEqual({ error: "bad input" });
   });
 });
