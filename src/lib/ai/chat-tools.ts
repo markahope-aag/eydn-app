@@ -7,6 +7,26 @@ import type { Database } from "@/lib/supabase/types";
  * Each tool maps to a real API operation on the user's wedding data.
  */
 
+// ─── Search rate limiting (10 searches/user/day) ────────────────────────────
+const searchCounts = new Map<string, { count: number; resetAt: number }>();
+const SEARCH_DAILY_LIMIT = 10;
+
+function canSearch(userId: string): boolean {
+  const now = Date.now();
+  const entry = searchCounts.get(userId);
+  if (!entry || now > entry.resetAt) {
+    searchCounts.set(userId, { count: 1, resetAt: now + 24 * 60 * 60 * 1000 });
+    return true;
+  }
+  if (entry.count >= SEARCH_DAILY_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
+// ─── Search result cache (24h) ──────────────────────────────────────────────
+const searchCache = new Map<string, { results: string; expiresAt: number }>();
+const CACHE_TTL = 24 * 60 * 60 * 1000;
+
 export const EYDN_TOOLS: Tool[] = [
   {
     name: "add_guest",
@@ -126,6 +146,17 @@ export const EYDN_TOOLS: Tool[] = [
       required: ["info"],
     },
   },
+  {
+    name: "web_search",
+    description: "Search the web for wedding-related information — vendors, venues, pricing, inspiration, planning tips. Use this when the user asks you to find, look up, or research something that requires current/local information you don't have.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        query: { type: "string", description: "Search query — be specific, include location if relevant (e.g., 'florists Milwaukee WI under $3000')" },
+      },
+      required: ["query"],
+    },
+  },
 ];
 
 /**
@@ -135,7 +166,8 @@ export async function executeTool(
   toolName: string,
   input: Record<string, unknown>,
   supabase: SupabaseClient<Database>,
-  weddingId: string
+  weddingId: string,
+  userId?: string
 ): Promise<string> {
   try {
     switch (toolName) {
@@ -250,6 +282,53 @@ export async function executeTool(
         await supabase.from("weddings").update({ key_decisions: updated, updated_at: new Date().toISOString() })
           .eq("id", weddingId);
         return `Got it — I'll remember that: "${input.info}"`;
+      }
+
+      case "web_search": {
+        if (!process.env.TAVILY_API_KEY) {
+          return "Web search is not configured. Please check your Tavily API key.";
+        }
+
+        // Rate limit
+        if (userId && !canSearch(userId)) {
+          return "You've reached your daily search limit (10 searches per day). Try again tomorrow!";
+        }
+
+        const query = input.query as string;
+
+        // Check cache
+        const cacheKey = query.toLowerCase().trim();
+        const cached = searchCache.get(cacheKey);
+        if (cached && cached.expiresAt > Date.now()) {
+          return cached.results;
+        }
+
+        // Execute search
+        const { tavily } = await import("@tavily/core");
+        const client = tavily({ apiKey: process.env.TAVILY_API_KEY });
+
+        const searchResult = await client.search(query, {
+          searchDepth: "basic",
+          maxResults: 5,
+        });
+
+        if (!searchResult.results || searchResult.results.length === 0) {
+          return `No results found for "${query}". Try a more specific search.`;
+        }
+
+        // Format results
+        const formatted = searchResult.results
+          .map((r: { title: string; url: string; content: string }, i: number) =>
+            `${i + 1}. **${r.title}**\n   ${r.content.slice(0, 200)}${r.content.length > 200 ? "..." : ""}\n   ${r.url}`
+          )
+          .join("\n\n");
+
+        const resultText = `Search results for "${query}":\n\n${formatted}`;
+
+        // Cache results
+        searchCache.set(cacheKey, { results: resultText, expiresAt: Date.now() + CACHE_TTL });
+
+        return resultText;
       }
 
       default:

@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
-  const { wedding: weddingData, supabase } = result;
+  const { wedding: weddingData, supabase, userId } = result;
 
   const wedding = weddingData as Wedding;
   const parsed = await safeParseJSON(request);
@@ -313,7 +313,8 @@ export async function POST(request: Request) {
             block.name,
             block.input as Record<string, unknown>,
             supabase,
-            wedding.id
+            wedding.id,
+            userId
           );
           actionsTaken.push(result);
 
