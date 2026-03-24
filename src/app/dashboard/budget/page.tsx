@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
+import { NoWeddingState } from "@/components/NoWeddingState";
 import { Tooltip } from "@/components/Tooltip";
 import { BUDGET_CATEGORIES, BUDGET_TEMPLATE } from "@/lib/budget/budget-template";
 
@@ -28,6 +29,7 @@ type Vendor = {
 
 export default function BudgetPage() {
   const [budget, setBudget] = useState(0);
+  const [noWedding, setNoWedding] = useState(false);
   const [weddingId, setWeddingId] = useState<string | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -39,8 +41,14 @@ export default function BudgetPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/expenses").then((r) => (r.ok ? r.json() : [])),
-      fetch("/api/weddings").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/expenses").then((r) => {
+        if (r.status === 404) { setNoWedding(true); return []; }
+        return r.ok ? r.json() : [];
+      }),
+      fetch("/api/weddings").then((r) => {
+        if (r.status === 404) { setNoWedding(true); return null; }
+        return r.ok ? r.json() : null;
+      }),
       fetch("/api/vendors").then((r) => (r.ok ? r.json() : [])),
     ])
       .then(async ([expData, weddingData, vendorData]) => {
@@ -259,6 +267,8 @@ export default function BudgetPage() {
   if (loading) {
     return <SkeletonList count={4} />;
   }
+
+  if (noWedding) return <NoWeddingState feature="Budget" />;
 
   return (
     <div>

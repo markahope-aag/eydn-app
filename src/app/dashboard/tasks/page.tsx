@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
+import { NoWeddingState } from "@/components/NoWeddingState";
 import { EmptyState } from "@/components/EmptyState";
 import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { TaskFilters } from "./TaskFilters";
@@ -49,6 +50,7 @@ const ADD_CATEGORIES = [
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [noWedding, setNoWedding] = useState(false);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Other");
   const [dueDate, setDueDate] = useState("");
@@ -65,7 +67,10 @@ export default function TasksPage() {
 
   useEffect(() => {
     fetch("/api/tasks")
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((res) => {
+        if (res.status === 404) { setNoWedding(true); return []; }
+        return res.ok ? res.json() : Promise.reject();
+      })
       .then(setTasks)
       .catch(() => toast.error("Failed to load tasks"))
       .finally(() => setLoading(false));
@@ -335,6 +340,8 @@ export default function TasksPage() {
   if (loading) {
     return <SkeletonList count={6} />;
   }
+
+  if (noWedding) return <NoWeddingState feature="Tasks" />;
 
   const subTasks = selectedTask
     ? tasks.filter((t) => t.parent_task_id === selectedTask.id)

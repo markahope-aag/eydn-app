@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
+import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { usePremium } from "@/components/PremiumGate";
@@ -55,6 +56,7 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default function GuestsPage() {
   const [guests, setGuests] = useState<Guest[]>([]);
+  const [noWedding, setNoWedding] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [newRole, setNewRole] = useState("friend");
@@ -77,7 +79,10 @@ export default function GuestsPage() {
 
   useEffect(() => {
     fetch("/api/guests")
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((res) => {
+        if (res.status === 404) { setNoWedding(true); return []; }
+        return res.ok ? res.json() : Promise.reject();
+      })
       .then(setGuests)
       .catch(() => toast.error("Failed to load guests"))
       .finally(() => setLoading(false));
@@ -513,6 +518,8 @@ export default function GuestsPage() {
   if (loading) {
     return <SkeletonList count={6} />;
   }
+
+  if (noWedding) return <NoWeddingState feature="Guest List" />;
 
   return (
     <div>

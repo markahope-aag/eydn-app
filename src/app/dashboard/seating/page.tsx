@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
+import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Tooltip } from "@/components/Tooltip";
 
@@ -33,6 +34,7 @@ type Tab = "reception" | "ceremony";
 export default function SeatingPage() {
   const [tab, setTab] = useState<Tab>("reception");
   const [tables, setTables] = useState<Table[]>([]);
+  const [noWedding, setNoWedding] = useState(false);
   const [guests, setGuests] = useState<Guest[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [partyMembers, setPartyMembers] = useState<WeddingPartyMember[]>([]);
@@ -46,7 +48,10 @@ export default function SeatingPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/seating/tables").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/seating/tables").then((r) => {
+        if (r.status === 404) { setNoWedding(true); return []; }
+        return r.ok ? r.json() : [];
+      }),
       fetch("/api/guests").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/seating/assignments").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/wedding-party").then((r) => (r.ok ? r.json() : [])),
@@ -240,6 +245,8 @@ export default function SeatingPage() {
   const availableParty = partyMembers.filter((m) => !assignedPartyNames.has(m.name));
 
   if (loading) return <SkeletonList count={4} />;
+
+  if (noWedding) return <NoWeddingState feature="Seating Chart" />;
 
   return (
     <div>

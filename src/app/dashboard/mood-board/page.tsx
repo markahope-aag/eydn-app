@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { SkeletonGrid } from "@/components/Skeleton";
+import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { trackMoodBoardAdd } from "@/lib/analytics";
 
@@ -48,6 +49,7 @@ const CATEGORIES = [
 export default function MoodBoardPage() {
   const [items, setItems] = useState<MoodItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [noWedding, setNoWedding] = useState(false);
   const [filterCategory, setFilterCategory] = useState("All");
   const [showAdd, setShowAdd] = useState(false);
   const [addMode, setAddMode] = useState<"upload" | "url">("upload");
@@ -62,7 +64,10 @@ export default function MoodBoardPage() {
 
   useEffect(() => {
     fetch("/api/mood-board")
-      .then((r) => (r.ok ? r.json() : []))
+      .then((r) => {
+        if (r.status === 404) { setNoWedding(true); return []; }
+        return r.ok ? r.json() : [];
+      })
       .then(setItems)
       .catch(() => toast.error("Failed to load vision board"))
       .finally(() => setLoading(false));
@@ -174,6 +179,8 @@ export default function MoodBoardPage() {
   const filtered = filterCategory === "All" ? items : items.filter((i) => i.category === filterCategory);
 
   if (loading) return <SkeletonGrid count={6} cols={3} />;
+
+  if (noWedding) return <NoWeddingState feature="Vision Board" />;
 
   return (
     <div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
+import { NoWeddingState } from "@/components/NoWeddingState";
 import { PremiumButton } from "@/components/PremiumGate";
 import { exportWeddingBinder } from "@/lib/export-binder";
 import { Tooltip } from "@/components/Tooltip";
@@ -125,6 +126,7 @@ function generateTimelineFromCeremony(ceremonyTime: string): TimelineItem[] {
 export default function DayOfPage() {
   const [plan, setPlan] = useState<DayOfPlan | null>(null);
   const [loading, setLoading] = useState(true);
+  const [noWedding, setNoWedding] = useState(false);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<Tab>("timeline");
   const [timelineFilter, setTimelineFilter] = useState("All");
@@ -136,7 +138,10 @@ export default function DayOfPage() {
 
   useEffect(() => {
     fetch("/api/day-of")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        if (r.status === 404) { setNoWedding(true); return null; }
+        return r.ok ? r.json() : null;
+      })
       .then((data) => {
         if (!data?.content) return;
         const content = data.content as DayOfPlan;
@@ -472,6 +477,8 @@ export default function DayOfPage() {
   if (loading) {
     return <SkeletonList count={5} />;
   }
+
+  if (noWedding) return <NoWeddingState feature="Day-of Planner" />;
 
   if (!plan) {
     return (

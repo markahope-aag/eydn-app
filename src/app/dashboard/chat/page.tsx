@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Paywall } from "@/components/Paywall";
 import { trackChatMessage } from "@/lib/analytics";
 import { SkeletonList } from "@/components/Skeleton";
+import { NoWeddingState } from "@/components/NoWeddingState";
 
 type Message = {
   id: string;
@@ -14,6 +15,7 @@ type Message = {
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [noWedding, setNoWedding] = useState(false);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -21,7 +23,10 @@ export default function ChatPage() {
 
   useEffect(() => {
     fetch("/api/chat")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((r) => {
+        if (r.status === 404) { setNoWedding(true); return []; }
+        return r.ok ? r.json() : Promise.reject();
+      })
       .then(setMessages)
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -104,6 +109,8 @@ export default function ChatPage() {
   if (loading) {
     return <SkeletonList count={3} />;
   }
+
+  if (noWedding) return <NoWeddingState feature="AI Chat" />;
 
   return (
     <Paywall feature="Ask Eydn">

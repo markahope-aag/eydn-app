@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
+import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { Confetti, triggerConfetti } from "@/components/Confetti";
@@ -37,6 +38,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function VendorsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [noWedding, setNoWedding] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [emailCategory, setEmailCategory] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -49,7 +51,10 @@ export default function VendorsPage() {
 
   useEffect(() => {
     fetch("/api/vendors")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((r) => {
+        if (r.status === 404) { setNoWedding(true); return []; }
+        return r.ok ? r.json() : Promise.reject();
+      })
       .then(setVendors)
       .catch(() => toast.error("Failed to load vendors"))
       .finally(() => setLoading(false));
@@ -166,6 +171,8 @@ export default function VendorsPage() {
   if (loading) {
     return <SkeletonList count={5} />;
   }
+
+  if (noWedding) return <NoWeddingState feature="Vendors" />;
 
   return (
     <div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
+import { NoWeddingState } from "@/components/NoWeddingState";
 import { Tooltip } from "@/components/Tooltip";
 import { trackCollaboratorInvited, trackExport } from "@/lib/analytics";
 
@@ -69,6 +70,7 @@ export default function SettingsPage() {
   const [emailReminders, setEmailReminders] = useState(true);
   const [reminderDays, setReminderDays] = useState(7);
   const [loading, setLoading] = useState(true);
+  const [noWedding, setNoWedding] = useState(false);
   const [weddingId, setWeddingId] = useState<string | null>(null);
   const [keyDecisions, setKeyDecisions] = useState("");
 
@@ -102,7 +104,10 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetch("/api/weddings")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((r) => {
+        if (r.status === 404) { setNoWedding(true); return Promise.reject(); }
+        return r.ok ? r.json() : Promise.reject();
+      })
       .then((wedding) => {
         setWeddingId(wedding.id);
         setKeyDecisions(wedding.key_decisions || "");
@@ -249,6 +254,8 @@ export default function SettingsPage() {
   if (loading) {
     return <SkeletonList count={3} />;
   }
+
+  if (noWedding) return <NoWeddingState feature="Settings" />;
 
   return (
     <div className="max-w-lg">

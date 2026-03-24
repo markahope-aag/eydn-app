@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
+import { NoWeddingState } from "@/components/NoWeddingState";
 import { Tooltip } from "@/components/Tooltip";
 import { trackWebsitePublished } from "@/lib/analytics";
 
@@ -24,6 +25,7 @@ type Photo = { id: string; file_url: string; caption: string | null; uploader_na
 export default function WebsitePage() {
   const [tab, setTab] = useState<Tab>("setup");
   const [loading, setLoading] = useState(true);
+  const [noWedding, setNoWedding] = useState(false);
 
   // Setup state
   const [slug, setSlug] = useState("");
@@ -78,6 +80,7 @@ export default function WebsitePage() {
   async function loadWebsite() {
     try {
       const res = await fetch("/api/wedding-website");
+      if (res.status === 404) { setNoWedding(true); return; }
       if (!res.ok) throw new Error();
       const data = await res.json();
       setSlug(data.slug || "");
@@ -291,6 +294,8 @@ export default function WebsitePage() {
   if (loading) {
     return <SkeletonList count={4} />;
   }
+
+  if (noWedding) return <NoWeddingState feature="Wedding Website" />;
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "setup", label: "Setup" },

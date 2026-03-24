@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
+import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -33,6 +34,7 @@ const ROLES = [
 export default function WeddingPartyPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [noWedding, setNoWedding] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [showAddDetails, setShowAddDetails] = useState(false);
   const [name, setName] = useState("");
@@ -49,7 +51,10 @@ export default function WeddingPartyPage() {
 
   useEffect(() => {
     fetch("/api/wedding-party")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((r) => {
+        if (r.status === 404) { setNoWedding(true); return []; }
+        return r.ok ? r.json() : Promise.reject();
+      })
       .then(setMembers)
       .catch(() => toast.error("Failed to load wedding party"))
       .finally(() => setLoading(false));
@@ -166,6 +171,8 @@ export default function WeddingPartyPage() {
   if (loading) {
     return <SkeletonList count={4} />;
   }
+
+  if (noWedding) return <NoWeddingState feature="Wedding Party" />;
 
   return (
     <div>
