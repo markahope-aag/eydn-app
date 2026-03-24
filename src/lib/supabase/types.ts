@@ -356,6 +356,73 @@ export type Database = {
           },
         ]
       }
+      promo_codes: {
+        Row: {
+          id: string;
+          code: string;
+          description: string | null;
+          discount_type: "percentage" | "fixed";
+          discount_value: number;
+          max_uses: number | null;
+          current_uses: number;
+          is_active: boolean;
+          expires_at: string | null;
+          created_at: string;
+          created_by: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          description?: string | null;
+          discount_type: "percentage" | "fixed";
+          discount_value: number;
+          max_uses?: number | null;
+          is_active?: boolean;
+          expires_at?: string | null;
+          created_by: string;
+        };
+        Update: {
+          is_active?: boolean;
+          description?: string | null;
+          max_uses?: number | null;
+          expires_at?: string | null;
+          current_uses?: number;
+        };
+        Relationships: [];
+      };
+      promo_code_redemptions: {
+        Row: {
+          id: string;
+          promo_code_id: string;
+          user_id: string;
+          purchase_id: string | null;
+          original_amount: number;
+          discount_amount: number;
+          final_amount: number;
+          redeemed_at: string;
+        };
+        Insert: {
+          id?: string;
+          promo_code_id: string;
+          user_id: string;
+          purchase_id?: string | null;
+          original_amount: number;
+          discount_amount: number;
+          final_amount: number;
+        };
+        Update: {
+          purchase_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "promo_code_redemptions_promo_code_id_fkey";
+            columns: ["promo_code_id"];
+            isOneToOne: false;
+            referencedRelation: "promo_codes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       email_preferences: {
         Row: {
           deadline_reminders: boolean

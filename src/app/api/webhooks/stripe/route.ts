@@ -34,14 +34,39 @@ export async function POST(request: Request) {
 
       // Handle subscriber one-time purchase
       if (meta?.type === "subscriber_purchase" && meta?.user_id) {
-        await supabase.from("subscriber_purchases").insert({
+        const { data: purchase } = await supabase.from("subscriber_purchases").insert({
           user_id: meta.user_id,
           wedding_id: meta.wedding_id || null,
           amount: session.amount_total ? session.amount_total / 100 : 79,
           stripe_payment_intent_id: session.payment_intent as string,
           stripe_session_id: session.id,
           status: "active",
-        });
+        }).select("id").single();
+
+        // Record promo code redemption if applicable
+        if (meta.promo_code_id && purchase) {
+          await supabase.from("promo_code_redemptions").insert({
+            promo_code_id: meta.promo_code_id,
+            user_id: meta.user_id,
+            purchase_id: (purchase as { id: string }).id,
+            original_amount: 79,
+            discount_amount: Number(meta.discount_amount) || 0,
+            final_amount: session.amount_total ? session.amount_total / 100 : 79,
+          });
+
+          // Increment promo code usage
+          const { data: currentCode } = await supabase
+            .from("promo_codes")
+            .select("current_uses")
+            .eq("id", meta.promo_code_id)
+            .single();
+          if (currentCode) {
+            await supabase
+              .from("promo_codes")
+              .update({ current_uses: (currentCode as { current_uses: number }).current_uses + 1 })
+              .eq("id", meta.promo_code_id);
+          }
+        }
         break;
       }
 
