@@ -40,6 +40,7 @@ const CATEGORIES = [
   "Cake & Desserts",
   "Stationery",
   "Colors & Palette",
+  "Photo Inspo",
   "Favors",
   "Other",
 ];
