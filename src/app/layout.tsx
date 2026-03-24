@@ -14,7 +14,7 @@ const dmSans = DM_Sans({
 
 const SITE_URL = "https://eydn.app";
 const SITE_NAME = "Eydn";
-const DEFAULT_DESCRIPTION = "Plan your perfect wedding with Eydn. AI-powered task timeline, budget tracker, vendor management, guest RSVPs, seating chart, and a beautiful wedding website — all in one place.";
+const DEFAULT_DESCRIPTION = "Plan your wedding with Eydn. AI-powered timeline, budget tracker, vendor management, guest RSVPs, seating chart, and wedding website — all in one place.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

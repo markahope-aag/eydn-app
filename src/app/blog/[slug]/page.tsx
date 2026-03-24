@@ -37,10 +37,11 @@ export async function generateMetadata({
   if (!post) return { title: "Post Not Found" };
 
   return {
-    title: post.seo_title || `${post.title} — The Playbook | eydn`,
+    title: post.title,
     description: post.seo_description || post.excerpt,
     openGraph: {
-      title: post.seo_title || post.title,
+      type: "article",
+      title: post.title,
       description: post.seo_description || post.excerpt,
       ...(post.cover_image && { images: [post.cover_image] }),
     },

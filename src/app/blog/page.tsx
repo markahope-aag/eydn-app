@@ -3,9 +3,12 @@ import Link from "next/link";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "The Playbook — Wedding Planning Tips & Guides | eydn",
+  title: "The Playbook — Wedding Planning Tips & Guides",
   description:
     "Expert wedding planning advice, tips, and guides from the Eydn team. Budgeting, timelines, vendor management, and everything in between.",
+  alternates: {
+    canonical: "/blog",
+  },
 };
 
 const CATEGORIES = [

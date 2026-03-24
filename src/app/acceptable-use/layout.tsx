@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Acceptable Use Policy",
   description:
-    "Acceptable use policy for the Eydn wedding planning platform.",
+    "Our acceptable use policy outlines the rules and guidelines for using the Eydn wedding planning platform, including prohibited activities and content standards.",
   openGraph: {
     title: "Acceptable Use Policy",
     description:
-      "Acceptable use policy for the Eydn wedding planning platform.",
+      "Our acceptable use policy outlines the rules and guidelines for using the Eydn wedding planning platform, including prohibited activities and content standards.",
   },
 };
 

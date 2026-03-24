@@ -19,6 +19,7 @@ export default function PrivacyPage() {
       <Link href="/" className="text-[15px] text-muted hover:text-plum mb-6 block">
         &larr; Back to home
       </Link>
+      <h1 className="text-[28px] font-semibold text-plum mb-6">Privacy Policy</h1>
       <div
         data-name="termly-embed"
         data-id="653e52d3-2b91-46a2-8daf-dc8c8dd39ec3"

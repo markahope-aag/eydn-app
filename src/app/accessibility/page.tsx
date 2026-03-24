@@ -18,6 +18,7 @@ export default function AccessibilityPage() {
       <Link href="/" className="text-[15px] text-muted hover:text-plum mb-6 block">
         &larr; Back to home
       </Link>
+      <h1 className="text-[28px] font-semibold text-plum mb-6">Accessibility Statement</h1>
       <div
         data-name="termly-embed"
         data-id="86ea1168-d4b3-4f80-a73a-633886f8f034"

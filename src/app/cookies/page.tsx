@@ -18,6 +18,7 @@ export default function CookiePolicyPage() {
       <Link href="/" className="text-[15px] text-muted hover:text-plum mb-6 block">
         &larr; Back to home
       </Link>
+      <h1 className="text-[28px] font-semibold text-plum mb-6">Cookie Policy</h1>
       <div
         data-name="termly-embed"
         data-id="2e4f2c37-d593-424f-9d39-4ba3159ce35d"

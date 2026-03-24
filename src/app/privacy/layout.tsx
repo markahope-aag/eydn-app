@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "Eydn's privacy policy. How we collect, use, and protect your wedding planning data.",
+    "Learn how Eydn collects, uses, and protects your personal data. Our privacy policy covers data storage, third-party services, cookies, and your rights as a wedding planning platform user.",
   openGraph: {
     title: "Privacy Policy",
     description:
-      "Eydn's privacy policy. How we collect, use, and protect your wedding planning data.",
+      "Learn how Eydn collects, uses, and protects your personal data. Our privacy policy covers data storage, third-party services, cookies, and your rights as a wedding planning platform user.",
   },
 };
 
