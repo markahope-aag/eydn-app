@@ -445,12 +445,11 @@ function HeroBudgetCard() {
   return (
     <div
       style={{
-        background: "#fff",
+        background: "#2C3E2D",
         borderRadius: 12,
         padding: "18px 20px",
         width: 270,
-        border: "1px solid #E8D5B7",
-        boxShadow: "0 12px 40px rgba(140,110,100,.25)",
+        boxShadow: "0 12px 40px rgba(0,0,0,.3)",
         transform: "rotate(1deg)",
         animation: "float2 6s ease-in-out infinite",
         position: "absolute",
@@ -458,16 +457,16 @@ function HeroBudgetCard() {
         left: "5%",
       }}
     >
-      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#8A7A6A", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Budget Tracker</p>
+      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.5)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Budget Tracker</p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "6px 14px", fontFamily: "var(--font-body)", fontSize: 11 }}>
-        <span style={{ color: "#8A7A6A", fontWeight: 600 }}>Category</span>
-        <span style={{ color: "#8A7A6A", fontWeight: 600 }}>Estimated</span>
-        <span style={{ color: "#8A7A6A", fontWeight: 600 }}>Paid</span>
+        <span style={{ color: "rgba(250,246,241,0.5)", fontWeight: 600 }}>Category</span>
+        <span style={{ color: "rgba(250,246,241,0.5)", fontWeight: 600 }}>Estimated</span>
+        <span style={{ color: "rgba(250,246,241,0.5)", fontWeight: 600 }}>Paid</span>
         {rows.map((r, i) => (
           <div key={i} style={{ display: "contents" }}>
-            <span style={{ fontSize: 13, color: "#2A2018" }}>{r.cat}</span>
-            <span style={{ fontSize: 13, color: "#2A2018" }}>{r.est}</span>
-            <span style={{ fontSize: 13, color: "#2C3E2D", fontWeight: 600 }}>{r.paid}</span>
+            <span style={{ fontSize: 13, color: "#FAF6F1" }}>{r.cat}</span>
+            <span style={{ fontSize: 13, color: "rgba(250,246,241,0.7)" }}>{r.est}</span>
+            <span style={{ fontSize: 13, color: "#C9A84C", fontWeight: 600 }}>{r.paid}</span>
           </div>
         ))}
       </div>
