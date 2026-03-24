@@ -11,6 +11,9 @@ env:
   NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: placeholder
   CLERK_SECRET_KEY: placeholder
+  SENTRY_ORG: placeholder
+  SENTRY_PROJECT: placeholder
+  NEXT_PUBLIC_SENTRY_DSN: placeholder
 
 jobs:
   build-lint-typecheck:
