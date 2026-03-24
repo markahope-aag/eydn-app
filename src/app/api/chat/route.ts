@@ -67,14 +67,16 @@ export async function POST(request: Request) {
     .limit(50);
 
   // Get wedding context for system prompt
-  const [{ count: taskTotal }, { count: taskCompleted }, { count: vendorCount }, { count: guestCount }, { data: expenses }, { data: guideData }] =
+  const [{ count: taskTotal }, { count: taskCompleted }, { count: vendorCount }, { count: guestCount }, { data: expenses }, { data: guideData }, { data: upcomingTasks }, { data: vendorList }] =
     await Promise.all([
-      supabase.from("tasks").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id),
-      supabase.from("tasks").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).eq("completed", true),
-      supabase.from("vendors").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id),
-      supabase.from("guests").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id),
+      supabase.from("tasks").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).is("deleted_at", null),
+      supabase.from("tasks").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).eq("completed", true).is("deleted_at", null),
+      supabase.from("vendors").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).is("deleted_at", null),
+      supabase.from("guests").select("*", { count: "exact", head: true }).eq("wedding_id", wedding.id).is("deleted_at", null),
       supabase.from("expenses").select("amount_paid").eq("wedding_id", wedding.id),
       supabase.from("guide_responses").select("guide_slug, responses, completed").eq("wedding_id", wedding.id).eq("completed", true),
+      supabase.from("tasks").select("title, due_date, completed, category").eq("wedding_id", wedding.id).is("deleted_at", null).eq("completed", false).order("due_date", { ascending: true }).limit(15),
+      supabase.from("vendors").select("name, category, status, poc_name, poc_phone, amount, amount_paid").eq("wedding_id", wedding.id).is("deleted_at", null).limit(20),
     ]);
 
   const budgetSpent = (expenses || []).reduce((sum: number, e: { amount_paid: number }) => sum + (e.amount_paid || 0), 0);
@@ -94,6 +96,24 @@ export async function POST(request: Request) {
     if (lines.length > 0) guidesSummary = lines.join("\n");
   }
 
+  // Build task summary for AI context
+  let tasksSummary: string | undefined;
+  if (upcomingTasks && upcomingTasks.length > 0) {
+    const lines = (upcomingTasks as Array<{ title: string; due_date: string | null; category: string }>)
+      .map((t) => `- ${t.title} (${t.category})${t.due_date ? ` — due ${t.due_date}` : ""}`)
+      .join("\n");
+    tasksSummary = `Upcoming incomplete tasks:\n${lines}`;
+  }
+
+  // Build vendor summary for AI context
+  let vendorsSummary: string | undefined;
+  if (vendorList && vendorList.length > 0) {
+    const lines = (vendorList as Array<{ name: string; category: string; status: string; poc_name: string | null; amount: number | null }>)
+      .map((v) => `- ${v.name} (${v.category}) — ${v.status}${v.poc_name ? `, contact: ${v.poc_name}` : ""}${v.amount ? `, $${v.amount}` : ""}`)
+      .join("\n");
+    vendorsSummary = lines;
+  }
+
   const systemPrompt = buildEdynSystemPrompt({
     wedding,
     taskStats: { total: taskTotal ?? 0, completed: taskCompleted ?? 0 },
@@ -101,6 +121,8 @@ export async function POST(request: Request) {
     guestCount: guestCount ?? 0,
     budgetSpent,
     guidesSummary,
+    tasksSummary,
+    vendorsSummary,
   });
 
   // Build messages for Claude

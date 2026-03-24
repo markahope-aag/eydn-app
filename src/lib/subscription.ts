@@ -36,6 +36,19 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
 
   const supabase = createSupabaseAdmin();
 
+  // Admin users always have access
+  const { data: adminRole } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .limit(1)
+    .single();
+
+  if (adminRole) {
+    return { hasAccess: true, isPaid: true, isTrialing: false, trialDaysLeft: 0, trialExpired: false };
+  }
+
   // Check for active purchase by this user
   const { data: purchase } = await supabase
     .from("subscriber_purchases")
