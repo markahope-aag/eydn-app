@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 
-// Revalidate sitemap every hour
+// Dynamic — don't pre-render at build time (needs DB access for blog posts)
+export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
