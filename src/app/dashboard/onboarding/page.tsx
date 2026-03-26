@@ -700,7 +700,7 @@ export default function OnboardingPage() {
             update("date", v);
             validateDate(v);
             if (isReview && originalDate && v && v !== originalDate) {
-              setDateChangeWarning("Changing your wedding date will update it across the app — your dashboard countdown, task timelines, and any date-linked planning will reflect this new date.");
+              setDateChangeWarning("Changing your wedding date will automatically update your rehearsal dinner date and shift planning milestone dates. Any appointments you've added (fittings, tastings, trials) will NOT be moved — you'll need to reschedule those with your vendors.");
             } else {
               setDateChangeWarning("");
             }

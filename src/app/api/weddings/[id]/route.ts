@@ -77,16 +77,19 @@ export async function PATCH(
       const dayShift = Math.round((newWeddingDate.getTime() - oldWeddingDate.getTime()) / (1000 * 60 * 60 * 24));
 
       if (dayShift !== 0) {
-        // Fetch all system-generated tasks and shift their due dates
-        const { data: tasks } = await supabase
+        // Fetch ALL tasks with due dates — separate into auto-shift vs manual-review
+        const { data: allTasks } = await supabase
           .from("tasks")
-          .select("id, due_date")
+          .select("id, title, due_date, is_system_generated, completed")
           .eq("wedding_id", id)
-          .eq("is_system_generated", true)
           .not("due_date", "is", null);
 
-        if (tasks && tasks.length > 0) {
-          for (const task of tasks) {
+        if (allTasks && allTasks.length > 0) {
+          const autoShift = allTasks.filter((t) => t.is_system_generated && !t.completed);
+          const needsReview = allTasks.filter((t) => !t.is_system_generated || t.completed);
+
+          // Auto-shift system-generated incomplete tasks
+          for (const task of autoShift) {
             const oldDue = new Date(task.due_date + "T12:00:00");
             oldDue.setDate(oldDue.getDate() + dayShift);
             const newDue = oldDue.toISOString().slice(0, 10);
@@ -95,20 +98,29 @@ export async function PATCH(
               .update({ due_date: newDue })
               .eq("id", task.id);
           }
-          cascadeResults.push(`tasks_shifted_${tasks.length}`);
+          if (autoShift.length > 0) cascadeResults.push(`tasks_shifted_${autoShift.length}`);
+
+          // Flag tasks that need manual review (user-created or completed)
+          if (needsReview.length > 0) {
+            cascadeResults.push(`tasks_need_review_${needsReview.length}`);
+            // Return the list so the frontend can display them
+            (data as Record<string, unknown>)._tasks_needing_review = needsReview.map((t) => ({
+              id: t.id,
+              title: t.title,
+              due_date: t.due_date,
+            }));
+          }
         }
       }
     } else {
-      // No old date — calculate from scratch using monthsBefore
+      // No old date — calculate system-generated from scratch, flag user-created
       const newWeddingDate = new Date(newDate + "T12:00:00");
-      const { data: tasks } = await supabase
+      const { data: allTasks } = await supabase
         .from("tasks")
-        .select("id, title")
-        .eq("wedding_id", id)
-        .eq("is_system_generated", true);
+        .select("id, title, due_date, is_system_generated, completed")
+        .eq("wedding_id", id);
 
-      if (tasks && tasks.length > 0) {
-        // Build a title→monthsBefore lookup from TASK_TIMELINE
+      if (allTasks && allTasks.length > 0) {
         const monthsMap = new Map<string, number>();
         for (const t of TASK_TIMELINE) {
           monthsMap.set(t.title, t.monthsBefore);
@@ -117,20 +129,33 @@ export async function PATCH(
           }
         }
 
-        for (const task of tasks) {
-          const months = monthsMap.get(task.title);
-          if (months !== undefined) {
-            const d = new Date(newWeddingDate);
-            d.setMonth(d.getMonth() - Math.floor(months));
-            const frac = months - Math.floor(months);
-            if (frac) d.setDate(d.getDate() - Math.round(frac * 30));
-            await supabase
-              .from("tasks")
-              .update({ due_date: d.toISOString().slice(0, 10) })
-              .eq("id", task.id);
+        let recalculated = 0;
+        const needsReview: { id: string; title: string; due_date: string | null }[] = [];
+
+        for (const task of allTasks) {
+          if (task.is_system_generated && !task.completed) {
+            const months = monthsMap.get(task.title);
+            if (months !== undefined) {
+              const d = new Date(newWeddingDate);
+              d.setMonth(d.getMonth() - Math.floor(months));
+              const frac = months - Math.floor(months);
+              if (frac) d.setDate(d.getDate() - Math.round(frac * 30));
+              await supabase
+                .from("tasks")
+                .update({ due_date: d.toISOString().slice(0, 10) })
+                .eq("id", task.id);
+              recalculated++;
+            }
+          } else if (task.due_date) {
+            needsReview.push({ id: task.id, title: task.title, due_date: task.due_date });
           }
         }
-        cascadeResults.push(`tasks_recalculated_${tasks.length}`);
+
+        if (recalculated > 0) cascadeResults.push(`tasks_recalculated_${recalculated}`);
+        if (needsReview.length > 0) {
+          cascadeResults.push(`tasks_need_review_${needsReview.length}`);
+          (data as Record<string, unknown>)._tasks_needing_review = needsReview;
+        }
       }
     }
   }

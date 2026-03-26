@@ -1405,7 +1405,7 @@ export default function DayOfPage() {
       <ConfirmDialog
         open={confirmRegenerate}
         title="Regenerate timeline?"
-        message="This will replace your current timeline with a new one based on the updated ceremony time. Any custom events or edits will be lost."
+        message="This will replace your current timeline with a new one based on the updated ceremony time. Any custom events or edits will be lost. The new ceremony time will be synced across the entire app — binder exports, AI assistant, and anywhere else it's referenced."
         confirmLabel="Regenerate"
         onConfirm={() => {
           setConfirmRegenerate(false);
