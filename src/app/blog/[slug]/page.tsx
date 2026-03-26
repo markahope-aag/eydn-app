@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import DOMPurify from "isomorphic-dompurify";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 
 // Revalidate blog posts every 10 minutes
@@ -203,7 +204,7 @@ export default async function BlogPostPage({
         <div
           className="blog-content"
           style={{ marginTop: 40 }}
-          dangerouslySetInnerHTML={{ __html: p.content }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.content, { ADD_TAGS: ["iframe"], ADD_ATTR: ["target", "rel"] }) }}
         />
 
         {/* Tags */}
