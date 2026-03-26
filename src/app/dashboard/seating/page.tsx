@@ -6,6 +6,7 @@ import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Tooltip } from "@/components/Tooltip";
+import { escapeHtml } from "@/lib/validation";
 
 type Table = {
   id: string;
@@ -346,10 +347,11 @@ export default function SeatingPage() {
   function printCeremony() {
     const printWin = window.open("", "_blank");
     if (!printWin) return;
-    const centerHtml = centerPositions.map((p) => `<div style="font-size:18px;font-weight:600;color:#1A1A2E;margin:6px 0">${p.person_name} <span style="font-size:13px;color:#8E7A9E;font-weight:400">${p.role || ""}</span></div>`).join("");
+    const esc = escapeHtml;
+    const centerHtml = centerPositions.map((p) => `<div style="font-size:18px;font-weight:600;color:#1A1A2E;margin:6px 0">${esc(p.person_name)} <span style="font-size:13px;color:#8E7A9E;font-weight:400">${esc(p.role || "")}</span></div>`).join("");
     const sideHtml = (positions: CeremonyPosition[]) => positions.length === 0
       ? '<p style="color:#8E7A9E;font-size:14px;text-align:center;padding:16px 0">—</p>'
-      : positions.sort((a, b) => a.position_order - b.position_order).map((p, i) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid #E8D5B7"><span style="color:#8E7A9E;font-size:13px;width:20px">${i + 1}</span><span style="font-size:15px;color:#1A1A2E;flex:1">${p.person_name}</span><span style="font-size:12px;color:#8E7A9E">${p.role || ""}</span></div>`).join("");
+      : positions.sort((a, b) => a.position_order - b.position_order).map((p, i) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid #E8D5B7"><span style="color:#8E7A9E;font-size:13px;width:20px">${i + 1}</span><span style="font-size:15px;color:#1A1A2E;flex:1">${esc(p.person_name)}</span><span style="font-size:12px;color:#8E7A9E">${esc(p.role || "")}</span></div>`).join("");
 
     printWin.document.write(`<!DOCTYPE html><html><head><title>Ceremony Layout</title><style>body{font-family:system-ui,sans-serif;padding:40px;color:#1A1A2E}@media print{body{padding:20px}}</style></head><body>
       <h1 style="font-size:24px;margin-bottom:4px">Ceremony Layout</h1>
