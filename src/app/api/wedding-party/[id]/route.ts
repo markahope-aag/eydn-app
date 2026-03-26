@@ -5,6 +5,7 @@ import { softDelete, logActivity } from "@/lib/audit";
 
 const ALLOWED_FIELDS = [
   "name", "role", "email", "phone", "job_assignment", "photo_url", "attire", "sort_order",
+  "address_line1", "address_line2", "city", "state", "zip",
 ];
 
 export async function PATCH(

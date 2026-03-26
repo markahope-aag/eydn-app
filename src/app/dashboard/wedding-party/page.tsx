@@ -18,7 +18,23 @@ type Member = {
   photo_url: string | null;
   attire: string | null;
   sort_order: number;
+  address_line1: string | null;
+  address_line2: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
 };
+
+const DAY_OF_JOBS = [
+  "Hold bouquet",
+  "Carry rings",
+  "Greet guests",
+  "Manage timeline",
+  "Coordinate vendors",
+  "Distribute programs",
+  "Handle gifts",
+  "Manage guest book",
+];
 
 const ROLES = [
   "Maid of Honor",
@@ -46,16 +62,27 @@ export default function WeddingPartyPage() {
   const [editing, setEditing] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null);
+  const [sharedAttireNote, setSharedAttireNote] = useState("");
+  const [weddingId, setWeddingId] = useState<string | null>(null);
   const photoRef = useRef<HTMLInputElement>(null);
   const photoTargetId = useRef<string | null>(null);
+  const attireTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
-    fetch("/api/wedding-party")
-      .then((r) => {
+    Promise.all([
+      fetch("/api/wedding-party").then((r) => {
         if (r.status === 404) { setNoWedding(true); return []; }
         return r.ok ? r.json() : Promise.reject();
+      }),
+      fetch("/api/weddings").then((r) => r.ok ? r.json() : null),
+    ])
+      .then(([partyData, weddingData]) => {
+        setMembers(partyData);
+        if (weddingData) {
+          setWeddingId(weddingData.id);
+          setSharedAttireNote(weddingData.shared_attire_note || "");
+        }
       })
-      .then(setMembers)
       .catch(() => toast.error("Couldn't load your wedding party. Try refreshing."))
       .finally(() => setLoading(false));
   }, []);
@@ -75,6 +102,11 @@ export default function WeddingPartyPage() {
       photo_url: null,
       attire: newAttire.trim() || null,
       sort_order: members.length,
+      address_line1: null,
+      address_line2: null,
+      city: null,
+      state: null,
+      zip: null,
     };
 
     setMembers((prev) => [...prev, member]);
@@ -139,6 +171,32 @@ export default function WeddingPartyPage() {
       setMembers(prev);
       toast.error("Couldn't remove that person. Try again.");
     }
+  }
+
+  function handleSharedAttireChange(value: string) {
+    setSharedAttireNote(value);
+    if (attireTimer.current) clearTimeout(attireTimer.current);
+    attireTimer.current = setTimeout(async () => {
+      if (!weddingId) return;
+      try {
+        const res = await fetch(`/api/weddings/${weddingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ shared_attire_note: value || null }),
+        });
+        if (!res.ok) throw new Error();
+      } catch {
+        toast.error("Shared attire note didn't save. Try again.");
+      }
+    }, 800);
+  }
+
+  function toggleJob(memberId: string, job: string, currentJobs: string) {
+    const jobs = currentJobs ? currentJobs.split(", ").filter(Boolean) : [];
+    const idx = jobs.indexOf(job);
+    if (idx >= 0) jobs.splice(idx, 1);
+    else jobs.push(job);
+    updateField(memberId, "job_assignment", jobs.join(", ") || null);
   }
 
   async function handlePhotoUpload(memberId: string) {
@@ -272,6 +330,21 @@ export default function WeddingPartyPage() {
         </form>
       )}
 
+      {/* Shared attire note */}
+      {members.length > 0 && (
+        <div className="mt-4 card p-4">
+          <label className="text-[12px] font-semibold text-muted">Shared Attire Note</label>
+          <p className="text-[11px] text-muted mt-0.5 mb-2">A note visible to everyone — e.g. &quot;Bridesmaids: Dusty Rose floor-length, Groomsmen: Navy suit&quot;</p>
+          <textarea
+            value={sharedAttireNote}
+            onChange={(e) => handleSharedAttireChange(e.target.value)}
+            placeholder="e.g. Bridesmaids: Dusty Rose floor-length dress from Azazie. Groomsmen: Navy suit with blush tie."
+            rows={2}
+            className="w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
+          />
+        </div>
+      )}
+
       {/* Hidden file input for photo uploads */}
       <input
         ref={photoRef}
@@ -286,23 +359,26 @@ export default function WeddingPartyPage() {
       {/* Member list */}
       <div className="mt-6 space-y-2">
         {members.map((member) => (
-          <div key={member.id} className="rounded-[16px] border-border bg-white overflow-hidden">
+          <div key={member.id} className="group/member rounded-[16px] border-border bg-white overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-3">
-              {/* Photo avatar */}
+              {/* Photo avatar — click to upload */}
               <div
-                className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 relative cursor-pointer group"
+                className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 relative cursor-pointer group/avatar"
                 onClick={() => { photoTargetId.current = member.id; photoRef.current?.click(); }}
+                title={member.photo_url ? "Change photo" : "Add photo"}
               >
                 {member.photo_url ? (
                   <>
                     <Image src={member.photo_url} alt={member.name} fill className="object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                      <span className="text-white text-[9px] font-semibold">Edit</span>
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition flex items-center justify-center">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M6 1H3C1.89543 1 1 1.89543 1 3V13C1 14.1046 1.89543 15 3 15H13C14.1046 15 15 14.1046 15 13V10M11.5 1.5L14.5 4.5M7.5 8.5L13.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                     </div>
                   </>
                 ) : (
-                  <div className="w-full h-full bg-lavender flex items-center justify-center group-hover:bg-violet transition">
-                    <span className={`text-[16px] font-semibold ${uploadingPhoto === member.id ? "animate-pulse text-muted" : "text-violet group-hover:text-white"}`}>
+                  <div className="w-full h-full bg-lavender flex items-center justify-center group-hover/avatar:bg-violet transition">
+                    <span className={`text-[16px] font-semibold ${uploadingPhoto === member.id ? "animate-pulse text-muted" : "text-violet group-hover/avatar:text-white"}`}>
                       {uploadingPhoto === member.id ? "..." : member.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
@@ -321,22 +397,41 @@ export default function WeddingPartyPage() {
                 )}
               </div>
 
+              {editing === member.id ? (
+                <button
+                  onClick={() => setEditing(null)}
+                  aria-label="Close details"
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-muted hover:text-plum hover:bg-lavender transition"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setEditing(member.id)}
+                  className="text-[12px] text-muted hover:text-violet transition"
+                >
+                  Edit
+                </button>
+              )}
               <button
-                onClick={() => setEditing(editing === member.id ? null : member.id)}
-                className={`text-[12px] font-semibold px-3 py-1 rounded-full transition ${
-                  editing === member.id
-                    ? "bg-violet text-white"
-                    : "bg-lavender text-violet hover:bg-violet hover:text-white"
-                }`}
+                onClick={() => setConfirmDelete(member.id)}
+                aria-label={`Remove ${member.name}`}
+                className="opacity-0 group-hover/member:opacity-100 transition-opacity text-muted hover:text-error"
               >
-                {editing === member.id ? "Close" : "Edit Details"}
-              </button>
-              <button onClick={() => setConfirmDelete(member.id)} className="text-[12px] text-error hover:opacity-80">
-                Remove
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M5 2V1.5C5 1.22386 5.22386 1 5.5 1H10.5C10.7761 1 11 1.22386 11 1.5V2M2.5 3H13.5M3.5 3V13.5C3.5 14.0523 3.94772 14.5 4.5 14.5H11.5C12.0523 14.5 12.5 14.0523 12.5 13.5V3M6.5 6V11.5M9.5 6V11.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </button>
             </div>
 
-            {editing === member.id && (
+            {editing === member.id && (() => {
+              const currentJobs = member.job_assignment || "";
+              const jobList = currentJobs ? currentJobs.split(", ").filter(Boolean) : [];
+              const hasCustomJob = jobList.some((j) => !DAY_OF_JOBS.includes(j));
+
+              return (
               <div className="border-t border-border px-4 py-4 bg-lavender/20">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
@@ -359,52 +454,84 @@ export default function WeddingPartyPage() {
                       placeholder="(555) 123-4567"
                     />
                   </div>
+
+                  {/* Address */}
+                  <div className="sm:col-span-2">
+                    <label className="text-[12px] font-semibold text-muted">Mailing Address</label>
+                    <div className="mt-1 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                      <input type="text" defaultValue={member.address_line1 || ""} onBlur={(e) => updateField(member.id, "address_line1", e.target.value || null)} placeholder="Street address" className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
+                      <input type="text" defaultValue={member.address_line2 || ""} onBlur={(e) => updateField(member.id, "address_line2", e.target.value || null)} placeholder="Apt, suite, etc." className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
+                      <input type="text" defaultValue={member.city || ""} onBlur={(e) => updateField(member.id, "city", e.target.value || null)} placeholder="City" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" />
+                      <input type="text" defaultValue={member.state || ""} onBlur={(e) => updateField(member.id, "state", e.target.value || null)} placeholder="State" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={2} />
+                      <input type="text" defaultValue={member.zip || ""} onBlur={(e) => updateField(member.id, "zip", e.target.value || null)} placeholder="ZIP" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={10} />
+                    </div>
+                  </div>
+
+                  {/* Day-of job assignment — multi-select chips */}
                   <div className="sm:col-span-2">
                     <label className="text-[12px] font-semibold text-muted">Day-of Job Assignment</label>
-                    <input
-                      type="text"
-                      defaultValue={member.job_assignment || ""}
-                      onBlur={(e) => updateField(member.id, "job_assignment", e.target.value || null)}
-                      className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
-                      placeholder="e.g. Carry rings, hold bouquet during vows"
-                    />
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {DAY_OF_JOBS.map((job) => {
+                        const active = jobList.includes(job);
+                        return (
+                          <button
+                            key={job}
+                            type="button"
+                            onClick={() => toggleJob(member.id, job, currentJobs)}
+                            className={`rounded-full px-3 py-1 text-[12px] font-medium transition ${
+                              active
+                                ? "bg-violet text-white"
+                                : "bg-lavender text-violet hover:bg-violet/20"
+                            }`}
+                          >
+                            {job}
+                          </button>
+                        );
+                      })}
+                      {/* Custom job input */}
+                      <input
+                        type="text"
+                        defaultValue={hasCustomJob ? jobList.filter((j) => !DAY_OF_JOBS.includes(j)).join(", ") : ""}
+                        onBlur={(e) => {
+                          const standardJobs = jobList.filter((j) => DAY_OF_JOBS.includes(j));
+                          const custom = e.target.value.trim();
+                          const all = custom ? [...standardJobs, custom] : standardJobs;
+                          updateField(member.id, "job_assignment", all.join(", ") || null);
+                        }}
+                        placeholder="Other..."
+                        className="rounded-full border-border px-3 py-1 text-[12px] w-28"
+                      />
+                    </div>
                   </div>
+
+                  {/* Attire — individual note */}
                   <div className="sm:col-span-2">
-                    <label className="text-[12px] font-semibold text-muted">Attire</label>
+                    <label className="text-[12px] font-semibold text-muted">Attire Note</label>
+                    {sharedAttireNote && (
+                      <p className="text-[11px] text-muted mt-0.5">Shared: {sharedAttireNote}</p>
+                    )}
                     <input
                       type="text"
                       defaultValue={member.attire || ""}
                       onBlur={(e) => updateField(member.id, "attire", e.target.value || null)}
                       className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
-                      placeholder="e.g. Navy suit, blush bridesmaid dress, accessories..."
+                      placeholder="Individual notes — e.g. size 6, needs alterations by March"
                     />
                   </div>
-                  <div className="sm:col-span-2">
-                    <label className="text-[12px] font-semibold text-muted">Photo</label>
-                    <div className="mt-1 flex items-center gap-3">
-                      {member.photo_url && (
-                        <div className="w-16 h-16 rounded-[10px] overflow-hidden relative">
-                          <Image src={member.photo_url} alt={member.name} fill className="object-cover" />
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => { photoTargetId.current = member.id; photoRef.current?.click(); }}
-                        disabled={uploadingPhoto === member.id}
-                        className="btn-secondary btn-sm disabled:opacity-50"
-                      >
-                        {uploadingPhoto === member.id ? "Uploading..." : member.photo_url ? "Change Photo" : "Upload Photo"}
+
+                  {/* Photo management — compact since avatar handles upload */}
+                  {member.photo_url && (
+                    <div className="sm:col-span-2 flex items-center gap-2">
+                      <span className="text-[12px] text-muted">Photo uploaded</span>
+                      <button type="button" onClick={() => updateField(member.id, "photo_url", null)} className="text-[12px] text-muted hover:text-error transition">
+                        Remove photo
                       </button>
-                      {member.photo_url && (
-                        <button type="button" onClick={() => updateField(member.id, "photo_url", null)} className="text-[12px] text-error hover:opacity-80">
-                          Remove
-                        </button>
-                      )}
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
-            )}
+              );
+            })()}
           </div>
         ))}
 
