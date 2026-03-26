@@ -7,6 +7,7 @@ import { NoWeddingState } from "@/components/NoWeddingState";
 import { PremiumButton } from "@/components/PremiumGate";
 import { exportWeddingBinder } from "@/lib/export-binder";
 import { Tooltip } from "@/components/Tooltip";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { trackExport } from "@/lib/analytics";
 
 type TimelineItem = { time: string; event: string; notes: string; forGroup?: string; duration?: number; vendorCategory?: string };
@@ -135,6 +136,7 @@ export default function DayOfPage() {
   const attirePhotoIndex = useRef<number | null>(null);
   const [newPackingItem, setNewPackingItem] = useState("");
   const [binderLoading, setBinderLoading] = useState(false);
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
 
   useEffect(() => {
     fetch("/api/day-of")
@@ -197,13 +199,23 @@ export default function DayOfPage() {
 
   function handleCeremonyTimeSet() {
     if (!plan || !ceremonyTime) return;
+    // If timeline has items, confirm before overwriting
+    if (plan.timeline.length > 0 && plan.ceremonyTime !== ceremonyTime) {
+      setConfirmRegenerate(true);
+      return;
+    }
+    doRegenerateTimeline();
+  }
+
+  function doRegenerateTimeline() {
+    if (!plan || !ceremonyTime) return;
     const newTimeline = generateTimelineFromCeremony(ceremonyTime);
     if (newTimeline.length === 0) {
       toast.error("Enter a valid time like 4:30 PM");
       return;
     }
     savePlan({ ...plan, ceremonyTime, timeline: newTimeline });
-    toast.success("Timeline built from your ceremony time");
+    toast.success("Timeline rebuilt — all times updated to match your new ceremony time");
   }
 
   function updatePackingNote(index: number, notes: string) {
@@ -1364,6 +1376,17 @@ export default function DayOfPage() {
           />
         </div>
       )}
+      <ConfirmDialog
+        open={confirmRegenerate}
+        title="Regenerate timeline?"
+        message="This will replace your current timeline with a new one based on the updated ceremony time. Any custom events or edits will be lost."
+        confirmLabel="Regenerate"
+        onConfirm={() => {
+          setConfirmRegenerate(false);
+          doRegenerateTimeline();
+        }}
+        onCancel={() => setConfirmRegenerate(false)}
+      />
     </div>
   );
 }

@@ -161,11 +161,13 @@ function WeddingDate({
   value,
   onChange,
   error,
+  warning,
 }: {
   partnerName: string;
   value: string;
   onChange: (_v: string) => void;
   error: string;
+  warning?: string;
 }) {
   return (
     <div className="max-w-md mx-auto">
@@ -184,6 +186,9 @@ function WeddingDate({
       />
       {error && (
         <p className="mt-2 text-[13px] text-red-600">{error}</p>
+      )}
+      {warning && (
+        <p className="mt-2 text-[13px] text-amber-600 bg-amber-50 rounded-[10px] px-3 py-2">{warning}</p>
       )}
       <p className="mt-3 text-[13px] text-muted leading-relaxed">
         Don&apos;t have an exact date yet? Put in your target month and we&apos;ll work from there. You can update it anytime.
@@ -456,6 +461,8 @@ export default function OnboardingPage() {
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [dateError, setDateError] = useState("");
+  const [dateChangeWarning, setDateChangeWarning] = useState("");
+  const [originalDate, setOriginalDate] = useState<string | null>(null);
   const [aiInput, setAIInput] = useState("");
   const [ready, setReady] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -467,6 +474,7 @@ export default function OnboardingPage() {
         .then((r) => r.ok ? r.json() : null)
         .then((data) => {
           if (data) {
+            if (data.date) setOriginalDate(data.date);
             setForm((prev) => ({
               ...prev,
               partner1_name: data.partner1_name || "",
@@ -688,8 +696,17 @@ export default function OnboardingPage() {
         <WeddingDate
           partnerName={form.partner1_name}
           value={form.date}
-          onChange={(v) => { update("date", v); validateDate(v); }}
+          onChange={(v) => {
+            update("date", v);
+            validateDate(v);
+            if (isReview && originalDate && v && v !== originalDate) {
+              setDateChangeWarning("Changing your wedding date will update it across the app — your dashboard countdown, task timelines, and any date-linked planning will reflect this new date.");
+            } else {
+              setDateChangeWarning("");
+            }
+          }}
           error={dateError}
+          warning={dateChangeWarning}
         />
       )}
       {step === 3 && (

@@ -72,13 +72,17 @@ export default function RehearsalDinnerPage() {
   const [guestSearch, setGuestSearch] = useState("");
   const [weddingGuests, setWeddingGuests] = useState<WeddingGuest[]>([]);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
+  const [weddingDate, setWeddingDate] = useState<string | null>(null);
+  const [dateWarning, setDateWarning] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/rehearsal-dinner").then((r) => (r.ok ? r.json() : Promise.reject())),
       fetch("/api/guests").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/weddings").then((r) => (r.ok ? r.json() : null)),
     ])
-      .then(([rehearsalData, guestData]) => {
+      .then(([rehearsalData, guestData, weddingData]) => {
+        if (weddingData?.date) setWeddingDate(weddingData.date);
         // Migrate old string[] guest_list to RehearsalGuest[]
         if (rehearsalData.guest_list && rehearsalData.guest_list.length > 0) {
           const first = rehearsalData.guest_list[0];
@@ -132,7 +136,30 @@ export default function RehearsalDinnerPage() {
 
   function updateField(field: keyof RehearsalDinner, value: string | number | null) {
     if (!data) return;
+
+    // Date sync warning
+    if (field === "date" && value && weddingDate) {
+      const rehearsalMs = new Date(value as string).getTime();
+      const weddingMs = new Date(weddingDate).getTime();
+      const daysDiff = Math.round((weddingMs - rehearsalMs) / (1000 * 60 * 60 * 24));
+      if (daysDiff < 0) {
+        setDateWarning("This date is after your wedding date — rehearsal dinners are typically the night before.");
+      } else if (daysDiff === 0) {
+        setDateWarning("This is the same day as your wedding. Rehearsal dinners are typically the night before.");
+      } else if (daysDiff > 3) {
+        setDateWarning(`This is ${daysDiff} days before your wedding. Most rehearsal dinners are 1-2 days before.`);
+      } else {
+        setDateWarning(null);
+      }
+    }
+
     save({ ...data, [field]: value });
+  }
+
+  function getDayBefore(dateStr: string): string {
+    const d = new Date(dateStr + "T12:00:00");
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().slice(0, 10);
   }
 
   function addTimelineItem() {
@@ -281,6 +308,18 @@ export default function RehearsalDinnerPage() {
               onChange={(e) => updateField("date", e.target.value || null)}
               className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
             />
+            {dateWarning && (
+              <p className="text-[11px] text-amber-600 mt-1">{dateWarning}</p>
+            )}
+            {!data.date && weddingDate && (
+              <button
+                type="button"
+                onClick={() => updateField("date", getDayBefore(weddingDate))}
+                className="text-[11px] text-violet hover:text-plum mt-1"
+              >
+                Set to night before wedding ({new Date(getDayBefore(weddingDate) + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })})
+              </button>
+            )}
           </div>
           <div>
             <label className="text-[12px] font-semibold text-muted">Start Time</label>
