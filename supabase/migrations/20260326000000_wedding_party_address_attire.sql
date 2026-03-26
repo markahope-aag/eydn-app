@@ -6,6 +6,6 @@ ALTER TABLE wedding_party
   ADD COLUMN IF NOT EXISTS state text,
   ADD COLUMN IF NOT EXISTS zip text;
 
--- Add shared attire note to weddings (e.g. "All bridesmaids: Dusty Rose floor-length dress")
+-- Add shared attire note to weddings (e.g. "Left side: Dusty Rose floor-length dress")
 ALTER TABLE weddings
   ADD COLUMN IF NOT EXISTS shared_attire_note text;

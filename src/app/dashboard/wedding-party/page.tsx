@@ -37,13 +37,12 @@ const DAY_OF_JOBS = [
 ];
 
 const ROLES = [
-  "Maid of Honor",
-  "Best Man",
-  "Bridesmaid",
-  "Groomsman",
+  "Honor Attendant",
+  "Attendant",
   "Flower Girl",
   "Ring Bearer",
   "Usher",
+  "Reader",
   "Other",
 ];
 
@@ -54,7 +53,7 @@ export default function WeddingPartyPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [showAddDetails, setShowAddDetails] = useState(false);
   const [name, setName] = useState("");
-  const [role, setRole] = useState("Bridesmaid");
+  const [role, setRole] = useState("Attendant");
   const [newEmail, setNewEmail] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [newJobAssignment, setNewJobAssignment] = useState("");
@@ -320,7 +319,7 @@ export default function WeddingPartyPage() {
                     type="text"
                     value={newAttire}
                     onChange={(e) => setNewAttire(e.target.value)}
-                    placeholder="e.g. Navy suit, blush bridesmaid dress, accessories..."
+                    placeholder="e.g. Navy suit, blush floor-length dress, accessories..."
                     className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                   />
                 </div>
@@ -334,11 +333,11 @@ export default function WeddingPartyPage() {
       {members.length > 0 && (
         <div className="mt-4 card p-4">
           <label className="text-[12px] font-semibold text-muted">Shared Attire Note</label>
-          <p className="text-[11px] text-muted mt-0.5 mb-2">A note visible to everyone — e.g. &quot;Bridesmaids: Dusty Rose floor-length, Groomsmen: Navy suit&quot;</p>
+          <p className="text-[11px] text-muted mt-0.5 mb-2">A note visible to everyone — e.g. &quot;Left side: Dusty Rose floor-length, Right side: Navy suit&quot;</p>
           <textarea
             value={sharedAttireNote}
             onChange={(e) => handleSharedAttireChange(e.target.value)}
-            placeholder="e.g. Bridesmaids: Dusty Rose floor-length dress from Azazie. Groomsmen: Navy suit with blush tie."
+            placeholder="e.g. Left side: Dusty Rose floor-length dress from Azazie. Right side: Navy suit with blush tie."
             rows={2}
             className="w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
           />

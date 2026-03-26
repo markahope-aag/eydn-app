@@ -44,7 +44,7 @@ export const BUDGET_TEMPLATE: BudgetLineItem[] = [
 
   // Gifts & Favors
   { category: "Gifts & Favors", description: "Guest Favors" },
-  { category: "Gifts & Favors", description: "Bridal Party Gifts" },
+  { category: "Gifts & Favors", description: "Wedding Party Gifts" },
   { category: "Gifts & Favors", description: "Transportation / Shuttle" },
   { category: "Gifts & Favors", description: "Guest Hotel Room Block" },
 

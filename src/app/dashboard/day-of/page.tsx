@@ -36,15 +36,15 @@ type AttireItem = { person: string; description: string; photoUrl: string | null
 
 type Tab = "timeline" | "vendors" | "packing" | "ceremony" | "music" | "speeches" | "setup" | "attire";
 
-const TIMELINE_GROUPS = ["Everyone", "Bride", "Groom", "Bridesmaids", "Groomsmen", "Family", "Vendors"];
+const TIMELINE_GROUPS = ["Everyone", "Partner 1", "Partner 2", "Attendants", "Family", "Vendors"];
 
 const DEFAULT_MUSIC_MOMENTS = [
   "Processional",
-  "Bride Entrance",
+  "Couple Entrance",
   "Recessional",
   "First Dance",
-  "Father/Daughter Dance",
-  "Mother/Son Dance",
+  "Parent Dance 1",
+  "Parent Dance 2",
   "Cake Cutting",
   "Last Dance",
   "Exit Song",
@@ -102,23 +102,23 @@ function generateTimelineFromCeremony(ceremonyTime: string): TimelineItem[] {
   }
 
   return [
-    { time: formatTime(ceremonyMinutes - 510), event: "Hair & makeup begins", notes: "", forGroup: "Bride,Bridesmaids", duration: 120, vendorCategory: "Hair & Makeup" },
+    { time: formatTime(ceremonyMinutes - 510), event: "Hair & makeup begins", notes: "", forGroup: "Partner 1,Attendants", duration: 120, vendorCategory: "Hair & Makeup" },
     { time: formatTime(ceremonyMinutes - 390), event: "Photographer arrives", notes: "", forGroup: "Vendors", duration: 30, vendorCategory: "Photography" },
-    { time: formatTime(ceremonyMinutes - 330), event: "Getting ready photos", notes: "", forGroup: "Bride,Bridesmaids,Groomsmen", duration: 60 },
-    { time: formatTime(ceremonyMinutes - 270), event: "Lunch for wedding party", notes: "", forGroup: "Bride,Groom,Bridesmaids,Groomsmen", duration: 45 },
-    { time: formatTime(ceremonyMinutes - 150), event: "First look (if applicable)", notes: "", forGroup: "Bride,Groom", duration: 30 },
-    { time: formatTime(ceremonyMinutes - 90), event: "Wedding party photos", notes: "", forGroup: "Bride,Groom,Bridesmaids,Groomsmen", duration: 60 },
+    { time: formatTime(ceremonyMinutes - 330), event: "Getting ready photos", notes: "", forGroup: "Partner 1,Partner 2,Attendants", duration: 60 },
+    { time: formatTime(ceremonyMinutes - 270), event: "Lunch for wedding party", notes: "", forGroup: "Partner 1,Partner 2,Attendants", duration: 45 },
+    { time: formatTime(ceremonyMinutes - 150), event: "First look (if applicable)", notes: "", forGroup: "Partner 1,Partner 2", duration: 30 },
+    { time: formatTime(ceremonyMinutes - 90), event: "Wedding party photos", notes: "", forGroup: "Partner 1,Partner 2,Attendants", duration: 60 },
     { time: formatTime(ceremonyMinutes - 30), event: "Guests arrive", notes: "", forGroup: "Everyone", duration: 30 },
     { time: formatTime(ceremonyMinutes), event: "Ceremony begins", notes: "", forGroup: "Everyone", duration: 30 },
     { time: formatTime(ceremonyMinutes + 30), event: "Cocktail hour", notes: "", forGroup: "Everyone", duration: 60, vendorCategory: "Catering" },
     { time: formatTime(ceremonyMinutes + 90), event: "Reception entrance", notes: "", forGroup: "Everyone", duration: 15 },
-    { time: formatTime(ceremonyMinutes + 105), event: "First dance", notes: "", forGroup: "Bride,Groom", duration: 5, vendorCategory: "DJ / Band" },
+    { time: formatTime(ceremonyMinutes + 105), event: "First dance", notes: "", forGroup: "Partner 1,Partner 2", duration: 5, vendorCategory: "DJ / Band" },
     { time: formatTime(ceremonyMinutes + 120), event: "Dinner service", notes: "", forGroup: "Everyone", duration: 60, vendorCategory: "Catering" },
     { time: formatTime(ceremonyMinutes + 180), event: "Speeches & toasts", notes: "", forGroup: "Everyone", duration: 30 },
-    { time: formatTime(ceremonyMinutes + 210), event: "Cake cutting", notes: "", forGroup: "Bride,Groom", duration: 15, vendorCategory: "Bakery" },
-    { time: formatTime(ceremonyMinutes + 225), event: "Parent dances", notes: "", forGroup: "Bride,Groom,Family", duration: 10 },
+    { time: formatTime(ceremonyMinutes + 210), event: "Cake cutting", notes: "", forGroup: "Partner 1,Partner 2", duration: 15, vendorCategory: "Bakery" },
+    { time: formatTime(ceremonyMinutes + 225), event: "Parent dances", notes: "", forGroup: "Partner 1,Partner 2,Family", duration: 10 },
     { time: formatTime(ceremonyMinutes + 240), event: "Open dancing", notes: "", forGroup: "Everyone", duration: 120, vendorCategory: "DJ / Band" },
-    { time: formatTime(ceremonyMinutes + 360), event: "Last dance", notes: "", forGroup: "Bride,Groom", duration: 5 },
+    { time: formatTime(ceremonyMinutes + 360), event: "Last dance", notes: "", forGroup: "Partner 1,Partner 2", duration: 5 },
     { time: formatTime(ceremonyMinutes + 375), event: "Send-off", notes: "", forGroup: "Everyone", duration: 15 },
   ];
 }
@@ -903,7 +903,7 @@ export default function DayOfPage() {
 
           {/* Processional Order */}
           <div>
-            <h2 className="text-[15px] font-semibold text-plum mb-2">Processional Order <Tooltip text="The order people walk down the aisle before the ceremony. Typically: officiant, grandparents, parents, wedding party (paired or single), ring bearer/flower girl, then the bride or couple." wide /></h2>
+            <h2 className="text-[15px] font-semibold text-plum mb-2">Processional Order <Tooltip text="The order people walk down the aisle before the ceremony. Typically: officiant, grandparents, parents, wedding party (paired or single), ring bearer/flower girl, then the couple." wide /></h2>
             <p className="text-[12px] text-muted mb-3">Drag to reorder, or use the arrows. Names appear in order of entry.</p>
             <div className="space-y-1">
               {plan.processionalOrder.map((name, i) => (
@@ -1129,7 +1129,7 @@ export default function DayOfPage() {
                           savePlan({ ...plan, speeches: updated });
                         }}
                         className="w-full text-[15px] text-muted border-0 bg-transparent"
-                        placeholder="e.g. Best Man"
+                        placeholder="e.g. Honor Attendant"
                       />
                     </td>
                     <td className="px-4 py-2">
@@ -1303,7 +1303,7 @@ export default function DayOfPage() {
                       updated[i] = { ...updated[i], person: e.target.value };
                       savePlan({ ...plan, attire: updated });
                     }}
-                    placeholder="Person (e.g. Bride, Groom, Maid of Honor)"
+                    placeholder="Person (e.g. Partner 1, Honor Attendant)"
                     className="w-full text-[15px] font-semibold text-plum border-0 bg-transparent"
                   />
                   <textarea

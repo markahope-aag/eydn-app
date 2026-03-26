@@ -934,7 +934,7 @@ export default function SeatingPage() {
                 onClick={() => {
                   const name = prompt("Name:");
                   if (!name) return;
-                  const role = prompt("Role (e.g. Bridesmaid, Groomsman):") || undefined;
+                  const role = prompt("Role (e.g. Attendant, Reader):") || undefined;
                   addCeremonyPosition(name, "wedding_party", "left", role);
                 }}
                 className="btn-ghost btn-sm"
@@ -945,7 +945,7 @@ export default function SeatingPage() {
                 onClick={() => {
                   const name = prompt("Name:");
                   if (!name) return;
-                  const role = prompt("Role (e.g. Bridesmaid, Groomsman):") || undefined;
+                  const role = prompt("Role (e.g. Attendant, Reader):") || undefined;
                   addCeremonyPosition(name, "wedding_party", "right", role);
                 }}
                 className="btn-ghost btn-sm"

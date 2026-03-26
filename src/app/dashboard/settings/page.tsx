@@ -301,7 +301,7 @@ export default function SettingsPage() {
               toast.error("Changes didn't save. Try again.");
             }
           }}
-          placeholder={"e.g.\n• We're going rustic-elegant with a woodland theme\n• No shellfish — groom has an allergy\n• Ceremony will be outdoors rain or shine\n• Colors are blush, sage, and gold\n• We want a first look before the ceremony\n• Budget priority: photography > food > flowers"}
+          placeholder={"e.g.\n• We're going rustic-elegant with a woodland theme\n• No shellfish — partner has an allergy\n• Ceremony will be outdoors rain or shine\n• Colors are blush, sage, and gold\n• We want a first look before the ceremony\n• Budget priority: photography > food > flowers"}
           rows={6}
           className="mt-3 w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
         />

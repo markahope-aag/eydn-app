@@ -751,7 +751,7 @@ export default function GuestsPage() {
                   type="text"
                   value={newGroup}
                   onChange={(e) => setNewGroup(e.target.value)}
-                  placeholder="e.g. Bride's family, College friends"
+                  placeholder="e.g. Partner's family, College friends"
                   className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                 />
               </div>
@@ -915,7 +915,7 @@ export default function GuestsPage() {
                       type="text"
                       defaultValue={guest.group_name || ""}
                       onBlur={(e) => updateGuest(guest.id, "group_name", e.target.value || null)}
-                      placeholder="e.g. Bride's family, College friends"
+                      placeholder="e.g. Partner's family, College friends"
                       className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
                     />
                   </div>

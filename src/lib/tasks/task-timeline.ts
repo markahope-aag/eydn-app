@@ -50,7 +50,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     category: "Wedding Party",
     phase: "12 Months Before",
     monthsBefore: 12,
-    edynMessage: "Who's going to stand by your side and cheer you on? Make a list of your bridesmaids, groomsmen, maid of honor, best man, ring bearer, and flower girl.",
+    edynMessage: "Who's going to stand by your side and cheer you on? Add your wedding party — honor attendants, attendants, ring bearer, flower girl — and give each person a role.",
     conditional: "has_wedding_party",
   },
   {
@@ -196,7 +196,7 @@ export const TASK_TIMELINE: TaskDefinition[] = [
 
   // === 6-9 Months Before ===
   {
-    title: "Order Bridesmaid Dresses",
+    title: "Order Attendant Attire (Side 1)",
     category: "Attire",
     phase: "6-9 Months Before",
     monthsBefore: 8,
@@ -204,11 +204,11 @@ export const TASK_TIMELINE: TaskDefinition[] = [
     conditional: "has_wedding_party",
   },
   {
-    title: "Order Groomsmen Suits/Tuxes",
+    title: "Order Attendant Attire (Side 2)",
     category: "Attire",
     phase: "6-9 Months Before",
     monthsBefore: 8,
-    edynMessage: "Get the groomsmen suited up! Order early so there's time for alterations.",
+    edynMessage: "Get the other side suited up! Order early so there's time for alterations.",
     conditional: "has_wedding_party",
   },
   {

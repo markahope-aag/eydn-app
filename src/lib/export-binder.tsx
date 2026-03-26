@@ -515,7 +515,7 @@ export async function exportWeddingBinder(): Promise<void> {
 
   // ─── Timeline groups ─────────────────────────────────────────────────────
 
-  const timelineGroups = ["Everyone", "Bride", "Groom", "Bridesmaids", "Groomsmen"];
+  const timelineGroups = ["Everyone", "Partner 1", "Partner 2", "Attendants", "Family", "Vendors"];
   const allTimeline = dayOf.timeline || [];
 
   const timelineByGroup: { label: string; items: typeof allTimeline }[] = [];

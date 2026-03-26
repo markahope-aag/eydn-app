@@ -91,7 +91,7 @@ We're planning our wedding for [Date] at [Venue] and are looking for a florist.
 What we're thinking:
 - Style/theme: [e.g., romantic garden, modern minimalist, rustic]
 - Color palette: [Colors]
-- Items needed: [Bridal bouquet, bridesmaids, boutonnieres, centerpieces, arch/altar, etc.]
+- Items needed: [Couple bouquet, attendant bouquets, boutonnieres, centerpieces, arch/altar, etc.]
 - Budget range for florals: [Range]
 
 Would love to set up a consultation if you're available!

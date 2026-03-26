@@ -83,7 +83,7 @@ const florist: GuideDefinition = {
       ],
     },
     {
-      title: "Bridal Party",
+      title: "Wedding Party",
       questions: [
         {
           id: "q6",
@@ -91,7 +91,7 @@ const florist: GuideDefinition = {
           field: {
             kind: "number",
             min: 0,
-            placeholder: "Bridal bouquet + bridesmaids",
+            placeholder: "Couple bouquet + attendants",
           },
         },
         {

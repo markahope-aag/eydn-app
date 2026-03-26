@@ -14,7 +14,7 @@ type GuideStatus = {
 const GUIDE_CARDS = [
   { slug: "guest-list", title: "Guest List", subtitle: "Build your guest list with capacity planning and priority tiers", icon: "clipboard", time: "5 min", order: 1 },
   { slug: "colors-theme", title: "Colors & Theme", subtitle: "Define your wedding aesthetic, palette, and style references", icon: "palette", time: "10 min", order: 2 },
-  { slug: "florist", title: "Florist", subtitle: "Plan ceremony, bridal party, and reception florals", icon: "flower", time: "10 min", order: 4 },
+  { slug: "florist", title: "Florist", subtitle: "Plan ceremony, wedding party, and reception florals", icon: "flower", time: "10 min", order: 4 },
   { slug: "rentals", title: "Rentals", subtitle: "Tables, chairs, linens, tabletop, and extras", icon: "chair", time: "8 min", order: 6 },
   { slug: "wedding-dress", title: "Wedding Dress", subtitle: "Silhouette, details, and boutique preparation", icon: "sparkles", time: "5 min", order: 3 },
   { slug: "hair-makeup", title: "Hair & Makeup", subtitle: "Artist brief, getting-ready schedule, and trial planning", icon: "scissors", time: "5 min", order: 5 },

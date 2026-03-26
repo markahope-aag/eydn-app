@@ -37,8 +37,8 @@ describe("generateTasks – task generation workflow", () => {
 
     const partyTitles = withParty.map((t) => t.title);
     expect(partyTitles).toContain("Choose Wedding Party");
-    expect(partyTitles).toContain("Order Bridesmaid Dresses");
-    expect(partyTitles).toContain("Order Groomsmen Suits/Tuxes");
+    expect(partyTitles).toContain("Order Attendant Attire (Side 1)");
+    expect(partyTitles).toContain("Order Attendant Attire (Side 2)");
   });
 
   it("generates honeymoon tasks when hasHoneymoon is true", () => {

@@ -55,8 +55,8 @@ export const speechesGuide: GuideDefinition = {
             options: [
               { value: "partner-1", label: "Partner 1" },
               { value: "partner-2", label: "Partner 2" },
-              { value: "best-man", label: "Best man" },
-              { value: "maid-of-honour", label: "Maid of honour" },
+              { value: "honor-attendant-1", label: "Honor attendant (side 1)" },
+              { value: "honor-attendant-2", label: "Honor attendant (side 2)" },
               { value: "father-partner-1", label: "Father of Partner 1" },
               { value: "father-partner-2", label: "Father of Partner 2" },
               { value: "mother-partner-1", label: "Mother of Partner 1" },

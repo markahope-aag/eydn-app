@@ -37,7 +37,7 @@ export const EYDN_TOOLS: Tool[] = [
         name: { type: "string", description: "Guest's full name" },
         email: { type: "string", description: "Guest's email (optional)" },
         role: { type: "string", enum: ["family", "friend", "wedding_party", "coworker", "plus_one", "other"], description: "Guest's relationship" },
-        group_name: { type: "string", description: "Group name (e.g., 'Bride's Family')" },
+        group_name: { type: "string", description: "Group name (e.g., 'Partner 1's Family')" },
         meal_preference: { type: "string", description: "Meal preference (optional)" },
       },
       required: ["name"],

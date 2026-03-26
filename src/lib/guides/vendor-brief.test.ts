@@ -31,7 +31,7 @@ describe("generateVendorBrief", () => {
     const sectionTitles = result!.sections.map((s) => s.title);
     expect(sectionTitles).toContain("Overview");
     expect(sectionTitles).toContain("Ceremony Florals");
-    expect(sectionTitles).toContain("Bridal Party");
+    expect(sectionTitles).toContain("Wedding Party");
     expect(sectionTitles).toContain("Reception");
     expect(sectionTitles).toContain("Style & Preferences");
   });

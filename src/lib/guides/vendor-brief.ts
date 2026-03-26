@@ -71,7 +71,7 @@ function buildFloristBrief(r: Record<string, unknown>, header: string, palette: 
   const sections = [
     { title: "Overview", content: `Budget: ${money(r, "q1")}\nPreferred florist: ${val(r, "q2")}\nCeremony setting: ${val(r, "q3")}` },
     { title: "Ceremony Florals", content: `Needs: ${val(r, "q4")}\nArch fullness: ${val(r, "q5")}` },
-    { title: "Bridal Party", content: `Bouquets: ${val(r, "q6")}\nBoutonnieres: ${val(r, "q7")}\nCorsages: ${val(r, "q8")}\nBouquet style: ${val(r, "q9")}` },
+    { title: "Wedding Party", content: `Bouquets: ${val(r, "q6")}\nBoutonnieres: ${val(r, "q7")}\nCorsages: ${val(r, "q8")}\nBouquet style: ${val(r, "q9")}` },
     { title: "Reception", content: `Guest tables: ${val(r, "q10")}\nCenterpiece style: ${val(r, "q11")}\nOther areas: ${val(r, "q12")}` },
     { title: "Style & Preferences", content: `Color palette: ${palette}\nFlowers loved: ${val(r, "q14")}\nFlowers to avoid: ${val(r, "q15")}\nVenue restrictions: ${val(r, "q16")}` },
   ];

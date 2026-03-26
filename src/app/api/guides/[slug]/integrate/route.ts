@@ -123,8 +123,8 @@ export async function POST(
     const speakerLabels: Record<string, string> = {
       "partner-1": "Partner 1",
       "partner-2": "Partner 2",
-      "best-man": "Best Man",
-      "maid-of-honour": "Maid of Honour",
+      "honor-attendant-1": "Honor Attendant (Side 1)",
+      "honor-attendant-2": "Honor Attendant (Side 2)",
       "father-partner-1": "Father of Partner 1",
       "father-partner-2": "Father of Partner 2",
       "mother-partner-1": "Mother of Partner 1",
