@@ -53,8 +53,5 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.0"
-  },
-  "overrides": {
-    "brace-expansion": "^5.0.5"
   }
 }
