@@ -63,6 +63,44 @@ export async function POST(request: Request) {
   return NextResponse.json(data, { status: 201 });
 }
 
+export async function PATCH(request: Request) {
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  const { wedding, supabase } = result;
+
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
+  if (!id) {
+    return NextResponse.json({ error: "id required" }, { status: 400 });
+  }
+
+  const updates: Record<string, unknown> = {};
+  if (body.position_order !== undefined) updates.position_order = body.position_order;
+  if (body.role !== undefined) updates.role = body.role;
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: "No valid fields" }, { status: 400 });
+  }
+
+  const { data, error } = await supabase
+    .from("ceremony_positions")
+    .update(updates)
+    .eq("id", id)
+    .eq("wedding_id", wedding.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
 export async function DELETE(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;

@@ -47,6 +47,8 @@ export default function SeatingPage() {
   const [confirmDeleteTable, setConfirmDeleteTable] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [unassignedSearch, setUnassignedSearch] = useState("");
+  const [partner1, setPartner1] = useState("Partner 1");
+  const [partner2, setPartner2] = useState("Partner 2");
   const undoStack = useRef<{ type: "assign" | "unassign"; guestId: string; tableId?: string }[]>([]);
   const [undoCount, setUndoCount] = useState(0); // trigger re-render on undo stack change
 
@@ -60,13 +62,18 @@ export default function SeatingPage() {
       fetch("/api/seating/assignments").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/wedding-party").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/ceremony").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/weddings").then((r) => (r.ok ? r.json() : null)),
     ])
-      .then(([t, g, a, p, c]) => {
+      .then(([t, g, a, p, c, w]) => {
         setTables(t);
         setGuests(g);
         setAssignments(a);
         setPartyMembers(p);
         setCeremonyPositions(c);
+        if (w) {
+          if (w.partner1_name) setPartner1(w.partner1_name);
+          if (w.partner2_name) setPartner2(w.partner2_name);
+        }
       })
       .catch(() => toast.error("Couldn't load seating data. Try refreshing."))
       .finally(() => setLoading(false));
@@ -294,6 +301,73 @@ export default function SeatingPage() {
     } catch {
       setCeremonyPositions(prev);
     }
+  }
+
+  async function reorderPosition(id: string, side: "left" | "right" | "center", direction: "up" | "down") {
+    const sidePositions = ceremonyPositions
+      .filter((p) => p.side === side)
+      .sort((a, b) => a.position_order - b.position_order);
+    const idx = sidePositions.findIndex((p) => p.id === id);
+    if (idx < 0) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sidePositions.length) return;
+
+    const current = sidePositions[idx];
+    const swap = sidePositions[swapIdx];
+
+    // Optimistic update
+    setCeremonyPositions((prev) =>
+      prev.map((p) => {
+        if (p.id === current.id) return { ...p, position_order: swap.position_order };
+        if (p.id === swap.id) return { ...p, position_order: current.position_order };
+        return p;
+      })
+    );
+
+    // Save both
+    try {
+      await Promise.all([
+        fetch(`/api/ceremony?id=${current.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ position_order: swap.position_order }),
+        }),
+        fetch(`/api/ceremony?id=${swap.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ position_order: current.position_order }),
+        }),
+      ]);
+    } catch {
+      toast.error("Reorder didn't save. Try again.");
+    }
+  }
+
+  function printCeremony() {
+    const printWin = window.open("", "_blank");
+    if (!printWin) return;
+    const centerHtml = centerPositions.map((p) => `<div style="font-size:18px;font-weight:600;color:#1A1A2E;margin:6px 0">${p.person_name} <span style="font-size:13px;color:#8E7A9E;font-weight:400">${p.role || ""}</span></div>`).join("");
+    const sideHtml = (positions: CeremonyPosition[]) => positions.length === 0
+      ? '<p style="color:#8E7A9E;font-size:14px;text-align:center;padding:16px 0">—</p>'
+      : positions.sort((a, b) => a.position_order - b.position_order).map((p, i) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid #E8D5B7"><span style="color:#8E7A9E;font-size:13px;width:20px">${i + 1}</span><span style="font-size:15px;color:#1A1A2E;flex:1">${p.person_name}</span><span style="font-size:12px;color:#8E7A9E">${p.role || ""}</span></div>`).join("");
+
+    printWin.document.write(`<!DOCTYPE html><html><head><title>Ceremony Layout</title><style>body{font-family:system-ui,sans-serif;padding:40px;color:#1A1A2E}@media print{body{padding:20px}}</style></head><body>
+      <h1 style="font-size:24px;margin-bottom:4px">Ceremony Layout</h1>
+      <p style="color:#8E7A9E;font-size:13px;margin-bottom:32px">Processional order: #1 walks first</p>
+      <div style="text-align:center;background:#EDE7DF;border-radius:12px;padding:24px;margin-bottom:32px">
+        <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8E7A9E;font-weight:600">Altar</p>
+        ${centerHtml}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:0;max-width:700px;margin:0 auto">
+        <div><h3 style="text-align:center;font-size:14px;color:#8E7A9E;margin-bottom:12px">Left Side</h3>${sideHtml(leftSide)}</div>
+        <div style="display:flex;align-items:stretch;justify-content:center"><div style="width:2px;background:linear-gradient(to bottom,#E8D5B7,#D4A5A5);border-radius:1px"></div></div>
+        <div><h3 style="text-align:center;font-size:14px;color:#8E7A9E;margin-bottom:12px">Right Side</h3>${sideHtml(rightSide)}</div>
+      </div>
+      <div style="text-align:center;margin-top:40px"><div style="display:inline-block;background:#FAF8FC;border-radius:999px;padding:8px 24px;border:1px solid #E8D5B7"><p style="font-size:13px;color:#8E7A9E">Guest Seating</p></div></div>
+      <p style="text-align:center;color:#8E7A9E;font-size:11px;margin-top:32px">Generated by eydn.app</p>
+    </body></html>`);
+    printWin.document.close();
+    printWin.print();
   }
 
   const [editingTable, setEditingTable] = useState<string | null>(null);
@@ -672,66 +746,132 @@ export default function SeatingPage() {
       {/* CEREMONY TAB */}
       {tab === "ceremony" && (
         <div>
-          <p className="text-[13px] text-muted mb-6">Arrange who stands at the altar during the ceremony. <Tooltip text="Left and Right are from the guests' perspective facing the altar. Center is for the officiant and couple at the altar itself." wide /></p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[13px] text-muted">Arrange who stands at the altar. Left/Right are from the guests&apos; perspective. <Tooltip text="The number beside each name is their processional order — #1 walks first. Use the arrows to reorder." wide /></p>
+            <div className="flex gap-2">
+              <button onClick={printCeremony} className="btn-secondary btn-sm inline-flex items-center gap-1.5">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M4 6V1H12V6M4 12H2.5C1.67157 12 1 11.3284 1 10.5V7.5C1 6.67157 1.67157 6 2.5 6H13.5C14.3284 6 15 6.67157 15 7.5V10.5C15 11.3284 14.3284 12 13.5 12H12M4 9H12V15H4V9Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Print
+              </button>
+            </div>
+          </div>
+          <p className="text-[11px] text-muted mb-6">This layout is also included in your downloadable Day-of Binder.</p>
 
-          {/* Altar visualization */}
-          <div className="bg-white rounded-[16px] border border-border p-8">
-            {/* Officiant + Couple at center */}
-            <div className="text-center mb-8">
-              <div className="inline-block bg-lavender rounded-[16px] px-8 py-4 min-w-[200px]">
-                <p className="text-[12px] text-muted uppercase font-semibold tracking-wide">Altar</p>
+          {/* Altar visualization — prominent at top */}
+          <div className="bg-white rounded-[16px] border border-border overflow-hidden">
+            {/* Altar — large, prominent */}
+            <div className="bg-gradient-to-b from-lavender to-white px-8 pt-8 pb-6 text-center">
+              <p className="text-[11px] text-muted uppercase font-semibold tracking-widest mb-3">Altar</p>
+              <div className="inline-block bg-white rounded-[16px] px-10 py-5 min-w-[280px] shadow-sm border border-border">
                 {centerPositions.length === 0 && (
-                  <p className="text-[13px] text-muted mt-2">Add the officiant and couple below</p>
+                  <p className="text-[13px] text-muted">Add the officiant and couple below</p>
                 )}
                 {centerPositions.map((p) => (
-                  <div key={p.id} className="flex items-center justify-center gap-2 mt-2">
-                    <span className="text-[15px] font-semibold text-plum">{p.person_name}</span>
+                  <div key={p.id} className="flex items-center justify-center gap-2 mt-2 first:mt-0">
+                    <span className="text-[17px] font-semibold text-plum">{p.person_name}</span>
                     <span className="badge">{p.role || p.person_type}</span>
-                    <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name} from ceremony`} className="w-6 h-6 flex items-center justify-center text-[12px] text-error hover:opacity-80 rounded-full">x</button>
+                    <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name}`} className="text-muted hover:text-error transition">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                        <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Two sides */}
-            <div className="grid grid-cols-2 gap-12 max-w-2xl mx-auto">
-              {/* Left side */}
-              <div>
-                <h3 className="text-[13px] font-semibold text-muted text-center mb-3">Left Side</h3>
-                <div className="space-y-2">
-                  {leftSide.map((p, i) => (
-                    <div key={p.id} className="card-list flex items-center gap-2 px-3 py-2">
-                      <span className="text-[12px] text-muted w-4">{i + 1}</span>
-                      <span className="flex-1 text-[15px] text-plum">{p.person_name}</span>
-                      {p.role && <span className="text-[12px] text-muted">{p.role}</span>}
-                      <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name} from left side`} className="w-6 h-6 flex items-center justify-center text-[12px] text-error hover:opacity-80 rounded-full">x</button>
-                    </div>
-                  ))}
-                  {leftSide.length === 0 && <p className="text-[13px] text-muted text-center py-4">No one added yet</p>}
+            {/* Two sides with aisle line between */}
+            <div className="px-8 py-6">
+              <div className="grid grid-cols-[1fr_40px_1fr] gap-0 max-w-2xl mx-auto">
+                {/* Left side */}
+                <div>
+                  <h3 className="text-[12px] font-semibold text-muted text-center mb-3 uppercase tracking-wide">Left Side</h3>
+                  <div className="space-y-1.5">
+                    {leftSide.sort((a, b) => a.position_order - b.position_order).map((p, i) => (
+                      <div key={p.id} className="group/pos card-list flex items-center gap-2 px-3 py-2">
+                        <span className="text-[11px] font-bold text-violet bg-lavender rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" title={`Processional order: #${i + 1} walks first`}>{i + 1}</span>
+                        <span className="flex-1 text-[15px] text-plum font-medium">{p.person_name}</span>
+                        {p.role && <span className="text-[11px] text-muted">{p.role}</span>}
+                        <div className="flex flex-col opacity-0 group-hover/pos:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => reorderPosition(p.id, "left", "up")}
+                            disabled={i === 0}
+                            aria-label="Move up in processional order"
+                            className="text-muted hover:text-violet disabled:opacity-20 leading-none"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2L10 7H2L6 2Z" fill="currentColor"/></svg>
+                          </button>
+                          <button
+                            onClick={() => reorderPosition(p.id, "left", "down")}
+                            disabled={i === leftSide.length - 1}
+                            aria-label="Move down in processional order"
+                            className="text-muted hover:text-violet disabled:opacity-20 leading-none"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 10L2 5H10L6 10Z" fill="currentColor"/></svg>
+                          </button>
+                        </div>
+                        <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name}`} className="opacity-0 group-hover/pos:opacity-100 text-muted hover:text-error transition-opacity">
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                        </button>
+                      </div>
+                    ))}
+                    {leftSide.length === 0 && <p className="text-[13px] text-muted text-center py-6">No one added yet</p>}
+                  </div>
                 </div>
-              </div>
 
-              {/* Right side */}
-              <div>
-                <h3 className="text-[13px] font-semibold text-muted text-center mb-3">Right Side</h3>
-                <div className="space-y-2">
-                  {rightSide.map((p, i) => (
-                    <div key={p.id} className="card-list flex items-center gap-2 px-3 py-2">
-                      <span className="text-[12px] text-muted w-4">{i + 1}</span>
-                      <span className="flex-1 text-[15px] text-plum">{p.person_name}</span>
-                      {p.role && <span className="text-[12px] text-muted">{p.role}</span>}
-                      <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name} from right side`} className="w-6 h-6 flex items-center justify-center text-[12px] text-error hover:opacity-80 rounded-full">x</button>
-                    </div>
-                  ))}
-                  {rightSide.length === 0 && <p className="text-[13px] text-muted text-center py-4">No one added yet</p>}
+                {/* Aisle line */}
+                <div className="flex items-stretch justify-center">
+                  <div className="w-[2px] rounded-full" style={{ background: "linear-gradient(to bottom, var(--border, #E8D5B7), var(--blush, #D4A5A5), var(--border, #E8D5B7))" }} />
+                </div>
+
+                {/* Right side */}
+                <div>
+                  <h3 className="text-[12px] font-semibold text-muted text-center mb-3 uppercase tracking-wide">Right Side</h3>
+                  <div className="space-y-1.5">
+                    {rightSide.sort((a, b) => a.position_order - b.position_order).map((p, i) => (
+                      <div key={p.id} className="group/pos card-list flex items-center gap-2 px-3 py-2">
+                        <span className="text-[11px] font-bold text-violet bg-lavender rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" title={`Processional order: #${i + 1} walks first`}>{i + 1}</span>
+                        <span className="flex-1 text-[15px] text-plum font-medium">{p.person_name}</span>
+                        {p.role && <span className="text-[11px] text-muted">{p.role}</span>}
+                        <div className="flex flex-col opacity-0 group-hover/pos:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => reorderPosition(p.id, "right", "up")}
+                            disabled={i === 0}
+                            aria-label="Move up in processional order"
+                            className="text-muted hover:text-violet disabled:opacity-20 leading-none"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2L10 7H2L6 2Z" fill="currentColor"/></svg>
+                          </button>
+                          <button
+                            onClick={() => reorderPosition(p.id, "right", "down")}
+                            disabled={i === rightSide.length - 1}
+                            aria-label="Move down in processional order"
+                            className="text-muted hover:text-violet disabled:opacity-20 leading-none"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 10L2 5H10L6 10Z" fill="currentColor"/></svg>
+                          </button>
+                        </div>
+                        <button onClick={() => removeCeremonyPosition(p.id)} aria-label={`Remove ${p.person_name}`} className="opacity-0 group-hover/pos:opacity-100 text-muted hover:text-error transition-opacity">
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                        </button>
+                      </div>
+                    ))}
+                    {rightSide.length === 0 && <p className="text-[13px] text-muted text-center py-6">No one added yet</p>}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Guest seating indicator */}
-            <div className="mt-10 text-center">
-              <div className="inline-block bg-whisper rounded-full px-6 py-2 border border-border">
-                <p className="text-[13px] text-muted">Guest Seating Area</p>
+            {/* Guest seating indicator — smaller, at bottom */}
+            <div className="pb-6 text-center">
+              <div className="inline-flex items-center gap-2 bg-[#FAF8FC] rounded-full px-5 py-2 border border-border">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15C11.866 15 15 11.866 15 8C15 4.13401 11.866 1 8 1Z" stroke="var(--muted)" strokeWidth="1.2"/>
+                  <path d="M5.5 6.5H10.5M5 9.5H11" stroke="var(--muted)" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
+                <p className="text-[12px] text-muted">Guest Seating</p>
               </div>
             </div>
           </div>
@@ -779,13 +919,16 @@ export default function SeatingPage() {
                 Add Officiant
               </button>
               <button
-                onClick={() => {
-                  const name = prompt("Name:");
-                  if (name) addCeremonyPosition(name, "couple", "center", "Couple");
-                }}
+                onClick={() => addCeremonyPosition(partner1, "couple", "center", "Couple")}
                 className="btn-ghost btn-sm"
               >
-                Add to Altar
+                Add {partner1}
+              </button>
+              <button
+                onClick={() => addCeremonyPosition(partner2, "couple", "center", "Couple")}
+                className="btn-ghost btn-sm"
+              >
+                Add {partner2}
               </button>
               <button
                 onClick={() => {
