@@ -28,7 +28,7 @@ export default function ChatPage() {
         return r.ok ? r.json() : Promise.reject();
       })
       .then(setMessages)
-      .catch(() => {})
+      .catch((e) => console.error("[fetch] chat messages", e))
       .finally(() => setLoading(false));
   }, []);
 
@@ -69,9 +69,9 @@ export default function ChatPage() {
       }
 
       if (res.status === 403) {
-        toast.error("AI chat is a premium feature. Upgrade to continue.", {
+        toast.error("AI chat requires a paid plan.", {
           action: {
-            label: "Upgrade — $79",
+            label: "See pricing",
             onClick: () => { window.location.href = "/dashboard/pricing"; },
           },
         });
@@ -99,7 +99,7 @@ export default function ChatPage() {
         }
       }
     } catch {
-      toast.error("Failed to get response from Eydn");
+      toast.error("Couldn't reach Eydn. Check your connection and try again.");
       setMessages((prev) => prev.filter((m) => m.id !== assistantId));
     } finally {
       setStreaming(false);
@@ -131,9 +131,9 @@ export default function ChatPage() {
             </div>
             <div className="bg-lavender rounded-[16px] rounded-tl-sm px-4 py-3 max-w-lg">
               <p className="text-[15px] text-muted">
-                Hi! I&apos;m Eydn, your wedding guide. Ask me anything about
-                your wedding planning — I know your timeline, budget, vendors,
-                and guests!
+                Hey — I&apos;m Eydn. I have your full wedding details loaded:
+                timeline, budget, vendors, guests, and everything from your
+                planning guides. Ask me anything.
               </p>
             </div>
           </div>

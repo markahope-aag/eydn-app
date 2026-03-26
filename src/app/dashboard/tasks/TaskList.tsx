@@ -38,10 +38,10 @@ type Task = {
 
 type Props = {
   tasks: Task[];
-  onToggle: (id: string) => void;
-  onDelete: (id: string) => void;
-  onSelect: (task: Task) => void;
-  onReorder?: (phaseTaskIds: string[]) => void;
+  onToggle: (_id: string) => void;
+  onDelete: (_id: string) => void;
+  onSelect: (_task: Task) => void;
+  onReorder?: (_phaseTaskIds: string[]) => void;
 };
 
 const PHASE_ORDER = [
@@ -54,6 +54,18 @@ const PHASE_ORDER = [
   "1 Week Before",
   "After the Wedding",
 ];
+
+const PHASE_LABELS: Record<string, { label: string; hint: string }> = {
+  "12 Months Before": { label: "Start Here", hint: "Lock in your big-ticket vendors early" },
+  "9-12 Months Before": { label: "Building Momentum", hint: "Book your creative team and set the tone" },
+  "6-9 Months Before": { label: "Details Taking Shape", hint: "Invitations, attire, and decor decisions" },
+  "4-6 Months Before": { label: "Getting Real", hint: "Finalize menus, music, and guest details" },
+  "3-4 Months Before": { label: "Fine-Tuning", hint: "Fittings, beauty trials, and logistics" },
+  "1-2 Months Before": { label: "Almost There", hint: "Confirm everything and tie up loose ends" },
+  "1 Week Before": { label: "Final Countdown", hint: "Last checks before your big day" },
+  "After the Wedding": { label: "After the I Do's", hint: "Thank-yous, name changes, and memories" },
+  "Custom Tasks": { label: "Custom Tasks", hint: "Tasks you added yourself" },
+};
 
 const STATUS_LABELS: Record<string, string> = {
   not_started: "Not Started",
@@ -80,9 +92,9 @@ function SortableTaskItem({
   onSelect,
 }: {
   task: Task;
-  onToggle: (id: string) => void;
-  onDelete: (id: string) => void;
-  onSelect: (task: Task) => void;
+  onToggle: (_id: string) => void;
+  onDelete: (_id: string) => void;
+  onSelect: (_task: Task) => void;
 }) {
   const {
     attributes,
@@ -113,8 +125,9 @@ function SortableTaskItem({
       <button
         {...attributes}
         {...listeners}
-        className="flex-shrink-0 cursor-grab active:cursor-grabbing text-muted hover:text-plum p-0.5 touch-none"
+        className="flex-shrink-0 cursor-grab active:cursor-grabbing text-muted hover:text-plum p-0.5 touch-none group/drag relative"
         aria-label="Drag to reorder"
+        title="Drag to reorder tasks"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
           <circle cx="5" cy="3" r="1.5" />
@@ -131,12 +144,14 @@ function SortableTaskItem({
         className={`w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]} ${
           task.priority === "low" ? "border border-border" : ""
         }`}
+        title={`${task.priority} priority`}
       />
 
       {/* Status badge - click to cycle */}
       <button
         onClick={() => onToggle(task.id)}
         className={`rounded-full px-2 py-0.5 text-[12px] flex-shrink-0 ${STATUS_CLASSES[task.status]}`}
+        title="Click to change status"
       >
         {STATUS_LABELS[task.status]}
       </button>
@@ -175,7 +190,7 @@ function SortableTaskItem({
               : "text-muted"
           }`}
         >
-          {dueDateInfo.formatted} &middot; {dueDateInfo.relative}
+          {dueDateInfo.formatted} · {dueDateInfo.relative}
         </span>
       )}
       {!task.is_system_generated && (
@@ -253,6 +268,7 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect, onReorder }: Pro
         const phaseTasks = grouped.get(phase)!;
         const completed = phaseTasks.filter((t) => t.status === "done").length;
         const collapsed = collapsedPhases.has(phase);
+        const phaseInfo = PHASE_LABELS[phase] || { label: phase, hint: "" };
 
         return (
           <div key={phase} className="rounded-[16px] border-border bg-white overflow-hidden">
@@ -260,19 +276,40 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect, onReorder }: Pro
               onClick={() => togglePhase(phase)}
               className="w-full flex items-center justify-between px-4 py-3 bg-lavender hover:opacity-90 transition text-left"
             >
-              <div className="flex items-center gap-2">
-                <span className="text-[12px] text-muted">
-                  {collapsed ? "+" : "-"}
-                </span>
-                <span className="text-[15px] font-semibold text-plum">
-                  {phase}
-                </span>
-                <span className="text-[12px] text-muted">
-                  {completed}/{phaseTasks.length}
-                </span>
+              <div className="flex items-center gap-3 min-w-0">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  className={`flex-shrink-0 text-muted transition-transform ${collapsed ? "" : "rotate-180"}`}
+                >
+                  <path d="M3 4.5L6 7.5L9 4.5" />
+                </svg>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[15px] font-semibold text-plum">
+                      {phaseInfo.label}
+                    </span>
+                    <span className="text-[12px] text-muted">
+                      · {phase !== "Custom Tasks" ? phase : ""}
+                    </span>
+                    <span className="text-[12px] text-muted">
+                      {completed}/{phaseTasks.length}
+                    </span>
+                  </div>
+                  {phaseInfo.hint && (
+                    <p className="text-[12px] text-muted mt-0.5 truncate">
+                      {phaseInfo.hint}
+                    </p>
+                  )}
+                </div>
               </div>
               {/* Phase progress */}
-              <div className="progress-track w-24">
+              <div className="progress-track w-24 flex-shrink-0">
                 <div
                   className="progress-fill"
                   style={{

@@ -1,152 +1,507 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { EdynMessage } from "@/components/EdynMessage";
 import { trackOnboardingComplete } from "@/lib/analytics";
 
-const VENDOR_CATEGORIES = [
-  "Venue",
-  "Caterer",
-  "Photographer",
-  "Videographer",
-  "DJ or Band",
-  "Officiant",
-  "Florist",
-  "Cake/Dessert Baker",
-  "Hair Stylist",
-  "Makeup Artist",
-  "Rentals",
-  "Wedding Planner / Day-of Coordinator",
-  "Transportation",
-];
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type FormData = {
   partner1_name: string;
   partner2_name: string;
-  has_date: boolean;
   date: string;
-  has_venue: boolean;
-  venue: string;
-  has_guest_estimate: boolean;
-  guest_count_estimate: string;
-  style_description: string;
-  has_wedding_party: boolean | null;
-  wedding_party_count: string;
-  booked_vendors: string[];
-  has_budget: boolean;
   budget: string;
-  has_pre_wedding_events: boolean | null;
-  has_honeymoon: boolean | null;
-  anything_else: string;
+  guest_count_estimate: string;
+  venue_status: "booked" | "looking" | "nontraditional" | "";
+  venue_name: string;
+  venue_city: string;
+  booked_vendors: string[];
 };
 
 const INITIAL_FORM: FormData = {
   partner1_name: "",
   partner2_name: "",
-  has_date: false,
   date: "",
-  has_venue: false,
-  venue: "",
-  has_guest_estimate: false,
-  guest_count_estimate: "",
-  style_description: "",
-  has_wedding_party: null,
-  wedding_party_count: "",
-  booked_vendors: [],
-  has_budget: false,
   budget: "",
-  has_pre_wedding_events: null,
-  has_honeymoon: null,
-  anything_else: "",
+  guest_count_estimate: "",
+  venue_status: "",
+  venue_name: "",
+  venue_city: "",
+  booked_vendors: [],
 };
 
-const STEPS = [
-  "names",
-  "date",
-  "venue",
-  "guests",
-  "style",
-  "wedding_party",
-  "vendors",
-  "budget",
-  "pre_wedding",
-  "honeymoon",
-  "anything_else",
-] as const;
+const VENDOR_CATEGORIES = [
+  "Photographer",
+  "Videographer",
+  "Caterer",
+  "DJ or Band",
+  "Florist",
+  "Officiant",
+  "Cake/Dessert Baker",
+  "Hair Stylist",
+  "Makeup Artist",
+  "Rentals",
+  "Wedding Planner / Coordinator",
+  "Transportation",
+];
 
-/** Yes/Not yet toggle button pair */
-function YesNotYet({
-  value,
-  onChange,
-  yesLabel = "Yes",
-  noLabel = "Not yet",
-}: {
-  value: boolean | null;
-  onChange: (v: boolean) => void;
-  yesLabel?: string;
-  noLabel?: string;
-}) {
+const VENUE_OPTIONS = [
+  { value: "booked" as const, label: "Yes — we have a venue" },
+  { value: "looking" as const, label: "We're still looking" },
+  { value: "nontraditional" as const, label: "We're doing something non-traditional" },
+];
+
+// ─── AI Greeting Generator ───────────────────────────────────────────────────
+
+function generateAIGreeting(form: FormData): string {
+  const { partner1_name, partner2_name, date } = form;
+  const p1 = partner1_name || "there";
+  const p2 = partner2_name || "your partner";
+
+  if (!date) {
+    return `Hi ${p1} and ${p2}.\n\nYou haven't locked in a date yet, so we'll keep things flexible. I can see your planning details as you add them, so the more you put in, the more useful I get. What's on your mind?`;
+  }
+
+  const weddingDate = new Date(date + "T00:00:00");
+  const now = new Date();
+  const daysOut = Math.ceil((weddingDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const monthsOut = Math.max(1, Math.round(daysOut / 30));
+
+  const formatted = weddingDate.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  let variant: string;
+  if (daysOut > 365) {
+    variant = "You have good runway — the decisions you make now will save you real stress later.";
+  } else if (daysOut > 180) {
+    variant = "That's a solid planning window. A few things are worth locking in soon.";
+  } else if (daysOut > 90) {
+    variant = "You're in the thick of it now. Let's make sure nothing falls through the cracks.";
+  } else if (daysOut > 30) {
+    variant = "Things are getting real. Let's focus on what actually matters in the time you have.";
+  } else {
+    variant = "Almost there. This week is about execution, not decisions.";
+  }
+
+  return `Hi ${p1} and ${p2}.\n\nYou've got ${monthsOut > 1 ? `${monthsOut} months` : `${daysOut} days`} until ${formatted} — ${variant}\n\nI can see your planning details as you add them, so the more you put in, the more useful I get. What's on your mind?`;
+}
+
+// ─── Step Components ─────────────────────────────────────────────────────────
+
+function Welcome({ onNext }: { onNext: () => void }) {
   return (
-    <div className="flex gap-3">
-      <button
-        type="button"
-        onClick={() => onChange(true)}
-        className={`flex-1 rounded-[10px] border-border px-4 py-2.5 text-[15px] font-semibold transition ${
-          value === true
-            ? "border-violet bg-lavender text-violet"
-            : "hover:bg-lavender"
-        }`}
-      >
-        {yesLabel}
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange(false)}
-        className={`flex-1 rounded-[10px] border-border px-4 py-2.5 text-[15px] font-semibold transition ${
-          value === false
-            ? "border-violet bg-lavender text-violet"
-            : "hover:bg-lavender"
-        }`}
-      >
-        {noLabel}
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center max-w-xl mx-auto">
+      <h1 className="text-[28px] sm:text-[34px] font-semibold text-plum leading-tight">
+        Wedding planning without the chaos.
+      </h1>
+      <p className="mt-4 text-[16px] text-muted leading-relaxed max-w-md">
+        Most couples end up with five apps, two spreadsheets, and a folder full of PDFs they can never find. Eydn keeps everything in one place — your budget, vendors, guests, tasks, and day-of timeline, all talking to each other.
+      </p>
+      <button onClick={onNext} className="btn-primary mt-8 w-full sm:w-auto sm:min-w-[240px]">
+        Let&apos;s get started
       </button>
     </div>
   );
 }
 
+// Screen 2 — Partner Names (first, so we can personalize the rest)
+function PartnerNames({
+  partner1,
+  partner2,
+  onPartner1Change,
+  onPartner2Change,
+}: {
+  partner1: string;
+  partner2: string;
+  onPartner1Change: (_v: string) => void;
+  onPartner2Change: (_v: string) => void;
+}) {
+  return (
+    <div className="max-w-md mx-auto">
+      <h1 className="text-[24px] sm:text-[28px] font-semibold text-plum">Who&apos;s getting married?</h1>
+      <p className="mt-2 text-[15px] text-muted leading-relaxed">
+        Just first names is fine. We&apos;ll use these throughout the app.
+      </p>
+      <div className="mt-6 space-y-4">
+        <div>
+          <label className="block text-[14px] font-medium text-muted mb-1">Your name</label>
+          <input
+            type="text"
+            value={partner1}
+            onChange={(e) => onPartner1Change(e.target.value)}
+            className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
+            placeholder="First name"
+            aria-label="Your name"
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className="block text-[14px] font-medium text-muted mb-1">Partner&apos;s name</label>
+          <input
+            type="text"
+            value={partner2}
+            onChange={(e) => onPartner2Change(e.target.value)}
+            className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
+            placeholder="First name"
+            aria-label="Partner's name"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Screen 3 — Wedding Date (now personalized with their name)
+function WeddingDate({
+  partnerName,
+  value,
+  onChange,
+  error,
+}: {
+  partnerName: string;
+  value: string;
+  onChange: (_v: string) => void;
+  error: string;
+}) {
+  return (
+    <div className="max-w-md mx-auto">
+      <h1 className="text-[24px] sm:text-[28px] font-semibold text-plum">
+        When&apos;s the wedding{partnerName ? `, ${partnerName}` : ""}?
+      </h1>
+      <p className="mt-2 text-[15px] text-muted leading-relaxed">
+        Everything in Eydn — your task timeline, checklist, and planning priorities — is built around this date.
+      </p>
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-6 w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
+        aria-label="Wedding date"
+      />
+      {error && (
+        <p className="mt-2 text-[13px] text-red-600">{error}</p>
+      )}
+      <p className="mt-3 text-[13px] text-muted leading-relaxed">
+        Don&apos;t have an exact date yet? Put in your target month and we&apos;ll work from there. You can update it anytime.
+      </p>
+    </div>
+  );
+}
+
+// Screen 4 — Budget + Guest Count (combined, both skippable)
+function BudgetAndGuests({
+  budget,
+  guestCount,
+  onBudgetChange,
+  onGuestCountChange,
+}: {
+  budget: string;
+  guestCount: string;
+  onBudgetChange: (_v: string) => void;
+  onGuestCountChange: (_v: string) => void;
+}) {
+  return (
+    <div className="max-w-md mx-auto">
+      <h1 className="text-[24px] sm:text-[28px] font-semibold text-plum">Budget and guest count</h1>
+      <p className="mt-2 text-[15px] text-muted leading-relaxed">
+        These two numbers drive most of your planning decisions. Estimates are fine — you can adjust both anytime.
+      </p>
+
+      <div className="mt-6 space-y-6">
+        <div>
+          <label className="block text-[14px] font-medium text-muted mb-1">Total budget</label>
+          <div className="flex items-center gap-2">
+            <span className="text-muted text-[20px] font-medium">$</span>
+            <input
+              type="number"
+              value={budget}
+              onChange={(e) => onBudgetChange(e.target.value)}
+              className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
+              placeholder="e.g. 30,000"
+              min="1"
+              step="500"
+              aria-label="Total budget"
+              autoFocus
+            />
+          </div>
+          <p className="mt-1.5 text-[12px] text-muted">
+            The average US wedding runs $25,000 &ndash; $35,000, but what matters is what&apos;s realistic for you.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-[14px] font-medium text-muted mb-1">Estimated guest count</label>
+          <input
+            type="number"
+            value={guestCount}
+            onChange={(e) => onGuestCountChange(e.target.value)}
+            className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
+            placeholder="e.g. 120"
+            min="1"
+            step="1"
+            aria-label="Estimated guest count"
+          />
+          <p className="mt-1.5 text-[12px] text-muted">
+            This is your planning number — not a commitment. Most couples adjust it several times.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Screen 5 — Venue Status
+function VenueStatus({
+  status,
+  venueName,
+  venueCity,
+  onStatusChange,
+  onVenueNameChange,
+  onVenueCityChange,
+}: {
+  status: FormData["venue_status"];
+  venueName: string;
+  venueCity: string;
+  onStatusChange: (_v: FormData["venue_status"]) => void;
+  onVenueNameChange: (_v: string) => void;
+  onVenueCityChange: (_v: string) => void;
+}) {
+  return (
+    <div className="max-w-md mx-auto">
+      <h1 className="text-[24px] sm:text-[28px] font-semibold text-plum">Have you booked a venue yet?</h1>
+      <div className="mt-6 space-y-3">
+        {VENUE_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onStatusChange(opt.value)}
+            className={`w-full text-left rounded-[12px] border-2 px-5 py-4 text-[15px] font-medium transition ${
+              status === opt.value
+                ? "border-violet bg-lavender text-violet"
+                : "border-border hover:border-violet/30 text-plum"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+      {status === "booked" && (
+        <div className="mt-5 space-y-3">
+          <div>
+            <label className="block text-[14px] font-medium text-muted mb-1">Venue name</label>
+            <input
+              type="text"
+              value={venueName}
+              onChange={(e) => onVenueNameChange(e.target.value)}
+              className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
+              placeholder="e.g. The Barn at Cedar Grove"
+              aria-label="Venue name"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-[14px] font-medium text-muted mb-1">City</label>
+            <input
+              type="text"
+              value={venueCity}
+              onChange={(e) => onVenueCityChange(e.target.value)}
+              className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
+              placeholder="e.g. Austin, TX"
+              aria-label="Venue city"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Screen 6 — Booked Vendors
+function BookedVendors({
+  selected,
+  onToggle,
+}: {
+  selected: string[];
+  onToggle: (_vendor: string) => void;
+}) {
+  return (
+    <div className="max-w-md mx-auto">
+      <h1 className="text-[24px] sm:text-[28px] font-semibold text-plum">Have you booked any vendors yet?</h1>
+      <p className="mt-2 text-[15px] text-muted leading-relaxed">
+        Eydn builds your task list around what you&apos;ve already done. Tap any you&apos;ve booked so we don&apos;t nag you about them.
+      </p>
+      <div className="mt-6 grid gap-2 sm:grid-cols-2">
+        {VENDOR_CATEGORIES.map((vendor) => (
+          <button
+            key={vendor}
+            type="button"
+            onClick={() => onToggle(vendor)}
+            className={`text-left rounded-[12px] border-2 px-4 py-3 text-[14px] font-medium transition flex items-center gap-2.5 ${
+              selected.includes(vendor)
+                ? "border-violet bg-lavender text-violet"
+                : "border-border hover:border-violet/30 text-plum"
+            }`}
+          >
+            <span className={`w-4.5 h-4.5 rounded border-2 flex items-center justify-center flex-shrink-0 transition ${
+              selected.includes(vendor) ? "border-violet bg-violet" : "border-border"
+            }`}>
+              {selected.includes(vendor) && (
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                  <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </span>
+            {vendor}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Screen 7 — AI intro + first message + input (combined)
+function AIScreen({
+  form,
+  aiInput,
+  onAIInputChange,
+  onGoToDashboard,
+  submitting,
+}: {
+  form: FormData;
+  aiInput: string;
+  onAIInputChange: (_v: string) => void;
+  onGoToDashboard: () => void;
+  submitting: boolean;
+}) {
+  const greeting = generateAIGreeting(form);
+
+  return (
+    <div className="max-w-lg mx-auto">
+      <h1 className="text-[24px] sm:text-[28px] font-semibold text-plum">
+        One more thing before you dive in.
+      </h1>
+      <p className="mt-2 text-[15px] text-muted leading-relaxed">
+        Eydn has a planning assistant that knows your wedding — your budget, your vendors, your timeline, all of it. It&apos;s not a chatbot. It knows your actual situation and gives you straight answers.
+      </p>
+
+      {/* AI message bubble */}
+      <div className="flex gap-3 items-start mt-6">
+        <div className="flex-shrink-0 w-9 h-9 rounded-full bg-brand-gradient flex items-center justify-center">
+          <span className="text-[14px] font-semibold text-white">e</span>
+        </div>
+        <div className="flex-1 bg-lavender rounded-[16px] rounded-tl-[4px] px-5 py-4">
+          <p className="text-[15px] text-plum leading-relaxed whitespace-pre-line">{greeting}</p>
+        </div>
+      </div>
+
+      {/* Text input */}
+      <div className="mt-5">
+        <input
+          type="text"
+          value={aiInput}
+          onChange={(e) => onAIInputChange(e.target.value)}
+          placeholder="Ask anything, or head to your dashboard..."
+          className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
+          aria-label="Message Eydn"
+        />
+      </div>
+
+      {/* Dashboard button — always visible */}
+      <button
+        onClick={onGoToDashboard}
+        disabled={submitting}
+        className="btn-primary mt-6 w-full disabled:opacity-50"
+      >
+        {submitting ? "Setting up..." : "Go to my dashboard"}
+      </button>
+    </div>
+  );
+}
+
+// ─── Budget Category Allocations ─────────────────────────────────────────────
+
+const BUDGET_ALLOCATIONS = [
+  { category: "Ceremony & Venue", pct: 0.30 },
+  { category: "Food & Beverage", pct: 0.25 },
+  { category: "Photography & Video", pct: 0.12 },
+  { category: "Music & Entertainment", pct: 0.08 },
+  { category: "Florals & Decor", pct: 0.08 },
+  { category: "Attire & Beauty", pct: 0.07 },
+  { category: "Stationery & Postage", pct: 0.02 },
+  { category: "Gifts & Favors", pct: 0.02 },
+  { category: "Miscellaneous", pct: 0.06 },
+];
+
+// ─── Steps ───────────────────────────────────────────────────────────────────
+// 0: Welcome (no progress bar)
+// 1: Partner Names
+// 2: Wedding Date
+// 3: Budget + Guest Count
+// 4: Venue Status
+// 5: Booked Vendors
+// 6: AI (intro + greeting + input)
+
+const TOTAL_STEPS = 7;
+const PROGRESS_STEPS = TOTAL_STEPS - 1; // exclude Welcome
+
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isReview = searchParams.get("review") === "true";
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
-  const [resumeChecked, setResumeChecked] = useState(false);
+  const [dateError, setDateError] = useState("");
+  const [aiInput, setAIInput] = useState("");
+  const [ready, setReady] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  const currentStep = STEPS[step];
-  const isLast = step === STEPS.length - 1;
-
-  // Check for existing partial questionnaire
+  // Check if already onboarded → redirect (unless reviewing)
   useEffect(() => {
-    fetch("/api/questionnaire")
-      .then((r) => {
-        if (r.ok) return r.json();
-        return null;
-      })
-      .then((data) => {
-        if (data?.responses) {
-          const saved = data.responses as Partial<FormData>;
-          setForm((prev) => ({ ...prev, ...saved }));
-          if (data.completed) {
-            setStep(0);
-          } else {
-            const lastStep = (saved as Record<string, unknown>).last_step;
-            if (typeof lastStep === "number") setStep(lastStep);
+    if (isReview) {
+      fetch("/api/weddings")
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => {
+          if (data) {
+            setForm((prev) => ({
+              ...prev,
+              partner1_name: data.partner1_name || "",
+              partner2_name: data.partner2_name || "",
+              date: data.date || "",
+              budget: data.budget ? String(data.budget) : "",
+              guest_count_estimate: data.guest_count_estimate ? String(data.guest_count_estimate) : "",
+              venue_name: data.venue || "",
+              venue_city: data.venue_city || "",
+              venue_status: data.venue ? "booked" : "",
+            }));
+            setStep(1);
           }
+          setReady(true);
+        })
+        .catch(() => setReady(true));
+      return;
+    }
+
+    fetch("/api/weddings")
+      .then((r) => {
+        if (r.ok) {
+          router.replace("/dashboard");
+        } else {
+          setReady(true);
         }
       })
-      .finally(() => setResumeChecked(true));
-  }, []);
+      .catch(() => setReady(true));
+  }, [router, isReview]);
+
+  // Scroll to top on step change
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
 
   function update<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -161,37 +516,69 @@ export default function OnboardingPage() {
     }));
   }
 
-  async function saveProgress() {
-    await fetch("/api/questionnaire", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        responses: { ...form, last_step: step },
-        completed: false,
-      }),
-    }).catch(() => {});
+  function validateDate(d: string): boolean {
+    if (!d) return true;
+    const weddingDate = new Date(d + "T00:00:00");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (weddingDate < today) {
+      setDateError("That date has already passed — did you mean a future date?");
+      return false;
+    }
+    setDateError("");
+    return true;
   }
 
   function canProceed(): boolean {
-    switch (currentStep) {
-      case "names":
+    switch (step) {
+      case 1: // Partner Names
         return !!form.partner1_name.trim() && !!form.partner2_name.trim();
+      case 2: // Wedding Date
+        return !!form.date && !dateError;
+      case 3: // Budget + Guest Count — always proceed (both optional)
+        return true;
+      case 4: // Venue Status
+        if (!form.venue_status) return false;
+        if (form.venue_status === "booked" && !form.venue_name.trim()) return false;
+        return true;
+      case 5: // Booked Vendors — always proceed (none is fine)
+        return true;
       default:
         return true;
     }
   }
 
-  async function handleNext() {
-    if (!canProceed()) return;
-    await saveProgress();
-    if (isLast) {
-      await handleSubmit();
-    } else {
+  function getCTALabel(): string {
+    switch (step) {
+      case 1: return "Nice to meet you both";
+      case 2: return "That's the date";
+      case 3: return "Continue";
+      case 4: return "Continue";
+      case 5: return form.booked_vendors.length > 0
+        ? `Continue with ${form.booked_vendors.length} booked`
+        : "None yet — continue";
+      default: return "Continue";
+    }
+  }
+
+  function getSkipLabel(): string | null {
+    switch (step) {
+      case 3: return "I'll add these later";
+      default: return null;
+    }
+  }
+
+  function handleNext() {
+    if (step === 2 && form.date && !validateDate(form.date)) return;
+    if (step === 3 && form.budget && Number(form.budget) <= 0) return;
+    if (step === 3 && form.guest_count_estimate && (Number(form.guest_count_estimate) <= 0 || !Number.isInteger(Number(form.guest_count_estimate)))) return;
+
+    if (step < TOTAL_STEPS - 1) {
       setStep((s) => s + 1);
     }
   }
 
-  async function handleSubmit() {
+  async function handleComplete() {
     setSubmitting(true);
     try {
       const res = await fetch("/api/onboarding", {
@@ -201,385 +588,166 @@ export default function OnboardingPage() {
           partner1_name: form.partner1_name,
           partner2_name: form.partner2_name,
           date: form.date || null,
-          venue: form.venue || null,
+          venue: form.venue_name || null,
+          venue_city: form.venue_city || null,
           budget: form.budget ? Number(form.budget) : null,
-          guest_count_estimate: form.guest_count_estimate
-            ? Number(form.guest_count_estimate)
-            : null,
-          style_description: form.style_description || null,
-          has_wedding_party: form.has_wedding_party,
-          wedding_party_count: form.wedding_party_count
-            ? Number(form.wedding_party_count)
-            : null,
-          has_pre_wedding_events: form.has_pre_wedding_events,
-          has_honeymoon: form.has_honeymoon,
+          guest_count_estimate: form.guest_count_estimate ? Number(form.guest_count_estimate) : null,
+          venue_status: form.venue_status || null,
           booked_vendors: form.booked_vendors,
+          budget_allocations: form.budget ? BUDGET_ALLOCATIONS.map((a) => ({
+            category: a.category,
+            allocated: Math.round(Number(form.budget) * a.pct),
+          })) : null,
           responses: form,
         }),
       });
 
       if (res.ok) {
         trackOnboardingComplete();
-        toast.success("Your planning journey begins now!");
+        if (aiInput.trim()) {
+          await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: aiInput.trim() }),
+          }).catch((err) => console.error("Failed to seed AI chat", err));
+        }
         router.push("/dashboard");
       } else {
-        toast.error("Something went wrong. Please try again.");
+        toast.error("Setup didn't save. Try once more — if it keeps happening, reach out to support@eydn.app.");
       }
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (!resumeChecked) {
-    return <p className="text-[15px] text-muted py-8">Loading...</p>;
+  if (!ready) {
+    return <p className="text-[15px] text-muted py-12 text-center">One moment...</p>;
   }
 
+  // Screen 1 — Welcome (no progress bar)
+  if (step === 0) {
+    return (
+      <div className="px-6 py-12" ref={contentRef}>
+        <Welcome onNext={() => setStep(1)} />
+      </div>
+    );
+  }
+
+  // Screen 7 — AI screen (no back button, no standard nav)
+  if (step === 6) {
+    return (
+      <div className="px-6 py-8 max-w-2xl mx-auto" ref={contentRef}>
+        <div className="flex gap-1 mb-10">
+          {Array.from({ length: PROGRESS_STEPS }).map((_, i) => (
+            <div
+              key={i}
+              className={`h-1 flex-1 rounded-full transition-colors ${
+                i < step ? "bg-violet" : "bg-lavender"
+              }`}
+            />
+          ))}
+        </div>
+        <AIScreen
+          form={form}
+          aiInput={aiInput}
+          onAIInputChange={setAIInput}
+          onGoToDashboard={handleComplete}
+          submitting={submitting}
+        />
+      </div>
+    );
+  }
+
+  // Screens 2–6
+  const skipLabel = getSkipLabel();
+
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="px-6 py-8 max-w-2xl mx-auto" ref={contentRef}>
       {/* Progress bar */}
-      <div className="flex gap-1 mb-8">
-        {STEPS.map((_, i) => (
+      <div className="flex gap-1 mb-10">
+        {Array.from({ length: PROGRESS_STEPS }).map((_, i) => (
           <div
             key={i}
-            className={`h-1.5 flex-1 rounded-full transition-colors ${
-              i <= step ? "bg-violet" : "bg-lavender"
+            className={`h-1 flex-1 rounded-full transition-colors ${
+              i < step ? "bg-violet" : "bg-lavender"
             }`}
           />
         ))}
       </div>
 
-      <div className="space-y-6">
-        {/* STEP: Names */}
-        {currentStep === "names" && (
-          <>
-            <EdynMessage message="Hey! Let's get started with the basics so we can plan your perfect day. What are your names?" />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-[15px] font-semibold text-muted">Your Name</label>
-                <input
-                  type="text"
-                  value={form.partner1_name}
-                  onChange={(e) => update("partner1_name", e.target.value)}
-                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
-                  placeholder="First name"
-                  aria-label="Your name"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-[15px] font-semibold text-muted">Partner&apos;s Name</label>
-                <input
-                  type="text"
-                  value={form.partner2_name}
-                  onChange={(e) => update("partner2_name", e.target.value)}
-                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
-                  placeholder="First name"
-                  aria-label="Partner's name"
-                  required
-                />
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* STEP: Date */}
-        {currentStep === "date" && (
-          <>
-            <EdynMessage message={`Great to meet you, ${form.partner1_name}! Do you have a wedding date set?`} />
-            <YesNotYet
-              value={form.has_date ? true : form.has_date === false && !form.date ? false : null}
-              onChange={(v) => { update("has_date", v); if (!v) update("date", ""); }}
-              yesLabel="We have a date"
-              noLabel="Not yet"
-            />
-            {form.has_date && (
-              <>
-                <EdynMessage message="Wonderful! When is the big day?" />
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => update("date", e.target.value)}
-                  aria-label="Wedding date"
-                  className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
-                />
-              </>
-            )}
-            {form.has_date === false && (
-              <EdynMessage message="No worries! We'll help you plan around a flexible timeline." />
-            )}
-          </>
-        )}
-
-        {/* STEP: Venue */}
-        {currentStep === "venue" && (
-          <>
-            <EdynMessage message="Do you have a venue booked?" />
-            <YesNotYet
-              value={form.has_venue ? true : form.has_venue === false && !form.venue ? false : null}
-              onChange={(v) => { update("has_venue", v); if (!v) update("venue", ""); }}
-              yesLabel="We have one"
-              noLabel="Still looking"
-            />
-            {form.has_venue && (
-              <>
-                <EdynMessage message="Love it! What's the venue called?" />
-                <input
-                  type="text"
-                  value={form.venue}
-                  onChange={(e) => update("venue", e.target.value)}
-                  placeholder="e.g. The Grand Ballroom"
-                  aria-label="Venue name"
-                  className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
-                />
-              </>
-            )}
-            {form.has_venue === false && (
-              <EdynMessage message="No problem! We'll add venue research to your task list." />
-            )}
-          </>
-        )}
-
-        {/* STEP: Guests */}
-        {currentStep === "guests" && (
-          <>
-            <EdynMessage message="How about your guest list — do you have a rough idea of how many people you're inviting?" />
-            <YesNotYet
-              value={form.has_guest_estimate ? true : form.has_guest_estimate === false && !form.guest_count_estimate ? false : null}
-              onChange={(v) => { update("has_guest_estimate", v); if (!v) update("guest_count_estimate", ""); }}
-              yesLabel="We have an estimate"
-              noLabel="Not sure yet"
-            />
-            {form.has_guest_estimate && (
-              <>
-                <EdynMessage message="Great! Roughly how many guests are you thinking?" />
-                <input
-                  type="number"
-                  value={form.guest_count_estimate}
-                  onChange={(e) => update("guest_count_estimate", e.target.value)}
-                  placeholder="e.g. 150"
-                  min="1"
-                  aria-label="Estimated guest count"
-                  className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
-                />
-              </>
-            )}
-            {form.has_guest_estimate === false && (
-              <EdynMessage message="That's totally fine! The guest list tool will help you figure it out." />
-            )}
-          </>
-        )}
-
-        {/* STEP: Style */}
-        {currentStep === "style" && (
-          <>
-            <EdynMessage message="Now for the fun part — how would you describe your wedding vibe in a few words?" />
-            <input
-              type="text"
-              value={form.style_description}
-              onChange={(e) => update("style_description", e.target.value)}
-              placeholder="e.g. Rustic, elegant, outdoor"
-              aria-label="Wedding style description"
-              className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
-            />
-          </>
-        )}
-
-        {/* STEP: Wedding Party */}
-        {currentStep === "wedding_party" && (
-          <>
-            <EdynMessage message="Do you already have a wedding party lined up?" />
-            <YesNotYet
-              value={form.has_wedding_party}
-              onChange={(v) => { update("has_wedding_party", v); if (!v) update("wedding_party_count", ""); }}
-            />
-            {form.has_wedding_party === true && (
-              <>
-                <EdynMessage message="Great! How many people will be in your wedding party total?" />
-                <input
-                  type="number"
-                  value={form.wedding_party_count}
-                  onChange={(e) => update("wedding_party_count", e.target.value)}
-                  placeholder="e.g. 8"
-                  min="1"
-                  aria-label="Wedding party count"
-                  className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
-                />
-              </>
-            )}
-            {form.has_wedding_party === false && (
-              <EdynMessage message="No worries! We can help you plan who to ask later." />
-            )}
-          </>
-        )}
-
-        {/* STEP: Vendors */}
-        {currentStep === "vendors" && (
-          <>
-            <EdynMessage message="Let's see where you're at with vendors. Which of these have you already booked?" />
-            <div className="grid gap-2 sm:grid-cols-2">
-              {VENDOR_CATEGORIES.map((vendor) => (
-                <button
-                  key={vendor}
-                  type="button"
-                  onClick={() => toggleVendor(vendor)}
-                  className={`flex items-center gap-2 rounded-[10px] border-border px-3 py-2.5 text-[15px] text-left transition ${
-                    form.booked_vendors.includes(vendor)
-                      ? "border-violet bg-lavender text-violet font-semibold"
-                      : "hover:bg-lavender"
-                  }`}
-                >
-                  <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition ${
-                    form.booked_vendors.includes(vendor)
-                      ? "border-violet bg-violet"
-                      : "border-border"
-                  }`}>
-                    {form.booked_vendors.includes(vendor) && (
-                      <span className="text-white text-[10px]">✓</span>
-                    )}
-                  </span>
-                  {vendor}
-                </button>
-              ))}
-            </div>
-            {form.booked_vendors.length === 0 && (
-              <EdynMessage message="No vendors booked yet? That's completely normal! We'll help you find and manage them." />
-            )}
-            {form.booked_vendors.length > 0 && (
-              <EdynMessage message={`Nice — ${form.booked_vendors.length} vendor${form.booked_vendors.length > 1 ? "s" : ""} already locked in!`} />
-            )}
-          </>
-        )}
-
-        {/* STEP: Budget */}
-        {currentStep === "budget" && (
-          <>
-            <EdynMessage message="Do you have a wedding budget in mind?" />
-            <YesNotYet
-              value={form.has_budget ? true : form.has_budget === false && !form.budget ? false : null}
-              onChange={(v) => { update("has_budget", v); if (!v) update("budget", ""); }}
-              yesLabel="We have a budget"
-              noLabel="Not sure yet"
-            />
-            {form.has_budget && (
-              <>
-                <EdynMessage message="Smart! What's the total budget you're working with?" />
-                <div className="flex items-center gap-2">
-                  <span className="text-muted text-[18px]">$</span>
-                  <input
-                    type="number"
-                    value={form.budget}
-                    onChange={(e) => update("budget", e.target.value)}
-                    placeholder="e.g. 25,000"
-                    min="0"
-                    step="500"
-                    aria-label="Wedding budget"
-                    className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px]"
-                  />
-                </div>
-              </>
-            )}
-            {form.has_budget === false && (
-              <EdynMessage message="No problem! The budget tracker will help you figure out what to allocate where." />
-            )}
-          </>
-        )}
-
-        {/* STEP: Pre-wedding Events */}
-        {currentStep === "pre_wedding" && (
-          <>
-            <EdynMessage message="Are you planning any pre-wedding celebrations — bridal shower, bachelor/bachelorette parties?" />
-            <YesNotYet
-              value={form.has_pre_wedding_events}
-              onChange={(v) => update("has_pre_wedding_events", v)}
-              yesLabel="Yes, we are"
-              noLabel="Not at this point"
-            />
-            {form.has_pre_wedding_events === true && (
-              <EdynMessage message="Fun! We'll add those to your planning timeline." />
-            )}
-            {form.has_pre_wedding_events === false && (
-              <EdynMessage message="That's totally fine! Less to plan means more time to enjoy the journey." />
-            )}
-          </>
-        )}
-
-        {/* STEP: Honeymoon */}
-        {currentStep === "honeymoon" && (
-          <>
-            <EdynMessage message="What about a honeymoon — are you planning one?" />
-            <YesNotYet
-              value={form.has_honeymoon}
-              onChange={(v) => update("has_honeymoon", v)}
-              yesLabel="Yes!"
-              noLabel="Not yet"
-            />
-            {form.has_honeymoon === true && (
-              <EdynMessage message="Exciting! We'll keep track of bookings, flights, and packing reminders for you." />
-            )}
-            {form.has_honeymoon === false && (
-              <EdynMessage message="No worries! If you decide to later, we can add a honeymoon planning checklist." />
-            )}
-          </>
-        )}
-
-        {/* STEP: Anything Else */}
-        {currentStep === "anything_else" && (
-          <>
-            <EdynMessage message="We've got a great starting point! Is there anything else you'd like me to know before we dive in?" />
-            <textarea
-              value={form.anything_else}
-              onChange={(e) => update("anything_else", e.target.value)}
-              placeholder="Share any other details, preferences, or concerns..."
-              rows={4}
-              aria-label="Additional details"
-              className="w-full rounded-[10px] border-border px-3 py-2.5 text-[15px] resize-none"
-            />
-          </>
-        )}
-      </div>
+      {/* Step content */}
+      {step === 1 && (
+        <PartnerNames
+          partner1={form.partner1_name}
+          partner2={form.partner2_name}
+          onPartner1Change={(v) => update("partner1_name", v)}
+          onPartner2Change={(v) => update("partner2_name", v)}
+        />
+      )}
+      {step === 2 && (
+        <WeddingDate
+          partnerName={form.partner1_name}
+          value={form.date}
+          onChange={(v) => { update("date", v); validateDate(v); }}
+          error={dateError}
+        />
+      )}
+      {step === 3 && (
+        <BudgetAndGuests
+          budget={form.budget}
+          guestCount={form.guest_count_estimate}
+          onBudgetChange={(v) => update("budget", v)}
+          onGuestCountChange={(v) => update("guest_count_estimate", v)}
+        />
+      )}
+      {step === 4 && (
+        <VenueStatus
+          status={form.venue_status}
+          venueName={form.venue_name}
+          venueCity={form.venue_city}
+          onStatusChange={(v) => update("venue_status", v)}
+          onVenueNameChange={(v) => update("venue_name", v)}
+          onVenueCityChange={(v) => update("venue_city", v)}
+        />
+      )}
+      {step === 5 && (
+        <BookedVendors
+          selected={form.booked_vendors}
+          onToggle={toggleVendor}
+        />
+      )}
 
       {/* Navigation */}
-      <div className="mt-8 flex items-center">
-        {step > 0 && (
+      <div className="mt-10 max-w-md mx-auto">
+        <button
+          type="button"
+          onClick={handleNext}
+          disabled={!canProceed()}
+          className="btn-primary w-full disabled:opacity-40"
+        >
+          {getCTALabel()}
+        </button>
+
+        {skipLabel && (
+          <button
+            type="button"
+            onClick={() => setStep((s) => s + 1)}
+            className="block mx-auto mt-3 text-[14px] text-muted hover:text-plum transition"
+          >
+            {skipLabel}
+          </button>
+        )}
+
+        {step > 1 && (
           <button
             type="button"
             onClick={() => setStep((s) => s - 1)}
-            className="btn-ghost"
+            className="block mx-auto mt-4 text-[14px] text-muted hover:text-plum transition"
           >
             Back
           </button>
         )}
-        <div className="ml-auto flex items-center gap-3">
-          {currentStep !== "names" && !isLast && (
-            <button
-              type="button"
-              onClick={async () => {
-                await saveProgress();
-                setStep((s) => s + 1);
-              }}
-              className="text-[15px] text-muted hover:text-plum transition"
-            >
-              Skip for now
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={!canProceed() || submitting}
-            className="btn-primary disabled:opacity-50"
-          >
-            {submitting
-              ? "Setting up..."
-              : isLast
-              ? "Start Planning!"
-              : "Continue"}
-          </button>
-        </div>
       </div>
-
-      <p className="mt-4 text-center text-[12px] text-muted">
-        Step {step + 1} of {STEPS.length}
-      </p>
     </div>
   );
 }

@@ -64,7 +64,7 @@ export default function SeatingPage() {
         setPartyMembers(p);
         setCeremonyPositions(c);
       })
-      .catch(() => toast.error("Failed to load seating data"))
+      .catch(() => toast.error("Couldn't load seating data. Try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -101,7 +101,7 @@ export default function SeatingPage() {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ x: table.x, y: table.y }),
-          }).catch(() => {});
+          }).catch((err) => console.error("Failed to save table position", err));
         }
         return prev;
       });
@@ -134,7 +134,7 @@ export default function SeatingPage() {
       const saved = await res.json();
       setTables((prev) => [...prev, saved]);
     } catch {
-      toast.error("Failed to add table");
+      toast.error("Table didn't save. Try again.");
     }
   }
 
@@ -599,7 +599,7 @@ export default function SeatingPage() {
       <ConfirmDialog
         open={confirmDeleteTable !== null}
         title="Delete table?"
-        message="This table and all its guest assignments will be permanently removed. This action cannot be undone."
+        message="This permanently removes this table and its seat assignments."
         confirmLabel="Delete"
         onConfirm={() => {
           if (confirmDeleteTable) deleteTable(confirmDeleteTable);

@@ -56,7 +56,7 @@ export default function WeddingPartyPage() {
         return r.ok ? r.json() : Promise.reject();
       })
       .then(setMembers)
-      .catch(() => toast.error("Failed to load wedding party"))
+      .catch(() => toast.error("Couldn't load your wedding party. Try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -106,7 +106,7 @@ export default function WeddingPartyPage() {
       toast.success("Added to wedding party");
     } catch {
       setMembers((prev) => prev.filter((m) => m.id !== tempId));
-      toast.error("Failed to add member");
+      toast.error("Couldn't add that person. Try again.");
     }
   }
 
@@ -124,7 +124,7 @@ export default function WeddingPartyPage() {
       if (!res.ok) throw new Error();
     } catch {
       setMembers(prev);
-      toast.error("Failed to update");
+      toast.error("Changes didn't save. Try again.");
     }
   }
 
@@ -137,7 +137,7 @@ export default function WeddingPartyPage() {
       toast("Removed from wedding party");
     } catch {
       setMembers(prev);
-      toast.error("Failed to remove");
+      toast.error("Couldn't remove that person. Try again.");
     }
   }
 
@@ -159,9 +159,9 @@ export default function WeddingPartyPage() {
       }
       const { file_url } = await uploadRes.json();
       await updateField(memberId, "photo_url", file_url);
-      toast.success("Photo uploaded");
+      toast.success("Photo saved");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to upload photo");
+      toast.error(err instanceof Error ? err.message : "Photo didn't upload. Try again.");
     } finally {
       setUploadingPhoto(null);
       if (photoRef.current) photoRef.current.value = "";
@@ -412,7 +412,7 @@ export default function WeddingPartyPage() {
           <EmptyState
             icon="👗"
             title="No wedding party members yet"
-            message="Add your bridesmaids, groomsmen, and other members of your wedding party."
+            message="Add the people who'll be standing with you on the day."
           />
         )}
       </div>
@@ -420,7 +420,7 @@ export default function WeddingPartyPage() {
       <ConfirmDialog
         open={confirmDelete !== null}
         title="Remove member?"
-        message="This person will be removed from your wedding party. This action cannot be undone."
+        message="This permanently removes them from your wedding party."
         confirmLabel="Remove"
         onConfirm={() => { if (confirmDelete) deleteMember(confirmDelete); setConfirmDelete(null); }}
         onCancel={() => setConfirmDelete(null)}

@@ -9,6 +9,7 @@ import { hairMakeupGuide } from "./hair-makeup";
 import { decorGuide } from "./decor";
 import { musicGuide } from "./music";
 import { speechesGuide } from "./speeches";
+import registryGuide from "./registry";
 
 export const GUIDES: GuideDefinition[] = [
   guestList,
@@ -20,6 +21,7 @@ export const GUIDES: GuideDefinition[] = [
   decorGuide,
   musicGuide,
   speechesGuide,
+  registryGuide,
 ];
 
 export const GUIDE_MAP: Record<string, GuideDefinition> = Object.fromEntries(

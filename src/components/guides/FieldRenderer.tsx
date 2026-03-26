@@ -5,7 +5,7 @@ import type { FieldType } from "@/lib/guides/types";
 type Props = {
   field: FieldType;
   value: unknown;
-  onChange: (value: unknown) => void;
+  onChange: (_value: unknown) => void;
 };
 
 export function FieldRenderer({ field, value, onChange }: Props) {

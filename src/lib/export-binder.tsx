@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -93,6 +92,13 @@ type Expense = {
   vendor_name: string | null;
 };
 
+type RegistryLink = {
+  id: string;
+  name: string;
+  url: string;
+  sort_order: number;
+};
+
 type RehearsalDinner = {
   venue: string | null;
   date: string | null;
@@ -158,6 +164,7 @@ const SECTIONS = [
   "Guest List",
   "Budget Summary",
   "Rehearsal Dinner",
+  "Gift Registry",
   "Packing Checklist",
   "Notes",
 ];
@@ -177,6 +184,7 @@ export async function exportWeddingBinder(): Promise<void> {
     ceremonyPositions,
     expenses,
     rehearsalDinner,
+    registryLinks,
   ] = await Promise.all([
     fetchJSON<Wedding>("/api/weddings"),
     fetchJSON<{ content: DayOfPlan }>("/api/day-of"),
@@ -188,6 +196,7 @@ export async function exportWeddingBinder(): Promise<void> {
     fetchJSON<CeremonyPosition[]>("/api/ceremony"),
     fetchJSON<Expense[]>("/api/expenses"),
     fetchJSON<RehearsalDinner>("/api/rehearsal-dinner"),
+    fetchJSON<RegistryLink[]>("/api/wedding-website/registry"),
   ]);
 
   const wedding = weddingData || { partner1_name: "Partner 1", partner2_name: "Partner 2", date: null, venue: null, budget: null };
@@ -223,6 +232,7 @@ export async function exportWeddingBinder(): Promise<void> {
   const positionList = ceremonyPositions || [];
   const expenseList = expenses || [];
   const rehearsal = rehearsalDinner;
+  const registry = registryLinks || [];
 
   // 2. Dynamic import of @react-pdf/renderer
   const {
@@ -1112,7 +1122,7 @@ export async function exportWeddingBinder(): Promise<void> {
                       <Text style={[s.tableHeaderCell, { flex: 1 }]}>Event</Text>
                       <Text style={[s.tableHeaderCell, { width: 150 }]}>Notes</Text>
                     </View>
-                    {rehearsal.timeline.map((t: any, i: number) => (
+                    {rehearsal.timeline.map((t: { time?: string; event?: string; notes?: string }, i: number) => (
                       <View key={i} style={rowStyle(i)} wrap={false}>
                         <Text style={[s.tableCellBold, { width: 80 }]}>{t.time || "\u2014"}</Text>
                         <Text style={[s.tableCell, { flex: 1 }]}>{t.event || "\u2014"}</Text>
@@ -1137,6 +1147,31 @@ export async function exportWeddingBinder(): Promise<void> {
                 </>
               )}
             </>
+          )}
+        </View>
+        <Footer />
+      </PdfPage>
+
+      {/* ── GIFT REGISTRY ──────────────────────────────────────────────── */}
+      <PdfPage size="A4" style={s.page} wrap>
+        <View style={s.body}>
+          <SectionHeader title="Gift Registry" />
+          {registry.length === 0 ? (
+            <Text style={s.mutedText}>No registry links added yet.</Text>
+          ) : (
+            <View>
+              <Text style={{ fontSize: 10, color: brand.muted, marginBottom: 12 }}>
+                Share these links with guests who ask where you&apos;re registered.
+              </Text>
+              {registry.map((link, i) => (
+                <View key={i} style={{ flexDirection: "row", marginBottom: 8, paddingBottom: 8, borderBottomWidth: i < registry.length - 1 ? 0.5 : 0, borderBottomColor: brand.champagne }} wrap={false}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: brand.forest, marginBottom: 2 }}>{link.name}</Text>
+                    <Text style={{ fontSize: 9, color: brand.muted }}>{link.url}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
           )}
         </View>
         <Footer />

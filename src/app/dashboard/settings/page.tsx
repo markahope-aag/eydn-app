@@ -120,7 +120,7 @@ export default function SettingsPage() {
           setReminderDays(prefs.reminder_days_before);
         }
       })
-      .catch(() => {})
+      .catch((err) => console.error("Failed to load settings", err))
       .finally(() => setLoading(false));
 
     // Fetch collaborators (will 403 if not owner — that's fine)
@@ -132,7 +132,7 @@ export default function SettingsPage() {
           setIsOwner(true);
         }
       })
-      .catch(() => {});
+      .catch(() => {}); // Expected 403 for non-owners
 
     // Fetch trash
     fetchTrash();
@@ -160,7 +160,7 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error();
       toast.success("Settings saved");
     } catch {
-      toast.error("Failed to save settings");
+      toast.error("Settings didn't save. Try again.");
     }
   }
 
@@ -184,7 +184,7 @@ export default function SettingsPage() {
       trackCollaboratorInvited();
       toast.success(`Invitation sent to ${saved.email}`);
     } catch {
-      toast.error("Failed to send invitation");
+      toast.error("Invitation didn't send. Check the email and try again.");
     } finally {
       setInviting(false);
     }
@@ -199,7 +199,7 @@ export default function SettingsPage() {
       toast.success("Collaborator removed");
     } catch {
       setCollaborators(prev);
-      toast.error("Failed to remove collaborator");
+      toast.error("Couldn't remove that collaborator. Try again.");
     }
   }
 
@@ -223,7 +223,7 @@ export default function SettingsPage() {
       trackExport("json");
       toast.success("Data exported successfully");
     } catch {
-      toast.error("Failed to export data");
+      toast.error("Export didn't work. Try again.");
     } finally {
       setExporting(false);
     }
@@ -241,7 +241,7 @@ export default function SettingsPage() {
       setTrashItems((prev) => prev.filter((t) => t.id !== item.id));
       toast.success(`Restored ${formatEntityType(item.type)}: ${item.name}`);
     } catch {
-      toast.error("Failed to restore item");
+      toast.error("Couldn't restore that item. Try again.");
     } finally {
       setRestoringIds((prev) => {
         const next = new Set(prev);
@@ -266,7 +266,7 @@ export default function SettingsPage() {
 
       <div className="mt-6">
         <Link
-          href="/dashboard/onboarding"
+          href="/dashboard/onboarding?review=true"
           className="inline-flex items-center gap-2 text-[15px] text-violet hover:text-plum transition font-semibold"
         >
           Review Questionnaire Answers
@@ -298,7 +298,7 @@ export default function SettingsPage() {
               if (!res.ok) throw new Error();
               toast.success("Saved — Eydn will remember this");
             } catch {
-              toast.error("Failed to save");
+              toast.error("Changes didn't save. Try again.");
             }
           }}
           placeholder={"e.g.\n• We're going rustic-elegant with a woodland theme\n• No shellfish — groom has an allergy\n• Ceremony will be outdoors rain or shine\n• Colors are blush, sage, and gold\n• We want a first look before the ceremony\n• Budget priority: photography > food > flowers"}
@@ -433,7 +433,7 @@ export default function SettingsPage() {
 
           {collaborators.length === 0 && (
             <p className="mt-4 text-[13px] text-muted">
-              No collaborators yet. Invite your partner or coordinator above.
+              No collaborators yet. Add your partner or coordinator above.
             </p>
           )}
 

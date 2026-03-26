@@ -22,7 +22,7 @@ export function NotificationBell() {
     fetch("/api/notifications")
       .then((r) => (r.ok ? r.json() : []))
       .then(setNotifications)
-      .catch(() => {});
+      .catch((e) => console.error("[fetch] notifications", e));
   }, []);
 
   useEffect(() => {

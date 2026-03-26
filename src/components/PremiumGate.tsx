@@ -51,9 +51,9 @@ export function usePremium() {
         action();
         return;
       }
-      toast.error("This is a premium feature. Upgrade to continue.", {
+      toast.error("This feature requires a paid plan.", {
         action: {
-          label: "Upgrade — $79",
+          label: "See pricing",
           onClick: () => { window.location.href = "/dashboard/pricing"; },
         },
       });

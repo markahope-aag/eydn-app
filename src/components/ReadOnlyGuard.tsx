@@ -54,10 +54,10 @@ export function useReadOnly() {
         action();
         return;
       }
-      toast.error("Your account is in read-only mode.", {
-        description: "Subscribe to the Memory Plan to continue editing.",
+      toast.error("Your account is read-only.", {
+        description: "Subscribe to the Memory Plan to start editing again.",
         action: {
-          label: "Subscribe — $29/yr",
+          label: "Memory Plan — $29/yr",
           onClick: async () => {
             try {
               const res = await fetch("/api/memory-plan", { method: "POST" });

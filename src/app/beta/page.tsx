@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { toast } from "sonner";
 
 type BetaStatus = {
@@ -26,7 +27,7 @@ export default function BetaPage() {
     fetch("/api/public/beta")
       .then((r) => r.json())
       .then(setStatus)
-      .catch(() => {})
+      .catch((e) => console.error("[fetch] beta status", e))
       .finally(() => setLoading(false));
   }, []);
 
@@ -45,7 +46,7 @@ export default function BetaPage() {
       setSubmitted(true);
       setSuccessMessage(data.message);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      toast.error(err instanceof Error ? err.message : "That didn't go through. Try again.");
     } finally {
       setSubmitting(false);
     }
@@ -56,7 +57,7 @@ export default function BetaPage() {
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4">
         <Link href="/">
-          <img src="/logo.svg" alt="eydn" className="h-7" />
+          <Image src="/logo.png" alt="eydn" width={120} height={28} className="h-7 w-auto" />
         </Link>
         <Link href="/sign-up" className="btn-primary btn-sm">
           Sign Up

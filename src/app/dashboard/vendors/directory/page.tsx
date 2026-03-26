@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import { VENDOR_CATEGORIES } from "@/lib/vendors/categories";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type SuggestedVendor = {
   id: string;
@@ -40,6 +42,27 @@ type PlaceData = {
   }>;
 };
 
+type Pagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+};
+
+// ─── Debounce hook ───────────────────────────────────────────────────────────
+
+function useDebounce(value: string, delay: number): string {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+
+// ─── Star Rating ─────────────────────────────────────────────────────────────
+
 function StarRating({ rating }: { rating: number }) {
   const full = Math.floor(rating);
   const hasHalf = rating - full >= 0.3;
@@ -52,28 +75,86 @@ function StarRating({ rating }: { rating: number }) {
             i < full ? "text-yellow-400" : i === full && hasHalf ? "text-yellow-300" : "text-gray-300"
           }`}
         >
-          ★
+          &#9733;
         </span>
       ))}
     </span>
   );
 }
 
+// ─── Main Page ───────────────────────────────────────────────────────────────
+
 export default function VendorDirectoryPage() {
   const [vendors, setVendors] = useState<SuggestedVendor[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [filterCategory, setFilterCategory] = useState("");
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [gmbCache, setGmbCache] = useState<Record<string, PlaceData | "loading" | "error">>({});
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
+  const debouncedSearch = useDebounce(search, 300);
+
+  // Build API URL from current filters
+  const buildUrl = useCallback((page: number) => {
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    params.set("limit", "25");
+    if (filterCategory) params.set("category", filterCategory);
+    if (debouncedSearch.trim()) params.set("q", debouncedSearch.trim());
+    return `/api/suggested-vendors?${params.toString()}`;
+  }, [filterCategory, debouncedSearch]);
+
+  // Fetch first page when filters change
   useEffect(() => {
-    fetch("/api/suggested-vendors")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setVendors)
-      .catch(() => toast.error("Failed to load directory"))
+    setLoading(true);
+    setVendors([]);
+    setPagination(null);
+
+    fetch(buildUrl(1))
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: { vendors: SuggestedVendor[]; pagination: Pagination }) => {
+        setVendors(data.vendors);
+        setPagination(data.pagination);
+      })
+      .catch(() => toast.error("Couldn't load the directory. Try refreshing."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [buildUrl]);
+
+  // Load more (next page)
+  const loadMore = useCallback(() => {
+    if (!pagination || !pagination.hasMore || loadingMore) return;
+
+    setLoadingMore(true);
+    fetch(buildUrl(pagination.page + 1))
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: { vendors: SuggestedVendor[]; pagination: Pagination }) => {
+        setVendors((prev) => [...prev, ...data.vendors]);
+        setPagination(data.pagination);
+      })
+      .catch(() => toast.error("Couldn't load more vendors."))
+      .finally(() => setLoadingMore(false));
+  }, [pagination, loadingMore, buildUrl]);
+
+  // Infinite scroll — observe sentinel element
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   function toggleDetails(vendorId: string) {
     if (expandedId === vendorId) {
@@ -81,12 +162,11 @@ export default function VendorDirectoryPage() {
       return;
     }
     setExpandedId(vendorId);
-    // Fetch GMB data if not cached
     if (!gmbCache[vendorId]) {
       setGmbCache((prev) => ({ ...prev, [vendorId]: "loading" }));
       fetch(`/api/suggested-vendors/${vendorId}/gmb`)
         .then((r) => {
-          if (!r.ok) return r.json().then((d) => { throw new Error(d.error || "Not found"); });
+          if (!r.ok) return r.json().then((d: { error?: string }) => { throw new Error(d.error || "Not found"); });
           return r.json();
         })
         .then((data: PlaceData) => {
@@ -114,28 +194,30 @@ export default function VendorDirectoryPage() {
       if (!res.ok) throw new Error();
       toast.success(`${vendor.name} added to your vendors`);
     } catch {
-      toast.error("Failed to add vendor");
+      toast.error("Couldn't add that vendor. Try again.");
     }
   }
 
-  const filtered = vendors.filter((v) => {
-    if (filterCategory && v.category !== filterCategory) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      return (
-        (v.name || "").toLowerCase().includes(q) ||
-        (v.city || "").toLowerCase().includes(q) ||
-        (v.state || "").toLowerCase().includes(q) ||
-        (v.description || "").toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
+  const featured = vendors.filter((v) => v.featured);
+  const regular = vendors.filter((v) => !v.featured);
 
-  const featured = filtered.filter((v) => v.featured);
-  const regular = filtered.filter((v) => !v.featured);
-
-  if (loading) return <p className="text-[15px] text-muted py-8">Loading...</p>;
+  if (loading) {
+    return (
+      <div className="space-y-3 py-8">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="animate-pulse rounded-[16px] border border-border bg-white p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-lavender rounded w-1/3" />
+                <div className="h-3 bg-lavender rounded w-1/4" />
+              </div>
+              <div className="h-8 w-16 bg-lavender rounded-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -143,7 +225,7 @@ export default function VendorDirectoryPage() {
         <div>
           <h1>Vendor Directory</h1>
           <p className="mt-1 text-[15px] text-muted">
-            Browse recommended vendors in your area. Add any to your vendor list.
+            {pagination ? `${pagination.total.toLocaleString()} vendors` : "Browse recommended vendors in your area"}
           </p>
         </div>
         <Link href="/dashboard/vendors" className="btn-secondary">
@@ -207,9 +289,27 @@ export default function VendorDirectoryPage() {
           ))}
         </div>
 
-        {filtered.length === 0 && (
+        {vendors.length === 0 && (
           <p className="text-[15px] text-muted text-center py-8">
             No vendors found. Try a different search or category.
+          </p>
+        )}
+
+        {/* Infinite scroll sentinel */}
+        <div ref={sentinelRef} className="h-1" />
+
+        {loadingMore && (
+          <div className="flex justify-center py-4">
+            <div className="animate-pulse flex gap-2 items-center text-[14px] text-muted">
+              <div className="w-2 h-2 bg-muted rounded-full animate-bounce" />
+              Loading more vendors...
+            </div>
+          </div>
+        )}
+
+        {pagination && !pagination.hasMore && vendors.length > 0 && (
+          <p className="text-[13px] text-muted text-center py-4">
+            Showing all {pagination.total.toLocaleString()} vendors
           </p>
         )}
       </div>
@@ -217,7 +317,7 @@ export default function VendorDirectoryPage() {
   );
 }
 
-// ─── GMB Highlight Card (shared between featured and regular) ─────────────
+// ─── GMB Highlight Card ──────────────────────────────────────────────────────
 
 function GmbHighlightCard({ state }: { state: PlaceData | "loading" | "error" | undefined }) {
   if (state === "loading") {
@@ -247,7 +347,6 @@ function GmbHighlightCard({ state }: { state: PlaceData | "loading" | "error" | 
 
   return (
     <div className="pt-3 space-y-3">
-      {/* Photo + core info */}
       <div className="flex gap-4">
         {data.photoUrl && (
           <div className="w-24 h-24 rounded-[12px] overflow-hidden flex-shrink-0 relative">
@@ -283,12 +382,10 @@ function GmbHighlightCard({ state }: { state: PlaceData | "loading" | "error" | 
         </div>
       </div>
 
-      {/* Editorial summary */}
       {data.editorialSummary && (
         <p className="text-[13px] text-muted leading-relaxed">{data.editorialSummary}</p>
       )}
 
-      {/* Action links */}
       <div className="flex flex-wrap gap-2">
         {data.nationalPhoneNumber && (
           <a
@@ -320,7 +417,6 @@ function GmbHighlightCard({ state }: { state: PlaceData | "loading" | "error" | 
         )}
       </div>
 
-      {/* Reviews */}
       {data.reviews.length > 0 && (
         <div className="space-y-2 pt-1">
           <p className="text-[12px] font-semibold text-plum">Google Reviews</p>
@@ -342,7 +438,7 @@ function GmbHighlightCard({ state }: { state: PlaceData | "loading" | "error" | 
   );
 }
 
-// ─── Featured Card ─────────────────────────────────────────────────────────
+// ─── Featured Card ───────────────────────────────────────────────────────────
 
 function FeaturedCard({
   vendor,
@@ -352,7 +448,7 @@ function FeaturedCard({
   onToggle,
 }: {
   vendor: SuggestedVendor;
-  onAdd: (v: SuggestedVendor) => void;
+  onAdd: (_v: SuggestedVendor) => void;
   expanded: boolean;
   gmbState: PlaceData | "loading" | "error" | undefined;
   onToggle: () => void;
@@ -363,7 +459,7 @@ function FeaturedCard({
         <div>
           <h3 className="text-[15px] font-semibold text-plum">{vendor.name}</h3>
           <p className="text-[12px] text-muted">
-            {vendor.category} · {vendor.city}, {vendor.state}
+            {vendor.category} &middot; {vendor.city}, {vendor.state}
           </p>
         </div>
         {vendor.price_range && (
@@ -391,7 +487,7 @@ function FeaturedCard({
   );
 }
 
-// ─── Regular Vendor Row ────────────────────────────────────────────────────
+// ─── Regular Vendor Row ──────────────────────────────────────────────────────
 
 function VendorRow({
   vendor,
@@ -401,7 +497,7 @@ function VendorRow({
   onToggle,
 }: {
   vendor: SuggestedVendor;
-  onAdd: (v: SuggestedVendor) => void;
+  onAdd: (_v: SuggestedVendor) => void;
   expanded: boolean;
   gmbState: PlaceData | "loading" | "error" | undefined;
   onToggle: () => void;
@@ -412,7 +508,7 @@ function VendorRow({
         <div className="flex-1 min-w-0">
           <span className="text-[15px] font-semibold text-plum">{vendor.name}</span>
           <p className="text-[12px] text-muted">
-            {vendor.category} · {vendor.city}, {vendor.state} {vendor.price_range && `· ${vendor.price_range}`}
+            {vendor.category} &middot; {vendor.city}, {vendor.state} {vendor.price_range && `\u00B7 ${vendor.price_range}`}
           </p>
           {vendor.description && (
             <p className="text-[13px] text-muted mt-1">{vendor.description}</p>

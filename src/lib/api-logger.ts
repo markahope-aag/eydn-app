@@ -34,7 +34,7 @@ export function logRequest(
 /**
  * Wrap an API route handler with automatic request logging.
  */
-export function withLogging<T extends (...args: unknown[]) => Promise<Response>>(
+export function withLogging<T extends (..._args: unknown[]) => Promise<Response>>(
   handler: T
 ): T {
   return (async (...args: unknown[]) => {

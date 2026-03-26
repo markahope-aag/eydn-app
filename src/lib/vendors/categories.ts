@@ -26,3 +26,15 @@ export const VENDOR_STATUSES = [
 ] as const;
 
 export type VendorStatus = (typeof VENDOR_STATUSES)[number]["value"];
+
+/** Display-friendly labels for categories that are awkward in the DB form. */
+export const CATEGORY_DISPLAY: Partial<Record<VendorCategory, string>> = {
+  "Cake/Dessert Baker": "Cake & Desserts",
+  "DJ or Band": "DJ / Band",
+  "Wedding Planner / Day-of Coordinator": "Planner / Coordinator",
+};
+
+/** Get the display label for a category, falling back to the raw value. */
+export function categoryLabel(cat: string): string {
+  return (CATEGORY_DISPLAY as Record<string, string>)[cat] || cat;
+}

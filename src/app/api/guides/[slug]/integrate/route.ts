@@ -284,6 +284,75 @@ export async function POST(
     results.push("Vendor brief generated — copy it from below and send to vendors");
   }
 
+  if (slug === "registry") {
+    // Save registry links from the guide responses
+    const linkPairs = [
+      { urlKey: "q12", nameKey: "q12_name" },
+      { urlKey: "q13", nameKey: "q13_name" },
+      { urlKey: "q14", nameKey: "q14_name" },
+    ];
+
+    // Also check q6 (Amazon URL from setup section)
+    const amazonUrl = (responses.q6 as string)?.trim();
+    if (amazonUrl && amazonUrl.startsWith("http")) {
+      const { data: existing } = await supabase
+        .from("registry_links")
+        .select("id")
+        .eq("wedding_id", wedding.id)
+        .eq("url", amazonUrl)
+        .limit(1);
+
+      if (!existing || existing.length === 0) {
+        const { count } = await supabase
+          .from("registry_links")
+          .select("*", { count: "exact", head: true })
+          .eq("wedding_id", wedding.id);
+
+        await supabase.from("registry_links").insert({
+          wedding_id: wedding.id,
+          name: "Amazon Registry",
+          url: amazonUrl,
+          sort_order: (count ?? 0) + 1,
+        });
+        results.push("Added Amazon registry link to your wedding website");
+      }
+    }
+
+    let linksAdded = 0;
+    for (const { urlKey, nameKey } of linkPairs) {
+      const url = (responses[urlKey] as string)?.trim();
+      const name = (responses[nameKey] as string)?.trim();
+      if (!url || !url.startsWith("http")) continue;
+
+      // Skip if already exists
+      const { data: existing } = await supabase
+        .from("registry_links")
+        .select("id")
+        .eq("wedding_id", wedding.id)
+        .eq("url", url)
+        .limit(1);
+
+      if (existing && existing.length > 0) continue;
+
+      const { count } = await supabase
+        .from("registry_links")
+        .select("*", { count: "exact", head: true })
+        .eq("wedding_id", wedding.id);
+
+      await supabase.from("registry_links").insert({
+        wedding_id: wedding.id,
+        name: name || "Registry",
+        url,
+        sort_order: (count ?? 0) + 1,
+      });
+      linksAdded++;
+    }
+
+    if (linksAdded > 0) {
+      results.push(`Added ${linksAdded} registry link${linksAdded > 1 ? "s" : ""} to your wedding website`);
+    }
+  }
+
   if (slug === "wedding-dress") {
     const budget = responses.q1 as number;
     const needBy = responses.q3 as string;

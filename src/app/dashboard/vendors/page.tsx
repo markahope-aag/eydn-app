@@ -9,7 +9,7 @@ import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { Confetti, triggerConfetti } from "@/components/Confetti";
-import { VENDOR_CATEGORIES, VENDOR_STATUSES } from "@/lib/vendors/categories";
+import { VENDOR_CATEGORIES, VENDOR_STATUSES, categoryLabel } from "@/lib/vendors/categories";
 import { Tooltip } from "@/components/Tooltip";
 import { EmailTemplate } from "./EmailTemplate";
 import { trackVendorAdded } from "@/lib/analytics";
@@ -29,12 +29,12 @@ type Vendor = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  searching: "bg-lavender text-muted",
-  contacted: "bg-blue-50 text-blue-600",
-  quote_received: "badge-pending",
-  booked: "badge-confirmed",
-  deposit_paid: "badge-confirmed",
-  paid_in_full: "bg-lavender text-violet",
+  searching: "bg-whisper text-muted",
+  contacted: "bg-amber-50 text-amber-700",
+  quote_received: "bg-blue-50 text-blue-600",
+  booked: "bg-emerald-50 text-emerald-700",
+  deposit_paid: "bg-emerald-50 text-emerald-700",
+  paid_in_full: "bg-violet/10 text-violet",
 };
 
 export default function VendorsPage() {
@@ -58,7 +58,7 @@ export default function VendorsPage() {
         return r.ok ? r.json() : Promise.reject();
       })
       .then(setVendors)
-      .catch(() => toast.error("Failed to load vendors"))
+      .catch(() => toast.error("Couldn't load your vendors. Try refreshing the page."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -117,7 +117,7 @@ export default function VendorsPage() {
       toast.success("Vendor added");
     } catch {
       setVendors((prev) => prev.filter((v) => v.id !== tempId));
-      toast.error("Failed to add vendor");
+      toast.error("That vendor didn't save. Try again.");
     }
   }
 
@@ -140,7 +140,7 @@ export default function VendorsPage() {
       }
     } catch {
       setVendors(prev);
-      toast.error("Failed to update vendor");
+      toast.error("Changes didn't save. Try again.");
     }
   }
 
@@ -154,7 +154,7 @@ export default function VendorsPage() {
       toast("Vendor removed");
     } catch {
       setVendors(prev);
-      toast.error("Failed to remove vendor");
+      toast.error("Couldn't remove that vendor. Try again.");
     }
   }
 
@@ -188,22 +188,22 @@ export default function VendorsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/dashboard/vendors/directory" className="btn-secondary">
-            Browse Directory
-          </Link>
           <button
             onClick={() => setShowAdd(!showAdd)}
-            className="btn-primary"
+            className="btn-secondary"
           >
             Add Your Own
           </button>
+          <Link href="/dashboard/vendors/directory" className="btn-primary">
+            Browse Directory
+          </Link>
         </div>
       </div>
 
       {showAdd && (
         <form onSubmit={addVendor} className="mt-4 card p-4 space-y-3">
           <p className="text-[13px] text-muted">
-            Add a vendor you&apos;ve found. We&apos;ll also save their info to help other couples.
+            Add a vendor you&apos;ve found or been recommended.
             <Tooltip text="Only the vendor name and category are required. Website, city, and state are optional but help other couples discover this vendor in our directory." wide />
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -224,7 +224,7 @@ export default function VendorsPage() {
               className="rounded-[10px] border-border px-3 py-2 text-[15px]"
             >
               {VENDOR_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>{categoryLabel(c)}</option>
               ))}
             </select>
             <input
@@ -265,13 +265,7 @@ export default function VendorsPage() {
         {[...grouped.entries()].map(([category, catVendors]) => (
           <div key={category}>
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-[15px] font-semibold text-muted">{category}</h2>
-              <button
-                onClick={() => setEmailCategory(category)}
-                className="text-[12px] text-violet hover:text-soft-violet"
-              >
-                Email template
-              </button>
+              <h2 className="text-[15px] font-semibold text-muted">{categoryLabel(category)}</h2>
             </div>
             <div className="space-y-2">
               {catVendors.map((vendor) => (
@@ -325,12 +319,23 @@ export default function VendorsPage() {
                       </option>
                     ))}
                   </select>
-                  <Tooltip text="Pipeline stages: Searching (researching options) → Contacted (reached out) → Quote Received (got pricing) → Booked (confirmed!) → Deposit Paid → Paid in Full." wide />
                   {vendor.amount !== null && (
                     <span className="text-[12px] text-muted">
                       ${vendor.amount.toLocaleString()}
                     </span>
                   )}
+                  {/* Email template button on vendor card */}
+                  <button
+                    onClick={() => setEmailCategory(vendor.category)}
+                    className="btn-ghost btn-sm text-[12px] flex items-center gap-1"
+                    title="Email template"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="1" y="3" width="12" height="9" rx="1.5" />
+                      <path d="M1 4.5L7 8.5L13 4.5" />
+                    </svg>
+                    Email
+                  </button>
                   <a
                     href={`/dashboard/vendors/${vendor.id}`}
                     className="btn-secondary btn-sm"
@@ -352,8 +357,8 @@ export default function VendorsPage() {
         {vendors.length === 0 && (
           <EmptyState
             icon="🏪"
-            title="No vendors yet"
-            message="Start by browsing our directory or adding your own vendors."
+            title="Your vendor list is empty"
+            message="Browse the directory or add vendors you've already found."
             actionLabel="Browse Directory"
             actionHref="/dashboard/vendors/directory"
           />
@@ -370,7 +375,7 @@ export default function VendorsPage() {
       <ConfirmDialog
         open={confirmDelete !== null}
         title="Delete vendor?"
-        message="This vendor and all its details will be permanently removed. This action cannot be undone."
+        message="This removes the vendor and all their details permanently."
         confirmLabel="Delete"
         onConfirm={() => {
           if (confirmDelete) deleteVendor(confirmDelete);

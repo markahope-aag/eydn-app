@@ -69,7 +69,7 @@ export default function MoodBoardPage() {
         return r.ok ? r.json() : [];
       })
       .then(setItems)
-      .catch(() => toast.error("Failed to load vision board"))
+      .catch(() => toast.error("Couldn't load your vision board. Try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -83,16 +83,16 @@ export default function MoodBoardPage() {
         body: JSON.stringify({ image_url: imageUrl.trim(), caption: caption.trim() || null, category, location: location || null }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to add image");
+      if (!res.ok) throw new Error(data.error || "Image didn't save. Try again.");
       setItems((prev) => [data, ...prev]);
       setImageUrl("");
       setCaption("");
       setLocation("");
       setShowAdd(false);
       trackMoodBoardAdd();
-      toast.success("Added to vision board");
+      toast.success("Saved to vision board");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to add image");
+      toast.error(err instanceof Error ? err.message : "Image didn't save. Try again.");
     } finally {
       setUploading(false);
     }
@@ -128,9 +128,9 @@ export default function MoodBoardPage() {
       setLocation("");
       setShowAdd(false);
       trackMoodBoardAdd();
-      toast.success("Added to vision board");
+      toast.success("Saved to vision board");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to upload image");
+      toast.error(err instanceof Error ? err.message : "Image didn't upload. Try again.");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -144,7 +144,7 @@ export default function MoodBoardPage() {
       await fetch(`/api/mood-board/${id}`, { method: "DELETE" });
     } catch {
       setItems(prev);
-      toast.error("Failed to remove");
+      toast.error("Couldn't remove that. Try again.");
     }
   }
 
@@ -154,7 +154,7 @@ export default function MoodBoardPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ caption: newCaption || null }),
-    }).catch(() => {});
+    }).catch((err) => console.error("Failed to save caption", err));
   }
 
   async function updateCategory(id: string, newCategory: string) {
@@ -163,7 +163,7 @@ export default function MoodBoardPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ category: newCategory }),
-    }).catch(() => {});
+    }).catch((err) => console.error("Failed to save category", err));
   }
 
   async function updateLocation(id: string, newLocation: string | null) {
@@ -172,7 +172,7 @@ export default function MoodBoardPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ location: newLocation }),
-    }).catch(() => {});
+    }).catch((err) => console.error("Failed to save location", err));
   }
 
   const categories = ["All", ...new Set(items.map((i) => i.category))];

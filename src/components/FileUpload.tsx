@@ -29,7 +29,7 @@ export function FileUpload({ entityType, entityId, onUpload }: Props) {
         body: formData,
       });
       if (res.status === 403) {
-        toast.error("File attachments are a premium feature. Upgrade to continue.", {
+        toast.error("File attachments require a paid plan.", {
           action: {
             label: "Upgrade — $79",
             onClick: () => { window.location.href = "/dashboard/pricing"; },
@@ -41,7 +41,7 @@ export function FileUpload({ entityType, entityId, onUpload }: Props) {
       toast.success("File uploaded");
       onUpload?.();
     } catch {
-      toast.error("Failed to upload file");
+      toast.error("File didn't upload. Try again.");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";

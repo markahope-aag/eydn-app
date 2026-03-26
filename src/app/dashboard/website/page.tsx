@@ -95,7 +95,7 @@ export default function WebsitePage() {
       setAccommodations(data.accommodations || "");
       setFaq(data.faq || []);
     } catch {
-      toast.error("Failed to load website settings");
+      toast.error("Couldn't load website settings. Try refreshing.");
     } finally {
       setLoading(false);
     }
@@ -107,7 +107,7 @@ export default function WebsitePage() {
       if (!res.ok) throw new Error();
       setRegistryLinks(await res.json());
     } catch {
-      toast.error("Failed to load registry");
+      toast.error("Couldn't load registry links. Try refreshing.");
     }
   }
 
@@ -117,7 +117,7 @@ export default function WebsitePage() {
       if (!res.ok) throw new Error();
       setRsvpTokens(await res.json());
     } catch {
-      toast.error("Failed to load RSVP data");
+      toast.error("Couldn't load RSVP data. Try refreshing.");
     }
   }
 
@@ -127,7 +127,7 @@ export default function WebsitePage() {
       if (!res.ok) throw new Error();
       setPhotos(await res.json());
     } catch {
-      toast.error("Failed to load photos");
+      toast.error("Couldn't load photos. Try refreshing.");
     }
   }
 
@@ -197,7 +197,7 @@ export default function WebsitePage() {
       setCoverUrl(data.file_url);
       toast.success("Cover image uploaded");
     } catch {
-      toast.error("Failed to upload cover image");
+      toast.error("Cover image didn't upload. Try again.");
     } finally {
       setUploadingCover(false);
       if (coverRef.current) coverRef.current.value = "";
@@ -224,7 +224,7 @@ export default function WebsitePage() {
       setCouplePhotoUrl(data.file_url);
       toast.success("Couple photo uploaded");
     } catch {
-      toast.error("Failed to upload couple photo");
+      toast.error("Photo didn't upload. Try again.");
     } finally {
       setUploadingCouplePhoto(false);
       if (couplePhotoRef.current) couplePhotoRef.current.value = "";
@@ -243,9 +243,9 @@ export default function WebsitePage() {
       setNewRegistryName("");
       setNewRegistryUrl("");
       loadRegistry();
-      toast.success("Registry link added");
+      toast.success("Registry link saved");
     } catch {
-      toast.error("Failed to add registry link");
+      toast.error("Couldn't add that link. Try again.");
     }
   }
 
@@ -256,7 +256,7 @@ export default function WebsitePage() {
       loadRegistry();
       toast.success("Registry link removed");
     } catch {
-      toast.error("Failed to remove");
+      toast.error("Couldn't remove that. Try again.");
     }
   }
 
@@ -269,7 +269,7 @@ export default function WebsitePage() {
       toast.success(data.message);
       loadRsvpTokens();
     } catch {
-      toast.error("Failed to generate RSVP links");
+      toast.error("Couldn't generate RSVP links. Try again.");
     } finally {
       setGeneratingTokens(false);
     }
@@ -277,7 +277,7 @@ export default function WebsitePage() {
 
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
-    toast.success("Link copied!");
+    toast.success("Link copied");
   }
 
   async function deletePhoto(id: string) {
@@ -287,7 +287,7 @@ export default function WebsitePage() {
       setPhotos((prev) => prev.filter((p) => p.id !== id));
       toast.success("Photo removed");
     } catch {
-      toast.error("Failed to remove photo");
+      toast.error("Couldn't remove that photo. Try again.");
     }
   }
 

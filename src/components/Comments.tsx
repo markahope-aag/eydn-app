@@ -28,7 +28,7 @@ export function Comments({ entityType, entityId }: Props) {
     fetch(`/api/comments?entity_type=${entityType}&entity_id=${entityId}`)
       .then((r) => (r.ok ? r.json() : []))
       .then(setComments)
-      .catch(() => {})
+      .catch((e) => console.error("[fetch] comments", e))
       .finally(() => setLoading(false));
   }, [entityType, entityId]);
 
@@ -56,7 +56,7 @@ export function Comments({ entityType, entityId }: Props) {
       setComments((prev) => [...prev, saved]);
       setNewComment("");
     } catch {
-      toast.error("Failed to post comment");
+      toast.error("Comment didn't post. Try again.");
     } finally {
       setSubmitting(false);
     }

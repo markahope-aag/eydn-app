@@ -81,7 +81,7 @@ export default function BudgetPage() {
           setExpenses(expData);
         }
       })
-      .catch(() => toast.error("Failed to load budget data"))
+      .catch(() => toast.error("Couldn't load your budget. Try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -98,7 +98,7 @@ export default function BudgetPage() {
         });
         if (!res.ok) throw new Error();
       } catch {
-        toast.error("Failed to save budget");
+        toast.error("Budget didn't save. Try again.");
       }
     }, 800);
   }
@@ -123,7 +123,7 @@ export default function BudgetPage() {
           });
           if (!res.ok) throw new Error();
         } catch {
-          toast.error("Failed to save");
+          toast.error("Changes didn't save. Try again.");
         }
       }, 800)
     );
@@ -170,7 +170,7 @@ export default function BudgetPage() {
       toast.success("Line item added");
     } catch {
       setExpenses((prev) => prev.filter((x) => x.id !== tempId));
-      toast.error("Failed to add line item");
+      toast.error("That line item didn't save. Try again.");
     }
   }
 
@@ -183,7 +183,7 @@ export default function BudgetPage() {
       if (!res.ok) throw new Error();
     } catch {
       setExpenses(prev);
-      toast.error("Failed to remove");
+      toast.error("Couldn't remove that item. Try again.");
     }
   }
 
@@ -220,7 +220,7 @@ export default function BudgetPage() {
       toast.success(`Linked to ${vendor.name}`);
     } catch {
       setExpenses(prev);
-      toast.error("Failed to link vendor");
+      toast.error("Couldn't link that vendor. Try again.");
     }
   }
 

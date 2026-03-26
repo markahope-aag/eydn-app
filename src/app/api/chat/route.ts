@@ -108,29 +108,49 @@ export async function POST(request: Request) {
     if (lines.length > 0) guidesSummary = lines.join("\n");
   }
 
-  // Build task summary
+  // Build task summary with overdue highlighting
   let tasksSummary: string | undefined;
   if (allTasks && allTasks.length > 0) {
     type TaskRow = { title: string; due_date: string | null; completed: boolean; category: string; notes: string | null };
+    const now = new Date();
+    const twoWeeks = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
     const incomplete = (allTasks as TaskRow[]).filter((t) => !t.completed);
     const completed = (allTasks as TaskRow[]).filter((t) => t.completed);
+    const overdue = incomplete.filter((t) => t.due_date && new Date(t.due_date) < now);
+    const dueSoon = incomplete.filter((t) => t.due_date && new Date(t.due_date) >= now && new Date(t.due_date) <= twoWeeks);
     const lines: string[] = [];
+    lines.push(`Completed: ${completed.length} of ${(allTasks as TaskRow[]).length}`);
+    if (overdue.length > 0) {
+      lines.push(`OVERDUE (${overdue.length}): ${overdue.slice(0, 5).map(t => t.title).join(", ")}${overdue.length > 5 ? ` + ${overdue.length - 5} more` : ""}`);
+    }
+    if (dueSoon.length > 0) {
+      lines.push(`Due in next 14 days (${dueSoon.length}): ${dueSoon.slice(0, 5).map(t => `${t.title}${t.due_date ? ` (${t.due_date})` : ""}`).join(", ")}${dueSoon.length > 5 ? ` + ${dueSoon.length - 5} more` : ""}`);
+    }
     if (incomplete.length > 0) {
-      lines.push("Upcoming:");
+      lines.push("All upcoming:");
       for (const t of incomplete.slice(0, 20)) {
         lines.push(`- ${t.title} (${t.category})${t.due_date ? ` — due ${t.due_date}` : ""}${t.notes ? ` [note: ${t.notes.slice(0, 80)}]` : ""}`);
       }
       if (incomplete.length > 20) lines.push(`  ...and ${incomplete.length - 20} more`);
     }
-    lines.push(`Completed: ${completed.length} tasks done`);
     tasksSummary = lines.join("\n");
   }
 
-  // Build vendor summary
+  // Build vendor summary with status grouping
   let vendorsSummary: string | undefined;
   if (allVendors && allVendors.length > 0) {
     type VendorRow = { name: string; category: string; status: string; poc_name: string | null; poc_email: string | null; poc_phone: string | null; amount: number | null; amount_paid: number | null; notes: string | null; arrival_time: string | null; meal_needed: boolean };
-    const lines = (allVendors as VendorRow[]).map((v) => {
+    const vendors = allVendors as VendorRow[];
+    const booked = vendors.filter((v) => v.status === "booked" || v.status === "contracted");
+    const inquired = vendors.filter((v) => v.status === "inquired" || v.status === "contacted");
+    const needed = vendors.filter((v) => v.status === "needed" || v.status === "researching");
+    const statusLines = [
+      `Booked/contracted: ${booked.length}`,
+      `In conversation: ${inquired.length}`,
+      `Still needed: ${needed.length}`,
+    ];
+    const lines = [...statusLines, ""];
+    for (const v of vendors) {
       let line = `- ${v.name} (${v.category}) — ${v.status}`;
       if (v.poc_name) line += `, contact: ${v.poc_name}`;
       if (v.poc_phone) line += ` ${v.poc_phone}`;
@@ -139,8 +159,8 @@ export async function POST(request: Request) {
       if (v.amount_paid) line += `, paid: $${v.amount_paid}`;
       if (v.arrival_time) line += `, arrives: ${v.arrival_time}`;
       if (v.notes) line += ` [note: ${v.notes.slice(0, 60)}]`;
-      return line;
-    });
+      lines.push(line);
+    }
     vendorsSummary = lines.join("\n");
   }
 
@@ -152,7 +172,8 @@ export async function POST(request: Request) {
     const accepted = guests.filter((g) => g.rsvp_status === "accepted").length;
     const declined = guests.filter((g) => g.rsvp_status === "declined").length;
     const pending = guests.filter((g) => !["accepted", "declined"].includes(g.rsvp_status)).length;
-    const lines = [`Total: ${guests.length} (accepted: ${accepted}, declined: ${declined}, pending: ${pending})`];
+    const rsvpRate = guests.length > 0 ? Math.round(((accepted + declined) / guests.length) * 100) : 0;
+    const lines = [`Total: ${guests.length} — Attending: ${accepted}, Declined: ${declined}, Awaiting RSVP: ${pending} (${rsvpRate}% response rate)`];
     // List guests with notable info
     for (const g of guests.slice(0, 40)) {
       let line = `- ${g.name} (${g.rsvp_status})`;
@@ -195,7 +216,9 @@ export async function POST(request: Request) {
       cats.set(e.category, c);
     }
     for (const [cat, vals] of cats) {
-      lines.push(`- ${cat}: estimated $${vals.estimated.toLocaleString()}, paid $${vals.paid.toLocaleString()}`);
+      const variance = vals.estimated - vals.paid;
+      const status = variance < 0 ? "OVER" : variance < vals.estimated * 0.1 ? "TIGHT" : "OK";
+      lines.push(`- ${cat}: $${vals.estimated.toLocaleString()} allocated, $${vals.paid.toLocaleString()} spent [${status}]`);
     }
     budgetSummary = lines.join("\n");
   }
@@ -338,7 +361,7 @@ export async function POST(request: Request) {
 
     // If actions were taken but no final text, add a summary
     if (actionsTaken.length > 0 && !finalText.trim()) {
-      finalText = "Done! " + actionsTaken.join(" ");
+      finalText = "Done — " + actionsTaken.join(" ");
     }
 
     // Save assistant response
@@ -376,7 +399,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Claude API error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to get response from Eydn" },
+      { error: error instanceof Error ? error.message : "Couldn't reach Eydn. Try again." },
       { status: 500 }
     );
   }

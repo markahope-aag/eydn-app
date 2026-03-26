@@ -165,7 +165,7 @@ export default function DayOfPage() {
         setPlan(content);
         setCeremonyTime(content.ceremonyTime || "");
       })
-      .catch(() => {})
+      .catch((err) => console.error("Failed to load day-of plan", err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -175,7 +175,7 @@ export default function DayOfPage() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: updated }),
-    }).catch(() => toast.error("Failed to save"));
+    }).catch(() => toast.error("Changes didn't save. Try again."));
   }
 
   function updateTimeline(index: number, field: keyof TimelineItem, value: string) {
@@ -203,7 +203,7 @@ export default function DayOfPage() {
       return;
     }
     savePlan({ ...plan, ceremonyTime, timeline: newTimeline });
-    toast.success("Timeline generated based on ceremony time");
+    toast.success("Timeline built from your ceremony time");
   }
 
   function updatePackingNote(index: number, notes: string) {
@@ -537,9 +537,9 @@ export default function DayOfPage() {
                 }
                 setPlan(content);
                 setCeremonyTime(content.ceremonyTime || ceremonyTime);
-                toast.success("Day-of plan generated!");
+                toast.success("Day-of plan ready");
               } catch {
-                toast.error("Failed to generate plan");
+                toast.error("Couldn't generate the plan. Try again.");
               }
             }}
             className="btn-primary"
@@ -568,9 +568,9 @@ export default function DayOfPage() {
               try {
                 await exportWeddingBinder();
                 trackExport("binder");
-                toast.success("Wedding binder downloaded");
+                toast.success("Binder downloaded");
               } catch {
-                toast.error("Failed to generate binder");
+                toast.error("Binder didn't download. Try again.");
               } finally {
                 setBinderLoading(false);
               }
@@ -1301,9 +1301,9 @@ export default function DayOfPage() {
                 const updated = [...plan.attire];
                 updated[idx] = { ...updated[idx], photoUrl: file_url };
                 savePlan({ ...plan, attire: updated });
-                toast.success("Photo uploaded");
+                toast.success("Photo saved");
               } catch {
-                toast.error("Failed to upload photo");
+                toast.error("Photo didn't upload. Try again.");
               }
               if (attirePhotoRef.current) attirePhotoRef.current.value = "";
             }}

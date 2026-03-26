@@ -33,7 +33,7 @@ export function EmailTemplate({ category, onClose }: Props) {
 
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text).then(() => {
-      toast.success("Copied to clipboard!");
+      toast.success("Copied to clipboard");
     });
   }
 

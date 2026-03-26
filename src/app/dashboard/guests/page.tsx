@@ -84,7 +84,7 @@ export default function GuestsPage() {
         return res.ok ? res.json() : Promise.reject();
       })
       .then(setGuests)
-      .catch(() => toast.error("Failed to load guests"))
+      .catch(() => toast.error("Couldn't load your guest list. Try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -168,7 +168,7 @@ export default function GuestsPage() {
       toast("Guest removed");
     } catch {
       setGuests(prev);
-      toast.error("Failed to remove guest");
+      toast.error("Couldn't remove that guest. Try again.");
     }
   }
 
@@ -190,7 +190,7 @@ export default function GuestsPage() {
       }
     } catch (err) {
       setGuests(prev);
-      toast.error(err instanceof Error ? err.message : "Failed to update guest");
+      toast.error(err instanceof Error ? err.message : "Changes didn't save. Try again.");
     }
   }
 
@@ -216,7 +216,7 @@ export default function GuestsPage() {
       const reload = await fetch("/api/guests");
       if (reload.ok) setGuests(await reload.json());
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to import");
+      toast.error(err instanceof Error ? err.message : "Import didn't work. Check your file format and try again.");
     }
     if (fileInput.current) fileInput.current.value = "";
   }
@@ -439,7 +439,7 @@ export default function GuestsPage() {
       toast.success(`Updated ${successCount} of ${ids.length} guests`);
     } else {
       setGuests(prev);
-      toast.error("Failed to update guests");
+      toast.error("Bulk update didn't save. Try again.");
     }
     setSelectedGuests(new Set());
   }
@@ -475,7 +475,7 @@ export default function GuestsPage() {
       toast.success(`Updated ${successCount} of ${ids.length} guests`);
     } else {
       setGuests(prev);
-      toast.error("Failed to update guests");
+      toast.error("Bulk update didn't save. Try again.");
     }
     setSelectedGuests(new Set());
   }
@@ -506,7 +506,7 @@ export default function GuestsPage() {
       if (reload.ok) setGuests(await reload.json());
     } else {
       setGuests(prev);
-      toast.error("Failed to remove guests");
+      toast.error("Couldn't remove those guests. Try again.");
     }
     setSelectedGuests(new Set());
   }
@@ -540,7 +540,7 @@ export default function GuestsPage() {
             </button>
             {showExportMenu && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />
+                <div className="fixed inset-0 z-10" role="presentation" onClick={() => setShowExportMenu(false)} />
                 <div className="absolute right-0 mt-1 z-20 bg-white border border-border rounded-[10px] shadow-lg py-1 w-40" role="menu">
                   <button
                     onClick={() => { exportCSV(); setShowExportMenu(false); }}
@@ -899,7 +899,7 @@ export default function GuestsPage() {
       <ConfirmDialog
         open={confirmDelete !== null}
         title="Remove guest?"
-        message="This guest will be permanently removed from your guest list. This action cannot be undone."
+        message="This permanently removes this guest from your list."
         confirmLabel="Remove"
         onConfirm={() => {
           if (confirmDelete) removeGuest(confirmDelete);
@@ -911,7 +911,7 @@ export default function GuestsPage() {
       <ConfirmDialog
         open={confirmBulkDelete}
         title={`Delete ${selectedGuests.size} guests?`}
-        message="These guests will be permanently removed from your guest list. This action cannot be undone."
+        message="This permanently removes these guests from your list."
         confirmLabel="Delete All"
         onConfirm={bulkDelete}
         onCancel={() => setConfirmBulkDelete(false)}
@@ -939,7 +939,7 @@ export default function GuestsPage() {
             </button>
             {bulkStatusOpen && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setBulkStatusOpen(false)} />
+                <div className="fixed inset-0 z-10" role="presentation" onClick={() => setBulkStatusOpen(false)} />
                 <div className="absolute bottom-full mb-1 left-0 z-20 bg-white border border-border rounded-[10px] shadow-lg py-1 w-40" role="menu">
                   {Object.entries(STATUS_LABELS).map(([v, l]) => (
                     <button

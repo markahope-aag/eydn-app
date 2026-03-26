@@ -1,58 +1,62 @@
-# eydn User Guide for Subscribers
+# Eydn User Guide
 
-Welcome to eydn, your AI-powered wedding planning companion! This comprehensive guide will help you make the most of your premium subscription and plan the wedding of your dreams.
+This guide covers what you get with Eydn and how to use each feature.
 
-## 🎉 Getting Started
+## Getting Started
 
-### Your Premium Benefits
+### What's included
 
-As an eydn subscriber, you have lifetime access to all features for just $79. Here's what you get:
+Your $79 one-time payment gives you lifetime access to everything:
 
-- **Unlimited AI Chat** with eydn, your personal wedding assistant
-- **File Uploads & Storage** for all your wedding documents and photos
-- **Premium Vendor Recommendations** from our curated marketplace
-- **Advanced Planning Tools** including seating charts and timelines
-- **Collaboration Features** to work with your partner and coordinators
-- **Wedding Website** with custom RSVP system
-- **Export & Backup** capabilities for all your data
+- **AI planning assistant** that knows your wedding details and gives straight answers
+- **Task timeline** auto-generated from your wedding date
+- **Budget tracker** with category allocations and vendor linking
+- **Guest list** with RSVP tracking, meal preferences, and CSV/Excel/PDF export
+- **Vendor management** with directory, email templates, and contract uploads
+- **Seating chart** with drag-and-drop table assignments
+- **Wedding website** with RSVP collection, photo gallery, and registry
+- **Day-of planner** with timeline, vendor contacts, and binder PDF export
+- **Planning guides** for flowers, music, decor, rentals, registry, and more
+- **Collaboration** — invite your partner or coordinator
+- **Data export** — download everything anytime
 
-### First Steps After Subscribing
+### First steps
 
-1. **Complete Your Wedding Profile**: Add your wedding date, venue, and basic details
-2. **Set Your Budget**: Use our comprehensive budget tracker to plan expenses
-3. **Create Your Guest List**: Import or manually add your wedding guests
-4. **Invite Your Partner**: Share planning access with your fiancé(e)
-5. **Chat with eydn**: Start getting personalized planning advice
+1. **Complete onboarding** — names, date, budget, guest count, venue, booked vendors
+2. **Review your task timeline** — Eydn generates tasks based on your date and what you've already booked
+3. **Add your vendors** — either from the directory or manually
+4. **Start your guest list** — add names or import from a spreadsheet
+5. **Ask Eydn anything** — open the chat and ask about your budget, timeline, or what to do next
 
-## 🤖 Meet eydn: Your AI Wedding Assistant
+## The AI Assistant
 
-### What eydn Can Do
+Eydn's assistant has your full wedding context loaded — budget, vendors, tasks, guests, guide answers, everything. It gives you direct answers, not generic advice.
 
-eydn is your personal wedding planning expert, available 24/7 to help with:
+### What it can do
 
-- **Planning Advice**: Get expert guidance on timing, vendors, and decisions
-- **Budget Recommendations**: Smart suggestions based on your budget and priorities
-- **Vendor Matching**: Personalized vendor recommendations for your style and location
-- **Timeline Management**: Keep your planning on track with custom reminders
-- **Problem Solving**: Get creative solutions for wedding planning challenges
+- **Answer questions** about your specific situation ("Am I behind?" "Where's my budget tight?")
+- **Take actions** — add guests, update RSVPs, mark tasks complete, add vendors, save to your mood board
+- **Search the web** for vendors, venues, and pricing in your area
+- **Draft messages** — vendor outreach, vows, speeches, thank-you notes
+- **Flag problems** — overdue tasks, budget overruns, missing vendors, low RSVP rates
 
-### How to Chat with eydn
+### What it won't do
 
-1. **Click the chat icon** in your dashboard
-2. **Ask specific questions** like "What should I prioritize with a $20K budget?"
-3. **Share your concerns** - eydn understands wedding planning stress
-4. **Get vendor recommendations** by asking "Show me photographers in my area"
-5. **Plan your timeline** with questions like "When should I book my caterer?"
+- Use exclamation points or cheerleader energy
+- Give you 47 options and wish you luck — it recommends and explains
+- Sugarcoat budget problems or pretend everything is fine
+- Make up vendor names or prices it doesn't have
 
-### Sample Questions to Ask eydn
+### Good questions to ask
 
-- "Help me prioritize my vendor bookings with 8 months to plan"
-- "What's a realistic budget breakdown for a 100-person wedding?"
-- "I'm stressed about seating arrangements - can you help?"
-- "What questions should I ask potential photographers?"
-- "How do I handle dietary restrictions for my guests?"
+- "We're $5K over budget — what should we cut?"
+- "What should I prioritize this week?"
+- "Find me photographers in Austin under $3K"
+- "Add Sarah Johnson to the guest list"
+- "What questions should I ask our caterer?"
+- "We just changed our guest count by 30 — what does that affect?"
 
-## 📋 Planning Your Wedding Timeline
+## Planning Your Wedding Timeline
 
 ### The 12-Month Planning Journey
 
@@ -100,7 +104,7 @@ eydn provides a comprehensive timeline that adapts to your wedding date:
 4. **Set Reminders**: Get notifications before important deadlines
 5. **Collaborate**: Assign tasks to your partner or coordinator
 
-## 💰 Budget Management
+## Budget Management
 
 ### Setting Up Your Budget
 
@@ -129,7 +133,7 @@ eydn provides a comprehensive timeline that adapts to your wedding date:
 - **Prioritize what matters most** to you as a couple
 - **Negotiate package deals** with vendors
 
-## 👥 Guest Management
+## Guest Management
 
 ### Building Your Guest List
 
@@ -181,7 +185,7 @@ eydn provides a comprehensive timeline that adapts to your wedding date:
 4. **Store Documents Safely**: Upload contracts to your eydn account
 5. **Communicate Changes**: Keep vendors updated on any modifications
 
-## 🎨 Design & Mood Board
+## Vision Board
 
 ### Creating Your Vision
 
@@ -199,7 +203,7 @@ eydn provides a comprehensive timeline that adapts to your wedding date:
 - **Reorder Items**: Drag and drop to prioritize favorites
 - **Share Access**: Let your partner and coordinator contribute
 
-## 🤝 Collaboration Features
+## Collaboration
 
 ### Inviting Your Partner
 
@@ -225,7 +229,7 @@ eydn provides a comprehensive timeline that adapts to your wedding date:
 - **Respect Boundaries**: Stay within your assigned permissions
 - **Document Decisions**: Keep notes on important choices made
 
-## 🌐 Your Wedding Website
+## Wedding Website
 
 ### Setting Up Your Site
 
@@ -251,7 +255,7 @@ eydn provides a comprehensive timeline that adapts to your wedding date:
 4. **Export Data**: Download for caterers and seating charts
 5. **Analyze Trends**: See response patterns and timing
 
-## 📱 Mobile Experience
+## Mobile Experience
 
 ### Using eydn on Your Phone
 

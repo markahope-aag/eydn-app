@@ -109,7 +109,7 @@ export default async function BlogPostPage({
       >
         <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="eydn" style={{ height: 22 }} />
+          <img src="/logo.png" alt="eydn" style={{ height: 22 }} />
         </Link>
         <Link
           href="/blog"

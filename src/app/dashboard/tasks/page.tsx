@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
@@ -8,7 +8,6 @@ import { NoWeddingState } from "@/components/NoWeddingState";
 import { EmptyState } from "@/components/EmptyState";
 import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { TaskFilters } from "./TaskFilters";
-import { Tooltip } from "@/components/Tooltip";
 import { trackTaskCreated, trackTaskCompleted } from "@/lib/analytics";
 
 // Dynamic imports for heavy components (dnd-kit, react-pdf in detail)
@@ -58,6 +57,23 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [calendarToken, setCalendarToken] = useState<string | null>(null);
+  const [showCalendarMenu, setShowCalendarMenu] = useState(false);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const calendarMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close calendar menu on outside click
+  useEffect(() => {
+    if (!showCalendarMenu) return;
+    function handleClick(e: MouseEvent) {
+      if (calendarMenuRef.current && !calendarMenuRef.current.contains(e.target as Node)) {
+        setShowCalendarMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showCalendarMenu]);
 
   // Filters
   const [filterCategory, setFilterCategory] = useState("");
@@ -72,7 +88,7 @@ export default function TasksPage() {
         return res.ok ? res.json() : Promise.reject();
       })
       .then(setTasks)
-      .catch(() => toast.error("Failed to load tasks"))
+      .catch(() => toast.error("Couldn't load your tasks. Try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -151,7 +167,7 @@ export default function TasksPage() {
       toast.success("Task added");
     } catch {
       setTasks((prev) => prev.filter((t) => t.id !== tempId));
-      toast.error("Failed to add task");
+      toast.error("That task didn't save. Try again.");
     }
   }
 
@@ -218,14 +234,14 @@ export default function TasksPage() {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: prevStatus, completed: rollbackCompleted }),
-              }).catch(() => toast.error("Failed to undo"));
+              }).catch(() => toast.error("Couldn't undo that change."));
             },
           },
         });
       }
     } catch {
       setTasks(prev);
-      toast.error("Failed to update task");
+      toast.error("Changes didn't save. Try again.");
     }
   }
 
@@ -250,7 +266,7 @@ export default function TasksPage() {
       if (!res.ok) throw new Error();
     } catch {
       setTasks(prev);
-      toast.error("Failed to update task");
+      toast.error("Changes didn't save. Try again.");
     }
   }
 
@@ -272,7 +288,7 @@ export default function TasksPage() {
       if (!res.ok) throw new Error();
     } catch {
       setTasks(prev);
-      toast.error("Failed to update priority");
+      toast.error("Priority didn't update. Try again.");
     }
   }
 
@@ -286,7 +302,7 @@ export default function TasksPage() {
       toast("Task removed");
     } catch {
       setTasks(prev);
-      toast.error("Failed to remove task");
+      toast.error("Couldn't remove that task. Try again.");
     }
   }
 
@@ -302,7 +318,65 @@ export default function TasksPage() {
         prev.map((t) => (t.id === id ? { ...t, notes } : t))
       );
     } catch {
-      toast.error("Failed to save notes");
+      toast.error("Notes didn't save. Try again.");
+    }
+  }
+
+  async function fetchCalendarToken() {
+    setCalendarLoading(true);
+    try {
+      const res = await fetch("/api/tasks/calendar-token");
+      if (!res.ok) throw new Error();
+      const { token } = await res.json();
+      if (token) {
+        setCalendarToken(token);
+        return token as string;
+      }
+      // No token yet — create one
+      const createRes = await fetch("/api/tasks/calendar-token", { method: "POST" });
+      if (!createRes.ok) throw new Error();
+      const { token: newToken } = await createRes.json();
+      setCalendarToken(newToken);
+      return newToken as string;
+    } catch {
+      toast.error("Couldn't set up calendar sync. Try again.");
+      return null;
+    } finally {
+      setCalendarLoading(false);
+    }
+  }
+
+  async function handleSubscribe() {
+    const token = calendarToken || await fetchCalendarToken();
+    if (!token) return;
+    const url = `${window.location.origin}/api/public/calendar/${token}`;
+    const webcalUrl = url.replace(/^https?:/, "webcal:");
+    window.location.href = webcalUrl;
+  }
+
+  async function handleDownloadICS() {
+    const token = calendarToken || await fetchCalendarToken();
+    if (!token) return;
+    window.open(`/api/public/calendar/${token}`, "_blank");
+  }
+
+  async function handleCopyLink() {
+    const token = calendarToken || await fetchCalendarToken();
+    if (!token) return;
+    const url = `${window.location.origin}/api/public/calendar/${token}`;
+    await navigator.clipboard.writeText(url);
+    toast.success("Calendar link copied");
+  }
+
+  async function handleRegenerateLink() {
+    try {
+      const res = await fetch("/api/tasks/calendar-token", { method: "POST" });
+      if (!res.ok) throw new Error();
+      const { token } = await res.json();
+      setCalendarToken(token);
+      toast.success("Calendar link regenerated. Previous subscriptions will stop updating.");
+    } catch {
+      toast.error("Couldn't regenerate link. Try again.");
     }
   }
 
@@ -357,7 +431,7 @@ export default function TasksPage() {
             {completed}/{total} completed
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <button
             onClick={() => setViewMode("list")}
             className={viewMode === "list" ? "btn-primary btn-sm" : "btn-ghost btn-sm"}
@@ -370,14 +444,72 @@ export default function TasksPage() {
           >
             Calendar
           </button>
+          <div className="relative ml-2" ref={calendarMenuRef}>
+            <button
+              onClick={() => setShowCalendarMenu(!showCalendarMenu)}
+              className="btn-ghost btn-sm flex items-center gap-1"
+              disabled={calendarLoading}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="opacity-60">
+                <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M2 7h12" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              Sync
+            </button>
+            {showCalendarMenu && (
+              <div className="absolute right-0 top-full mt-1 w-64 bg-white rounded-[12px] shadow-lg border border-border z-20 py-1">
+                <button
+                  onClick={() => { handleSubscribe(); setShowCalendarMenu(false); }}
+                  className="w-full text-left px-4 py-2.5 text-[14px] text-plum hover:bg-lavender/40 transition"
+                >
+                  <span className="font-semibold">Subscribe to calendar</span>
+                  <span className="block text-[12px] text-muted mt-0.5">
+                    Auto-updates in Google, Apple, or Outlook
+                  </span>
+                </button>
+                <button
+                  onClick={() => { handleDownloadICS(); setShowCalendarMenu(false); }}
+                  className="w-full text-left px-4 py-2.5 text-[14px] text-plum hover:bg-lavender/40 transition"
+                >
+                  <span className="font-semibold">Download .ics file</span>
+                  <span className="block text-[12px] text-muted mt-0.5">
+                    One-time import into any calendar app
+                  </span>
+                </button>
+                <button
+                  onClick={() => { handleCopyLink(); setShowCalendarMenu(false); }}
+                  className="w-full text-left px-4 py-2.5 text-[14px] text-plum hover:bg-lavender/40 transition"
+                >
+                  <span className="font-semibold">Copy calendar link</span>
+                  <span className="block text-[12px] text-muted mt-0.5">
+                    Paste into your calendar app manually
+                  </span>
+                </button>
+                {calendarToken && (
+                  <>
+                    <div className="border-t border-border my-1" />
+                    <button
+                      onClick={() => {
+                        if (confirm("This will break any existing calendar subscriptions. Continue?")) {
+                          handleRegenerateLink();
+                          setShowCalendarMenu(false);
+                        }
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-[13px] text-muted hover:bg-lavender/40 transition"
+                    >
+                      Regenerate link
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="mt-4">
-        <p className="text-[12px] text-muted mb-2">
-          Filter by status <Tooltip text="Not Started: haven't begun yet. In Progress: currently working on it. Done: completed. Use this workflow to track each task through to completion." wide /> or priority to focus on what matters most.
-        </p>
+      {/* Filters + Add Task */}
+      <div className="mt-4 flex items-center gap-3 flex-wrap">
         <TaskFilters
           categories={allCategories}
           phases={allPhases}
@@ -390,55 +522,99 @@ export default function TasksPage() {
           onStatusChange={setFilterStatus}
           onPriorityChange={setFilterPriority}
         />
+        <button
+          type="button"
+          onClick={() => setShowAddTask(true)}
+          className="btn-primary btn-sm flex items-center gap-1.5 ml-auto"
+        >
+          <span className="text-[16px] leading-none">+</span> Add Task
+        </button>
       </div>
 
-      {/* Add task form */}
-      <form onSubmit={addTask} className="mt-4 flex flex-wrap gap-3 items-center">
-        <Tooltip text="Tasks marked with a timeline phase were auto-generated from your onboarding answers. You can also add your own custom tasks here." wide />
-        <input
-          type="text"
-          placeholder="Add a custom task..."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1 min-w-[200px]"
-          required
-        />
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="rounded-[10px] border-border px-3 py-2 text-[15px]"
-        >
-          {ADD_CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-        <div className="flex items-center gap-1">
-          <select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value as "high" | "medium" | "low")}
-            className="rounded-[10px] border-border px-3 py-2 text-[15px]"
-          >
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-          <Tooltip text="High: time-sensitive or critical (e.g. booking vendors). Medium: important but flexible. Low: nice-to-have or far-off tasks." wide />
+      {/* Add task modal */}
+      {showAddTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-[16px] shadow-xl w-full max-w-md mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-plum">Add Task</h2>
+              <button
+                type="button"
+                onClick={() => setShowAddTask(false)}
+                className="text-muted hover:text-plum text-xl leading-none"
+              >
+                &times;
+              </button>
+            </div>
+            <form
+              onSubmit={(e) => {
+                addTask(e);
+                setShowAddTask(false);
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="text-[13px] text-muted">Task name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Book florist consultation"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[13px] text-muted">Category</label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                  >
+                    {ADD_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[13px] text-muted">Priority</label>
+                  <select
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value as "high" | "medium" | "low")}
+                    className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                  >
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-[13px] text-muted">Due date (optional)</label>
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                />
+              </div>
+              <div className="flex gap-3 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddTask(false)}
+                  className="btn-ghost btn-sm"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary">
+                  Add Task
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-        <input
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-          className="rounded-[10px] border-border px-3 py-2 text-[15px]"
-        />
-        <button
-          type="submit"
-          className="btn-primary"
-        >
-          Add
-        </button>
-      </form>
+      )}
 
       {/* View */}
       <div className="mt-6">

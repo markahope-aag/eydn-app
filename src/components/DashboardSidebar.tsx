@@ -9,28 +9,125 @@ import { NotificationBell } from "@/components/NotificationBell";
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then((m) => ({ default: m.CommandPalette })));
 const OnboardingTour = lazy(() => import("@/components/OnboardingTour").then((m) => ({ default: m.OnboardingTour })));
 
-const navItems = [
-  { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/tasks", label: "Tasks" },
-  { href: "/dashboard/vendors", label: "Vendors" },
-  { href: "/dashboard/budget", label: "Budget" },
-  { href: "/dashboard/guests", label: "Guests" },
-  { href: "/dashboard/wedding-party", label: "Wedding Party" },
-  { href: "/dashboard/seating", label: "Seating Chart" },
-  { href: "/dashboard/mood-board", label: "Vision Board" },
-  { href: "/dashboard/guides", label: "Planning Guides" },
-  { href: "/dashboard/day-of", label: "Day-of Planner" },
-  { href: "/dashboard/rehearsal-dinner", label: "Rehearsal Dinner" },
-  { href: "/dashboard/chat", label: "Ask Eydn" },
-  { href: "/dashboard/vendor-portal", label: "Vendor Portal" },
-  { href: "/dashboard/website", label: "Wedding Website" },
-  { href: "/dashboard/settings", label: "Settings" },
-  { href: "/dashboard/help", label: "Help & Support" },
+type NavItem = { href: string; label: string };
+type NavSection = { label: string; items: NavItem[] };
+
+const navSections: NavSection[] = [
+  {
+    label: "Planning",
+    items: [
+      { href: "/dashboard", label: "Overview" },
+      { href: "/dashboard/tasks", label: "Tasks" },
+      { href: "/dashboard/budget", label: "Budget" },
+      { href: "/dashboard/guides", label: "Planning Guides" },
+      { href: "/dashboard/mood-board", label: "Vision Board" },
+    ],
+  },
+  {
+    label: "Vendors",
+    items: [
+      { href: "/dashboard/vendors", label: "Vendors" },
+      { href: "/dashboard/vendor-portal", label: "Vendor Portal" },
+    ],
+  },
+  {
+    label: "People",
+    items: [
+      { href: "/dashboard/guests", label: "Guests" },
+      { href: "/dashboard/wedding-party", label: "Wedding Party" },
+      { href: "/dashboard/seating", label: "Seating Chart" },
+    ],
+  },
+  {
+    label: "Day-Of",
+    items: [
+      { href: "/dashboard/day-of", label: "Day-of Planner" },
+      { href: "/dashboard/rehearsal-dinner", label: "Rehearsal Dinner" },
+    ],
+  },
+  {
+    label: "Tools",
+    items: [
+      { href: "/dashboard/website", label: "Wedding Website" },
+      { href: "/dashboard/settings", label: "Settings" },
+      { href: "/dashboard/help", label: "Help & Support" },
+    ],
+  },
 ];
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard";
   return pathname.startsWith(href);
+}
+
+function isSectionActive(pathname: string, section: NavSection) {
+  return section.items.some((item) => isActive(pathname, item.href));
+}
+
+function NavLink({ item, active, onClick }: { item: NavItem; active: boolean; onClick?: () => void }) {
+  return (
+    <Link
+      href={item.href}
+      onClick={onClick}
+      className={`rounded-[12px] px-3 py-2 text-[15px] transition ${
+        active
+          ? "bg-lavender text-violet font-semibold"
+          : "font-normal text-muted hover:bg-lavender hover:text-violet"
+      }`}
+    >
+      {item.label}
+    </Link>
+  );
+}
+
+function CollapsibleSection({
+  section,
+  pathname,
+  onLinkClick,
+}: {
+  section: NavSection;
+  pathname: string;
+  onLinkClick?: () => void;
+}) {
+  const hasActive = isSectionActive(pathname, section);
+  const [open, setOpen] = useState(hasActive);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-semibold text-muted uppercase tracking-wider hover:text-plum transition"
+      >
+        {section.label}
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`transition-transform ${open ? "rotate-180" : ""}`}
+        >
+          <path d="M3 4.5L6 7.5L9 4.5" />
+        </svg>
+      </button>
+      {open && (
+        <div className="flex flex-col gap-0.5 mt-0.5">
+          {section.items.map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              active={isActive(pathname, item.href)}
+              onClick={onLinkClick}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function DashboardSidebar({ admin }: { admin: boolean }) {
@@ -45,98 +142,51 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
         onClick={() => setOpen(false)}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.svg" alt="eydn" className="h-7" />
+        <img src="/logo.png" alt="eydn" className="h-7" />
       </Link>
-      <nav role="navigation" aria-label="Dashboard navigation" className="mt-8 flex flex-col gap-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const active = isActive(pathname, item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setOpen(false)}
-              className={`rounded-[12px] px-3 py-2 text-[15px] transition ${
-                active
-                  ? "bg-lavender text-violet font-semibold"
-                  : "font-normal text-muted hover:bg-lavender hover:text-violet"
-              }`}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
+
+      {/* Ask Eydn — pinned at top */}
+      <Link
+        href="/dashboard/chat"
+        onClick={() => setOpen(false)}
+        className={`mt-6 flex items-center gap-2 rounded-[12px] px-3 py-2.5 text-[15px] font-semibold transition ${
+          isActive(pathname, "/dashboard/chat")
+            ? "bg-violet text-white"
+            : "bg-brand-gradient text-white hover:opacity-90"
+        }`}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v5a2 2 0 01-2 2H6.5L3 14V11H4a2 2 0 01-2-2V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+          <circle cx="6" cy="6.5" r="0.75" fill="currentColor" />
+          <circle cx="8" cy="6.5" r="0.75" fill="currentColor" />
+          <circle cx="10" cy="6.5" r="0.75" fill="currentColor" />
+        </svg>
+        Ask Eydn
+      </Link>
+
+      <nav role="navigation" aria-label="Dashboard navigation" className="mt-4 flex flex-col gap-3 overflow-y-auto">
+        {navSections.map((section) => (
+          <CollapsibleSection
+            key={section.label}
+            section={section}
+            pathname={pathname}
+            onLinkClick={() => setOpen(false)}
+          />
+        ))}
         {admin && (
-          <>
-            <Link
-              href="/dashboard/admin"
-              onClick={() => setOpen(false)}
-              className={`rounded-[12px] px-3 py-2 text-[15px] font-semibold transition mt-2 ${
-                isActive(pathname, "/dashboard/admin") &&
-                !pathname.startsWith("/dashboard/admin/placements") &&
-                !pathname.startsWith("/dashboard/admin/lifecycle") &&
-                !pathname.startsWith("/dashboard/admin/promo-codes")
-                  ? "bg-lavender text-violet"
-                  : "text-violet bg-lavender hover:bg-petal"
-              }`}
-            >
+          <div>
+            <p className="px-3 py-1.5 text-[11px] font-semibold text-violet uppercase tracking-wider">
               Admin
-            </Link>
-            <Link
-              href="/dashboard/admin/placements"
-              onClick={() => setOpen(false)}
-              className={`rounded-[12px] px-3 py-2 text-[13px] transition ${
-                isActive(pathname, "/dashboard/admin/placements")
-                  ? "bg-lavender text-violet font-semibold"
-                  : "font-normal text-violet hover:bg-lavender"
-              }`}
-            >
-              Placements
-            </Link>
-            <Link
-              href="/dashboard/admin/blog"
-              onClick={() => setOpen(false)}
-              className={`rounded-[12px] px-3 py-2 text-[13px] transition ${
-                isActive(pathname, "/dashboard/admin/blog")
-                  ? "bg-lavender text-violet font-semibold"
-                  : "font-normal text-violet hover:bg-lavender"
-              }`}
-            >
-              Blog CMS
-            </Link>
-            <Link
-              href="/dashboard/admin/lifecycle"
-              onClick={() => setOpen(false)}
-              className={`rounded-[12px] px-3 py-2 text-[13px] transition ${
-                isActive(pathname, "/dashboard/admin/lifecycle")
-                  ? "bg-lavender text-violet font-semibold"
-                  : "font-normal text-violet hover:bg-lavender"
-              }`}
-            >
-              Account Lifecycle
-            </Link>
-            <Link
-              href="/dashboard/admin/promo-codes"
-              onClick={() => setOpen(false)}
-              className={`rounded-[12px] px-3 py-2 text-[13px] transition ${
-                isActive(pathname, "/dashboard/admin/promo-codes")
-                  ? "bg-lavender text-violet font-semibold"
-                  : "font-normal text-violet hover:bg-lavender"
-              }`}
-            >
-              Promo Codes
-            </Link>
-            <Link
-              href="/dashboard/admin/waitlist"
-              onClick={() => setOpen(false)}
-              className={`rounded-[12px] px-3 py-2 text-[13px] transition ${
-                isActive(pathname, "/dashboard/admin/waitlist")
-                  ? "bg-lavender text-violet font-semibold"
-                  : "font-normal text-violet hover:bg-lavender"
-              }`}
-            >
-              Waitlist
-            </Link>
-          </>
+            </p>
+            <div className="flex flex-col gap-0.5 mt-0.5">
+              <NavLink item={{ href: "/dashboard/admin", label: "Dashboard" }} active={isActive(pathname, "/dashboard/admin") && !pathname.startsWith("/dashboard/admin/placements") && !pathname.startsWith("/dashboard/admin/lifecycle") && !pathname.startsWith("/dashboard/admin/promo-codes") && !pathname.startsWith("/dashboard/admin/blog") && !pathname.startsWith("/dashboard/admin/waitlist")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin/placements", label: "Placements" }} active={isActive(pathname, "/dashboard/admin/placements")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin/blog", label: "Blog CMS" }} active={isActive(pathname, "/dashboard/admin/blog")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin/lifecycle", label: "Account Lifecycle" }} active={isActive(pathname, "/dashboard/admin/lifecycle")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin/promo-codes", label: "Promo Codes" }} active={isActive(pathname, "/dashboard/admin/promo-codes")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin/waitlist", label: "Waitlist" }} active={isActive(pathname, "/dashboard/admin/waitlist")} onClick={() => setOpen(false)} />
+            </div>
+          </div>
         )}
       </nav>
       <div className="mt-auto pt-6 border-t border-border flex items-center gap-3">

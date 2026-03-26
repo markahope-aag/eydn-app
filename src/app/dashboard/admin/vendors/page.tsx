@@ -45,6 +45,7 @@ export default function AdminVendorsPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [filterCategory, setFilterCategory] = useState("");
   const [tab, setTab] = useState<"directory" | "submissions">("directory");
 
@@ -54,6 +55,28 @@ export default function AdminVendorsPage() {
     website: "", phone: "", email: "", city: "", state: "",
     price_range: "" as string, featured: false,
   });
+
+  // Import form state
+  const [importForm, setImportForm] = useState({
+    supabase_url: "",
+    supabase_key: "",
+    table_name: "vendors",
+    filter_column: "",
+    filter_value: "",
+    import_source: "",
+  });
+  const [importResult, setImportResult] = useState<{
+    dry_run?: boolean;
+    imported?: number;
+    would_import?: number;
+    skipped_invalid?: number;
+    duplicates?: number;
+    total_remote?: number;
+    preview?: Array<{ name: string; category: string; city: string; state: string }>;
+    message?: string;
+    errors?: string[];
+  } | null>(null);
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -149,6 +172,44 @@ export default function AdminVendorsPage() {
     }
   }
 
+  async function runImport(dryRun: boolean) {
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const payload: Record<string, unknown> = {
+        supabase_url: importForm.supabase_url,
+        supabase_key: importForm.supabase_key,
+        table_name: importForm.table_name || "vendors",
+        import_source: importForm.import_source || undefined,
+        dry_run: dryRun,
+      };
+      if (importForm.filter_column && importForm.filter_value) {
+        payload.filters = { [importForm.filter_column]: importForm.filter_value };
+      }
+      const res = await fetch("/api/admin/suggested-vendors/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Import failed");
+        return;
+      }
+      setImportResult(data);
+      if (!dryRun && data.imported > 0) {
+        toast.success(`Imported ${data.imported} vendors`);
+        // Reload vendor list
+        const r = await fetch("/api/admin/suggested-vendors");
+        if (r.ok) setVendors(await r.json());
+      }
+    } catch {
+      toast.error("Import request failed. Check the connection details.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   const pendingSubmissions = submissions.filter((s) => s.status === "pending");
 
   const filtered = filterCategory
@@ -166,9 +227,14 @@ export default function AdminVendorsPage() {
             {vendors.length} vendors across {new Set(vendors.map((v) => v.category)).size} categories
           </p>
         </div>
-        <button onClick={() => setShowAdd(!showAdd)} className="btn-primary">
-          Add Vendor
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => { setShowImport(!showImport); setShowAdd(false); }} className="btn-secondary">
+            Import from Supabase
+          </button>
+          <button onClick={() => { setShowAdd(!showAdd); setShowImport(false); }} className="btn-primary">
+            Add Vendor
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -220,6 +286,142 @@ export default function AdminVendorsPage() {
           ))}
         </select>
       </div>
+
+      {/* Import panel */}
+      {showImport && (
+        <div className="mt-4 card p-5 space-y-4">
+          <h3>Import from remote Supabase</h3>
+          <p className="text-[13px] text-muted">
+            Connect to another Supabase project and pull vendor records into the directory.
+            Duplicates (same name + city + state) are automatically skipped.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="block text-[13px] font-medium text-muted mb-1">Supabase URL</label>
+              <input
+                type="url"
+                value={importForm.supabase_url}
+                onChange={(e) => setImportForm((f) => ({ ...f, supabase_url: e.target.value }))}
+                placeholder="https://xyz.supabase.co"
+                className="w-full rounded-[10px] border-border px-3 py-2 text-[14px]"
+              />
+            </div>
+            <div>
+              <label className="block text-[13px] font-medium text-muted mb-1">Service Role Key</label>
+              <input
+                type="password"
+                value={importForm.supabase_key}
+                onChange={(e) => setImportForm((f) => ({ ...f, supabase_key: e.target.value }))}
+                placeholder="eyJhbGci..."
+                className="w-full rounded-[10px] border-border px-3 py-2 text-[14px]"
+              />
+            </div>
+            <div>
+              <label className="block text-[13px] font-medium text-muted mb-1">Table name</label>
+              <input
+                type="text"
+                value={importForm.table_name}
+                onChange={(e) => setImportForm((f) => ({ ...f, table_name: e.target.value }))}
+                placeholder="vendors"
+                className="w-full rounded-[10px] border-border px-3 py-2 text-[14px]"
+              />
+            </div>
+            <div>
+              <label className="block text-[13px] font-medium text-muted mb-1">Source label</label>
+              <input
+                type="text"
+                value={importForm.import_source}
+                onChange={(e) => setImportForm((f) => ({ ...f, import_source: e.target.value }))}
+                placeholder="e.g. WeddingWire TX vendors, March 2026"
+                className="w-full rounded-[10px] border-border px-3 py-2 text-[14px]"
+              />
+            </div>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="block text-[13px] font-medium text-muted mb-1">Filter column (optional)</label>
+                <input
+                  type="text"
+                  value={importForm.filter_column}
+                  onChange={(e) => setImportForm((f) => ({ ...f, filter_column: e.target.value }))}
+                  placeholder="e.g. status"
+                  className="w-full rounded-[10px] border-border px-3 py-2 text-[14px]"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-[13px] font-medium text-muted mb-1">Filter value</label>
+                <input
+                  type="text"
+                  value={importForm.filter_value}
+                  onChange={(e) => setImportForm((f) => ({ ...f, filter_value: e.target.value }))}
+                  placeholder="e.g. active"
+                  className="w-full rounded-[10px] border-border px-3 py-2 text-[14px]"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => runImport(true)}
+              disabled={importing || !importForm.supabase_url || !importForm.supabase_key}
+              className="btn-secondary btn-sm disabled:opacity-50"
+            >
+              {importing ? "Checking..." : "Preview import"}
+            </button>
+            <button
+              type="button"
+              onClick={() => runImport(false)}
+              disabled={importing || !importForm.supabase_url || !importForm.supabase_key}
+              className="btn-primary btn-sm disabled:opacity-50"
+            >
+              {importing ? "Importing..." : "Import now"}
+            </button>
+          </div>
+          {importResult && (
+            <div className="bg-lavender rounded-[10px] p-4 text-[13px] space-y-2">
+              {importResult.dry_run && (
+                <p className="font-semibold text-violet">Preview (no changes made)</p>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {importResult.total_remote != null && (
+                  <div><span className="text-muted">Remote records:</span> {importResult.total_remote}</div>
+                )}
+                {importResult.would_import != null && (
+                  <div><span className="text-muted">Would import:</span> {importResult.would_import}</div>
+                )}
+                {importResult.imported != null && !importResult.dry_run && (
+                  <div><span className="text-muted">Imported:</span> {importResult.imported}</div>
+                )}
+                {importResult.duplicates != null && (
+                  <div><span className="text-muted">Duplicates skipped:</span> {importResult.duplicates}</div>
+                )}
+                {importResult.skipped_invalid != null && importResult.skipped_invalid > 0 && (
+                  <div><span className="text-muted">Invalid (missing fields):</span> {importResult.skipped_invalid}</div>
+                )}
+              </div>
+              {importResult.message && <p className="text-muted">{importResult.message}</p>}
+              {importResult.errors && importResult.errors.length > 0 && (
+                <div className="text-red-600">
+                  {importResult.errors.map((err, i) => <p key={i}>{err}</p>)}
+                </div>
+              )}
+              {importResult.preview && importResult.preview.length > 0 && (
+                <div>
+                  <p className="font-medium text-muted mt-2">Sample records:</p>
+                  <div className="mt-1 space-y-1">
+                    {importResult.preview.map((v, i) => (
+                      <p key={i} className="text-plum">{v.name} — {v.category} — {v.city}, {v.state}</p>
+                    ))}
+                    {importResult.would_import && importResult.would_import > 10 && (
+                      <p className="text-muted">...and {importResult.would_import - 10} more</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Add form */}
       {showAdd && (

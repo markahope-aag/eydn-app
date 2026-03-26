@@ -221,6 +221,38 @@ export type Database = {
           },
         ]
       }
+      calendar_feed_tokens: {
+        Row: {
+          id: string
+          wedding_id: string
+          token: string
+          created_at: string
+          revoked_at: string | null
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          token?: string
+          created_at?: string
+          revoked_at?: string | null
+        }
+        Update: {
+          id?: string
+          wedding_id?: string
+          token?: string
+          created_at?: string
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_feed_tokens_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string

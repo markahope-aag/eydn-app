@@ -55,7 +55,7 @@ export function GuideWizard({ guide }: Props) {
           }
         }
       })
-      .catch(() => {})
+      .catch((e) => console.error("[fetch] guide progress", e))
       .finally(() => setLoading(false));
   }, [guide.slug, guide.sections.length]);
 
@@ -118,7 +118,7 @@ export function GuideWizard({ guide }: Props) {
       setSectionIndex(next);
       saveProgress(finalResponses, next, true);
       trackGuideComplete(guide.slug);
-      toast.success(`${guide.title} complete!`);
+      toast.success(`${guide.title} complete`);
 
       // Run integrations for all guide types
       try {
@@ -142,7 +142,7 @@ export function GuideWizard({ guide }: Props) {
           if (res.ok) {
             const brief = await res.json();
             setVendorBrief(brief);
-            toast.success("Vendor brief generated — ready to send!");
+            toast.success("Vendor brief generated — ready to send");
           }
         } catch {
           // Brief generation failed — user can retry manually
@@ -194,9 +194,9 @@ export function GuideWizard({ guide }: Props) {
       const brief = await res.json();
       setVendorBrief(brief);
       trackVendorBriefGenerated(guide.slug);
-      toast.success("Vendor brief generated!");
+      toast.success("Vendor brief ready");
     } catch {
-      toast.error("Failed to generate brief");
+      toast.error("Couldn't generate the brief. Try again.");
     } finally {
       setBriefLoading(false);
     }
@@ -275,12 +275,12 @@ export function GuideWizard({ guide }: Props) {
                           }),
                         });
                         if (res.ok) {
-                          toast.success(`${palette.name} saved to mood board!`);
+                          toast.success(`${palette.name} saved to mood board`);
                         } else {
                           throw new Error();
                         }
                       } catch {
-                        toast.error("Failed to save palette");
+                        toast.error("Palette didn't save. Try again.");
                       }
                     }}
                     className="btn-secondary btn-sm flex-shrink-0"
@@ -310,10 +310,10 @@ export function GuideWizard({ guide }: Props) {
                   if (res.ok) {
                     const data = await res.json();
                     setPalettes((data as { palettes: ColorPalette[] }).palettes || []);
-                    toast.success("New palettes generated!");
+                    toast.success("New palettes generated");
                   }
                 } catch {
-                  toast.error("Failed to regenerate");
+                  toast.error("Couldn't regenerate. Try again.");
                 } finally {
                   setPalettesLoading(false);
                 }
@@ -336,7 +336,7 @@ export function GuideWizard({ guide }: Props) {
                   navigator.clipboard.writeText(
                     (vendorBrief as { text?: string }).text || JSON.stringify(vendorBrief, null, 2)
                   );
-                  toast.success("Copied to clipboard!");
+                  toast.success("Copied to clipboard");
                 }}
                 className="btn-secondary btn-sm"
               >

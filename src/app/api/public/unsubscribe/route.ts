@@ -139,7 +139,7 @@ function renderPage(title: string, body: string): string {
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} — Eydn</title></head>
 <body style="margin:0;padding:40px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAF6F1;color:#1A1A2E;">
   <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;padding:40px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-    <img src="https://eydn.app/logo.svg" alt="eydn" style="height:28px;margin-bottom:24px;" />
+    <img src="https://eydn.app/logo.png" alt="eydn" style="height:28px;margin-bottom:24px;" />
     <h1 style="font-size:22px;margin:0 0 16px;">${title}</h1>
     ${body}
   </div>

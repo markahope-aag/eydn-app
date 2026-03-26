@@ -59,11 +59,11 @@ export default function ArchiveBanner() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1">
             <p className="text-[15px] font-semibold text-plum">
-              Congratulations! Your wedding has passed.
+              Your wedding day has come and gone.
             </p>
             <p className="text-[13px] text-muted mt-1">
-              Your data is safe. After 12 months, your account will become
-              read-only unless you subscribe to the Memory Plan.
+              Your data is safe. After 12 months it becomes read-only
+              unless you&apos;re on the Memory Plan.
             </p>
           </div>
           <div className="flex items-center gap-3 flex-shrink-0">

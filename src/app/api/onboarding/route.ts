@@ -30,14 +30,20 @@ export async function POST(request: Request) {
   const partner2_name = body.partner2_name as string;
   const date = (body.date as string) || null;
   const venue = (body.venue as string) || null;
+  const venue_city = (body.venue_city as string) || null;
   const budget = (body.budget as number) || null;
   const guest_count_estimate = (body.guest_count_estimate as number) || null;
+  const venue_status = (body.venue_status as string) || null;
+  const prior_tools = (body.prior_tools as string[]) || [];
+  const budget_allocations = (body.budget_allocations as Array<{ category: string; allocated: number }>) || null;
+  const responses = ((body.responses as Record<string, unknown>) || {}) as import("@/lib/supabase/types").Json;
+
+  // Support legacy fields from the old onboarding flow (Settings → Review Questionnaire)
   const style_description = (body.style_description as string) || null;
   const has_wedding_party = (body.has_wedding_party as boolean) ?? null;
   const wedding_party_count = (body.wedding_party_count as number) || null;
   const has_pre_wedding_events = (body.has_pre_wedding_events as boolean) ?? null;
   const has_honeymoon = (body.has_honeymoon as boolean) ?? null;
-  const responses = ((body.responses as Record<string, unknown>) || {}) as import("@/lib/supabase/types").Json;
   const booked_vendors = (body.booked_vendors as string[]) || [];
 
   // Upsert wedding with onboarding data
@@ -49,24 +55,27 @@ export async function POST(request: Request) {
 
   let weddingId: string;
 
+  const weddingFields = {
+    partner1_name,
+    partner2_name,
+    date,
+    venue,
+    venue_city,
+    budget,
+    guest_count_estimate,
+    style_description,
+    has_wedding_party,
+    wedding_party_count,
+    has_pre_wedding_events,
+    has_honeymoon,
+    updated_at: new Date().toISOString(),
+  };
+
   if (existingWedding) {
     weddingId = existingWedding.id;
     const { error } = await supabase
       .from("weddings")
-      .update({
-        partner1_name,
-        partner2_name,
-        date,
-        venue,
-        budget,
-        guest_count_estimate,
-        style_description,
-        has_wedding_party,
-        wedding_party_count,
-        has_pre_wedding_events,
-        has_honeymoon,
-        updated_at: new Date().toISOString(),
-      })
+      .update(weddingFields)
       .eq("id", weddingId);
 
     if (error) {
@@ -77,23 +86,13 @@ export async function POST(request: Request) {
       .from("weddings")
       .insert({
         user_id: userId,
-        partner1_name,
-        partner2_name,
-        date,
-        venue,
-        budget,
-        guest_count_estimate,
-        style_description,
-        has_wedding_party,
-        wedding_party_count,
-        has_pre_wedding_events,
-        has_honeymoon,
+        ...weddingFields,
       })
       .select("id")
       .single();
 
     if (error || !newWedding) {
-      return NextResponse.json({ error: error?.message || "Failed to create wedding" }, { status: 500 });
+      return NextResponse.json({ error: error?.message || "Couldn't create wedding" }, { status: 500 });
     }
     weddingId = newWedding.id;
   }
@@ -108,9 +107,23 @@ export async function POST(request: Request) {
       updated_at: new Date().toISOString(),
     });
 
-  // Generate tasks only if wedding date is set
+  // Save onboarding survey (prior tools for segmentation)
+  if (prior_tools.length > 0) {
+    // Table created via migration — not yet in generated types
+    await (supabase as unknown as { from: (_t: string) => { upsert: (_d: Record<string, unknown>) => Promise<unknown> } })
+      .from("onboarding_survey")
+      .upsert({
+        wedding_id: weddingId,
+        prior_tools,
+        venue_status,
+      });
+  }
+
+  // Generate tasks if wedding date is set
+  // New flow doesn't ask about wedding party/pre-wedding/honeymoon directly,
+  // so default to true — tasks can be deleted from the dashboard if not needed.
+  // Better to have extra tasks than to miss something.
   if (date) {
-    // Delete any existing system-generated tasks
     await supabase
       .from("tasks")
       .delete()
@@ -120,13 +133,12 @@ export async function POST(request: Request) {
     const tasks = generateTasks({
       weddingId,
       weddingDate: date,
-      hasWeddingParty: has_wedding_party ?? false,
-      hasPreWeddingEvents: has_pre_wedding_events ?? false,
-      hasHoneymoon: has_honeymoon ?? false,
+      hasWeddingParty: has_wedding_party ?? true,
+      hasPreWeddingEvents: has_pre_wedding_events ?? true,
+      hasHoneymoon: has_honeymoon ?? true,
       bookedVendors: booked_vendors,
     });
 
-    // Insert tasks in batches (Supabase has limits)
     const batchSize = 50;
     for (let i = 0; i < tasks.length; i += batchSize) {
       const batch = tasks.slice(i, i + batchSize);
@@ -134,26 +146,24 @@ export async function POST(request: Request) {
     }
   }
 
-  // Seed budget line items (skip if expenses already exist)
+  // Seed budget line items
   const { count: existingExpenses } = await supabase
     .from("expenses")
     .select("*", { count: "exact", head: true })
     .eq("wedding_id", weddingId);
 
   if (!existingExpenses || existingExpenses === 0) {
-    const budgetItems = BUDGET_TEMPLATE
-      .filter((item) => {
-        // Skip honeymoon items if no honeymoon planned
-        if (item.category === "Honeymoon" && !has_honeymoon) return false;
-        return true;
-      })
-      .map((item) => ({
+    const budgetItems = BUDGET_TEMPLATE.map((item) => {
+      // If budget allocations were provided, use them for estimated amounts
+      const allocation = budget_allocations?.find((a) => a.category === item.category);
+      return {
         wedding_id: weddingId,
         description: item.description,
-        estimated: 0,
+        estimated: allocation?.allocated ?? 0,
         category: item.category,
         paid: false,
-      }));
+      };
+    });
 
     await supabase.from("expenses").insert(budgetItems);
   }

@@ -2,6 +2,48 @@
 
 This document tracks all notable changes, updates, and improvements to the eydn wedding planning platform.
 
+## [1.4.0] - March 2026
+
+### Brand Voice & Copy Audit
+- Complete audit and rewrite of all user-facing copy across the app
+- Established brand voice rules: warm, direct, real — no cheerleader energy
+- Rewrote ~100 toast messages (errors and successes) to be calm and specific
+- Removed all unnecessary exclamation points from success messages
+- Rewrote all empty states to feel like potential, not absence
+- Updated paywall, archive, and read-only messaging
+
+### AI Assistant Persona Overhaul
+- Complete rewrite of the system prompt with new persona specification
+- Replaced "Friendly & warm / Romantic / Fun & energetic" with direct, honest, calm voice
+- Added explicit "What You Never Do" rules (no "Oops!", "Amazing!", "Great question!", etc.)
+- Added urgency flags to context: WEDDING IS THIS WEEK, FINAL MONTH, OVER BUDGET
+- Added budget category status tracking (OVER/TIGHT/OK per category)
+- Added overdue task highlighting and 14-day lookahead
+- Added vendor status grouping (booked/contracted, in conversation, still needed)
+- Added RSVP response rate calculation
+- Integrated buildCoupleContext patterns for structured context injection
+
+### Onboarding Flow Redesign
+- Rebuilt from 11-screen conversational flow to 7-screen focused wizard
+- Names moved before Date for personalization ("When's the wedding, Sarah?")
+- Budget and Guest Count combined into single screen (both skippable)
+- Two AI screens merged into one (intro + greeting + chat input)
+- Existing Tools screen removed (moved to post-onboarding)
+- Booked Vendors screen added back (drives task generation)
+- AI greeting generated client-side from template with timeframe variants
+- Budget allocations auto-calculated using percentage splits
+- Review mode (?review=true) for revisiting from Settings
+
+### Gift Registry Planning Guide
+- New 5-section guide with 14 questions covering platform selection, Amazon setup, price range strategy, cash funds, and registry link collection
+- Integration: completed guide auto-saves registry URLs to wedding website
+- Registry links now appear in day-of binder PDF export
+
+### Database Changes
+- Added onboarding_survey table for prior planning tools segmentation
+- Added venue_city column to weddings table
+- Added Gift Registry section to binder PDF export
+
 ## [Current] - March 2026
 
 ### 🆕 Major Features Added

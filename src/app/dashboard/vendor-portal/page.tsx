@@ -89,7 +89,7 @@ export default function VendorPortalPage() {
       .then((data) => {
         if (data) setAccount(data);
       })
-      .catch(() => toast.error("Failed to load vendor account"))
+      .catch(() => toast.error("Couldn't load your vendor account. Try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -106,7 +106,7 @@ export default function VendorPortalPage() {
 
 /* ---------- Registration Form ---------- */
 
-function RegistrationForm({ onSuccess }: { onSuccess: (a: VendorAccount) => void }) {
+function RegistrationForm({ onSuccess }: { onSuccess: (_a: VendorAccount) => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     business_name: "",
@@ -140,13 +140,13 @@ function RegistrationForm({ onSuccess }: { onSuccess: (a: VendorAccount) => void
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create account");
+        throw new Error(data.error || "Account didn't save. Try again.");
       }
       const data = await res.json();
-      toast.success("Vendor account created! Your application is pending review.");
+      toast.success("Account created. Your application is under review.");
       onSuccess(data);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create account");
+      toast.error(err instanceof Error ? err.message : "Account didn't save. Try again.");
     } finally {
       setSubmitting(false);
     }
@@ -276,7 +276,7 @@ function VendorDashboard({
   setAccount,
 }: {
   account: VendorAccount;
-  setAccount: (a: VendorAccount) => void;
+  setAccount: (_a: VendorAccount) => void;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [tiers, setTiers] = useState<Tier[]>([]);
@@ -287,17 +287,17 @@ function VendorDashboard({
     fetch("/api/vendor-portal/tiers")
       .then((r) => (r.ok ? r.json() : []))
       .then(setTiers)
-      .catch(() => {});
+      .catch((err) => console.error("Failed to load vendor tiers", err));
 
     fetch("/api/vendor-portal/placements")
       .then((r) => (r.ok ? r.json() : []))
       .then(setPlacements)
-      .catch(() => {});
+      .catch((err) => console.error("Failed to load vendor placements", err));
 
     fetch("/api/vendor-portal/analytics")
       .then((r) => (r.ok ? r.json() : { impressions: 0, clicks: 0, leads: 0 }))
       .then(setAnalytics)
-      .catch(() => {});
+      .catch((err) => console.error("Failed to load vendor analytics", err));
   }, []);
 
   const activePlacement = placements.find((p) => p.status === "active");
@@ -427,7 +427,7 @@ function ProfileEditor({
   onUpdate,
 }: {
   account: VendorAccount;
-  onUpdate: (a: VendorAccount) => void;
+  onUpdate: (_a: VendorAccount) => void;
 }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -460,7 +460,7 @@ function ProfileEditor({
       onUpdate(data);
       toast.success("Profile updated");
     } catch {
-      toast.error("Failed to update profile");
+      toast.error("Profile didn't save. Try again.");
     } finally {
       setSaving(false);
     }
@@ -581,7 +581,7 @@ function PlacementTab({
 
   async function handlePurchase(tierId: string, billingPeriod: string) {
     if (account.status !== "approved") {
-      toast.error("Your account must be approved before purchasing a placement");
+      toast.error("Your account needs to be approved first.");
       return;
     }
 
@@ -594,14 +594,14 @@ function PlacementTab({
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create checkout session");
+        throw new Error(data.error || "Couldn't start checkout. Try again.");
       }
       const { url } = await res.json();
       if (url) {
         window.location.href = url;
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Checkout failed");
+      toast.error(err instanceof Error ? err.message : "Checkout didn't go through. Try again.");
     } finally {
       setCheckingOut(null);
     }

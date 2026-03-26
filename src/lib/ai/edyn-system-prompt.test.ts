@@ -98,14 +98,14 @@ describe("buildEdynSystemPrompt", () => {
     const result = buildEdynSystemPrompt(
       makeContext({ wedding: { venue: null } }),
     );
-    expect(result).toContain("Not decided yet");
+    expect(result).toContain("Not yet booked");
   });
 
   it("includes task completion stats", () => {
     const result = buildEdynSystemPrompt(
       makeContext({ taskStats: { total: 20, completed: 8 } }),
     );
-    expect(result).toContain("8/20 completed");
+    expect(result).toContain("8 of 20 complete");
     expect(result).toContain("40%");
   });
 
@@ -113,18 +113,18 @@ describe("buildEdynSystemPrompt", () => {
     const result = buildEdynSystemPrompt(
       makeContext({ taskStats: { total: 0, completed: 0 } }),
     );
-    expect(result).toContain("0/0 completed");
+    expect(result).toContain("0 of 0 complete");
     expect(result).toContain("0%");
   });
 
   it("includes vendor count", () => {
     const result = buildEdynSystemPrompt(makeContext({ vendorCount: 5 }));
-    expect(result).toContain("Vendors tracked: 5");
+    expect(result).toContain("VENDORS: 5 tracked");
   });
 
   it("includes guest count", () => {
     const result = buildEdynSystemPrompt(makeContext({ guestCount: 150 }));
-    expect(result).toContain("Guests on list: 150");
+    expect(result).toContain("GUESTS: 150 on list");
   });
 
   it("includes budget information when budget is set", () => {
@@ -140,7 +140,7 @@ describe("buildEdynSystemPrompt", () => {
     const result = buildEdynSystemPrompt(
       makeContext({ wedding: { budget: null } }),
     );
-    expect(result).toContain("Budget: Not set");
+    expect(result).toContain("BUDGET: Not set");
   });
 
   it("handles null/missing optional fields gracefully", () => {
@@ -156,8 +156,8 @@ describe("buildEdynSystemPrompt", () => {
     );
     // Should not throw and should contain fallback text
     expect(result).toContain("Not set yet");
-    expect(result).toContain("Not decided yet");
-    expect(result).toContain("Budget: Not set");
+    expect(result).toContain("Not yet booked");
+    expect(result).toContain("BUDGET: Not set");
     // style_description is null so that line should not appear
     expect(result).not.toContain("Style:");
   });

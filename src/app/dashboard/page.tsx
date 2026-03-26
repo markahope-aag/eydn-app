@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/types";
 import { formatDueDate } from "@/lib/date-utils";
+import Link from "next/link";
 
 type Wedding = Database["public"]["Tables"]["weddings"]["Row"];
 
@@ -22,7 +23,7 @@ export default async function DashboardPage() {
       <div className="max-w-lg">
         <h1>Welcome to Eydn</h1>
         <p className="mt-2 text-[15px] text-muted">
-          You haven&apos;t set up your wedding yet. Let&apos;s get started.
+          Set up your wedding and Eydn will build your planning timeline.
         </p>
         <a href="/dashboard/onboarding" className="btn-primary mt-6 inline-flex">
           Set Up Your Wedding
@@ -51,10 +52,11 @@ export default async function DashboardPage() {
         .is("deleted_at", null),
       supabase
         .from("tasks")
-        .select("title, due_date, category, completed")
+        .select("title, due_date, category, completed, priority")
         .eq("wedding_id", wedding.id)
         .eq("completed", false)
         .is("deleted_at", null)
+        .not("due_date", "is", null)
         .order("due_date", { ascending: true, nullsFirst: false })
         .limit(5),
       supabase
@@ -94,11 +96,37 @@ export default async function DashboardPage() {
       )
     : null;
 
-  const taskPct = (taskCount ?? 0) > 0
-    ? Math.round(((completedTasks ?? 0) / (taskCount ?? 0)) * 100)
-    : 0;
+  const totalTasks = taskCount ?? 0;
+  const doneTasks = completedTasks ?? 0;
+  const taskPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   const budgetSpent = (expensesData || []).reduce((sum: number, e: { amount_paid: number }) => sum + ((e as { amount_paid: number }).amount_paid || 0), 0);
+  const budgetTotal = wedding.budget ?? 0;
+  const budgetRemaining = budgetTotal - budgetSpent;
+
+  // ─── Greeting message tailored to timeline ──────────────────────────────
+  function getGreeting(): string {
+    const name = wedding!.partner1_name;
+    if (doneTasks === 0) {
+      return `Hey ${name} — your planning timeline is ready. Start with whatever feels most pressing.`;
+    }
+    if (daysUntilWedding !== null && daysUntilWedding <= 7) {
+      return `It's almost here, ${name}. ${doneTasks} of ${totalTasks} tasks done. Take a breath — you've got this.`;
+    }
+    if (daysUntilWedding !== null && daysUntilWedding <= 30) {
+      return `The final stretch, ${name}. ${totalTasks - doneTasks} tasks left and ${daysUntilWedding} days to go.`;
+    }
+    if (taskPct >= 75) {
+      return `You're in great shape, ${name}. ${taskPct}% done with ${daysUntilWedding ? `${daysUntilWedding} days` : "plenty of time"} to go.`;
+    }
+    if (taskPct >= 50) {
+      return `Over halfway there, ${name}. ${doneTasks} of ${totalTasks} tasks checked off. Here's what's coming up.`;
+    }
+    if (taskPct >= 25) {
+      return `Good momentum, ${name}. ${doneTasks} tasks done so far. Here's what's next.`;
+    }
+    return `${doneTasks} of ${totalTasks} tasks done, ${name}. Here's what's coming up.`;
+  }
 
   // ─── Generate proactive nudges ──────────────────────────────────────────
   const nudges: { message: string; type: "urgent" | "tip" | "celebrate"; link?: string }[] = [];
@@ -179,21 +207,21 @@ export default async function DashboardPage() {
   }
 
   // Milestone celebrations
-  if (taskPct >= 50 && taskPct < 75 && (completedTasks ?? 0) > 5) {
+  if (taskPct >= 50 && taskPct < 75 && doneTasks > 5) {
     nudges.push({ message: `You're over halfway done with your planning tasks — ${taskPct}% complete! You're crushing it.`, type: "celebrate" });
   } else if (taskPct >= 75 && taskPct < 100) {
     nudges.push({ message: `${taskPct}% of tasks done — you're in the home stretch! Almost everything is locked in.`, type: "celebrate" });
-  } else if (taskPct === 100 && (taskCount ?? 0) > 10) {
+  } else if (taskPct === 100 && totalTasks > 10) {
     nudges.push({ message: "Every single task is done. You're officially the most organized couple ever. Enjoy your day!", type: "celebrate" });
   }
 
   // Budget check
-  if (wedding.budget) {
-    const budgetUsed = Math.round((budgetSpent / wedding.budget) * 100);
+  if (budgetTotal > 0) {
+    const budgetUsed = Math.round((budgetSpent / budgetTotal) * 100);
     if (budgetUsed > 90 && budgetUsed < 100) {
       nudges.push({ message: `You've spent ${budgetUsed}% of your budget — getting close to the limit. Keep an eye on remaining expenses.`, type: "urgent", link: "/dashboard/budget" });
-    } else if (budgetSpent > wedding.budget) {
-      nudges.push({ message: `You're over budget by $${(budgetSpent - wedding.budget).toLocaleString()}. Let's review your expenses and see where to trim.`, type: "urgent", link: "/dashboard/budget" });
+    } else if (budgetSpent > budgetTotal) {
+      nudges.push({ message: `You're over budget by $${(budgetSpent - budgetTotal).toLocaleString()}. Let's review your expenses and see where to trim.`, type: "urgent", link: "/dashboard/budget" });
     }
   }
 
@@ -204,6 +232,13 @@ export default async function DashboardPage() {
       return order[a.type] - order[b.type];
     })
     .slice(0, 3);
+
+  // Priority indicators for tasks
+  const priorityDot: Record<string, string> = {
+    high: "bg-error",
+    medium: "bg-[#D4A017]",
+    low: "bg-transparent border border-border",
+  };
 
   return (
     <div>
@@ -243,11 +278,7 @@ export default async function DashboardPage() {
             <span className="text-[13px] font-semibold text-white">e</span>
           </div>
           <div className="bg-lavender rounded-[12px] rounded-tl-[4px] px-4 py-3">
-            <p className="text-[15px] text-plum">
-              {(completedTasks ?? 0) === 0
-                ? `Welcome, ${wedding.partner1_name}. I've set up your personalized planning timeline. Let's make your dream wedding happen.`
-                : `Looking great, ${wedding.partner1_name}. You've completed ${completedTasks ?? 0} of ${taskCount ?? 0} tasks. Keep it up.`}
-            </p>
+            <p className="text-[15px] text-plum">{getGreeting()}</p>
           </div>
         </div>
       )}
@@ -266,53 +297,97 @@ export default async function DashboardPage() {
             })}
           </p>
           {daysUntilWedding !== null && daysUntilWedding > 0 && (
-            <div
-              className="mt-3 inline-flex items-baseline gap-2"
-              style={{
-                background: "linear-gradient(135deg, var(--violet), var(--soft-violet))",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              <span className="text-[48px] font-semibold leading-none" style={{ letterSpacing: "-1px" }}>
-                {daysUntilWedding}
-              </span>
-              <span className="text-[18px] font-semibold">
-                days to go
-              </span>
+            <div className="mt-3">
+              <div
+                className="inline-flex items-baseline gap-2"
+                style={{
+                  background: "linear-gradient(135deg, var(--violet), var(--soft-violet))",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                <span className="text-[48px] font-semibold leading-none" style={{ letterSpacing: "-1px" }}>
+                  {daysUntilWedding}
+                </span>
+                <span className="text-[18px] font-semibold">
+                  days to go
+                </span>
+              </div>
+              {/* Progress bar toward wedding date */}
+              <CountdownBar weddingDate={wedding.date} />
             </div>
           )}
         </div>
       )}
 
+      {/* Stats — Progress ring is larger and more prominent */}
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Progress Ring */}
-        <div className="card-summary p-4 flex flex-col items-center justify-center">
+        <div className="card-summary p-6 flex flex-col items-center justify-center sm:col-span-2 lg:col-span-1 lg:row-span-2">
           <ProgressRing percentage={taskPct} />
-          <p className="mt-2 text-[13px] font-semibold text-muted">Planning Progress</p>
+          <p className="mt-3 text-[14px] font-semibold text-plum">Planning Progress</p>
+          <p className="text-[12px] text-muted">{doneTasks} of {totalTasks} tasks</p>
         </div>
-        <StatCard label="Guests" value={guestCount ?? 0} />
+        <StatCard label="Guests" value={guestCount ?? 0} href="/dashboard/guests" />
         <StatCard
           label="Tasks"
-          value={`${completedTasks ?? 0}/${taskCount ?? 0}`}
+          value={`${doneTasks}/${totalTasks}`}
+          href="/dashboard/tasks"
         />
-        <StatCard
-          label="Budget"
-          value={wedding.budget ? `$${wedding.budget.toLocaleString()}` : "Not set"}
-        />
+        {budgetTotal > 0 ? (
+          <div className="card-summary p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[13px] font-semibold text-muted">Budget</p>
+              <Link href="/dashboard/budget" className="text-[11px] text-violet hover:text-soft-violet font-semibold">View →</Link>
+            </div>
+            <p className="mt-1 text-[22px] font-semibold text-plum">${budgetSpent.toLocaleString()}</p>
+            <p className="text-[12px] text-muted">
+              of ${budgetTotal.toLocaleString()} total
+              {budgetRemaining >= 0
+                ? ` · $${budgetRemaining.toLocaleString()} remaining`
+                : ` · $${Math.abs(budgetRemaining).toLocaleString()} over`}
+            </p>
+            <div className="mt-2 h-1.5 rounded-full bg-lavender overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${budgetSpent > budgetTotal ? "bg-error" : "bg-violet"}`}
+                style={{ width: `${Math.min(100, budgetTotal > 0 ? (budgetSpent / budgetTotal) * 100 : 0)}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <StatCard label="Budget" value="Not set" href="/dashboard/budget" />
+        )}
       </div>
 
-      {/* Upcoming tasks */}
+      {/* Quick-add buttons */}
+      <div className="mt-6 flex gap-3 flex-wrap">
+        <Link href="/dashboard/tasks" className="btn-ghost btn-sm flex items-center gap-1.5">
+          <span className="text-violet">+</span> Add Task
+        </Link>
+        <Link href="/dashboard/guests" className="btn-ghost btn-sm flex items-center gap-1.5">
+          <span className="text-violet">+</span> Add Guest
+        </Link>
+        <Link href="/dashboard/vendors" className="btn-ghost btn-sm flex items-center gap-1.5">
+          <span className="text-violet">+</span> Add Vendor
+        </Link>
+      </div>
+
+      {/* Upcoming tasks — sorted by urgency with priority indicators */}
       {upcomingTasks && upcomingTasks.length > 0 && (
         <div className="mt-8">
-          <h2>Upcoming tasks</h2>
+          <div className="flex items-center justify-between">
+            <h2>Upcoming tasks</h2>
+            <Link href="/dashboard/tasks" className="text-[13px] text-violet hover:text-soft-violet font-semibold">
+              View all →
+            </Link>
+          </div>
           <div className="mt-3 space-y-2">
-            {(upcomingTasks as { title: string; due_date: string | null; category: string | null; completed: boolean }[]).map((task, i) => {
+            {(upcomingTasks as { title: string; due_date: string | null; category: string | null; completed: boolean; priority: string }[]).map((task, i) => {
               const dueDateInfo = task.due_date ? formatDueDate(task.due_date) : null;
               const isOverdue = dueDateInfo?.isOverdue;
               return (
                 <div key={i} className="card-list flex items-center gap-3 px-4 py-3">
+                  <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${priorityDot[task.priority] || priorityDot.medium}`} title={`${task.priority} priority`} />
                   <span className="flex-1 text-[15px] text-plum">
                     {task.title}
                   </span>
@@ -320,22 +395,46 @@ export default async function DashboardPage() {
                     <span className="badge badge-booked">{task.category}</span>
                   )}
                   {dueDateInfo && (
-                    <span className={`text-[12px] ${isOverdue ? "text-error font-semibold" : dueDateInfo.isToday ? "text-violet font-semibold" : "text-muted"}`}>
-                      {dueDateInfo.formatted} &middot; {dueDateInfo.relative}
+                    <span className={`text-[12px] flex-shrink-0 ${isOverdue ? "text-error font-semibold" : dueDateInfo.isToday ? "text-violet font-semibold" : "text-muted"}`}>
+                      {dueDateInfo.formatted} · {dueDateInfo.relative}
                     </span>
                   )}
                 </div>
               );
             })}
           </div>
-          <a href="/dashboard/tasks" className="mt-3 inline-block text-[15px] text-violet hover:text-soft-violet font-semibold">
-            View all tasks →
-          </a>
         </div>
       )}
 
       {/* Recent Activity */}
       <RecentActivity weddingId={wedding.id} />
+    </div>
+  );
+}
+
+function CountdownBar({ weddingDate }: { weddingDate: string }) {
+  const now = new Date();
+  const wedding = new Date(weddingDate);
+  const totalDays = Math.ceil((wedding.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Assume ~18 month engagement as baseline (540 days)
+  // If wedding is further out, use actual distance
+  const totalSpan = Math.max(totalDays, 540);
+  const elapsed = totalSpan - totalDays;
+  const pct = Math.min(100, Math.max(0, (elapsed / totalSpan) * 100));
+
+  return (
+    <div className="mt-2 max-w-[220px]">
+      <div className="h-1.5 rounded-full bg-lavender overflow-hidden">
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${pct}%`,
+            background: "linear-gradient(135deg, var(--violet), var(--soft-violet))",
+            transition: "width 0.6s ease",
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -400,8 +499,8 @@ async function RecentActivity({ weddingId }: { weddingId: string }) {
 }
 
 function ProgressRing({ percentage }: { percentage: number }) {
-  const size = 120;
-  const strokeWidth = 10;
+  const size = 140;
+  const strokeWidth = 12;
   const r = (size - strokeWidth) / 2;
   const cx = size / 2;
   const cy = size / 2;
@@ -411,21 +510,18 @@ function ProgressRing({ percentage }: { percentage: number }) {
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {/* Gradient definition */}
       <defs>
         <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#2C3E2D" />
           <stop offset="100%" stopColor="#D4A5A5" />
         </linearGradient>
       </defs>
-      {/* Background ring */}
       <circle
         cx={cx} cy={cy} r={r}
         fill="none"
         stroke="var(--lavender, #F0E6FA)"
         strokeWidth={strokeWidth}
       />
-      {/* Filled ring */}
       <circle
         cx={cx} cy={cy} r={r}
         fill="none"
@@ -437,20 +533,19 @@ function ProgressRing({ percentage }: { percentage: number }) {
         transform={`rotate(-90 ${cx} ${cy})`}
         style={{ transition: "stroke-dashoffset 0.6s ease" }}
       />
-      {/* Percentage text */}
       <text
         x={cx} y={cy - 4}
         textAnchor="middle"
-        fontSize="28"
+        fontSize="32"
         fontWeight="600"
         fill="var(--plum, #3D2252)"
       >
         {percentage}%
       </text>
       <text
-        x={cx} y={cy + 16}
+        x={cx} y={cy + 18}
         textAnchor="middle"
-        fontSize="10"
+        fontSize="11"
         fill="var(--muted, #8E7A9E)"
       >
         complete
@@ -459,11 +554,24 @@ function ProgressRing({ percentage }: { percentage: number }) {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="card-summary p-4">
-      <p className="text-[13px] font-semibold text-muted">{label}</p>
+function StatCard({ label, value, href }: { label: string; value: string | number; href?: string }) {
+  const content = (
+    <>
+      <div className="flex items-center justify-between">
+        <p className="text-[13px] font-semibold text-muted">{label}</p>
+        {href && <span className="text-[11px] text-violet font-semibold">View →</span>}
+      </div>
       <p className="mt-1 text-[26px] font-semibold text-plum">{value}</p>
-    </div>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="card-summary p-4 hover:border-violet/30 transition-colors">
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className="card-summary p-4">{content}</div>;
 }

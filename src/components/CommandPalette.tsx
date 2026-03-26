@@ -181,7 +181,7 @@ export function CommandPalette() {
         <div ref={listRef} className="max-h-[320px] overflow-y-auto py-2">
           {flatItems.length === 0 ? (
             <p className="px-4 py-8 text-center text-[14px] text-muted">
-              No results found.
+              Nothing matched
             </p>
           ) : (
             grouped.map((group) => (

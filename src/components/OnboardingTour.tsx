@@ -16,28 +16,51 @@ function subscribeTour(cb: () => void) {
   return () => { tourListeners = tourListeners.filter((l) => l !== cb); };
 }
 
-type TourStep = { title: string; description: string };
+type TourStep = { title: string; description: string; section?: string };
 
 const STEPS: TourStep[] = [
   {
     title: "Welcome to Eydn!",
-    description: "Your personal wedding planning assistant. We'll walk you through the key features to help you plan your perfect day.",
+    description: "Your personal wedding planning assistant. Let's take a quick look at what's here so you can jump right in.",
   },
   {
-    title: "Your Tasks",
-    description: "Your planning timeline lives here. Tasks are organized by phase so you always know what to tackle next — from booking the venue to final details.",
+    title: "Your Dashboard",
+    description: "This is home base. You'll see your progress, upcoming tasks, countdown, and budget at a glance. Quick-add buttons let you create tasks, guests, or vendors without leaving the page.",
+    section: "Overview",
   },
   {
     title: "Ask Eydn",
-    description: "Have a question? Our AI assistant can help with vendor recommendations, etiquette advice, timeline suggestions, and more.",
+    description: "Your AI planning assistant. Ask it anything — vendor recommendations, etiquette questions, budget advice. It sees your full wedding data and can take actions for you, like adding guests or searching for venues.",
+    section: "AI Chat",
   },
   {
-    title: "Your Vendors",
-    description: "Track every vendor in one place. Update statuses, store contact info, and manage contracts as you build your dream team.",
+    title: "Planning",
+    description: "Tasks, budget, planning guides, and your vision board live here. Tasks are organized by timeline phase with priorities and due dates so you always know what to tackle next.",
+    section: "Planning",
+  },
+  {
+    title: "Vendors",
+    description: "Track every vendor from first contact to final payment. Manage statuses, store contracts, and use email templates to reach out. Google Business profiles are pulled in automatically.",
+    section: "Vendors",
+  },
+  {
+    title: "People",
+    description: "Manage your guest list with RSVPs and meal preferences, organize your wedding party with photos and roles, and build your seating chart with drag-and-drop tables.",
+    section: "People",
+  },
+  {
+    title: "Day-Of",
+    description: "Your day-of planner builds a detailed timeline, ceremony script, music lists, and packing checklist. Export everything as a beautiful PDF binder for your coordinator.",
+    section: "Day-Of",
+  },
+  {
+    title: "Navigation Tip",
+    description: "The sidebar groups everything into collapsible sections. Use the command palette (Cmd+K) to jump to any page instantly. And Ask Eydn is always pinned at the top of the sidebar.",
+    section: "Navigation",
   },
   {
     title: "You're all set!",
-    description: "You're ready to start planning. Explore the dashboard, add your wedding details, and let Eydn guide you every step of the way.",
+    description: "Start with your tasks — they were generated from your wedding date. Or ask Eydn for help with anything. You've got this.",
   },
 ];
 
@@ -60,16 +83,21 @@ export function OnboardingTour() {
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)" }} onClick={complete} />
-      <div style={{ position: "relative", backgroundColor: "white", borderRadius: 20, padding: "32px 28px 24px", maxWidth: 420, width: "90%", boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)" }}>
+      <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0, 0, 0, 0.5)" }} role="presentation" onClick={complete} />
+      <div style={{ position: "relative", backgroundColor: "white", borderRadius: 20, padding: "32px 28px 24px", maxWidth: 440, width: "90%", boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)" }}>
         {/* Step indicator */}
-        <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: 4, justifyContent: "center", marginBottom: 20 }}>
           {STEPS.map((_, i) => (
-            <div key={i} style={{ width: i === step ? 24 : 8, height: 8, borderRadius: 4, backgroundColor: i === step ? "#2C3E2D" : "#EDE7DF", transition: "all 0.3s ease" }} />
+            <div key={i} style={{ width: i === step ? 20 : 6, height: 6, borderRadius: 3, backgroundColor: i === step ? "#2C3E2D" : "#EDE7DF", transition: "all 0.3s ease" }} />
           ))}
         </div>
+        {current.section && (
+          <p style={{ fontSize: 11, fontWeight: 600, color: "#8E7A9E", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, textAlign: "center" }}>
+            {current.section}
+          </p>
+        )}
         <p style={{ fontSize: 12, fontWeight: 600, color: "#2C3E2D", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, textAlign: "center" }}>
-          {isFirst ? "Getting Started" : isLast ? "All Done" : `Step ${step} of ${STEPS.length - 2}`}
+          {isFirst ? "Getting Started" : isLast ? "All Done" : `${step} of ${STEPS.length - 2}`}
         </p>
         <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1a1a2e", textAlign: "center", marginBottom: 8 }}>{current.title}</h2>
         <p style={{ fontSize: 15, lineHeight: 1.6, color: "#6b7280", textAlign: "center", marginBottom: 28 }}>{current.description}</p>

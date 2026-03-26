@@ -44,7 +44,7 @@ export default function PricingPage() {
         toast.error(data.reason || "Invalid code");
       }
     } catch {
-      toast.error("Failed to validate code");
+      toast.error("That code didn't work. Check it and try again.");
     } finally {
       setValidating(false);
     }
@@ -81,7 +81,7 @@ export default function PricingPage() {
         window.location.href = data.url;
       }
     } catch {
-      toast.error("Something went wrong. Try again.");
+      toast.error("That didn't go through. Try again.");
     } finally {
       setLoading(false);
     }

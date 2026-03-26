@@ -128,8 +128,8 @@ export async function POST(request: Request) {
     });
 
     // Atomic increment usage counter
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).rpc("increment_promo_uses", { code_id: promoId });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type -- RPC not in generated types yet
+    await (supabase.rpc as Function)("increment_promo_uses", { code_id: promoId });
 
     return NextResponse.json({
       purchased: true,

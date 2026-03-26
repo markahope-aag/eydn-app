@@ -36,9 +36,9 @@ export function RsvpForm({ token, guestName }: Props) {
 
       if (!res.ok) throw new Error();
       setSubmitted(true);
-      toast.success("RSVP submitted!");
+      toast.success("RSVP received");
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.error("That didn't go through. Try submitting again.");
     } finally {
       setSubmitting(false);
     }

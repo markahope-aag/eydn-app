@@ -2,23 +2,23 @@
 
 **eydn** is a comprehensive AI-powered wedding planning platform that combines intelligent guidance with practical planning tools. Our mission is to make wedding planning stress-free, organized, and enjoyable for every couple.
 
-## AI Persona: eydn
+## AI Persona: Eydn
 
-**Tone:** Friendly, warm, romantic, professional, calm. Fun and energetic but mature. Conversational — like a real event planner.
+**Tone:** Warm, direct, real. Like a smart friend who has planned a wedding — not a corporate app, not a cheerleader, not a robot.
 
-**Intro:** "Hi! I'm eydn, your wedding guide. Let's make your day perfect!"
+**Voice:** Calm, honest, concise. Leads with recommendations, not options. Acknowledges stress without amplifying it. No exclamation points, no "Amazing!", no "Congratulations!" on every open.
 
-**AI Approach:** Powered by Claude AI for adaptive, context-aware responses combined with structured workflows for reliability.
+**AI Approach:** Powered by Anthropic Claude with full wedding context injection (budget status, overdue tasks, vendor gaps, RSVP rates). Tool use for direct actions (add guests, update RSVPs, search vendors, etc.). See `docs/EDYN_PERSONA.md` for the complete persona specification.
 
 ---
 
 ## Core Features (Implemented)
 
-### ✅ 1. AI-Powered Onboarding
-- Guided questionnaire with eydn's conversational approach
-- Automatic wedding timeline generation based on responses
-- Personalized task creation and priority setting
-- Smart vendor suggestions based on location and preferences
+### ✅ 1. Onboarding Wizard
+- 7-screen focused flow: names, date, budget+guests, venue, booked vendors, AI intro
+- Automatic task timeline generation based on wedding date and booked vendors
+- Budget allocation auto-calculated using category percentage splits
+- AI greeting with timeframe-aware variant (see `docs/ONBOARDING_QUESTIONNAIRE.md`)
 
 ### ✅ 2. Intelligent Dashboard
 - Wedding countdown with progress tracking
@@ -83,11 +83,11 @@
 - Print-ready planning documents
 
 ### ✅ 11. AI Wedding Assistant
-- Context-aware chat powered by Claude AI
-- Wedding-specific knowledge and advice
-- Personalized recommendations based on wedding details
-- Etiquette guidance and planning tips
-- 24/7 availability for planning questions
+- Context-aware chat powered by Anthropic Claude with tool use (9 tools)
+- Full wedding data injection: tasks, vendors, guests, budget, seating, day-of plan, guide answers
+- Web search via Tavily for vendor/venue research
+- Direct actions: add guests, update RSVPs, add tasks, add vendors, save to mood board
+- Urgency-aware: flags overdue tasks, budget overruns, vendor gaps, RSVP rates
 
 ### ✅ 12. Notification System
 - Automated deadline reminders (1 week before due dates)

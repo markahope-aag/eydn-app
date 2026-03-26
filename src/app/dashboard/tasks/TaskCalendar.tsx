@@ -20,7 +20,7 @@ type Task = {
 
 type Props = {
   tasks: Task[];
-  onSelectTask: (task: Task) => void;
+  onSelectTask: (_task: Task) => void;
 };
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

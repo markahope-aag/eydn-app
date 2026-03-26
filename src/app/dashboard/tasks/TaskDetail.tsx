@@ -78,10 +78,10 @@ type Props = {
   subTasks: Task[];
   allTasks: Task[];
   onClose: () => void;
-  onToggle: (id: string) => void;
-  onUpdateNotes: (id: string, notes: string) => void;
-  onUpdatePriority: (id: string, priority: "high" | "medium" | "low") => void;
-  onUpdateStatus: (id: string, status: "not_started" | "in_progress" | "done") => void;
+  onToggle: (_id: string) => void;
+  onUpdateNotes: (_id: string, _notes: string) => void;
+  onUpdatePriority: (_id: string, _priority: "high" | "medium" | "low") => void;
+  onUpdateStatus: (_id: string, _status: "not_started" | "in_progress" | "done") => void;
 };
 
 const STATUS_OPTIONS: { value: "not_started" | "in_progress" | "done"; label: string }[] = [
@@ -173,7 +173,7 @@ export function TaskDetail({
       fetchResources();
       toast.success("Resource added");
     } catch {
-      toast.error("Failed to add resource");
+      toast.error("Couldn't add that resource. Try again.");
     }
   }
 
@@ -185,7 +185,7 @@ export function TaskDetail({
       if (!res.ok) throw new Error();
       setResources((prev) => prev.filter((r) => r.id !== resourceId));
     } catch {
-      toast.error("Failed to remove resource");
+      toast.error("Couldn't remove that resource.");
     }
   }
 
@@ -202,7 +202,7 @@ export function TaskDetail({
       fetchRelatedTasks();
       toast.success("Related task linked");
     } catch {
-      toast.error("Failed to link task");
+      toast.error("Couldn't link that task. Try again.");
     }
   }
 
@@ -214,7 +214,7 @@ export function TaskDetail({
       if (!res.ok) throw new Error();
       setRelatedTasks((prev) => prev.filter((r) => r.id !== relationId));
     } catch {
-      toast.error("Failed to remove related task");
+      toast.error("Couldn't unlink that task.");
     }
   }
 
@@ -263,10 +263,35 @@ export function TaskDetail({
 
           {/* Due date */}
           {dueDateInfo && (
-            <div className="mt-4">
+            <div className="mt-4 flex items-center gap-3">
               <span className={`text-[15px] ${isOverdue ? "text-error font-semibold" : dueDateInfo.isToday ? "text-violet font-semibold" : "text-muted"}`}>
                 Due: {dueDateInfo.formatted} &middot; {dueDateInfo.relative}
               </span>
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch(`/api/tasks/${task.id}/ics`);
+                    if (!res.ok) throw new Error();
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `${task.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.ics`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  } catch {
+                    toast.error("Couldn't generate calendar event.");
+                  }
+                }}
+                className="text-[12px] text-violet hover:text-soft-violet font-semibold transition flex items-center gap-1"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M2 7h12" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                Add to Calendar
+              </button>
             </div>
           )}
 
@@ -378,7 +403,7 @@ export function TaskDetail({
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] font-semibold text-muted uppercase">Subject</label>
                     <button
-                      onClick={() => { navigator.clipboard.writeText(emailTemplate.subject); toast.success("Subject copied!"); }}
+                      onClick={() => { navigator.clipboard.writeText(emailTemplate.subject); toast.success("Subject copied"); }}
                       className="text-[11px] text-violet hover:text-soft-violet"
                     >
                       Copy
@@ -390,7 +415,7 @@ export function TaskDetail({
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] font-semibold text-muted uppercase">Body</label>
                     <button
-                      onClick={() => { navigator.clipboard.writeText(emailTemplate.body); toast.success("Body copied!"); }}
+                      onClick={() => { navigator.clipboard.writeText(emailTemplate.body); toast.success("Body copied"); }}
                       className="text-[11px] text-violet hover:text-soft-violet"
                     >
                       Copy
@@ -409,7 +434,7 @@ export function TaskDetail({
                       <div className="flex items-center justify-between">
                         <p className="text-[14px] text-plum">{followUpTemplate.subject}</p>
                         <button
-                          onClick={() => { navigator.clipboard.writeText(followUpTemplate.subject + "\n\n" + followUpTemplate.body); toast.success("Follow-up copied!"); }}
+                          onClick={() => { navigator.clipboard.writeText(followUpTemplate.subject + "\n\n" + followUpTemplate.body); toast.success("Follow-up copied"); }}
                           className="text-[11px] text-violet hover:text-soft-violet"
                         >
                           Copy all

@@ -18,7 +18,7 @@ export function PhotoUpload({ weddingSlug }: Props) {
     e.preventDefault();
     const file = fileRef.current?.files?.[0];
     if (!file) {
-      toast.error("Please select a photo");
+      toast.error("Select a photo first");
       return;
     }
 
@@ -35,13 +35,13 @@ export function PhotoUpload({ weddingSlug }: Props) {
         body: formData,
       });
       if (!res.ok) throw new Error();
-      toast.success("Photo uploaded! It will appear after review.");
+      toast.success("Photo uploaded. It'll appear once reviewed.");
       setCaption("");
       setUploaderName("");
       setFileName("");
       if (fileRef.current) fileRef.current.value = "";
     } catch {
-      toast.error("Failed to upload photo");
+      toast.error("Photo didn't upload. Try again.");
     } finally {
       setUploading(false);
     }

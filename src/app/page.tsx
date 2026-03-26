@@ -174,7 +174,7 @@ function LandingNav() {
         <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
           <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="eydn" decoding="async" style={{ height: 24 }} />
+            <img src="/logo.png" alt="eydn" decoding="async" style={{ height: 24 }} />
           </Link>
           <nav
             style={{ display: "flex", alignItems: "center", gap: 24 }}
@@ -1569,6 +1569,9 @@ export default function HomePage() {
         </section>
       </ScrollReveal>
 
+      {/* ─── NEWSLETTER ─── */}
+      <NewsletterSignup />
+
       {/* ─── FOOTER ─── */}
       <footer style={{ backgroundColor: "#1A1A2E", padding: "80px 24px 48px" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
@@ -1582,7 +1585,7 @@ export default function HomePage() {
           >
             <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-white.svg" alt="eydn" loading="lazy" decoding="async" style={{ height: 28 }} />
+              <img src="/logo-white.png" alt="eydn" loading="lazy" decoding="async" style={{ height: 28 }} />
               <p style={{ fontFamily: "var(--font-script)", fontSize: 16, color: "rgba(212,165,165,0.7)", marginTop: 8 }}>
                 From engagement to &ldquo;I do.&rdquo;
               </p>
@@ -1628,6 +1631,163 @@ export default function HomePage() {
         </div>
       </footer>
     </main>
+  );
+}
+
+/* ── Newsletter ──────────────────────────────────────────── */
+
+function NewsletterSignup() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setStatus("loading");
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("/api/public/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Something went wrong.");
+        setStatus("error");
+        return;
+      }
+      setStatus("success");
+      setEmail("");
+    } catch {
+      setErrorMsg("Something went wrong. Try again.");
+      setStatus("error");
+    }
+  }
+
+  return (
+    <section
+      style={{
+        backgroundColor: "#2C3E2D",
+        padding: "72px 24px",
+        textAlign: "center",
+      }}
+    >
+      <div style={{ maxWidth: 520, margin: "0 auto" }}>
+        <p
+          style={{
+            fontFamily: "var(--font-script)",
+            fontSize: 28,
+            color: "#D4A5A5",
+            marginBottom: 8,
+          }}
+        >
+          Stay in the loop
+        </p>
+        <h3
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 32,
+            fontWeight: 600,
+            color: "#FAF6F1",
+            lineHeight: 1.2,
+          }}
+        >
+          Planning tips, new features, and wedding inspiration
+        </h3>
+        <p
+          style={{
+            fontFamily: "var(--font-body)",
+            fontSize: 15,
+            color: "rgba(250,246,241,0.6)",
+            marginTop: 12,
+            lineHeight: 1.6,
+          }}
+        >
+          One email, once a week. No spam, unsubscribe anytime.
+        </p>
+
+        {status === "success" ? (
+          <p
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: 15,
+              color: "#D4A5A5",
+              marginTop: 32,
+              fontWeight: 500,
+            }}
+          >
+            You&rsquo;re in. We&rsquo;ll be in touch.
+          </p>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            style={{
+              marginTop: 32,
+              display: "flex",
+              gap: 10,
+              justifyContent: "center",
+            }}
+            className="max-sm:!flex-col"
+          >
+            <input
+              type="email"
+              placeholder="Your email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); if (status === "error") setStatus("idle"); }}
+              required
+              style={{
+                flex: 1,
+                minWidth: 0,
+                padding: "14px 20px",
+                borderRadius: 100,
+                border: "1px solid rgba(250,246,241,0.15)",
+                backgroundColor: "rgba(250,246,241,0.08)",
+                color: "#FAF6F1",
+                fontFamily: "var(--font-body)",
+                fontSize: 15,
+                outline: "none",
+              }}
+            />
+            <button
+              type="submit"
+              disabled={status === "loading"}
+              style={{
+                background: "linear-gradient(135deg, #D4A5A5, #C08080)",
+                color: "#fff",
+                borderRadius: 100,
+                padding: "14px 32px",
+                fontFamily: "var(--font-body)",
+                fontSize: 15,
+                fontWeight: 600,
+                border: "none",
+                cursor: status === "loading" ? "wait" : "pointer",
+                opacity: status === "loading" ? 0.7 : 1,
+                transition: "opacity 200ms",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {status === "loading" ? "Subscribing..." : "Subscribe"}
+            </button>
+          </form>
+        )}
+
+        {status === "error" && errorMsg && (
+          <p
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: 13,
+              color: "#E8A0A0",
+              marginTop: 12,
+            }}
+          >
+            {errorMsg}
+          </p>
+        )}
+      </div>
+    </section>
   );
 }
 

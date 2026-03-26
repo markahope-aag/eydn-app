@@ -9,17 +9,17 @@ export function NoWeddingState({ feature }: { feature?: string }) {
     <div className="text-center py-16 max-w-md mx-auto">
       <p className="text-[48px] mb-4">💍</p>
       <h2 className="text-[20px] font-semibold text-plum">
-        {feature ? `Set up your wedding to use ${feature}` : "Set up your wedding to get started"}
+        {feature ? `${feature} needs a wedding first` : "Let's set up your wedding"}
       </h2>
       <p className="mt-2 text-[15px] text-muted leading-relaxed">
-        Complete a quick setup to unlock your personalized planning timeline, budget tracker, guest list, and AI assistant.
+        Answer a few quick questions and Eydn will build your timeline, budget, guest list, and planning tools.
       </p>
       <div className="mt-6 flex justify-center gap-3">
         <Link href="/dashboard/onboarding" className="btn-primary">
-          Set Up Your Wedding
+          Get started
         </Link>
         <Link href="/dashboard" className="btn-secondary">
-          Back to Dashboard
+          Back to dashboard
         </Link>
       </div>
     </div>

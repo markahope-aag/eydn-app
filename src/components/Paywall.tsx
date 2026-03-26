@@ -51,9 +51,9 @@ export function Paywall({
       <div className="w-16 h-16 rounded-full bg-lavender flex items-center justify-center mx-auto">
         <span className="text-[26px]">🔒</span>
       </div>
-      <h2 className="mt-4 text-plum">{feature} requires full access</h2>
+      <h2 className="mt-4 text-plum">{feature} is part of the full plan</h2>
       <p className="mt-2 text-[15px] text-muted max-w-md mx-auto">
-        Your 14-day free trial has ended. Unlock Eydn for $79 — one payment, forever access.
+        Your free trial has ended. Unlock everything for $79 — one payment, yours forever.
       </p>
       <a href="/dashboard/pricing" className="btn-primary mt-6 inline-flex">
         Unlock Eydn — $79

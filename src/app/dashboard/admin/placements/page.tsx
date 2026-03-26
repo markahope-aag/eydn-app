@@ -337,7 +337,7 @@ function TiersManager({
   onSave,
 }: {
   tiers: Tier[];
-  onSave: (tier: Partial<Tier> & { id?: string }) => Promise<boolean>;
+  onSave: (_tier: Partial<Tier> & { id?: string }) => Promise<boolean>;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
@@ -420,7 +420,7 @@ function TierForm({
   onCancel,
 }: {
   initial?: Tier;
-  onSave: (tier: Partial<Tier>) => Promise<void>;
+  onSave: (_tier: Partial<Tier>) => Promise<void>;
   onCancel: () => void;
 }) {
   const [saving, setSaving] = useState(false);

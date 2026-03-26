@@ -60,7 +60,7 @@ export default function VendorDetailPage({
     fetch(`/api/attachments?entity_type=vendor&entity_id=${vid}`)
       .then((r) => (r.ok ? r.json() : []))
       .then(setAttachments)
-      .catch(() => {});
+      .catch((e) => console.error("[fetch] attachments", e));
   }, []);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function VendorDetailPage({
           const found = vendors.find((v) => v.id === p.id);
           setVendor(found || null);
         })
-        .catch(() => toast.error("Failed to load vendor"))
+        .catch(() => toast.error("Couldn't load this vendor. Try refreshing."))
         .finally(() => setLoading(false));
       loadAttachments(p.id);
     });
@@ -85,7 +85,7 @@ export default function VendorDetailPage({
       if (!res.ok) throw new Error();
     } catch {
       if (vendorId) loadAttachments(vendorId);
-      toast.error("Failed to delete file");
+      toast.error("Couldn't delete that file. Try again.");
     }
   }
 
@@ -114,7 +114,7 @@ export default function VendorDetailPage({
   if (!vendor) {
     return (
       <div>
-        <p className="text-[15px] text-muted">Vendor not found.</p>
+        <p className="text-[15px] text-muted">This vendor wasn&apos;t found. It may have been removed.</p>
         <button
           onClick={() => router.push("/dashboard/vendors")}
           className="mt-2 text-[15px] text-violet"
