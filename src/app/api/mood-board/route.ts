@@ -36,6 +36,7 @@ export async function POST(request: Request) {
   const caption = body.caption as string | undefined;
   const category = body.category as string | undefined;
   const location = body.location as string | undefined;
+  const vendor_id = body.vendor_id as string | undefined;
 
   // Allow data:image URLs (used by color palette generator) or HTTPS URLs
   const isDataImage = image_url?.startsWith("data:image/");
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
         caption: caption || null,
         category: category || "General",
         location: location || null,
+        vendor_id: vendor_id || null,
       })
       .select()
       .single();
@@ -146,6 +148,7 @@ export async function POST(request: Request) {
       caption: caption || null,
       category: category || "General",
       location: location || null,
+      vendor_id: vendor_id || null,
     })
     .select()
     .single();
