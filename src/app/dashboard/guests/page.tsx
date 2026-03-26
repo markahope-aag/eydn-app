@@ -726,7 +726,7 @@ export default function GuestsPage() {
                 />
               </div>
               <div>
-                <label className="text-[12px] font-semibold text-muted">Plus One Name</label>
+                <label className="text-[12px] font-semibold text-muted">Plus One Name <Tooltip text="If this guest is bringing someone, enter their name. This also counts them toward your total headcount." /></label>
                 <input
                   type="text"
                   value={newPlusOne}
@@ -886,7 +886,7 @@ export default function GuestsPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-[12px] font-semibold text-muted">Plus One Name</label>
+                    <label className="text-[12px] font-semibold text-muted">Plus One Name <Tooltip text="If this guest is bringing someone, enter their name. This also counts them toward your total headcount." /></label>
                     <input
                       type="text"
                       defaultValue={guest.plus_one_name || ""}

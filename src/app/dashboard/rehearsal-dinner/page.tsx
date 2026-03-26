@@ -303,7 +303,7 @@ export default function RehearsalDinnerPage() {
             />
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Date</label>
+            <label className="text-[12px] font-semibold text-muted">Date <Tooltip text="This date is automatically set to the night before your wedding when your wedding date changes. You can override it, but we'll warn you if it seems off." /></label>
             <input
               type="date"
               defaultValue={data.date || ""}
@@ -324,7 +324,7 @@ export default function RehearsalDinnerPage() {
             )}
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Start Time</label>
+            <label className="text-[12px] font-semibold text-muted">Start Time <Tooltip text="Set your dinner start time to generate a suggested timeline. You can customize it after." /></label>
             <input
               type="time"
               defaultValue={data.time || ""}
@@ -343,7 +343,7 @@ export default function RehearsalDinnerPage() {
             />
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Hosted By</label>
+            <label className="text-[12px] font-semibold text-muted">Hosted By <Tooltip text="Traditionally hosted by the parents of one partner, but anyone can host. This appears on the printed version." /></label>
             <input
               type="text"
               defaultValue={data.hosted_by || ""}
@@ -353,7 +353,7 @@ export default function RehearsalDinnerPage() {
             />
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Dress Code</label>
+            <label className="text-[12px] font-semibold text-muted">Dress Code <Tooltip text="Share this with your guests so they know what to wear. Common options: smart casual, cocktail, semi-formal." /></label>
             <input
               type="text"
               defaultValue={data.dress_code || ""}
@@ -462,7 +462,7 @@ export default function RehearsalDinnerPage() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-[11px] text-muted">Capacity:</label>
+            <label className="text-[11px] text-muted">Capacity: <Tooltip text="How many guests the venue can seat. We'll warn you if your guest list exceeds this." /></label>
             <input
               type="number"
               defaultValue={data.capacity || ""}

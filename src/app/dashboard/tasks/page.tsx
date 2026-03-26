@@ -8,6 +8,7 @@ import { NoWeddingState } from "@/components/NoWeddingState";
 import { EmptyState } from "@/components/EmptyState";
 import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { TaskFilters } from "./TaskFilters";
+import { Tooltip } from "@/components/Tooltip";
 import { trackTaskCreated, trackTaskCompleted } from "@/lib/analytics";
 
 // Dynamic imports for heavy components (dnd-kit, react-pdf in detail)
@@ -457,6 +458,7 @@ export default function TasksPage() {
               </svg>
               Sync
             </button>
+            <Tooltip text="Subscribe adds a live-updating calendar feed to your calendar app. Download ICS creates a one-time snapshot. Regenerating the link invalidates old subscriptions." wide />
             {showCalendarMenu && (
               <div className="absolute right-0 top-full mt-1 w-64 bg-white rounded-[12px] shadow-lg border border-border z-20 py-1">
                 <button
@@ -578,7 +580,7 @@ export default function TasksPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[13px] text-muted">Priority</label>
+                  <label className="text-[13px] text-muted">Priority <Tooltip text="High priority tasks appear first and trigger earlier reminders." /></label>
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value as "high" | "medium" | "low")}

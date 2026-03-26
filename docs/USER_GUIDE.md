@@ -214,6 +214,60 @@ The "Awaiting" stat in the header shows the combined count of guests with "Invit
 
 When you link a mood board item to a vendor, the vendor's name appears on the item card. This helps you communicate visual direction to that specific vendor during meetings.
 
+## Wedding party
+
+### Managing your wedding party
+
+Each member card supports:
+
+- **Role** — uses inclusive titles: Attendant, Honor Attendant, Officiant, etc.
+- **Contact info** — email and phone
+- **Address** — street address, city, state, and zip (useful for attire delivery or gift shipping)
+- **Job assignments** — select multiple day-of responsibilities using chips; assignments appear in the day-of planner
+- **Photo** — upload a photo that appears in their avatar
+- **Attire** — individual attire notes per member
+
+The shared attire note at the top of the page (stored on the wedding record) is a good place to describe the overall look when everyone wears the same thing.
+
+## Rehearsal dinner
+
+The rehearsal dinner planner is a separate section from the main day-of planner. It supports:
+
+- **Date and time pickers** for the rehearsal date and start time
+- **Timeline generator** — enter the start time and generate a suggested schedule
+- **Guest list** — search and add guests from your main guest list, or add names manually
+- **RSVP tracking** — mark who has confirmed attendance for the rehearsal dinner
+- **Host, dress code, and capacity** fields
+- **Print** — generate a printer-friendly summary
+
+## Ceremony layout
+
+The ceremony tab of the seating chart lets you arrange who stands where at the altar.
+
+- Partner names from your onboarding are shown at the center/altar positions
+- Left and right sides are from the guests' perspective
+- An aisle line separates the two sides visually
+- The processional order number appears next to each name; use the arrow buttons to reorder without drag-and-drop
+- The print button opens a printer-friendly ceremony layout in a new window
+
+## Date and time changes
+
+When you change your wedding date or ceremony time, eydn automatically shifts milestone tasks to maintain their relative timing (for example, a task set for "12 months before" moves to 12 months before the new date).
+
+Tasks tied to specific vendor appointments are not auto-shifted. Instead, eydn shows an amber banner at the top of every dashboard page listing those tasks and their previous due dates. The banner will not go away until you click "I understand — I will update affected appointments." This gives you a record of what changed and reminds you to contact affected vendors.
+
+## Planning guides
+
+The planning guides page shows:
+
+- A progress bar with your overall completion percentage
+- A "Start here" label on the first incomplete guide in the recommended order
+- "Not Started" badges on guides you haven't opened
+- Time estimates for how long each guide takes
+- Color-coded call-to-action buttons based on guide state
+
+Complete guides in the recommended order to avoid missing dependencies (for example, finishing the venue guide before the florals guide).
+
 ## Collaboration
 
 ### Inviting Your Partner
@@ -333,7 +387,7 @@ When you link a mood board item to a vendor, the vendor's name appears on the it
 ### Common Questions
 
 **Q: Can I change my wedding date after setting up my timeline?**
-A: Yes! eydn automatically adjusts all your deadlines when you update your wedding date.
+A: Yes. eydn automatically shifts milestone tasks to maintain their relative timing. Tasks tied to vendor appointments are not auto-shifted — eydn shows a banner listing those tasks so you can review and reschedule them with your vendors. The banner stays visible until you acknowledge it.
 
 **Q: What happens if I need to cancel my wedding?**
 A: Your data remains accessible, and you can use eydn for future events or reference.

@@ -7,6 +7,7 @@ import { SkeletonGrid } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { trackMoodBoardAdd } from "@/lib/analytics";
+import { Tooltip } from "@/components/Tooltip";
 
 type MoodItem = {
   id: string;
@@ -345,7 +346,7 @@ export default function MoodBoardPage() {
               />
             </div>
             <div>
-              <label className="text-[12px] font-semibold text-muted">Board / Category</label>
+              <label className="text-[12px] font-semibold text-muted">Board / Category <Tooltip text="Organize your pins into boards. Use the built-in categories or create your own like 'Cocktail Hour' or 'Favors'." wide /></label>
               {showCustomCat ? (
                 <div className="mt-1 flex gap-1">
                   <input
@@ -374,7 +375,7 @@ export default function MoodBoardPage() {
               )}
             </div>
             <div>
-              <label className="text-[12px] font-semibold text-muted">Where in your venue?</label>
+              <label className="text-[12px] font-semibold text-muted">Where in your venue? <Tooltip text="Where in your venue would this look go? Helps you plan decor placement room by room." /></label>
               <select
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -387,7 +388,7 @@ export default function MoodBoardPage() {
               </select>
             </div>
             <div>
-              <label className="text-[12px] font-semibold text-muted">Link to vendor (optional)</label>
+              <label className="text-[12px] font-semibold text-muted">Link to vendor (optional) <Tooltip text="Tag this image to a vendor in your list — great for sharing inspiration with your florist, decorator, or photographer." wide /></label>
               <select
                 value={vendorId}
                 onChange={(e) => setVendorId(e.target.value)}

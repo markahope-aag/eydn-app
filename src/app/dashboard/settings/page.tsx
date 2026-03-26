@@ -272,6 +272,7 @@ export default function SettingsPage() {
           Review Questionnaire Answers
           <span aria-hidden="true">&rarr;</span>
         </Link>
+        <Tooltip text="Go back through your onboarding answers to update wedding details. Changes to the wedding date will cascade to your rehearsal dinner and task dates." wide />
         <p className="mt-1 text-[12px] text-muted">
           Go back through the onboarding questions to update your wedding details
         </p>

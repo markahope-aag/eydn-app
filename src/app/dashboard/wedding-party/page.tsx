@@ -7,6 +7,7 @@ import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { Tooltip } from "@/components/Tooltip";
 
 type Member = {
   id: string;
@@ -456,7 +457,7 @@ export default function WeddingPartyPage() {
 
                   {/* Address */}
                   <div className="sm:col-span-2">
-                    <label className="text-[12px] font-semibold text-muted">Mailing Address</label>
+                    <label className="text-[12px] font-semibold text-muted">Mailing Address <Tooltip text="Used for shipping rehearsal dinner invites, thank-you cards, or attendant gifts." /></label>
                     <div className="mt-1 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                       <input type="text" defaultValue={member.address_line1 || ""} onBlur={(e) => updateField(member.id, "address_line1", e.target.value || null)} placeholder="Street address" className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
                       <input type="text" defaultValue={member.address_line2 || ""} onBlur={(e) => updateField(member.id, "address_line2", e.target.value || null)} placeholder="Apt, suite, etc." className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
@@ -468,7 +469,7 @@ export default function WeddingPartyPage() {
 
                   {/* Day-of job assignment — multi-select chips */}
                   <div className="sm:col-span-2">
-                    <label className="text-[12px] font-semibold text-muted">Day-of Job Assignment</label>
+                    <label className="text-[12px] font-semibold text-muted">Day-of Job Assignment <Tooltip text="Select common roles or type your own. These assignments appear in the Day-of Binder so your coordinator knows who's doing what." wide /></label>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {DAY_OF_JOBS.map((job) => {
                         const active = jobList.includes(job);
@@ -505,7 +506,7 @@ export default function WeddingPartyPage() {
 
                   {/* Attire — individual note */}
                   <div className="sm:col-span-2">
-                    <label className="text-[12px] font-semibold text-muted">Attire Note</label>
+                    <label className="text-[12px] font-semibold text-muted">Attire Note <Tooltip text="Individual attire details for this person — size, alterations, pickup dates. The shared note above applies to everyone." wide /></label>
                     {sharedAttireNote && (
                       <p className="text-[11px] text-muted mt-0.5">Shared: {sharedAttireNote}</p>
                     )}

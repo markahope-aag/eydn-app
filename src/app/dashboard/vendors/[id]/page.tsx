@@ -303,7 +303,7 @@ export default function VendorDetailPage({
         </p>
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
-            <label className="text-[12px] font-semibold text-muted">Arrival Time</label>
+            <label className="text-[12px] font-semibold text-muted">Arrival Time <Tooltip text="When this vendor should arrive on the wedding day. This time appears in your Day-of Binder." /></label>
             <input
               type="time"
               defaultValue={vendor.arrival_time || ""}
@@ -316,7 +316,7 @@ export default function VendorDetailPage({
             )}
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Meal Needed?</label>
+            <label className="text-[12px] font-semibold text-muted">Meal Needed? <Tooltip text="Let your caterer know if this vendor needs a meal. Vendor meals are typically a reduced rate." /></label>
             <div className="mt-2">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -330,7 +330,7 @@ export default function VendorDetailPage({
             </div>
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Insurance Submitted?</label>
+            <label className="text-[12px] font-semibold text-muted">Insurance Submitted? <Tooltip text="Many venues require vendors to carry liability insurance. Check this once they've submitted proof to your venue." wide /></label>
             <div className="mt-2">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -348,7 +348,7 @@ export default function VendorDetailPage({
 
       {/* Notes */}
       <div className="mt-6">
-        <label className="text-[12px] font-semibold text-muted">Notes &amp; Special Instructions</label>
+        <label className="text-[12px] font-semibold text-muted">Notes &amp; Special Instructions <Tooltip text="Day-of notes for your coordinator — setup requirements, parking instructions, or special requests." wide /></label>
         <textarea
           defaultValue={vendor.notes || ""}
           onBlur={(e) => updateField("notes", e.target.value || null)}

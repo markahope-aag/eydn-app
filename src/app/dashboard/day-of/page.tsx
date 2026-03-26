@@ -600,6 +600,7 @@ export default function DayOfPage() {
           <PremiumButton onClick={exportPDF} className="btn-secondary btn-sm">
             Export PDF
           </PremiumButton>
+          <Tooltip text="Downloads your timeline and vendor contacts as a printable PDF." />
           <PremiumButton
             onClick={async () => {
               setBinderLoading(true);
@@ -736,7 +737,7 @@ export default function DayOfPage() {
                     placeholder="Min"
                     min="0"
                     className="w-14 text-[11px] text-muted border-0 bg-transparent text-right opacity-0 group-hover/row:opacity-100 transition-opacity flex-shrink-0"
-                    title="Duration in minutes"
+                    title="Duration (minutes)"
                   />
                   <button
                     onClick={() => removeTimelineItem(i)}
