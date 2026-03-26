@@ -158,6 +158,21 @@ export async function PATCH(
         }
       }
     }
+
+    // 3. Create a date change alert for the user to acknowledge
+    const reviewTasks = (data as Record<string, unknown>)._tasks_needing_review as { title: string }[] | undefined;
+    const alertMessage = reviewTasks && reviewTasks.length > 0
+      ? `Your wedding date changed from ${oldDate || "unset"} to ${newDate}. Your rehearsal dinner and planning milestones have been updated automatically. However, ${reviewTasks.length} task(s) may have appointments that need rescheduling — please review and update them with your vendors.`
+      : `Your wedding date changed from ${oldDate || "unset"} to ${newDate}. Your rehearsal dinner date and all planning milestone dates have been updated automatically.`;
+
+    await supabase.from("date_change_alerts").insert({
+      wedding_id: id,
+      change_type: "wedding_date",
+      old_value: oldDate,
+      new_value: newDate,
+      affected_tasks: (reviewTasks || []) as import("@/lib/supabase/types").Json,
+      message: alertMessage,
+    });
   }
 
   // CASCADE: When ceremony_time changes, sync to day_of_plans
@@ -176,6 +191,19 @@ export async function PATCH(
         .update({ content: content as import("@/lib/supabase/types").Json })
         .eq("id", dayOfPlan.id);
       cascadeResults.push("day_of_ceremony_time");
+    }
+
+    // Create ceremony time change alert
+    const oldCeremonyTime = (wedding as Record<string, unknown>).ceremony_time as string || null;
+    if (updates.ceremony_time !== oldCeremonyTime) {
+      await supabase.from("date_change_alerts").insert({
+        wedding_id: id,
+        change_type: "ceremony_time",
+        old_value: oldCeremonyTime,
+        new_value: updates.ceremony_time as string,
+        affected_tasks: [] as import("@/lib/supabase/types").Json,
+        message: `Your ceremony time changed from ${oldCeremonyTime || "unset"} to ${updates.ceremony_time}. Your day-of timeline has been synced. Make sure any vendor arrival times, hair & makeup schedules, and photo sessions reflect the new timing.`,
+      });
     }
   }
 

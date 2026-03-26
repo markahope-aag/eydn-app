@@ -5,6 +5,7 @@ import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { SkeletonList } from "@/components/Skeleton";
 
 const ArchiveBanner = dynamic(() => import("@/components/ArchiveBanner"));
+const DateSyncBanner = dynamic(() => import("@/components/DateSyncBanner").then((m) => ({ default: m.DateSyncBanner })));
 
 export default async function DashboardLayout({
   children,
@@ -21,6 +22,7 @@ export default async function DashboardLayout({
       <main id="main-content" className="flex-1 bg-whisper p-8 pt-16 md:pt-8">
         <Suspense fallback={<SkeletonList count={5} />}>
           <ArchiveBanner />
+          <DateSyncBanner />
           {children}
         </Suspense>
       </main>

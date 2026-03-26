@@ -177,6 +177,50 @@ export type Database = {
         }
         Relationships: []
       }
+      date_change_alerts: {
+        Row: {
+          id: string
+          wedding_id: string
+          change_type: string
+          old_value: string | null
+          new_value: string | null
+          affected_tasks: Json
+          message: string
+          acknowledged: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          change_type: string
+          old_value?: string | null
+          new_value?: string | null
+          affected_tasks?: Json
+          message: string
+          acknowledged?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          wedding_id?: string
+          change_type?: string
+          old_value?: string | null
+          new_value?: string | null
+          affected_tasks?: Json
+          message?: string
+          acknowledged?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "date_change_alerts_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ceremony_positions: {
         Row: {
           created_at: string
