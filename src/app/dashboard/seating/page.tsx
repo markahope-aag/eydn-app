@@ -45,6 +45,10 @@ export default function SeatingPage() {
   const dragOffset = useRef({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
   const [confirmDeleteTable, setConfirmDeleteTable] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [unassignedSearch, setUnassignedSearch] = useState("");
+  const undoStack = useRef<{ type: "assign" | "unassign"; guestId: string; tableId?: string }[]>([]);
+  const [undoCount, setUndoCount] = useState(0); // trigger re-render on undo stack change
 
   useEffect(() => {
     Promise.all([
@@ -151,6 +155,15 @@ export default function SeatingPage() {
   }
 
   async function assignGuest(guestId: string, tableId: string) {
+    // Track previous state for undo
+    const prevAssignment = assignments.find((a) => a.guest_id === guestId);
+    undoStack.current.push({
+      type: "assign",
+      guestId,
+      tableId: prevAssignment?.seating_table_id, // previous table (undefined = was unassigned)
+    });
+    setUndoCount((c) => c + 1);
+
     const tempId = crypto.randomUUID();
     setAssignments((prev) => [
       ...prev.filter((a) => a.guest_id !== guestId),
@@ -167,18 +180,88 @@ export default function SeatingPage() {
       setAssignments((prev) => prev.map((a) => (a.id === tempId ? saved : a)));
     } catch {
       setAssignments((prev) => prev.filter((a) => a.id !== tempId));
+      undoStack.current.pop();
+      setUndoCount((c) => c + 1);
       toast.error("Failed to assign guest");
     }
   }
 
   async function unassignGuest(guestId: string) {
+    const prevAssignment = assignments.find((a) => a.guest_id === guestId);
+    if (prevAssignment) {
+      undoStack.current.push({
+        type: "unassign",
+        guestId,
+        tableId: prevAssignment.seating_table_id,
+      });
+      setUndoCount((c) => c + 1);
+    }
+
     const prev = assignments;
     setAssignments((a) => a.filter((x) => x.guest_id !== guestId));
     try {
       await fetch(`/api/seating/assignments?guest_id=${guestId}`, { method: "DELETE" });
     } catch {
       setAssignments(prev);
+      undoStack.current.pop();
+      setUndoCount((c) => c + 1);
     }
+  }
+
+  async function handleUndo() {
+    const action = undoStack.current.pop();
+    if (!action) return;
+    setUndoCount((c) => c + 1);
+
+    if (action.type === "assign") {
+      // Undo an assign: either unassign or reassign to previous table
+      if (action.tableId) {
+        // Was on a different table — move back
+        const tempId = crypto.randomUUID();
+        setAssignments((prev) => [
+          ...prev.filter((a) => a.guest_id !== action.guestId),
+          { id: tempId, seating_table_id: action.tableId!, guest_id: action.guestId, seat_number: null },
+        ]);
+        try {
+          const res = await fetch("/api/seating/assignments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ seating_table_id: action.tableId, guest_id: action.guestId }),
+          });
+          if (res.ok) {
+            const saved = await res.json();
+            setAssignments((prev) => prev.map((a) => (a.id === tempId ? saved : a)));
+          }
+        } catch { /* best effort */ }
+      } else {
+        // Was unassigned — remove assignment
+        setAssignments((a) => a.filter((x) => x.guest_id !== action.guestId));
+        try {
+          await fetch(`/api/seating/assignments?guest_id=${action.guestId}`, { method: "DELETE" });
+        } catch { /* best effort */ }
+      }
+    } else {
+      // Undo an unassign: reassign to the table they were on
+      if (action.tableId) {
+        const tempId = crypto.randomUUID();
+        setAssignments((prev) => [
+          ...prev,
+          { id: tempId, seating_table_id: action.tableId!, guest_id: action.guestId, seat_number: null },
+        ]);
+        try {
+          const res = await fetch("/api/seating/assignments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ seating_table_id: action.tableId, guest_id: action.guestId }),
+          });
+          if (res.ok) {
+            const saved = await res.json();
+            setAssignments((prev) => prev.map((a) => (a.id === tempId ? saved : a)));
+          }
+        } catch { /* best effort */ }
+      }
+    }
+    toast("Undone");
   }
 
   // --- Ceremony functions ---
@@ -276,9 +359,44 @@ export default function SeatingPage() {
       {tab === "reception" && (
         <div className="flex gap-6 h-[calc(100vh-10rem)]">
           <div className="flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[13px] text-muted">Drag tables to reposition. Drag guests onto tables. Click <strong>Edit</strong> on any table to change its size, shape, or name.</p>
-              <button onClick={addTable} className="btn-primary btn-sm">Add Table</button>
+            {/* Toolbar */}
+            <div className="flex items-center justify-between mb-3 gap-3">
+              <p className="text-[13px] text-muted flex-1">Drag tables to reposition. Drag guests onto tables.</p>
+              <div className="flex items-center gap-2">
+                {/* Undo */}
+                <button
+                  onClick={handleUndo}
+                  disabled={undoStack.current.length === 0}
+                  aria-label="Undo last action"
+                  title="Undo"
+                  className="w-8 h-8 rounded-[8px] bg-lavender text-violet flex items-center justify-center hover:bg-violet hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                  data-undo-count={undoCount /* keep reactivity */}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M3 6H10C12.2091 6 14 7.79086 14 10C14 12.2091 12.2091 14 10 14H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M6 3L3 6L6 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                {/* Zoom controls */}
+                <div className="flex items-center gap-1 bg-lavender rounded-[8px] px-1">
+                  <button
+                    onClick={() => setZoom((z) => Math.max(0.4, z - 0.1))}
+                    aria-label="Zoom out"
+                    className="w-7 h-7 text-violet font-semibold text-[16px] flex items-center justify-center hover:text-plum transition"
+                  >
+                    -
+                  </button>
+                  <span className="text-[11px] font-semibold text-plum w-9 text-center">{Math.round(zoom * 100)}%</span>
+                  <button
+                    onClick={() => setZoom((z) => Math.min(2, z + 0.1))}
+                    aria-label="Zoom in"
+                    className="w-7 h-7 text-violet font-semibold text-[16px] flex items-center justify-center hover:text-plum transition"
+                  >
+                    +
+                  </button>
+                </div>
+                <button onClick={addTable} className="btn-primary btn-sm">Add Table</button>
+              </div>
             </div>
 
             <div
@@ -287,9 +405,12 @@ export default function SeatingPage() {
               style={{ minHeight: 500 }}
               onDragOver={(e) => e.preventDefault()}
             >
+              <div style={{ transform: `scale(${zoom})`, transformOrigin: "top left", minWidth: 900, minHeight: 600 }}>
               {tables.map((table) => {
                 const tableGuests = getTableGuests(table.id);
                 const isFull = tableGuests.length >= table.capacity;
+                const isRound = table.shape === "round";
+                const tableSize = isRound ? 140 : undefined;
 
                 return (
                   <div
@@ -304,39 +425,115 @@ export default function SeatingPage() {
                       if (guestId && !isFull) assignGuest(guestId, table.id);
                     }}
                   >
-                    <div className={`${table.shape === "round" ? "w-36 rounded-full" : "w-44 rounded-[16px]"} border-2 bg-white shadow-sm p-3 ${isFull ? "border-violet" : "border-border"}`}>
-                      <div className="text-center">
-                        <p className="text-[12px] font-semibold text-plum">
-                          {table.name || `Table ${table.table_number}`}
-                        </p>
-                        <p className="text-[10px] text-muted">
-                          {tableGuests.length}/{table.capacity} &middot; {table.shape}
-                        </p>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setEditingTable(editingTable === table.id ? null : table.id); }}
-                          className={`mt-1 text-[11px] font-semibold px-3 py-1 rounded-full transition min-h-6 ${
-                            editingTable === table.id
-                              ? "bg-violet text-white"
-                              : "bg-lavender text-violet hover:bg-violet hover:text-white"
-                          }`}
-                        >
-                          {editingTable === table.id ? "Close" : "Edit"}
-                        </button>
-                      </div>
-                      <div className="mt-1 space-y-0.5">
-                        {tableGuests.map((g) => (
-                          <div key={g.id} className="flex items-center justify-between text-[10px]">
-                            <span className="text-muted truncate">{g.name}</span>
-                            <button onClick={(e) => { e.stopPropagation(); unassignGuest(g.id); }} aria-label={`Remove guest ${g.name} from table`} className="w-5 h-5 flex items-center justify-center text-error hover:opacity-80 ml-1 text-[10px]">x</button>
+                    {/* Table shape */}
+                    {isRound ? (
+                      /* Round table — circular with seat dots around perimeter */
+                      <div
+                        className={`relative border-2 bg-[#FAF8FC] shadow-sm ${isFull ? "border-violet" : "border-border"}`}
+                        style={{ width: tableSize, height: tableSize, borderRadius: "50%" }}
+                      >
+                        {/* Seat position dots around the circle */}
+                        {Array.from({ length: table.capacity }).map((_, i) => {
+                          const angle = (i / table.capacity) * 2 * Math.PI - Math.PI / 2;
+                          const r = (tableSize! / 2) + 10;
+                          const cx = tableSize! / 2 + r * Math.cos(angle);
+                          const cy = tableSize! / 2 + r * Math.sin(angle);
+                          const guest = tableGuests[i];
+                          return (
+                            <div
+                              key={i}
+                              className={`absolute w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-semibold ${
+                                guest ? "bg-violet text-white" : "bg-lavender text-muted"
+                              }`}
+                              style={{ left: cx - 10, top: cy - 10 }}
+                              title={guest?.name || `Seat ${i + 1}`}
+                            >
+                              {guest ? guest.name.split(" ").map((w) => w[0]).join("").slice(0, 2) : ""}
+                            </div>
+                          );
+                        })}
+                        {/* Center content */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-2">
+                          <p className="text-[11px] font-semibold text-plum leading-tight">
+                            {table.name || `Table ${table.table_number}`}
+                          </p>
+                          <p className="text-[9px] text-muted">
+                            {tableGuests.length}/{table.capacity}
+                          </p>
+                          {/* Guest names inside */}
+                          <div className="mt-1 max-h-[50px] overflow-hidden">
+                            {tableGuests.slice(0, 4).map((g) => (
+                              <p key={g.id} className="text-[8px] text-muted leading-tight truncate max-w-[80px]">{g.name}</p>
+                            ))}
+                            {tableGuests.length > 4 && (
+                              <p className="text-[8px] text-muted">+{tableGuests.length - 4} more</p>
+                            )}
                           </div>
-                        ))}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      /* Rectangle table — wider, more elongated */
+                      <div
+                        className={`relative border-2 bg-[#FAF8FC] shadow-sm rounded-[12px] ${isFull ? "border-violet" : "border-border"}`}
+                        style={{ width: 200, minHeight: 90 }}
+                      >
+                        {/* Seat dots along top and bottom edges */}
+                        {Array.from({ length: table.capacity }).map((_, i) => {
+                          const isTop = i < Math.ceil(table.capacity / 2);
+                          const sideIndex = isTop ? i : i - Math.ceil(table.capacity / 2);
+                          const sideCount = isTop ? Math.ceil(table.capacity / 2) : Math.floor(table.capacity / 2);
+                          const xPct = sideCount > 1 ? 12 + (sideIndex / (sideCount - 1)) * 76 : 50;
+                          const guest = tableGuests[i];
+                          return (
+                            <div
+                              key={i}
+                              className={`absolute w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-semibold ${
+                                guest ? "bg-violet text-white" : "bg-lavender text-muted"
+                              }`}
+                              style={{
+                                left: `${xPct}%`,
+                                top: isTop ? -12 : undefined,
+                                bottom: isTop ? undefined : -12,
+                                transform: "translateX(-50%)",
+                              }}
+                              title={guest?.name || `Seat ${i + 1}`}
+                            >
+                              {guest ? guest.name.split(" ").map((w) => w[0]).join("").slice(0, 2) : ""}
+                            </div>
+                          );
+                        })}
+                        {/* Center content */}
+                        <div className="flex flex-col items-center justify-center text-center px-3 py-3">
+                          <p className="text-[11px] font-semibold text-plum leading-tight">
+                            {table.name || `Table ${table.table_number}`}
+                          </p>
+                          <p className="text-[9px] text-muted">
+                            {tableGuests.length}/{table.capacity}
+                          </p>
+                          <div className="mt-1 max-h-[40px] overflow-hidden">
+                            {tableGuests.slice(0, 3).map((g) => (
+                              <p key={g.id} className="text-[8px] text-muted leading-tight truncate max-w-[140px]">{g.name}</p>
+                            ))}
+                            {tableGuests.length > 3 && (
+                              <p className="text-[8px] text-muted">+{tableGuests.length - 3} more</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Edit button */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingTable(editingTable === table.id ? null : table.id); }}
+                      className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-muted hover:text-violet transition bg-white border border-border rounded-full px-2 py-0.5 z-10"
+                    >
+                      {editingTable === table.id ? "Done" : "Edit"}
+                    </button>
 
                     {/* Edit popover */}
                     {editingTable === table.id && (
                       <div
-                        className="absolute top-full left-0 mt-1 z-10 bg-white border border-border rounded-[12px] shadow-lg p-3 space-y-3 w-52"
+                        className="absolute top-full left-0 mt-4 z-20 bg-white border border-border rounded-[12px] shadow-lg p-3 space-y-3 w-52"
                         onClick={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
                       >
@@ -350,7 +547,7 @@ export default function SeatingPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-muted">Shape <Tooltip text="Round tables seat guests evenly around the perimeter. Rectangle tables seat more guests but can make cross-table conversation harder." wide /></label>
+                          <label className="text-[11px] font-semibold text-muted">Shape</label>
                           <div className="flex gap-1 mt-0.5">
                             <button
                               onClick={() => updateTable(table.id, { shape: "round" })}
@@ -387,21 +584,31 @@ export default function SeatingPage() {
                             </button>
                           </div>
                         </div>
-                        <button
-                          onClick={() => setEditingTable(null)}
-                          className="w-full text-[12px] text-muted hover:text-plum transition text-center"
-                        >
-                          Done
-                        </button>
+                        {/* Seated guests list with remove */}
+                        {tableGuests.length > 0 && (
+                          <div>
+                            <label className="text-[11px] font-semibold text-muted">Seated</label>
+                            <div className="mt-0.5 space-y-0.5">
+                              {tableGuests.map((g) => (
+                                <div key={g.id} className="flex items-center justify-between text-[11px]">
+                                  <span className="text-plum truncate">{g.name}</span>
+                                  <button onClick={() => unassignGuest(g.id)} className="text-muted hover:text-error text-[10px]">unseat</button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
                     <button
                       onClick={(e) => { e.stopPropagation(); setConfirmDeleteTable(table.id); }}
                       aria-label={`Delete ${table.name || `Table ${table.table_number}`}`}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full text-[12px] flex items-center justify-center hover:opacity-80"
+                      className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-border text-muted hover:text-error hover:border-error rounded-full text-[10px] flex items-center justify-center transition z-10"
                     >
-                      x
+                      <svg width="10" height="10" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                        <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
                     </button>
                   </div>
                 );
@@ -412,14 +619,25 @@ export default function SeatingPage() {
                   <p className="text-[15px] text-muted">Add tables to start building your seating chart</p>
                 </div>
               )}
+              </div>
             </div>
           </div>
 
           {/* Guest sidebar */}
-          <div className="w-56 flex-shrink-0">
-            <h2 className="text-[15px] font-semibold text-muted mb-2">Unassigned ({unassignedGuests.length}) <Tooltip text="Drag a guest name and drop it onto a table to assign their seat." /></h2>
-            <div className="space-y-1 max-h-[500px] overflow-y-auto" aria-label="Unassigned guests — drag to a table or use the dropdown to assign">
-              {unassignedGuests.map((guest) => (
+          <div className="w-56 flex-shrink-0 flex flex-col">
+            <h2 className="text-[15px] font-semibold text-muted mb-2">Unassigned ({unassignedGuests.length})</h2>
+            <input
+              type="text"
+              placeholder="Search guests..."
+              value={unassignedSearch}
+              onChange={(e) => setUnassignedSearch(e.target.value)}
+              aria-label="Search unassigned guests"
+              className="rounded-[10px] border-border px-3 py-1.5 text-[13px] mb-2"
+            />
+            <div className="space-y-1 flex-1 overflow-y-auto" aria-label="Unassigned guests — drag to a table or use the dropdown to assign">
+              {unassignedGuests
+                .filter((g) => !unassignedSearch || g.name.toLowerCase().includes(unassignedSearch.toLowerCase()))
+                .map((guest) => (
                 <div
                   key={guest.id}
                   draggable
