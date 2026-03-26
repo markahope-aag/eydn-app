@@ -73,6 +73,14 @@ export async function POST(request: Request) {
 
   if (existingWedding) {
     weddingId = existingWedding.id;
+
+    // Check if date is changing so we can cascade
+    const { data: currentWedding } = await supabase
+      .from("weddings")
+      .select("date")
+      .eq("id", weddingId)
+      .single();
+
     const { error } = await supabase
       .from("weddings")
       .update(weddingFields)
@@ -80,6 +88,16 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
+
+    // CASCADE: If wedding date changed, update rehearsal dinner date
+    if (date && currentWedding?.date !== date) {
+      const dayBefore = new Date(date + "T12:00:00");
+      dayBefore.setDate(dayBefore.getDate() - 1);
+      await supabase
+        .from("rehearsal_dinner")
+        .update({ date: dayBefore.toISOString().slice(0, 10) })
+        .eq("wedding_id", weddingId);
     }
   } else {
     const { data: newWedding, error } = await supabase

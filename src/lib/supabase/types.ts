@@ -1880,6 +1880,7 @@ export type Database = {
       weddings: {
         Row: {
           budget: number | null
+          ceremony_time: string | null
           created_at: string
           date: string | null
           guest_count_estimate: number | null
@@ -1913,6 +1914,7 @@ export type Database = {
         }
         Insert: {
           budget?: number | null
+          ceremony_time?: string | null
           created_at?: string
           date?: string | null
           guest_count_estimate?: number | null
@@ -1946,6 +1948,7 @@ export type Database = {
         }
         Update: {
           budget?: number | null
+          ceremony_time?: string | null
           created_at?: string
           date?: string | null
           guest_count_estimate?: number | null

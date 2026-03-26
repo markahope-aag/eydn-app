@@ -137,22 +137,28 @@ export default function DayOfPage() {
   const [newPackingItem, setNewPackingItem] = useState("");
   const [binderLoading, setBinderLoading] = useState(false);
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  const [weddingId, setWeddingId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/day-of")
-      .then((r) => {
+    Promise.all([
+      fetch("/api/day-of").then((r) => {
         if (r.status === 404) { setNoWedding(true); return null; }
         return r.ok ? r.json() : null;
-      })
-      .then((data) => {
-        if (!data?.content) return;
-        const content = data.content as DayOfPlan;
+      }),
+      fetch("/api/weddings").then((r) => (r.ok ? r.json() : null)),
+    ])
+      .then(([dayOfData, weddingData]) => {
+        if (weddingData) {
+          setWeddingId(weddingData.id);
+        }
+        if (!dayOfData?.content) return;
+        const content = dayOfData.content as DayOfPlan;
         // Migrate old string[] packing checklist to PackingItem[]
         if (content.packingChecklist && content.packingChecklist.length > 0) {
           const first = content.packingChecklist[0];
           if (typeof first === "string") {
             content.packingChecklist = (content.packingChecklist as unknown as string[]).map(
-              (item) => ({ item, notes: "" })
+              (item: string) => ({ item, notes: "" })
             );
           }
         }
@@ -165,7 +171,9 @@ export default function DayOfPage() {
         if (!content.setupTasks) content.setupTasks = [];
         if (!content.attire) content.attire = [];
         setPlan(content);
-        setCeremonyTime(content.ceremonyTime || "");
+        // Canonical ceremony time: prefer weddings table, fall back to plan content
+        const canonicalTime = weddingData?.ceremony_time || content.ceremonyTime || "";
+        setCeremonyTime(canonicalTime);
       })
       .catch((err) => console.error("Failed to load day-of plan", err))
       .finally(() => setLoading(false));
@@ -207,15 +215,24 @@ export default function DayOfPage() {
     doRegenerateTimeline();
   }
 
-  function doRegenerateTimeline() {
+  async function doRegenerateTimeline() {
     if (!plan || !ceremonyTime) return;
     const newTimeline = generateTimelineFromCeremony(ceremonyTime);
     if (newTimeline.length === 0) {
       toast.error("Enter a valid time like 4:30 PM");
       return;
     }
+    // Save to day-of plan
     savePlan({ ...plan, ceremonyTime, timeline: newTimeline });
-    toast.success("Timeline rebuilt — all times updated to match your new ceremony time");
+    // Sync canonical ceremony time to weddings table
+    if (weddingId) {
+      await fetch(`/api/weddings/${weddingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ceremony_time: ceremonyTime }),
+      }).catch(() => { /* day-of save already succeeded */ });
+    }
+    toast.success("Timeline rebuilt — ceremony time synced across the app");
   }
 
   function updatePackingNote(index: number, notes: string) {
@@ -547,8 +564,17 @@ export default function DayOfPage() {
                   });
                 }
                 setPlan(content);
-                setCeremonyTime(content.ceremonyTime || ceremonyTime);
-                toast.success("Day-of plan ready");
+                const finalTime = content.ceremonyTime || ceremonyTime;
+                setCeremonyTime(finalTime);
+                // Sync ceremony time to weddings table
+                if (weddingId && finalTime) {
+                  await fetch(`/api/weddings/${weddingId}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ceremony_time: finalTime }),
+                  }).catch(() => {});
+                }
+                toast.success("Day-of plan ready — ceremony time synced");
               } catch {
                 toast.error("Couldn't generate the plan. Try again.");
               }

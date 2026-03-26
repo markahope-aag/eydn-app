@@ -145,6 +145,8 @@ describe("POST /api/onboarding", () => {
 
     // First from("weddings").select("id").eq(...).single() → existing wedding found
     const selectChain = chain({ data: { id: "existing_wedding" } });
+    // select("date") for cascade check
+    const dateChain = chain({ data: { date: null } });
     // update chain
     const updateChain = chain();
     (updateChain as Record<string, unknown>).eq = vi.fn().mockResolvedValue({ error: null });
@@ -158,9 +160,10 @@ describe("POST /api/onboarding", () => {
     mockFrom.mockImplementation(() => {
       callIndex++;
       if (callIndex === 1) return selectChain; // weddings select existing
-      if (callIndex === 2) return updateChain; // weddings update
-      if (callIndex === 3) return upsertChain; // questionnaire_responses upsert
-      if (callIndex === 4) return expensesChain; // expenses count (returns 5 = existing)
+      if (callIndex === 2) return dateChain;    // weddings select date for cascade
+      if (callIndex === 3) return updateChain;  // weddings update
+      if (callIndex === 4) return upsertChain;  // questionnaire_responses upsert
+      if (callIndex === 5) return expensesChain; // expenses count (returns 5 = existing)
       return chain({ data: null, error: null });
     });
 
