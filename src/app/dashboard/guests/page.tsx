@@ -28,6 +28,10 @@ type Guest = {
   group_name: string | null;
 };
 
+function titleCase(s: string) {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 const ROLES = ["family", "friend", "wedding_party", "coworker", "plus_one", "other"];
 const ROLE_LABELS: Record<string, string> = {
   family: "Family",
@@ -39,7 +43,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  not_invited: "Not Invited",
+  not_invited: "Save for Later",
   invite_sent: "Invite Sent",
   pending: "Pending",
   accepted: "Accepted",
@@ -74,16 +78,27 @@ export default function GuestsPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "status" | "role">("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [venueCapacity, setVenueCapacity] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetch("/api/guests")
-      .then((res) => {
+    Promise.all([
+      fetch("/api/guests").then((res) => {
         if (res.status === 404) { setNoWedding(true); return []; }
         return res.ok ? res.json() : Promise.reject();
+      }),
+      fetch("/api/weddings").then((r) => r.ok ? r.json() : null),
+    ])
+      .then(([guestData, weddingData]) => {
+        setGuests(guestData);
+        if (weddingData?.guest_count_estimate) {
+          setVenueCapacity(weddingData.guest_count_estimate);
+        }
       })
-      .then(setGuests)
       .catch(() => toast.error("Couldn't load your guest list. Try refreshing."))
       .finally(() => setLoading(false));
   }, []);
@@ -192,6 +207,19 @@ export default function GuestsPage() {
       setGuests(prev);
       toast.error(err instanceof Error ? err.message : "Changes didn't save. Try again.");
     }
+  }
+
+  function downloadTemplate() {
+    const headers = ["name", "email", "role", "meal_preference", "plus_one_name", "phone", "group"];
+    const example = ["Jane Doe", "jane@example.com", "friend", "Vegetarian", "John Doe", "(555) 123-4567", "College Friends"];
+    const csv = [headers.join(","), example.join(",")].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "guest-import-template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   async function importCSV() {
@@ -384,10 +412,22 @@ export default function GuestsPage() {
   const [showBulkGroupInput, setShowBulkGroupInput] = useState(false);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
+  const STATUS_ORDER = ["not_invited", "invite_sent", "pending", "accepted", "declined"];
+
   const filtered = guests.filter((g) => {
     if (filterRole && g.role !== filterRole) return false;
     if (filterStatus && g.rsvp_status !== filterStatus) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (!g.name.toLowerCase().includes(q) && !(g.email?.toLowerCase().includes(q))) return false;
+    }
     return true;
+  }).sort((a, b) => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    if (sortBy === "name") return dir * a.name.localeCompare(b.name);
+    if (sortBy === "status") return dir * (STATUS_ORDER.indexOf(a.rsvp_status) - STATUS_ORDER.indexOf(b.rsvp_status));
+    if (sortBy === "role") return dir * (a.role || "").localeCompare(b.role || "");
+    return 0;
   });
 
   const allFilteredSelected = filtered.length > 0 && filtered.every((g) => selectedGuests.has(g.id));
@@ -514,6 +554,7 @@ export default function GuestsPage() {
   const accepted = guests.filter((g) => g.rsvp_status === "accepted").length;
   const declined = guests.filter((g) => g.rsvp_status === "declined").length;
   const invited = guests.filter((g) => g.rsvp_status !== "not_invited").length;
+  const awaiting = guests.filter((g) => g.rsvp_status === "invite_sent" || g.rsvp_status === "pending").length;
 
   if (loading) {
     return <SkeletonList count={6} />;
@@ -570,20 +611,26 @@ export default function GuestsPage() {
           <button onClick={() => fileInput.current?.click()} className="btn-ghost btn-sm">
             Import CSV
           </button>
-          <Tooltip text="Upload a CSV file to bulk-import guests. The file must have a &quot;name&quot; column. Optional columns: &quot;email&quot; and &quot;group&quot;." wide />
+          <button onClick={downloadTemplate} className="btn-ghost btn-sm text-[12px]" title="Download a CSV template showing the expected format">
+            Template
+          </button>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="mt-4 flex gap-4 flex-wrap">
-        <span className="text-[15px] text-muted">Total: <strong className="font-semibold">{guests.length}</strong></span>
+      <div className="mt-4 flex gap-4 flex-wrap items-center">
+        <span className="text-[15px] text-muted">Total: <strong className="font-semibold">{guests.length}</strong>{venueCapacity ? <span className="text-[13px]"> / {venueCapacity}</span> : null}</span>
+        {venueCapacity && guests.length > venueCapacity && (
+          <span className="text-[12px] font-semibold text-error">Over capacity</span>
+        )}
         <span className="text-[15px] text-muted">Invited: <strong className="font-semibold">{invited}</strong></span>
+        <span className="badge badge-pending">Awaiting: {awaiting}</span>
         <span className="badge badge-confirmed">Accepted: {accepted}</span>
         <span className="badge badge-declined">Declined: {declined}</span>
       </div>
 
       {/* Filters */}
-      <div className="mt-4 flex gap-3 items-center">
+      <div className="mt-4 flex gap-3 items-center flex-wrap">
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <input
             type="checkbox"
@@ -593,6 +640,20 @@ export default function GuestsPage() {
           />
           <span className="text-[13px] text-muted font-medium">Select all</span>
         </label>
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M11 11L14.5 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search guests..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Search guests by name or email"
+            className="w-full rounded-[10px] border-border pl-8 pr-3 py-1.5 text-[15px]"
+          />
+        </div>
         <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} aria-label="Filter by role" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]">
           <option value="">All Roles</option>
           {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
@@ -601,13 +662,30 @@ export default function GuestsPage() {
           <option value="">All Status</option>
           {Object.entries(STATUS_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
-        <Tooltip text="RSVP pipeline: Not Invited → Invite Sent → Pending → Accepted or Declined. Update each guest's status as responses come in." wide />
+        <select
+          value={`${sortBy}-${sortDir}`}
+          onChange={(e) => {
+            const [by, dir] = e.target.value.split("-") as ["name" | "status" | "role", "asc" | "desc"];
+            setSortBy(by);
+            setSortDir(dir);
+          }}
+          aria-label="Sort guests"
+          className="rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+        >
+          <option value="name-asc">Name A-Z</option>
+          <option value="name-desc">Name Z-A</option>
+          <option value="status-asc">Status (pipeline)</option>
+          <option value="status-desc">Status (reverse)</option>
+          <option value="role-asc">Role A-Z</option>
+          <option value="role-desc">Role Z-A</option>
+        </select>
+        <Tooltip text="RSVP pipeline: Save for Later → Invite Sent → Pending → Accepted or Declined. Update each guest's status as responses come in." wide />
       </div>
 
       {/* Add guest */}
       <form onSubmit={addGuest} className="mt-6 card overflow-hidden">
         <div className="flex gap-3 px-4 py-3">
-          <input type="text" placeholder="Guest name" value={name} onChange={(e) => setName(e.target.value)} aria-label="Guest name" className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1" required />
+          <input type="text" placeholder="Guest name" value={name} onChange={(e) => setName(titleCase(e.target.value))} aria-label="Guest name" className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1" required />
           <input type="email" placeholder="Email (optional)" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Guest email" className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1" />
           <button
             type="button"
@@ -695,6 +773,14 @@ export default function GuestsPage() {
       {/* Guest list */}
       {filtered.length > 0 && (
         <div className="mt-6 space-y-2">
+          {/* Column headers */}
+          <div className="hidden sm:grid grid-cols-[auto_1fr_auto_auto_auto] gap-3 px-4 py-1 text-[11px] font-semibold text-muted uppercase tracking-wider">
+            <span className="w-4" />
+            <span>Name</span>
+            <span>Status</span>
+            <span className="w-[90px]" />
+            <span className="w-4" />
+          </div>
           {filtered.map((guest) => {
             const isExpanded = expanded === guest.id;
             const filledCount = [guest.meal_preference, guest.phone, guest.plus_one_name, guest.group_name, guest.address_line1].filter(Boolean).length;
@@ -704,7 +790,7 @@ export default function GuestsPage() {
             return (
             <div
               key={guest.id}
-              className={`card overflow-hidden transition-all ${isExpanded ? "ring-2 ring-violet/20" : ""}`}
+              className={`group/guest card overflow-hidden transition-all ${isExpanded ? "ring-2 ring-violet/20" : ""}`}
             >
               {/* Main row */}
               <div
@@ -748,7 +834,7 @@ export default function GuestsPage() {
                   value={guest.rsvp_status}
                   onChange={(e) => { e.stopPropagation(); updateGuest(guest.id, "rsvp_status", e.target.value); }}
                   onClick={(e) => e.stopPropagation()}
-                  className={`rounded-full px-2 py-0.5 text-[12px] font-semibold border-0 ${STATUS_BADGE[guest.rsvp_status] || ""}`}
+                  className={`rounded-full px-3 py-1 text-[13px] font-semibold border-0 cursor-pointer ${STATUS_BADGE[guest.rsvp_status] || ""}`}
                 >
                   {Object.entries(STATUS_LABELS).map(([v, l]) => (
                     <option key={v} value={v}>{l}</option>
@@ -757,19 +843,18 @@ export default function GuestsPage() {
 
                 <button
                   onClick={(e) => { e.stopPropagation(); setExpanded(isExpanded ? null : guest.id); }}
-                  className={`text-[12px] font-semibold px-3 py-1 rounded-full transition ${
-                    isExpanded
-                      ? "bg-violet text-white"
-                      : "bg-lavender text-violet hover:bg-violet hover:text-white"
-                  }`}
+                  className="text-[12px] text-muted hover:text-violet transition"
                 >
-                  {isExpanded ? "Close" : "Edit Details"}
+                  {isExpanded ? "Close" : "Edit"}
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setConfirmDelete(guest.id); }}
-                  className="text-[12px] text-error hover:opacity-80"
+                  aria-label={`Remove ${guest.name}`}
+                  className="opacity-0 group-hover/guest:opacity-100 transition-opacity text-muted hover:text-error"
                 >
-                  Remove
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M5 2V1.5C5 1.22386 5.22386 1 5.5 1H10.5C10.7761 1 11 1.22386 11 1.5V2M2.5 3H13.5M3.5 3V13.5C3.5 14.0523 3.94772 14.5 4.5 14.5H11.5C12.0523 14.5 12.5 14.0523 12.5 13.5V3M6.5 6V11.5M9.5 6V11.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </button>
               </div>
 
