@@ -35,6 +35,7 @@ function makeWedding(overrides: Partial<Wedding> = {}): Wedding {
     memory_plan_active: false,
     memory_plan_expires_at: null,
     key_decisions: null,
+    shared_attire_note: null,
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
     ...overrides,

@@ -737,6 +737,7 @@ export type Database = {
           image_url: string
           location: string | null
           sort_order: number
+          vendor_id: string | null
           wedding_id: string
         }
         Insert: {
@@ -748,6 +749,7 @@ export type Database = {
           image_url: string
           location?: string | null
           sort_order?: number
+          vendor_id?: string | null
           wedding_id: string
         }
         Update: {
@@ -759,6 +761,7 @@ export type Database = {
           image_url?: string
           location?: string | null
           sort_order?: number
+          vendor_id?: string | null
           wedding_id?: string
         }
         Relationships: [
@@ -767,6 +770,13 @@ export type Database = {
             columns: ["wedding_id"]
             isOneToOne: false
             referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mood_board_items_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -1751,7 +1761,10 @@ export type Database = {
       }
       wedding_party: {
         Row: {
+          address_line1: string | null
+          address_line2: string | null
           attire: string | null
+          city: string | null
           created_at: string
           deleted_at: string | null
           email: string | null
@@ -1762,10 +1775,15 @@ export type Database = {
           photo_url: string | null
           role: string
           sort_order: number
+          state: string | null
           wedding_id: string
+          zip: string | null
         }
         Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
           attire?: string | null
+          city?: string | null
           created_at?: string
           deleted_at?: string | null
           email?: string | null
@@ -1776,10 +1794,15 @@ export type Database = {
           photo_url?: string | null
           role: string
           sort_order?: number
+          state?: string | null
           wedding_id: string
+          zip?: string | null
         }
         Update: {
+          address_line1?: string | null
+          address_line2?: string | null
           attire?: string | null
+          city?: string | null
           created_at?: string
           deleted_at?: string | null
           email?: string | null
@@ -1790,7 +1813,9 @@ export type Database = {
           photo_url?: string | null
           role?: string
           sort_order?: number
+          state?: string | null
           wedding_id?: string
+          zip?: string | null
         }
         Relationships: [
           {
@@ -1859,6 +1884,7 @@ export type Database = {
           partner1_name: string
           partner2_name: string
           phase: string
+          shared_attire_note: string | null
           style_description: string | null
           trial_started_at: string | null
           updated_at: string
@@ -1891,6 +1917,7 @@ export type Database = {
           partner1_name: string
           partner2_name: string
           phase?: string
+          shared_attire_note?: string | null
           style_description?: string | null
           trial_started_at?: string | null
           updated_at?: string
@@ -1923,6 +1950,7 @@ export type Database = {
           partner1_name?: string
           partner2_name?: string
           phase?: string
+          shared_attire_note?: string | null
           style_description?: string | null
           trial_started_at?: string | null
           updated_at?: string
