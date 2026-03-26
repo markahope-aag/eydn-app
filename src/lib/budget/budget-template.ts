@@ -70,3 +70,23 @@ export const BUDGET_TEMPLATE: BudgetLineItem[] = [
 export const BUDGET_CATEGORIES = [
   ...new Set(BUDGET_TEMPLATE.map((item) => item.category)),
 ];
+
+/**
+ * Recommended budget allocation percentages by category.
+ * Based on standard wedding industry guidelines — percentages sum to 100.
+ */
+export const BUDGET_ALLOCATIONS: Record<string, number> = {
+  "Ceremony & Venue": 30,
+  "Food & Beverage": 25,
+  "Photography & Video": 10,
+  "Music & Entertainment": 7,
+  "Florals & Decor": 8,
+  "Attire & Beauty": 5,
+  "Coordinator": 3,
+  "Stationery & Postage": 2,
+  "Gifts & Favors": 3,
+  "Jewelry": 1,
+  "Rehearsal": 3,
+  "Honeymoon": 2,
+  "Miscellaneous": 1,
+};

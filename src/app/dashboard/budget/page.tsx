@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { Tooltip } from "@/components/Tooltip";
-import { BUDGET_CATEGORIES, BUDGET_TEMPLATE } from "@/lib/budget/budget-template";
+import { BUDGET_CATEGORIES, BUDGET_TEMPLATE, BUDGET_ALLOCATIONS } from "@/lib/budget/budget-template";
 
 type Expense = {
   id: string;
@@ -35,6 +35,8 @@ export default function BudgetPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Miscellaneous");
+  const [budgetInput, setBudgetInput] = useState("");
+  const [budgetFocused, setBudgetFocused] = useState(false);
   const [loading, setLoading] = useState(true);
   const budgetTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const fieldTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -55,6 +57,7 @@ export default function BudgetPage() {
         setVendors(vendorData);
         if (weddingData) {
           setBudget(weddingData.budget ?? 0);
+          setBudgetInput(weddingData.budget ? String(weddingData.budget) : "");
           setWeddingId(weddingData.id);
         }
 
@@ -281,9 +284,19 @@ export default function BudgetPage() {
           <div className="mt-1 flex items-center gap-1">
             <span className="text-muted">$</span>
             <input
-              type="number"
-              value={budget || ""}
-              onChange={(e) => handleBudgetChange(Number(e.target.value))}
+              type="text"
+              inputMode="numeric"
+              value={budgetFocused ? budgetInput : (budget ? budget.toLocaleString() : "")}
+              onFocus={() => {
+                setBudgetFocused(true);
+                setBudgetInput(budget ? String(budget) : "");
+              }}
+              onBlur={() => setBudgetFocused(false)}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^0-9]/g, "");
+                setBudgetInput(raw);
+                handleBudgetChange(Number(raw) || 0);
+              }}
               placeholder="0"
               aria-label="Total budget"
               className="text-[26px] font-semibold text-plum w-full outline-none bg-transparent border-0"
@@ -298,11 +311,16 @@ export default function BudgetPage() {
           <p className="text-[13px] font-semibold text-muted">Paid <Tooltip text="The total amount you've actually paid so far, including deposits and partial payments." /></p>
           <p className="mt-1 text-[26px] font-semibold text-violet">${totalPaid.toLocaleString()}</p>
         </div>
-        <div className="card-summary p-5">
+        <div className={`card-summary p-5 ring-2 ${remaining < 0 ? "ring-error/30" : "ring-violet/20"}`}>
           <p className="text-[13px] font-semibold text-muted">Remaining <Tooltip text="Budget minus total paid. If this goes negative, you're over budget." /></p>
-          <p className={`mt-1 text-[26px] font-semibold ${remaining < 0 ? "text-error" : "text-violet"}`}>
+          <p className={`mt-1 text-[32px] font-bold tracking-tight ${remaining < 0 ? "text-error" : "text-violet"}`}>
             ${remaining.toLocaleString()}
           </p>
+          {budget > 0 && (
+            <p className={`text-[12px] mt-0.5 ${remaining < 0 ? "text-error" : "text-muted"}`}>
+              {remaining < 0 ? "Over budget" : `${Math.round((remaining / budget) * 100)}% of budget left`}
+            </p>
+          )}
         </div>
       </div>
 
@@ -394,49 +412,61 @@ export default function BudgetPage() {
           {/* Budget vs Spent bar */}
           <div className="card p-6">
             <h2 className="text-[15px] font-semibold text-plum mb-4">Budget vs Spent</h2>
-            <div className="space-y-4">
-              {/* Estimated bar */}
-              <div>
-                <div className="flex justify-between text-[13px] mb-1">
-                  <span className="text-muted">Estimated</span>
-                  <span className="font-semibold text-plum">${totalEstimated.toLocaleString()}</span>
-                </div>
-                <div className="h-4 rounded-full overflow-hidden" style={{ backgroundColor: "var(--lavender, #F0E6FA)" }}>
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: budget > 0 ? `${Math.min((totalEstimated / budget) * 100, 100)}%` : "0%",
-                      background: "linear-gradient(90deg, #C9A84C, #E8D5B7)",
-                      transition: "width 0.5s ease",
-                    }}
-                  />
-                </div>
+            {totalEstimated === 0 && totalPaid === 0 ? (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="mb-3 opacity-40" aria-hidden="true">
+                  <rect x="6" y="28" width="8" height="14" rx="2" fill="var(--violet, #6B4C8A)" opacity="0.3" />
+                  <rect x="20" y="18" width="8" height="24" rx="2" fill="var(--violet, #6B4C8A)" opacity="0.5" />
+                  <rect x="34" y="8" width="8" height="34" rx="2" fill="var(--violet, #6B4C8A)" opacity="0.7" />
+                  <line x1="4" y1="44" x2="44" y2="44" stroke="var(--border, #E0D5E8)" strokeWidth="2" />
+                </svg>
+                <p className="text-[13px] text-muted">Your budget breakdown will appear here as you add costs.</p>
               </div>
-              {/* Paid bar */}
-              <div>
-                <div className="flex justify-between text-[13px] mb-1">
-                  <span className="text-muted">Paid</span>
-                  <span className="font-semibold text-violet">${totalPaid.toLocaleString()}</span>
+            ) : (
+              <div className="space-y-4">
+                {/* Estimated bar */}
+                <div>
+                  <div className="flex justify-between text-[13px] mb-1">
+                    <span className="text-muted">Estimated</span>
+                    <span className="font-semibold text-plum">${totalEstimated.toLocaleString()}</span>
+                  </div>
+                  <div className="h-4 rounded-full overflow-hidden" style={{ backgroundColor: "var(--lavender, #F0E6FA)" }}>
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: budget > 0 ? `${Math.min((totalEstimated / budget) * 100, 100)}%` : "0%",
+                        background: "linear-gradient(90deg, #C9A84C, #E8D5B7)",
+                        transition: "width 0.5s ease",
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="h-4 rounded-full overflow-hidden" style={{ backgroundColor: "var(--lavender, #F0E6FA)" }}>
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: budget > 0 ? `${Math.min((totalPaid / budget) * 100, 100)}%` : "0%",
-                      background: totalPaid > budget ? "var(--error, #E53E3E)" : "linear-gradient(90deg, #2C3E2D, #D4A5A5)",
-                      transition: "width 0.5s ease",
-                    }}
-                  />
+                {/* Paid bar */}
+                <div>
+                  <div className="flex justify-between text-[13px] mb-1">
+                    <span className="text-muted">Paid</span>
+                    <span className="font-semibold text-violet">${totalPaid.toLocaleString()}</span>
+                  </div>
+                  <div className="h-4 rounded-full overflow-hidden" style={{ backgroundColor: "var(--lavender, #F0E6FA)" }}>
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: budget > 0 ? `${Math.min((totalPaid / budget) * 100, 100)}%` : "0%",
+                        background: totalPaid > budget ? "var(--error, #E53E3E)" : "linear-gradient(90deg, #2C3E2D, #D4A5A5)",
+                        transition: "width 0.5s ease",
+                      }}
+                    />
+                  </div>
                 </div>
+                {/* Budget line reference */}
+                {budget > 0 && (
+                  <div className="flex items-center gap-2 text-[13px] text-muted pt-1">
+                    <span className="inline-block w-3 h-[3px] rounded-full" style={{ backgroundColor: "var(--plum, #3D2252)" }} />
+                    <span>Budget: <span className="font-semibold text-plum">${budget.toLocaleString()}</span></span>
+                  </div>
+                )}
               </div>
-              {/* Budget line reference */}
-              {budget > 0 && (
-                <div className="flex items-center gap-2 text-[13px] text-muted pt-1">
-                  <span className="w-3 border-t-2 border-dashed" style={{ borderColor: "var(--plum, #3D2252)" }} />
-                  <span>Budget: <span className="font-semibold text-plum">${budget.toLocaleString()}</span></span>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
       )}
@@ -471,20 +501,34 @@ export default function BudgetPage() {
           const items = grouped.get(cat)!;
           const catEstimated = items.reduce((sum, e) => sum + (e.estimated || 0), 0);
           const catPaid = items.reduce((sum, e) => sum + (e.amount_paid || 0), 0);
+          const catPct = budget > 0 ? Math.round((catEstimated / budget) * 100) : 0;
+          const recommendedPct = BUDGET_ALLOCATIONS[cat] ?? 0;
+          const recommendedAmt = budget > 0 ? Math.round(budget * recommendedPct / 100) : 0;
 
           return (
             <div key={cat} className="card overflow-hidden">
               {/* Category header */}
-              <div className="flex items-center justify-between px-4 py-3 bg-lavender">
-                <h2 className="text-[15px] font-semibold text-plum">{cat}</h2>
-                <div className="flex gap-4 text-[13px]">
-                  <span className="text-muted">
-                    Est: <span className="font-semibold text-plum">${catEstimated.toLocaleString()}</span>
-                  </span>
-                  <span className="text-muted">
-                    Paid: <span className="font-semibold text-violet">${catPaid.toLocaleString()}</span>
-                  </span>
+              <div className="px-4 py-3 bg-lavender">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-[15px] font-semibold text-plum">{cat}</h2>
+                  <div className="flex gap-4 text-[13px]">
+                    <span className="text-muted">
+                      Est: <span className="font-semibold text-plum">${catEstimated.toLocaleString()}</span>
+                      {budget > 0 && <span className="text-muted"> / {catPct}%</span>}
+                    </span>
+                    <span className="text-muted">
+                      Paid: <span className="font-semibold text-violet">${catPaid.toLocaleString()}</span>
+                    </span>
+                  </div>
                 </div>
+                {budget > 0 && recommendedPct > 0 && (
+                  <p className="text-[11px] text-muted mt-1">
+                    Suggested: ~{recommendedPct}% (${recommendedAmt.toLocaleString()})
+                    {catEstimated > 0 && catEstimated > recommendedAmt * 1.25 && (
+                      <span className="text-amber-600 ml-1">— above typical range</span>
+                    )}
+                  </p>
+                )}
               </div>
 
               {/* Column headers */}
@@ -499,7 +543,7 @@ export default function BudgetPage() {
               {/* Line items */}
               <div className="divide-y divide-border">
                 {items.map((exp) => (
-                  <div key={exp.id} className="grid grid-cols-[1fr_100px_100px_100px_60px] gap-2 px-4 py-2 items-center">
+                  <div key={exp.id} className="group/row grid grid-cols-[1fr_100px_100px_100px_60px] gap-2 px-4 py-2 items-center">
                     <div>
                       <span className="text-[15px] text-plum">{exp.description}</span>
                       {exp.vendor_name && (
@@ -562,9 +606,11 @@ export default function BudgetPage() {
                     <button
                       onClick={() => removeExpense(exp.id)}
                       aria-label={`Remove ${exp.description}`}
-                      className="text-[12px] text-error hover:opacity-80 text-right"
+                      className="opacity-0 group-hover/row:opacity-100 transition-opacity text-muted hover:text-error flex justify-end"
                     >
-                      Remove
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M5 2V1.5C5 1.22386 5.22386 1 5.5 1H10.5C10.7761 1 11 1.22386 11 1.5V2M2.5 3H13.5M3.5 3V13.5C3.5 14.0523 3.94772 14.5 4.5 14.5H11.5C12.0523 14.5 12.5 14.0523 12.5 13.5V3M6.5 6V11.5M9.5 6V11.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                     </button>
                   </div>
                 ))}
