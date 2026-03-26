@@ -36,13 +36,21 @@ type Vendor = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  searching: "bg-lavender text-muted",
-  contacted: "bg-blue-50 text-blue-600",
-  quote_received: "badge-pending",
-  booked: "badge-confirmed",
-  deposit_paid: "badge-confirmed",
-  paid_in_full: "bg-lavender text-violet",
+  searching: "bg-whisper text-muted",
+  contacted: "bg-amber-50 text-amber-700",
+  quote_received: "bg-blue-50 text-blue-600",
+  booked: "bg-emerald-50 text-emerald-700",
+  deposit_paid: "bg-emerald-50 text-emerald-700",
+  paid_in_full: "bg-violet/10 text-violet",
 };
+
+/** Format a phone string as (XXX) XXX-XXXX while typing. */
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 10);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
 
 export default function VendorDetailPage({
   params,
@@ -55,6 +63,8 @@ export default function VendorDetailPage({
   const [showEmail, setShowEmail] = useState(false);
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [phone, setPhone] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const loadAttachments = useCallback((vid: string) => {
     fetch(`/api/attachments?entity_type=vendor&entity_id=${vid}`)
@@ -71,6 +81,7 @@ export default function VendorDetailPage({
         .then((vendors: Vendor[]) => {
           const found = vendors.find((v) => v.id === p.id);
           setVendor(found || null);
+          if (found?.poc_phone) setPhone(formatPhone(found.poc_phone));
         })
         .catch(() => toast.error("Couldn't load this vendor. Try refreshing."))
         .finally(() => setLoading(false));
@@ -93,6 +104,7 @@ export default function VendorDetailPage({
     if (!vendorId) return;
     const prev = vendor;
     setVendor((v) => (v ? { ...v, [field]: value } : v));
+    setSaving(true);
 
     try {
       const res = await fetch(`/api/vendors/${vendorId}`, {
@@ -104,6 +116,8 @@ export default function VendorDetailPage({
     } catch {
       setVendor(prev);
       toast.error("Failed to update");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -126,18 +140,29 @@ export default function VendorDetailPage({
   }
 
   const statusIdx = VENDOR_STATUSES.findIndex((s) => s.value === vendor.status);
+  const remaining = vendor.amount !== null && vendor.amount_paid !== null
+    ? vendor.amount - vendor.amount_paid
+    : null;
 
   return (
     <div className="max-w-2xl">
-      <button
-        onClick={() => router.push("/dashboard/vendors")}
-        className="text-[15px] text-muted hover:text-plum mb-4"
-      >
-        &larr; All Vendors
-      </button>
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={() => router.push("/dashboard/vendors")}
+          className="text-[15px] text-muted hover:text-plum"
+        >
+          &larr; All Vendors
+        </button>
+        <span className={`text-[12px] text-muted transition-opacity ${saving ? "opacity-100" : "opacity-0"}`}>
+          Saving...
+        </span>
+      </div>
 
       <h1>{vendor.name}</h1>
       <p className="mt-1 text-[15px] text-muted">{vendor.category}</p>
+      <p className="mt-1 text-[11px] text-muted">
+        Changes save automatically when you leave a field.
+      </p>
 
       {/* Google Business Profile */}
       <div className="mt-4">
@@ -198,8 +223,9 @@ export default function VendorDetailPage({
           <label className="text-[12px] font-semibold text-muted">Phone</label>
           <input
             type="tel"
-            defaultValue={vendor.poc_phone || ""}
-            onBlur={(e) => updateField("poc_phone", e.target.value || null)}
+            value={phone}
+            onChange={(e) => setPhone(formatPhone(e.target.value))}
+            onBlur={() => updateField("poc_phone", phone || null)}
             placeholder="(555) 123-4567"
             className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
           />
@@ -207,7 +233,7 @@ export default function VendorDetailPage({
       </div>
 
       {/* Financials */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <div>
           <label className="text-[12px] font-semibold text-muted">
             Total Amount <Tooltip text="The full contracted price for this vendor. This feeds into your overall budget tracker." />
@@ -232,7 +258,7 @@ export default function VendorDetailPage({
         </div>
         <div>
           <label className="text-[12px] font-semibold text-muted">
-            Amount Paid <Tooltip text="Track deposits and installments here. Update this as you make payments so you can see the remaining balance at a glance." wide />
+            Amount Paid <Tooltip text="Track deposits and installments here. Update this as you make payments." />
           </label>
           <div className="mt-1 flex items-center gap-1">
             <span className="text-muted">$</span>
@@ -252,11 +278,29 @@ export default function VendorDetailPage({
             />
           </div>
         </div>
+        <div>
+          <label className="text-[12px] font-semibold text-muted">Remaining</label>
+          <div className="mt-1 flex items-center gap-1 h-[42px]">
+            {remaining !== null ? (
+              <span className={`text-[18px] font-semibold ${remaining > 0 ? "text-plum" : remaining === 0 ? "text-emerald-600" : "text-error"}`}>
+                {remaining === 0 ? "Paid in full" : `$${Math.abs(remaining).toLocaleString()}`}
+                {remaining < 0 && <span className="text-[12px] font-normal ml-1">overpaid</span>}
+              </span>
+            ) : (
+              <span className="text-[14px] text-muted">Enter amounts above</span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Day-of Details */}
       <div className="mt-6">
-        <h2 className="text-[15px] font-semibold text-plum mb-3">Day-of Details <Tooltip text="Logistics for the wedding day: when the vendor arrives, whether they need a vendor meal, and if they've submitted required liability insurance to your venue." wide /></h2>
+        <h2 className="text-[15px] font-semibold text-plum mb-1">
+          Day-of Details <Tooltip text="Logistics for the wedding day: when the vendor arrives, whether they need a vendor meal, and if they've submitted required liability insurance to your venue." wide />
+        </h2>
+        <p className="text-[12px] text-muted mb-3">
+          These details are included when you export your day-of binder.
+        </p>
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
             <label className="text-[12px] font-semibold text-muted">Arrival Time</label>
@@ -264,8 +308,12 @@ export default function VendorDetailPage({
               type="time"
               defaultValue={vendor.arrival_time || ""}
               onChange={(e) => updateField("arrival_time", e.target.value || null)}
+              placeholder="e.g. 2:00 PM"
               className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
             />
+            {!vendor.arrival_time && (
+              <p className="mt-1 text-[11px] text-muted">e.g. 2:00 PM</p>
+            )}
           </div>
           <div>
             <label className="text-[12px] font-semibold text-muted">Meal Needed?</label>

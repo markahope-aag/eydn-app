@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
-import { VENDOR_CATEGORIES } from "@/lib/vendors/categories";
+import { VENDOR_CATEGORIES, categoryLabel } from "@/lib/vendors/categories";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -50,6 +50,8 @@ type Pagination = {
   hasMore: boolean;
 };
 
+type SortOption = "featured" | "name" | "price_low" | "price_high" | "location";
+
 // ─── Debounce hook ───────────────────────────────────────────────────────────
 
 function useDebounce(value: string, delay: number): string {
@@ -82,6 +84,15 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+// ─── Price range helper ─────────────────────────────────────────────────────
+
+const PRICE_ORDER: Record<string, number> = { "$": 1, "$$": 2, "$$$": 3, "$$$$": 4 };
+
+function priceRank(range: string | null): number {
+  if (!range) return 99;
+  return PRICE_ORDER[range] ?? 99;
+}
+
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function VendorDirectoryPage() {
@@ -90,12 +101,18 @@ export default function VendorDirectoryPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [filterCategory, setFilterCategory] = useState("");
+  const [filterPrice, setFilterPrice] = useState("");
+  const [filterLocation, setFilterLocation] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [search, setSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [gmbCache, setGmbCache] = useState<Record<string, PlaceData | "loading" | "error">>({});
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const debouncedSearch = useDebounce(search, 300);
+
+  const activeFilterCount = [filterCategory, filterPrice, filterLocation].filter(Boolean).length;
 
   // Build API URL from current filters
   const buildUrl = useCallback((page: number) => {
@@ -156,26 +173,39 @@ export default function VendorDirectoryPage() {
     return () => observer.disconnect();
   }, [loadMore]);
 
+  // Auto-fetch GMB for a vendor
+  const fetchGmb = useCallback((vendorId: string) => {
+    if (gmbCache[vendorId]) return;
+    setGmbCache((prev) => ({ ...prev, [vendorId]: "loading" }));
+    fetch(`/api/suggested-vendors/${vendorId}/gmb`)
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then((data: PlaceData) => {
+        setGmbCache((prev) => ({ ...prev, [vendorId]: data }));
+      })
+      .catch(() => {
+        setGmbCache((prev) => ({ ...prev, [vendorId]: "error" }));
+      });
+  }, [gmbCache]);
+
+  // Auto-fetch GMB for featured vendors on load
+  useEffect(() => {
+    const featured = vendors.filter((v) => v.featured);
+    for (const v of featured.slice(0, 6)) {
+      if (!gmbCache[v.id]) fetchGmb(v.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vendors]);
+
   function toggleDetails(vendorId: string) {
     if (expandedId === vendorId) {
       setExpandedId(null);
       return;
     }
     setExpandedId(vendorId);
-    if (!gmbCache[vendorId]) {
-      setGmbCache((prev) => ({ ...prev, [vendorId]: "loading" }));
-      fetch(`/api/suggested-vendors/${vendorId}/gmb`)
-        .then((r) => {
-          if (!r.ok) return r.json().then((d: { error?: string }) => { throw new Error(d.error || "Not found"); });
-          return r.json();
-        })
-        .then((data: PlaceData) => {
-          setGmbCache((prev) => ({ ...prev, [vendorId]: data }));
-        })
-        .catch(() => {
-          setGmbCache((prev) => ({ ...prev, [vendorId]: "error" }));
-        });
-    }
+    fetchGmb(vendorId);
   }
 
   async function addToMyVendors(vendor: SuggestedVendor) {
@@ -198,8 +228,37 @@ export default function VendorDirectoryPage() {
     }
   }
 
-  const featured = vendors.filter((v) => v.featured);
-  const regular = vendors.filter((v) => !v.featured);
+  // Client-side filtering & sorting
+  let filtered = vendors;
+  if (filterPrice) {
+    filtered = filtered.filter((v) => v.price_range === filterPrice);
+  }
+  if (filterLocation) {
+    const loc = filterLocation.toLowerCase();
+    filtered = filtered.filter((v) =>
+      v.city.toLowerCase().includes(loc) || v.state.toLowerCase().includes(loc)
+    );
+  }
+
+  const sorted = [...filtered].sort((a, b) => {
+    switch (sortBy) {
+      case "name": return a.name.localeCompare(b.name);
+      case "price_low": return priceRank(a.price_range) - priceRank(b.price_range);
+      case "price_high": return priceRank(b.price_range) - priceRank(a.price_range);
+      case "location": return `${a.city}, ${a.state}`.localeCompare(`${b.city}, ${b.state}`);
+      default: return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+    }
+  });
+
+  const featured = sorted.filter((v) => v.featured);
+  const regular = sorted.filter((v) => !v.featured);
+
+  function clearFilters() {
+    setFilterCategory("");
+    setFilterPrice("");
+    setFilterLocation("");
+    setSortBy("featured");
+  }
 
   if (loading) {
     return (
@@ -207,6 +266,7 @@ export default function VendorDirectoryPage() {
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="animate-pulse rounded-[16px] border border-border bg-white p-4">
             <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-[10px] bg-lavender flex-shrink-0" />
               <div className="flex-1 space-y-2">
                 <div className="h-4 bg-lavender rounded w-1/3" />
                 <div className="h-3 bg-lavender rounded w-1/4" />
@@ -233,7 +293,7 @@ export default function VendorDirectoryPage() {
         </Link>
       </div>
 
-      {/* Search + filters */}
+      {/* Search + filter button */}
       <div className="mt-4 flex gap-3">
         <input
           type="text"
@@ -242,23 +302,89 @@ export default function VendorDirectoryPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
         />
-        <select
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-          className="rounded-[10px] border-border px-3 py-2 text-[15px]"
+        <button
+          type="button"
+          onClick={() => setShowFilters(!showFilters)}
+          className={`flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[14px] transition ${
+            activeFilterCount > 0
+              ? "bg-violet/10 text-violet font-semibold"
+              : "bg-whisper text-muted hover:bg-lavender hover:text-plum"
+          }`}
         >
-          <option value="">All Categories</option>
-          {VENDOR_CATEGORIES.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M1.5 3h11M3.5 7h7M5.5 11h3" />
+          </svg>
+          Filter
+          {activeFilterCount > 0 && (
+            <span className="bg-violet text-white text-[11px] w-4 h-4 rounded-full flex items-center justify-center">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* Expandable filters */}
+      {showFilters && (
+        <div className="mt-2 flex flex-wrap gap-3 items-center">
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="rounded-[10px] border-border px-3 py-1.5 text-[14px]"
+          >
+            <option value="">All Categories</option>
+            {VENDOR_CATEGORIES.map((c) => (
+              <option key={c} value={c}>{categoryLabel(c)}</option>
+            ))}
+          </select>
+          <select
+            value={filterPrice}
+            onChange={(e) => setFilterPrice(e.target.value)}
+            className="rounded-[10px] border-border px-3 py-1.5 text-[14px]"
+          >
+            <option value="">Any Price</option>
+            <option value="$">$ — Budget-friendly</option>
+            <option value="$$">$$ — Mid-range</option>
+            <option value="$$$">$$$ — Premium</option>
+            <option value="$$$$">$$$$ — Luxury</option>
+          </select>
+          <input
+            type="text"
+            placeholder="City or state..."
+            value={filterLocation}
+            onChange={(e) => setFilterLocation(e.target.value)}
+            className="rounded-[10px] border-border px-3 py-1.5 text-[14px] w-44"
+          />
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            className="rounded-[10px] border-border px-3 py-1.5 text-[14px]"
+          >
+            <option value="featured">Sort: Featured first</option>
+            <option value="name">Sort: Name A–Z</option>
+            <option value="price_low">Sort: Price low to high</option>
+            <option value="price_high">Sort: Price high to low</option>
+            <option value="location">Sort: Location</option>
+          </select>
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-[12px] text-muted hover:text-plum transition"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Featured */}
       {featured.length > 0 && (
         <div className="mt-6">
-          <h2>Featured</h2>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="flex items-center gap-2 mb-3">
+            <h2>Top Rated in Your Area</h2>
+            <span className="text-[11px] text-muted bg-whisper px-2 py-0.5 rounded-full">Recommended</span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
             {featured.map((v) => (
               <FeaturedCard
                 key={v.id}
@@ -285,11 +411,12 @@ export default function VendorDirectoryPage() {
               expanded={expandedId === v.id}
               gmbState={gmbCache[v.id]}
               onToggle={() => toggleDetails(v.id)}
+              onVisible={() => fetchGmb(v.id)}
             />
           ))}
         </div>
 
-        {vendors.length === 0 && (
+        {sorted.length === 0 && (
           <p className="text-[15px] text-muted text-center py-8">
             No vendors found. Try a different search or category.
           </p>
@@ -438,6 +565,27 @@ function GmbHighlightCard({ state }: { state: PlaceData | "loading" | "error" | 
   );
 }
 
+// ─── Compact GMB preview (photo + rating for card display) ──────────────────
+
+function GmbPreview({ state }: { state: PlaceData | "loading" | "error" | undefined }) {
+  if (!state || state === "loading" || state === "error") return null;
+  const data = state;
+
+  return (
+    <>
+      {data.rating != null && (
+        <div className="flex items-center gap-1 mt-1">
+          <span className="text-[13px] text-yellow-400">★</span>
+          <span className="text-[12px] font-semibold text-plum">{data.rating}</span>
+          {data.userRatingCount != null && (
+            <span className="text-[11px] text-muted">({data.userRatingCount})</span>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
 // ─── Featured Card ───────────────────────────────────────────────────────────
 
 function FeaturedCard({
@@ -453,36 +601,42 @@ function FeaturedCard({
   gmbState: PlaceData | "loading" | "error" | undefined;
   onToggle: () => void;
 }) {
+  const photo = gmbState && gmbState !== "loading" && gmbState !== "error" ? gmbState.photoUrl : null;
+
   return (
-    <div className="card-summary p-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="text-[15px] font-semibold text-plum">{vendor.name}</h3>
-          <p className="text-[12px] text-muted">
-            {vendor.category} &middot; {vendor.city}, {vendor.state}
-          </p>
+    <div className="card-summary overflow-hidden">
+      {/* Photo */}
+      {photo && (
+        <div className="relative w-full h-36">
+          <Image src={photo} alt={vendor.name} fill className="object-cover" />
         </div>
-        {vendor.price_range && (
-          <span className="text-[13px] font-semibold text-violet">{vendor.price_range}</span>
-        )}
-      </div>
-      {vendor.description && (
-        <p className="text-[13px] text-muted mt-2">{vendor.description}</p>
       )}
-      <div className="mt-3 flex gap-2">
-        <button onClick={() => onAdd(vendor)} className="btn-primary btn-sm">
-          Add to my vendors
-        </button>
-        <button onClick={onToggle} className="btn-secondary btn-sm">
-          {expanded ? "Hide Details" : "Details"}
-        </button>
-        {vendor.website && (
-          <a href={vendor.website} target="_blank" rel="noopener noreferrer" className="btn-ghost btn-sm">
-            Visit website
-          </a>
+      <div className="p-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="text-[15px] font-semibold text-plum">{vendor.name}</h3>
+            <p className="text-[12px] text-muted">
+              {categoryLabel(vendor.category)} · {vendor.city}, {vendor.state}
+            </p>
+            <GmbPreview state={gmbState} />
+          </div>
+          {vendor.price_range && (
+            <span className="text-[13px] font-semibold text-violet">{vendor.price_range}</span>
+          )}
+        </div>
+        {vendor.description && (
+          <p className="text-[13px] text-muted mt-2">{vendor.description}</p>
         )}
+        <div className="mt-3 flex gap-2">
+          <button onClick={() => onAdd(vendor)} className="btn-primary btn-sm">
+            Add to my vendors
+          </button>
+          <button onClick={onToggle} className="btn-secondary btn-sm">
+            {expanded ? "Hide Details" : "Details"}
+          </button>
+        </div>
+        {expanded && <GmbHighlightCard state={gmbState} />}
       </div>
-      {expanded && <GmbHighlightCard state={gmbState} />}
     </div>
   );
 }
@@ -495,29 +649,64 @@ function VendorRow({
   expanded,
   gmbState,
   onToggle,
+  onVisible,
 }: {
   vendor: SuggestedVendor;
   onAdd: (_v: SuggestedVendor) => void;
   expanded: boolean;
   gmbState: PlaceData | "loading" | "error" | undefined;
   onToggle: () => void;
+  onVisible: () => void;
 }) {
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  // Lazy-load GMB when row becomes visible
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el || gmbState) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onVisible();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "100px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gmbState]);
+
+  const photo = gmbState && gmbState !== "loading" && gmbState !== "error" ? gmbState.photoUrl : null;
+
   return (
-    <div className="rounded-[16px] border border-border bg-white overflow-hidden">
+    <div ref={rowRef} className="rounded-[16px] border border-border bg-white overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-3">
+        {/* Thumbnail */}
+        {photo ? (
+          <div className="w-12 h-12 rounded-[10px] overflow-hidden relative flex-shrink-0">
+            <Image src={photo} alt={vendor.name} fill className="object-cover" />
+          </div>
+        ) : (
+          <div className="w-12 h-12 rounded-[10px] bg-lavender flex items-center justify-center flex-shrink-0">
+            <span className="text-[18px] font-semibold text-violet">{vendor.name.charAt(0)}</span>
+          </div>
+        )}
+
         <div className="flex-1 min-w-0">
           <span className="text-[15px] font-semibold text-plum">{vendor.name}</span>
           <p className="text-[12px] text-muted">
-            {vendor.category} &middot; {vendor.city}, {vendor.state} {vendor.price_range && `\u00B7 ${vendor.price_range}`}
+            {categoryLabel(vendor.category)} · {vendor.city}, {vendor.state}
+            {vendor.price_range && ` · ${vendor.price_range}`}
           </p>
-          {vendor.description && (
-            <p className="text-[13px] text-muted mt-1">{vendor.description}</p>
-          )}
+          <GmbPreview state={gmbState} />
         </div>
-        <button onClick={onToggle} className="btn-secondary btn-sm">
+        <button onClick={onToggle} className="btn-secondary btn-sm flex-shrink-0">
           {expanded ? "Hide" : "Details"}
         </button>
-        <button onClick={() => onAdd(vendor)} className="btn-primary btn-sm">
+        <button onClick={() => onAdd(vendor)} className="btn-primary btn-sm flex-shrink-0">
           Add
         </button>
       </div>
