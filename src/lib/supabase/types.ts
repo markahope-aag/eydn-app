@@ -977,9 +977,12 @@ export type Database = {
       rehearsal_dinner: {
         Row: {
           address: string | null
+          capacity: number | null
           created_at: string | null
           date: string | null
+          dress_code: string | null
           guest_list: Json | null
+          hosted_by: string | null
           id: string
           notes: string | null
           time: string | null
@@ -989,9 +992,12 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          capacity?: number | null
           created_at?: string | null
           date?: string | null
+          dress_code?: string | null
           guest_list?: Json | null
+          hosted_by?: string | null
           id?: string
           notes?: string | null
           time?: string | null
@@ -1001,9 +1007,12 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          capacity?: number | null
           created_at?: string | null
           date?: string | null
+          dress_code?: string | null
           guest_list?: Json | null
+          hosted_by?: string | null
           id?: string
           notes?: string | null
           time?: string | null

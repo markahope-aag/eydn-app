@@ -59,8 +59,11 @@ export async function PUT(request: Request) {
     time: (body.time as string) ?? null,
     address: (body.address as string) ?? null,
     notes: (body.notes as string) ?? null,
+    hosted_by: (body.hosted_by as string) ?? null,
+    dress_code: (body.dress_code as string) ?? null,
+    capacity: (body.capacity as number) ?? null,
     timeline: ((body.timeline as Record<string, unknown>[]) ?? []) as import("@/lib/supabase/types").Json,
-    guest_list: (body.guest_list as string[]) ?? [],
+    guest_list: (body.guest_list ?? []) as import("@/lib/supabase/types").Json,
   };
 
   const { data, error } = await supabase
