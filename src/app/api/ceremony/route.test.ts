@@ -29,7 +29,7 @@ function createMockSupabase(overrides: { selectData?: unknown[]; insertData?: un
 const mockGetWeddingForUser = vi.fn();
 vi.mock("@/lib/auth", () => ({ getWeddingForUser: (...args: unknown[]) => mockGetWeddingForUser(...args) }));
 
-import { GET, POST, DELETE } from "./route";
+import { GET, POST, DELETE, PATCH } from "./route";
 
 describe("GET /api/ceremony", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -160,5 +160,108 @@ describe("POST /api/ceremony", () => {
 
     expect(res.status).toBe(400);
     expect(json.error).toMatch(/side/i);
+  });
+});
+
+describe("PATCH /api/ceremony", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  function createPatchSupabase(overrides: { patchData?: unknown; error?: unknown } = {}) {
+    return {
+      from: vi.fn().mockReturnValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: overrides.patchData ?? { id: "cp-1", position_order: 2 },
+                  error: overrides.error ?? null,
+                }),
+              }),
+            }),
+          }),
+        }),
+      }),
+    };
+  }
+
+  it("updates position_order for a ceremony position", async () => {
+    const updated = { id: "cp-1", position_order: 3 };
+    const supabase = createPatchSupabase({ patchData: updated });
+    mockGetWeddingForUser.mockResolvedValue({ wedding: mockWedding, supabase, userId: "user-1", role: "owner" });
+
+    const req = new Request("http://localhost/api/ceremony?id=cp-1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ position_order: 3 }),
+    });
+    const res = await PATCH(req);
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json).toEqual(updated);
+  });
+
+  it("updates role for a ceremony position", async () => {
+    const updated = { id: "cp-1", role: "Best Man" };
+    const supabase = createPatchSupabase({ patchData: updated });
+    mockGetWeddingForUser.mockResolvedValue({ wedding: mockWedding, supabase, userId: "user-1", role: "owner" });
+
+    const req = new Request("http://localhost/api/ceremony?id=cp-1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "Best Man" }),
+    });
+    const res = await PATCH(req);
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.role).toBe("Best Man");
+  });
+
+  it("returns 400 when id query param is missing", async () => {
+    const supabase = createPatchSupabase();
+    mockGetWeddingForUser.mockResolvedValue({ wedding: mockWedding, supabase, userId: "user-1", role: "owner" });
+
+    const req = new Request("http://localhost/api/ceremony", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ position_order: 1 }),
+    });
+    const res = await PATCH(req);
+    const json = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(json.error).toMatch(/id/i);
+  });
+
+  it("returns 400 when no valid fields are provided", async () => {
+    const supabase = createPatchSupabase();
+    mockGetWeddingForUser.mockResolvedValue({ wedding: mockWedding, supabase, userId: "user-1", role: "owner" });
+
+    const req = new Request("http://localhost/api/ceremony?id=cp-1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ unknown_field: "value" }),
+    });
+    const res = await PATCH(req);
+    const json = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(json.error).toMatch(/no valid fields/i);
+  });
+
+  it("returns 401 when not authenticated", async () => {
+    mockGetWeddingForUser.mockResolvedValue({
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    });
+
+    const req = new Request("http://localhost/api/ceremony?id=cp-1", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ position_order: 1 }),
+    });
+    const res = await PATCH(req);
+    expect(res.status).toBe(401);
   });
 });

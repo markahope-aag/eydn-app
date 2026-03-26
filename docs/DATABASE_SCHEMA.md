@@ -1,6 +1,6 @@
 # eydn Database Schema
 
-**36 tables · 36 migrations · Supabase (PostgreSQL)**
+**41 tables · 64 migrations · Supabase (PostgreSQL)**
 
 ---
 
@@ -28,6 +28,8 @@ Main wedding record. One per user (or per collaborator group).
 | phase | text | active, post_wedding, archived, sunset |
 | memory_plan_active | boolean | $29/yr retention plan |
 | memory_plan_expires_at | timestamptz | |
+| ceremony_time | text | Canonical ceremony start time (HH:MM 24h). Single source of truth — day_of_plans mirrors this. |
+| shared_attire_note | text | Shared attire description shown on the wedding party page |
 | website_slug | text | Public URL: eydn.app/w/{slug} |
 | website_enabled | boolean | |
 | website_headline | text | |
@@ -133,17 +135,22 @@ Budget tracker with 36 pre-seeded line items.
 | created_at | timestamptz | |
 
 ### `wedding_party`
-Wedding party members with photos and attire.
+Wedding party members with photos, attire, and address for delivery/shipping.
 
 | Column | Type | Notes |
 |--------|------|-------|
 | id | uuid | PK |
 | wedding_id | uuid | FK → weddings |
 | name | text | |
-| role | text | Maid of Honor, Best Man, Bridesmaid, etc. |
+| role | text | Honor Attendant, Attendant, Officiant, etc. |
 | email | text | |
 | phone | text | |
-| job_assignment | text | Day-of task |
+| address_line1 | text | Street address (added migration 20260326000000) |
+| address_line2 | text | Apt, suite, etc. |
+| city | text | |
+| state | text | |
+| zip | text | |
+| job_assignment | text | Comma-separated day-of task assignments |
 | photo_url | text | |
 | attire | text | Outfit description |
 | sort_order | integer | |
@@ -236,6 +243,24 @@ Rehearsal dinner planning.
 | notes | text | |
 | timeline | jsonb | [{ time, event }] |
 | guest_list | jsonb | [names] |
+| hosted_by | text | Host name(s) — added migration 20260326200000 |
+| dress_code | text | e.g. "Black tie optional" |
+| capacity | integer | Maximum attendees |
+| created_at | timestamptz | |
+
+### `date_change_alerts`
+Tracks wedding date and ceremony time changes that require acknowledgment. The `DateSyncBanner` dashboard component reads unacknowledged rows and shows a persistent warning until the user acknowledges. See the architecture doc for the full cascade behavior.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| wedding_id | uuid | FK → weddings |
+| change_type | text | wedding_date, ceremony_time, rehearsal_date |
+| old_value | text | Previous value |
+| new_value | text | Updated value |
+| affected_tasks | jsonb | Array of { title, due_date } objects |
+| message | text | Human-readable summary |
+| acknowledged | boolean | false until user confirms |
 | created_at | timestamptz | |
 
 ### `questionnaire_responses`
@@ -250,7 +275,7 @@ Onboarding questionnaire data.
 | updated_at | timestamptz | |
 
 ### `mood_board_items`
-Pinterest-style inspiration board.
+Pinterest-style inspiration board. Items can be linked to a vendor for inspiration-to-booking tracking.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -258,8 +283,9 @@ Pinterest-style inspiration board.
 | wedding_id | uuid | FK → weddings |
 | image_url | text | |
 | caption | text | |
-| category | text | Florals, Attire, Colors, etc. |
+| category | text | Florals, Attire, Colors, etc. Custom categories also supported. |
 | location | text | Ceremony, Reception, Bar, etc. |
+| vendor_id | uuid | FK → vendors (optional — added migration 20260326100000) |
 | sort_order | integer | |
 | deleted_at | timestamptz | Soft delete |
 | created_at | timestamptz | |

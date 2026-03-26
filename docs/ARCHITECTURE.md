@@ -58,7 +58,7 @@ The database is designed around the central `weddings` table with related entiti
 
 ```sql
 weddings (1) ──┬── (n) tasks
-               ├── (n) guests  
+               ├── (n) guests
                ├── (n) vendors
                ├── (n) expenses
                ├── (n) wedding_party
@@ -66,13 +66,15 @@ weddings (1) ──┬── (n) tasks
                ├── (n) notifications
                ├── (n) chat_messages
                ├── (n) wedding_collaborators
-               └── (n) mood_board_items
+               ├── (n) mood_board_items
+               ├── (n) date_change_alerts
+               └── (1) rehearsal_dinner
 ```
 
 ### Primary Tables
 
 #### `weddings`
-Core wedding information and settings.
+Core wedding information and settings. `ceremony_time` is the canonical source of truth for the ceremony start time — `day_of_plans.content.ceremonyTime` mirrors this value but `weddings.ceremony_time` takes precedence.
 
 ```sql
 create table public.weddings (
@@ -86,6 +88,8 @@ create table public.weddings (
   guest_count integer,
   style text,
   location text,
+  ceremony_time text,                       -- Canonical ceremony start time (HH:MM 24h)
+  shared_attire_note text,                  -- Shared attire description for wedding party
   website_slug text unique,                 -- Public website URL
   website_enabled boolean default false,
   website_couple_photo_url text,           -- Couple photo for website
@@ -185,19 +189,26 @@ create table public.expenses (
 ### Extended Tables
 
 #### `wedding_party`
-Wedding party member management.
+Wedding party member management. Address fields support attire delivery and gift shipping workflows.
 
 ```sql
 create table public.wedding_party (
   id uuid primary key default gen_random_uuid(),
   wedding_id uuid not null references public.weddings(id) on delete cascade,
   name text not null,
-  role text not null,                       -- maid_of_honor, best_man, etc.
-  side text not null,                       -- bride, groom
+  role text not null,                       -- Honor Attendant, Attendant, etc.
   email text,
   phone text,
-  address text,
-  day_of_responsibilities text[],
+  address_line1 text,
+  address_line2 text,
+  city text,
+  state text,
+  zip text,
+  job_assignment text,                      -- Comma-separated day-of assignments
+  photo_url text,
+  attire text,
+  sort_order integer,
+  deleted_at timestamptz,
   created_at timestamptz not null default now()
 );
 ```
@@ -367,7 +378,7 @@ create table public.wedding_collaborators (
 4. **Subscription Inheritance**: Collaborators inherit owner's premium status
 
 #### `mood_board_items`
-Pinterest-style wedding inspiration board.
+Pinterest-style wedding inspiration board. Items can be linked to a vendor in the wedding's vendor pipeline for inspiration-to-booking tracking.
 
 ```sql
 create table public.mood_board_items (
@@ -377,14 +388,32 @@ create table public.mood_board_items (
   caption text,
   category text not null default 'General',
   location text,                           -- Ceremony, Reception, Bar, etc.
+  vendor_id uuid references public.vendors(id), -- Optional vendor association
   sort_order integer not null default 0,
   deleted_at timestamptz,                  -- Soft delete support
   created_at timestamptz default now()
 );
 ```
 
-**Categories:** Florals, Attire, Colors, Decor, Venue, Food, etc.
+**Categories:** Florals, Attire, Colors, Decor, Venue, Food, and custom user-defined categories
 **Locations:** Ceremony, Reception, Bar, Lounge, Photo Areas
+
+#### `date_change_alerts`
+Tracks wedding date and ceremony time changes that require user acknowledgment. When a date or time changes, a record is created listing the old value, new value, and any tasks whose due dates are affected. The `DateSyncBanner` component in the dashboard layout reads unacknowledged alerts and shows a persistent warning banner until the user confirms they understand which appointments may need rescheduling.
+
+```sql
+create table public.date_change_alerts (
+  id uuid primary key default gen_random_uuid(),
+  wedding_id uuid not null references public.weddings(id),
+  change_type text not null,               -- 'wedding_date' | 'ceremony_time' | 'rehearsal_date'
+  old_value text,
+  new_value text,
+  affected_tasks jsonb default '[]',       -- [{ title, due_date }]
+  message text not null,
+  acknowledged boolean not null default false,
+  created_at timestamptz not null default now()
+);
+```
 
 #### `comments`
 Collaborative commenting system for all entities.
@@ -404,6 +433,17 @@ create table public.comments (
 
 **Entity Types:** Tasks, vendors, guests, expenses, general wedding comments
 **Collaboration:** All roles can comment, fostering team communication
+
+## Date and time synchronization
+
+When a user changes their wedding date or ceremony time, the platform cascades updates across related data:
+
+1. **Task shifting** — milestone tasks whose due dates are calculated relative to the wedding date are automatically recalculated to maintain their relative offset (e.g., "12 months before").
+2. **Appointment flagging** — appointment-type tasks with fixed dates are not auto-shifted; instead they are included in the `affected_tasks` payload of the alert so the user can review and update vendor appointments manually.
+3. **Alert creation** — a `date_change_alerts` record is inserted with the old and new values, the affected task list, and a human-readable message.
+4. **Banner display** — the `DateSyncBanner` component (rendered in `src/app/dashboard/layout.tsx`) fetches unacknowledged alerts via `GET /api/date-alerts` on every dashboard page load and displays an amber warning banner. The banner will not disappear until the user clicks "I understand — I will update affected appointments", which calls `POST /api/date-alerts` to set `acknowledged = true`.
+
+`weddings.ceremony_time` is the canonical source of truth for ceremony start time. `day_of_plans.content.ceremonyTime` is kept in sync but treated as a copy; API routes that read ceremony time should prefer `weddings.ceremony_time`.
 
 ## Security Architecture
 

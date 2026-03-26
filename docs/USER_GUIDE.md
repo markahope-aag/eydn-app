@@ -1,8 +1,8 @@
-# Eydn User Guide
+# eydn user guide
 
-This guide covers what you get with Eydn and how to use each feature.
+This guide covers what you get with eydn and how to use each feature.
 
-## Getting Started
+## Getting started
 
 ### What's included
 
@@ -10,13 +10,15 @@ Your $79 one-time payment gives you lifetime access to everything:
 
 - **AI planning assistant** that knows your wedding details and gives straight answers
 - **Task timeline** auto-generated from your wedding date
-- **Budget tracker** with category allocations and vendor linking
-- **Guest list** with RSVP tracking, meal preferences, and CSV/Excel/PDF export
+- **Budget tracker** with category allocations, % of budget indicators, and spending recommendations
+- **Guest list** with RSVP tracking, "Save for Later" status, venue capacity indicator, search, sort, and CSV import
 - **Vendor management** with directory, email templates, and contract uploads
-- **Seating chart** with drag-and-drop table assignments
+- **Seating chart** — reception drag-and-drop layout with zoom, undo, and distinct table shapes; ceremony layout with altar, aisle, and processional ordering
 - **Wedding website** with RSVP collection, photo gallery, and registry
-- **Day-of planner** with timeline, vendor contacts, and binder PDF export
-- **Planning guides** for flowers, music, decor, rentals, registry, and more
+- **Day-of planner** with timeline, multi-select assignee chips, vendor category tags, and binder PDF export
+- **Rehearsal dinner planner** with timeline generator, guest lookup, and RSVP tracking
+- **Planning guides** with progress bar, time estimates, and recommended completion order
+- **Vision board** with drag-and-drop upload, custom categories, and vendor linking
 - **Collaboration** — invite your partner or coordinator
 - **Data export** — download everything anytime
 
@@ -104,60 +106,73 @@ eydn provides a comprehensive timeline that adapts to your wedding date:
 4. **Set Reminders**: Get notifications before important deadlines
 5. **Collaborate**: Assign tasks to your partner or coordinator
 
-## Budget Management
+## Budget management
 
-### Setting Up Your Budget
+### Setting up your budget
 
-1. **Use the Budget Template**: Start with our comprehensive categories
-2. **Set Realistic Amounts**: eydn can help with typical cost ranges
-3. **Track Actual Expenses**: Log payments as you make them
-4. **Monitor Progress**: See spending vs. budget in real-time
-5. **Adjust as Needed**: Update budget categories as priorities change
+1. **Use the budget template**: Start with the pre-seeded categories
+2. **Set realistic amounts**: eydn shows you the recommended percentage allocation for each category
+3. **Track actual expenses**: Log payments as you make them
+4. **Monitor progress**: The remaining budget card changes color to indicate healthy, tight, or over-budget states
+5. **Adjust as needed**: Update budget categories as priorities change
 
-### Budget Categories Included
+### Budget categories
 
-- **Venue** (typically 40-50% of budget)
-- **Catering & Bar** (25-35% of budget)
-- **Photography & Videography** (10-15% of budget)
-- **Flowers & Decor** (8-10% of budget)
-- **Attire** (5-8% of budget)
-- **Music & Entertainment** (8-10% of budget)
-- **Transportation** (2-3% of budget)
-- **Miscellaneous** (5-10% buffer)
+Each category row shows:
+- Your budgeted amount
+- What you've spent so far
+- The recommended % of your total budget for that category
+- The recommended dollar amount based on that percentage
 
-### Money-Saving Tips from eydn
+### Allocation recommendations
 
-- **Book vendors early** for better rates and availability
-- **Consider off-peak dates** for significant savings
-- **DIY select elements** like favors or simple decor
-- **Prioritize what matters most** to you as a couple
-- **Negotiate package deals** with vendors
+The recommended percentage splits are based on typical wedding budgets:
 
-## Guest Management
+- **Venue** — typically 40–50% of budget
+- **Catering & bar** — 25–35%
+- **Photography & videography** — 10–15%
+- **Flowers & decor** — 8–10%
+- **Attire** — 5–8%
+- **Music & entertainment** — 8–10%
+- **Transportation** — 2–3%
+- **Miscellaneous** — 5–10% buffer
 
-### Building Your Guest List
+## Guest management
 
-1. **Start with Categories**: Family, friends, colleagues, plus-ones
-2. **Use the Questionnaire**: eydn's prompts help you think through everyone
-3. **Import Contacts**: Upload from your phone or email contacts
-4. **Track Plus-Ones**: Manage who gets a plus-one invitation
-5. **Set RSVP Deadlines**: Give yourself time to finalize numbers
+### Building your guest list
 
-### RSVP Management
+1. **Add guests manually or import**: Use the CSV import feature to upload a list; download the template first to see the expected format
+2. **Use Save for Later**: Add guests you're unsure about using the "Save for Later" status — they won't count toward your invited total until you change their status
+3. **Track plus-ones**: Manage who gets a plus-one invitation
+4. **Monitor capacity**: If your venue capacity is set, the header shows how many guests you have versus the venue limit and warns you when you're over
+5. **Search and sort**: Use the search bar to find guests by name; sort by name, RSVP status, or group
 
-- **Wedding Website Integration**: Guests RSVP directly on your site
-- **Automatic Updates**: RSVPs sync with your guest list automatically
-- **Meal Preferences**: Collect dietary restrictions and meal choices
-- **Follow-Up Tools**: Send reminders to guests who haven't responded
-- **Export Options**: Download lists for caterers and venues
+### RSVP statuses
 
-### Seating Chart Planning
+| Status | What it means |
+|--------|---------------|
+| Save for Later | Added but not yet invited |
+| Invite sent | Invitation mailed or emailed |
+| Pending | Awaiting response |
+| Accepted | Coming |
+| Declined | Not coming |
+
+The "Awaiting" stat in the header shows the combined count of guests with "Invite sent" or "Pending" status.
+
+### RSVP collection
+
+- **Wedding website integration**: Guests RSVP directly on your site
+- **Automatic updates**: RSVPs sync with your guest list automatically
+- **Meal preferences**: Collect dietary restrictions and meal choices
+- **Export options**: Download lists for caterers and venues
+
+### Seating chart planning
 
 1. **Wait for RSVPs**: Start after you know who's coming
-2. **Consider Relationships**: Keep compatible people together
-3. **Mix Social Groups**: Help guests meet new people
-4. **Account for Special Needs**: Accessibility and dietary considerations
-5. **Use the Interactive Tool**: Drag and drop guests between tables
+2. **Consider relationships**: Keep compatible groups together
+3. **Use distinct table shapes**: Choose round, rectangle, or square per table
+4. **Use zoom and undo**: Zoom the canvas in or out; undo any assignment with the undo button
+5. **Search unassigned guests**: Filter the unassigned panel by name to find guests quickly
 
 ## 🏢 Working with Vendors
 
@@ -185,23 +200,19 @@ eydn provides a comprehensive timeline that adapts to your wedding date:
 4. **Store Documents Safely**: Upload contracts to your eydn account
 5. **Communicate Changes**: Keep vendors updated on any modifications
 
-## Vision Board
+## Vision board
 
-### Creating Your Vision
+### Creating your vision
 
-1. **Collect Inspiration**: Save images that speak to you
-2. **Organize by Category**: Separate venue, flowers, dress, decor ideas
-3. **Add Descriptions**: Note what specifically you love about each image
-4. **Share with Vendors**: Use your mood board in vendor meetings
-5. **Stay Consistent**: Reference your mood board for all design decisions
+1. **Upload by drag-and-drop or URL**: Drag image files directly onto the upload area, or paste a URL
+2. **Organize by category**: Choose from preset categories (Florals, Attire, Colors, Decor, Venue, Food) or type a custom category name
+3. **Tag a location**: Optionally tag each item to a venue area (Ceremony, Reception, Bar, etc.)
+4. **Link to a vendor**: Associate an image with one of your booked or prospective vendors — this creates a direct connection between your inspiration and the vendor you're considering
+5. **Share**: Use the share button to show your board to vendors or collaborators
 
-### Working with Your Mood Board
+### What vendor linking does
 
-- **Add Images**: Upload photos or save from URLs
-- **Categorize Content**: Organize by wedding elements
-- **Write Captions**: Describe what you love about each image
-- **Reorder Items**: Drag and drop to prioritize favorites
-- **Share Access**: Let your partner and coordinator contribute
+When you link a mood board item to a vendor, the vendor's name appears on the item card. This helps you communicate visual direction to that specific vendor during meetings.
 
 ## Collaboration
 

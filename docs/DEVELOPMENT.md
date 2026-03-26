@@ -126,22 +126,23 @@ supabase db reset
 
 This will create all necessary tables, RLS policies, and seed data.
 
-#### Database Schema Overview (36 Tables)
+#### Database schema overview (41 tables)
 
 The database includes these main table groups:
 
-**Core Wedding Data:**
-- `weddings` - Core wedding information with lifecycle management
-- `tasks` - Planning timeline with 50+ auto-generated tasks
-- `vendors` - Vendor pipeline with Google Places integration
-- `guests` - Guest list and RSVP tracking with addresses
-- `expenses` - Budget tracking with 36 pre-seeded line items
-- `wedding_party` - Wedding party with photos and attire
+**Core wedding data:**
+- `weddings` — Core wedding information with lifecycle management; `ceremony_time` and `shared_attire_note` are first-class columns
+- `tasks` — Planning timeline with 50+ auto-generated tasks
+- `vendors` — Vendor pipeline with Google Places integration
+- `guests` — Guest list and RSVP tracking with addresses
+- `expenses` — Budget tracking with 36 pre-seeded line items
+- `wedding_party` — Wedding party with photos, attire, and address fields
+- `date_change_alerts` — Tracks date/time changes requiring user acknowledgment
 
-**Collaboration & Communication:**
-- `wedding_collaborators` - Partner and coordinator invitations
-- `comments` - Collaborative commenting on all entities
-- `chat_messages` - AI conversation history
+**Collaboration and communication:**
+- `wedding_collaborators` — Partner and coordinator invitations
+- `comments` — Collaborative commenting on all entities
+- `chat_messages` — AI conversation history
 
 **Wedding Website:**
 - `wedding_photos` - Guest photo uploads with approval workflow
@@ -286,12 +287,14 @@ npm run lint        # Check for linting errors (ESLint 9)
 npx tsc --noEmit    # Check TypeScript types
 ```
 
-#### Security Auditing
+#### Security auditing
 
 ```bash
-npm run audit       # Check for security vulnerabilities
+npm run audit       # Check for security vulnerabilities (omits dev deps)
 npm run security-check # Run comprehensive security check (audit + tsc + lint)
 ```
+
+The `npm run audit` script runs `npm audit --omit=dev`. In CI, the audit step uses `--audit-level=high` so that low and moderate advisories (such as the `picomatch` dev-only finding) do not block builds. If you are investigating a specific advisory, run `npm audit` locally without the level flag to see the full output.
 
 #### Bundle Analysis
 

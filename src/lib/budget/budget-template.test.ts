@@ -1,6 +1,6 @@
  
 import { describe, it, expect } from "vitest";
-import { BUDGET_TEMPLATE, BUDGET_CATEGORIES } from "./budget-template";
+import { BUDGET_TEMPLATE, BUDGET_CATEGORIES, BUDGET_ALLOCATIONS } from "./budget-template";
 
 describe("BUDGET_TEMPLATE integrity", () => {
   it("has a reasonable number of items", () => {
@@ -47,5 +47,45 @@ describe("BUDGET_TEMPLATE integrity", () => {
     const descriptions = honeymoonItems.map((i) => i.description);
     expect(descriptions).toContain("Flights");
     expect(descriptions).toContain("Hotels");
+  });
+});
+
+describe("BUDGET_ALLOCATIONS", () => {
+  it("all percentage values sum to 100", () => {
+    const total = Object.values(BUDGET_ALLOCATIONS).reduce((sum, pct) => sum + pct, 0);
+    expect(total).toBe(100);
+  });
+
+  it("all values are positive numbers", () => {
+    for (const [category, pct] of Object.entries(BUDGET_ALLOCATIONS)) {
+      expect(typeof pct).toBe("number");
+      expect(pct).toBeGreaterThan(0);
+      // Provide a useful failure message via the condition itself
+      expect(pct).toBeLessThanOrEqual(100);
+      void category;
+    }
+  });
+
+  it("covers the main cost categories (Ceremony & Venue, Food & Beverage, Photography & Video)", () => {
+    expect(BUDGET_ALLOCATIONS["Ceremony & Venue"]).toBeDefined();
+    expect(BUDGET_ALLOCATIONS["Food & Beverage"]).toBeDefined();
+    expect(BUDGET_ALLOCATIONS["Photography & Video"]).toBeDefined();
+  });
+
+  it("Ceremony & Venue has the highest allocation", () => {
+    const max = Math.max(...Object.values(BUDGET_ALLOCATIONS));
+    expect(BUDGET_ALLOCATIONS["Ceremony & Venue"]).toBe(max);
+  });
+
+  it("every key in BUDGET_ALLOCATIONS is also a BUDGET_CATEGORY", () => {
+    for (const key of Object.keys(BUDGET_ALLOCATIONS)) {
+      expect(BUDGET_CATEGORIES).toContain(key);
+    }
+  });
+
+  it("every BUDGET_CATEGORY has an allocation entry", () => {
+    for (const category of BUDGET_CATEGORIES) {
+      expect(BUDGET_ALLOCATIONS[category]).toBeDefined();
+    }
   });
 });

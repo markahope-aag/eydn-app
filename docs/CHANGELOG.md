@@ -2,6 +2,122 @@
 
 This document tracks all notable changes, updates, and improvements to the eydn wedding planning platform.
 
+## [1.5.0] - March 2026
+
+### Inclusive language — platform-wide
+
+- Replaced "bride", "groom", "bridesmaids", and "groomsmen" throughout the UI with gender-neutral terms: Partner 1, Partner 2, Attendant, Honor Attendant, and Wedding Party
+- Wedding party roles now default to "Attendant" rather than a gendered title
+- Day-of planner timeline auto-assigns groups using "Partner 1", "Partner 2", and "Attendants" instead of gendered labels
+
+### Date and time synchronization
+
+- `ceremony_time` promoted to a first-class column on the `weddings` table; it is the single source of truth — `day_of_plans.content.ceremonyTime` is kept in sync but `weddings.ceremony_time` is canonical
+- Date or time changes now cascade: milestone tasks auto-shift relative to the new wedding date; appointment-type tasks are flagged for manual review
+- New `date_change_alerts` table records each change with `old_value`, `new_value`, affected tasks, and an `acknowledged` flag
+- `DateSyncBanner` component added to the dashboard layout — renders a persistent amber warning banner for every unacknowledged alert, listing affected task names and their previous due dates; the banner requires explicit acknowledgment before it dismisses
+
+### Budget page
+
+- Monetary values now display with comma formatting (e.g., $12,500 instead of $12500)
+- Remaining budget card is visually prominent — color changes to indicate healthy, tight, or over-budget states
+- Empty state for the Budget vs. Spent chart when no expenses exist
+- Budget allocation recommendations shown per category as a percentage of the total budget; the recommended amount is calculated from the stored percentage split
+- "% of budget" indicator shown inline with each category row
+- Legend on the Budget vs. Spent chart corrected
+- Trash icons on expense rows appear on hover rather than always being visible
+
+### Guest list
+
+- Name fields auto-capitalize on entry
+- "Not Invited" status renamed to "Save for Later" in the UI (the underlying `rsvp_status` value remains `not_invited`)
+- "Awaiting" stat added to the header showing guests with `invite_sent` or `pending` status
+- Venue capacity from the wedding record is shown alongside total guest count; an over-capacity warning appears when the list exceeds it
+- Search bar added for filtering guests by name
+- Sort options added (name, RSVP status, group)
+- Column headers added to the guest table
+- Trash icons on guest rows appear on hover
+- CSV import includes a downloadable template (`guest-import-template.csv`)
+
+### Wedding party
+
+- Address fields added to each member card: address line 1, address line 2, city, state, zip (backed by new `wedding_party` columns)
+- Job assignments now use multi-select chips rather than a single text input
+- Shared attire note field added at the page level, stored in `weddings.shared_attire_note`
+- Member avatar supports a photo upload
+- X (close/remove) button added to member cards
+- Trash icons appear on hover
+
+### Seating chart — reception
+
+- Distinct table shapes rendered visually: round, rectangle, and square
+- Seat position dots shown around each table shape
+- Zoom controls added to the canvas (percentage displayed)
+- Undo button backed by a client-side undo stack
+- Search field added to the unassigned guests panel
+
+### Seating chart — ceremony
+
+- Partner names pulled from onboarding data and shown in the ceremony layout
+- Altar rendered with prominent visual hierarchy
+- Aisle line drawn between left and right sides
+- Processional reorder arrows allow changing the walk order without drag-and-drop
+- Print button generates a printer-friendly version of the ceremony layout in a new window
+
+### Vision board (mood board)
+
+- Drag-and-drop file upload with visual drag-over state
+- Custom categories supported alongside the preset list
+- Vendor linking: each mood board item can be associated with a vendor from the wedding's vendor list, stored via the new `mood_board_items.vendor_id` foreign key
+- URL input includes a hint/placeholder
+- Location label display corrected
+- Share button added
+- Empty state placeholder shown when the board has no items
+
+### Planning guides
+
+- Progress bar across all guides showing percentage complete
+- Consistent SVG icons used throughout
+- Color-coded call-to-action buttons per guide state
+- Time estimates shown per guide
+- "Not Started" badge displayed on guides not yet begun
+- Recommended completion order defined; the first incomplete guide in that order is labeled "Start here"
+
+### Day-of planner
+
+- Ceremony time input displayed prominently; value is read from and written back to `weddings.ceremony_time`
+- Timeline event assignees use multi-select chips showing group names (Partner 1, Partner 2, Attendants, Vendors, Everyone, Family)
+- Auto-assigned groups pre-populated when the timeline is generated from the ceremony time
+- Duration field added to each timeline event
+- Vendor category tags shown on timeline events where applicable
+- Page uses a wider layout
+- Export button hierarchy clarified; binder tooltip explains what the PDF export contains
+
+### Rehearsal dinner
+
+- Date and time fields use dedicated date/time picker inputs
+- Timeline generator creates a suggested schedule based on the rehearsal start time
+- Guest lookup pulls from the main guest list when adding rehearsal dinner attendees
+- RSVP tracking for rehearsal dinner guests
+- Host, dress code, and capacity fields added (backed by new `rehearsal_dinner` columns)
+- Print button generates a printer-friendly rehearsal dinner summary
+
+### CI and dependency fixes
+
+- `picomatch` vulnerability resolved
+- GitHub Actions updated to `actions/checkout@v6` and `actions/setup-node@v6`
+- Security audit step in CI now runs with `--audit-level=high` to reduce noise from low/moderate false positives
+
+### Database migrations (this release)
+
+- `wedding_party`: added `address_line1`, `address_line2`, `city`, `state`, `zip`
+- `weddings`: added `shared_attire_note`, `ceremony_time`
+- `mood_board_items`: added `vendor_id uuid REFERENCES vendors(id)`
+- `rehearsal_dinner`: added `hosted_by`, `dress_code`, `capacity`
+- New table: `date_change_alerts` — tracks wedding date and ceremony time changes with acknowledgment workflow and affected-task list
+
+---
+
 ## [1.4.0] - March 2026
 
 ### Brand Voice & Copy Audit
