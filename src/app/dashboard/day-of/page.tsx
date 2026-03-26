@@ -9,7 +9,7 @@ import { exportWeddingBinder } from "@/lib/export-binder";
 import { Tooltip } from "@/components/Tooltip";
 import { trackExport } from "@/lib/analytics";
 
-type TimelineItem = { time: string; event: string; notes: string; forGroup?: string };
+type TimelineItem = { time: string; event: string; notes: string; forGroup?: string; duration?: number; vendorCategory?: string };
 type VendorContact = { vendor: string; category: string; contact: string; phone: string };
 type PartyAssignment = { name: string; role: string; job: string; phone: string };
 type PackingItem = { item: string; notes: string };
@@ -102,24 +102,24 @@ function generateTimelineFromCeremony(ceremonyTime: string): TimelineItem[] {
   }
 
   return [
-    { time: formatTime(ceremonyMinutes - 510), event: "Hair & makeup begins", notes: "" },
-    { time: formatTime(ceremonyMinutes - 390), event: "Photographer arrives", notes: "" },
-    { time: formatTime(ceremonyMinutes - 330), event: "Getting ready photos", notes: "" },
-    { time: formatTime(ceremonyMinutes - 270), event: "Lunch for wedding party", notes: "" },
-    { time: formatTime(ceremonyMinutes - 150), event: "First look (if applicable)", notes: "" },
-    { time: formatTime(ceremonyMinutes - 90), event: "Wedding party photos", notes: "" },
-    { time: formatTime(ceremonyMinutes - 30), event: "Guests arrive", notes: "" },
-    { time: formatTime(ceremonyMinutes), event: "Ceremony begins", notes: "" },
-    { time: formatTime(ceremonyMinutes + 30), event: "Cocktail hour", notes: "" },
-    { time: formatTime(ceremonyMinutes + 90), event: "Reception entrance", notes: "" },
-    { time: formatTime(ceremonyMinutes + 105), event: "First dance", notes: "" },
-    { time: formatTime(ceremonyMinutes + 120), event: "Dinner service", notes: "" },
-    { time: formatTime(ceremonyMinutes + 180), event: "Speeches & toasts", notes: "" },
-    { time: formatTime(ceremonyMinutes + 210), event: "Cake cutting", notes: "" },
-    { time: formatTime(ceremonyMinutes + 225), event: "Parent dances", notes: "" },
-    { time: formatTime(ceremonyMinutes + 240), event: "Open dancing", notes: "" },
-    { time: formatTime(ceremonyMinutes + 360), event: "Last dance", notes: "" },
-    { time: formatTime(ceremonyMinutes + 375), event: "Send-off", notes: "" },
+    { time: formatTime(ceremonyMinutes - 510), event: "Hair & makeup begins", notes: "", forGroup: "Bride,Bridesmaids", duration: 120, vendorCategory: "Hair & Makeup" },
+    { time: formatTime(ceremonyMinutes - 390), event: "Photographer arrives", notes: "", forGroup: "Vendors", duration: 30, vendorCategory: "Photography" },
+    { time: formatTime(ceremonyMinutes - 330), event: "Getting ready photos", notes: "", forGroup: "Bride,Bridesmaids,Groomsmen", duration: 60 },
+    { time: formatTime(ceremonyMinutes - 270), event: "Lunch for wedding party", notes: "", forGroup: "Bride,Groom,Bridesmaids,Groomsmen", duration: 45 },
+    { time: formatTime(ceremonyMinutes - 150), event: "First look (if applicable)", notes: "", forGroup: "Bride,Groom", duration: 30 },
+    { time: formatTime(ceremonyMinutes - 90), event: "Wedding party photos", notes: "", forGroup: "Bride,Groom,Bridesmaids,Groomsmen", duration: 60 },
+    { time: formatTime(ceremonyMinutes - 30), event: "Guests arrive", notes: "", forGroup: "Everyone", duration: 30 },
+    { time: formatTime(ceremonyMinutes), event: "Ceremony begins", notes: "", forGroup: "Everyone", duration: 30 },
+    { time: formatTime(ceremonyMinutes + 30), event: "Cocktail hour", notes: "", forGroup: "Everyone", duration: 60, vendorCategory: "Catering" },
+    { time: formatTime(ceremonyMinutes + 90), event: "Reception entrance", notes: "", forGroup: "Everyone", duration: 15 },
+    { time: formatTime(ceremonyMinutes + 105), event: "First dance", notes: "", forGroup: "Bride,Groom", duration: 5, vendorCategory: "DJ / Band" },
+    { time: formatTime(ceremonyMinutes + 120), event: "Dinner service", notes: "", forGroup: "Everyone", duration: 60, vendorCategory: "Catering" },
+    { time: formatTime(ceremonyMinutes + 180), event: "Speeches & toasts", notes: "", forGroup: "Everyone", duration: 30 },
+    { time: formatTime(ceremonyMinutes + 210), event: "Cake cutting", notes: "", forGroup: "Bride,Groom", duration: 15, vendorCategory: "Bakery" },
+    { time: formatTime(ceremonyMinutes + 225), event: "Parent dances", notes: "", forGroup: "Bride,Groom,Family", duration: 10 },
+    { time: formatTime(ceremonyMinutes + 240), event: "Open dancing", notes: "", forGroup: "Everyone", duration: 120, vendorCategory: "DJ / Band" },
+    { time: formatTime(ceremonyMinutes + 360), event: "Last dance", notes: "", forGroup: "Bride,Groom", duration: 5 },
+    { time: formatTime(ceremonyMinutes + 375), event: "Send-off", notes: "", forGroup: "Everyone", duration: 15 },
   ];
 }
 
@@ -487,21 +487,23 @@ export default function DayOfPage() {
         <p className="mt-2 text-[15px] text-muted">
           Generate your day-of timeline, vendor contact sheet, and packing checklist.
         </p>
-        <div className="mt-6 card p-4 space-y-4">
-          <div className="flex items-center gap-3">
-            <label className="text-[13px] font-semibold text-plum whitespace-nowrap" htmlFor="ceremony-time-initial">Ceremony time:</label>
+        <div className="mt-8 card p-8 text-center space-y-5">
+          <div>
+            <p className="text-[17px] font-semibold text-plum">Set your ceremony time to generate your timeline</p>
+            <p className="text-[13px] text-muted mt-1">Everything else — hair &amp; makeup, photos, dinner, dancing — is scheduled around this time.</p>
+          </div>
+          <div className="flex items-center justify-center gap-3">
             <input
               id="ceremony-time-initial"
               type="time"
               value={ceremonyTime}
               onChange={(e) => setCeremonyTime(e.target.value)}
               aria-label="Ceremony start time"
-              className="rounded-[10px] border-border px-3 py-1.5 text-[15px] w-36"
+              className="rounded-[12px] border-2 border-violet/30 px-4 py-3 text-[20px] font-semibold text-plum w-44 text-center focus:border-violet focus:ring-2 focus:ring-violet/20 transition"
             />
           </div>
           <button
             onClick={async () => {
-              // Validate ceremony time if provided
               let customTimeline: TimelineItem[] | null = null;
               if (ceremonyTime.trim()) {
                 customTimeline = generateTimelineFromCeremony(ceremonyTime);
@@ -510,7 +512,6 @@ export default function DayOfPage() {
                   return;
                 }
               }
-              // Fetch/generate the plan from the API
               try {
                 const res = await fetch("/api/day-of");
                 if (!res.ok) throw new Error();
@@ -524,11 +525,9 @@ export default function DayOfPage() {
                     );
                   }
                 }
-                // Apply custom ceremony time if provided
                 if (customTimeline && ceremonyTime.trim()) {
                   content.ceremonyTime = ceremonyTime;
                   content.timeline = customTimeline;
-                  // Save updated plan
                   await fetch("/api/day-of", {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
@@ -542,7 +541,8 @@ export default function DayOfPage() {
                 toast.error("Couldn't generate the plan. Try again.");
               }
             }}
-            className="btn-primary"
+            disabled={!ceremonyTime.trim()}
+            className="btn-primary text-[16px] px-8 py-3 disabled:opacity-40"
           >
             Generate Timeline
           </button>
@@ -555,11 +555,11 @@ export default function DayOfPage() {
   }
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <div className="flex items-center justify-between">
         <h1>Day-of Planner</h1>
         <div className="flex items-center gap-2">
-          <PremiumButton onClick={exportPDF} className="btn-primary btn-sm">
+          <PremiumButton onClick={exportPDF} className="btn-secondary btn-sm">
             Export PDF
           </PremiumButton>
           <PremiumButton
@@ -575,11 +575,12 @@ export default function DayOfPage() {
                 setBinderLoading(false);
               }
             }}
-            className="btn-sm bg-[#2C3E2D] text-[#FAF6F1] border-[#2C3E2D] hover:bg-[#3a5240]"
+            className="btn-primary btn-sm"
             disabled={binderLoading}
           >
-            {binderLoading ? "Generating binder..." : "Export Full Binder"}
+            {binderLoading ? "Generating..." : "Export Full Binder"}
           </PremiumButton>
+          <Tooltip text="The Full Binder includes your timeline, vendor contacts, wedding party jobs, packing checklist, seating chart, and ceremony layout — everything your coordinator needs." wide />
         </div>
       </div>
       <p className="mt-1 text-[15px] text-muted">
@@ -588,19 +589,19 @@ export default function DayOfPage() {
 
       {/* Ceremony time */}
       <div className="mt-4 card p-4 flex flex-wrap items-center gap-3">
-        <label className="text-[13px] font-semibold text-plum whitespace-nowrap" htmlFor="ceremony-time-main">Ceremony time: <Tooltip text="Set your ceremony start time and click Generate Timeline. All other events will be scheduled automatically, working backwards and forwards from this time." wide /></label>
+        <label className="text-[15px] font-semibold text-plum whitespace-nowrap" htmlFor="ceremony-time-main">Ceremony at</label>
         <input
           id="ceremony-time-main"
           type="time"
           value={ceremonyTime}
           onChange={(e) => setCeremonyTime(e.target.value)}
           aria-label="Ceremony start time"
-          className="rounded-[10px] border-border px-3 py-1.5 text-[15px] w-36"
+          className="rounded-[10px] border-2 border-violet/30 px-3 py-1.5 text-[17px] font-semibold text-plum w-36 text-center"
         />
         <button onClick={handleCeremonyTimeSet} className="btn-secondary btn-sm">
-          Generate Timeline
+          Regenerate Timeline
         </button>
-        <p className="text-[12px] text-muted">Sets all times working backwards from your ceremony</p>
+        <Tooltip text="Changing the ceremony time recalculates all events. Custom events you've added are preserved." wide />
       </div>
 
       {/* Tabs */}
@@ -636,7 +637,10 @@ export default function DayOfPage() {
       {/* TIMELINE TAB */}
       {tab === "timeline" && (
         <div className="mt-4">
-          <p className="text-[12px] text-muted mb-2">Events are scheduled working backwards and forwards from your ceremony time. <Tooltip text="Hair and makeup, photos, and arrival times are calculated by counting backwards from the ceremony. Reception events like dinner, speeches, and dancing are scheduled forward." wide /></p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[12px] text-muted">Events scheduled around your ceremony time. <Tooltip text="Hair and makeup, photos, and arrival times count backwards. Reception events count forward. Durations help your coordinator keep things on track." wide /></p>
+            <button onClick={addTimelineItem} className="btn-primary btn-sm">Add Event</button>
+          </div>
           {/* Group filter */}
           <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1">
             {["All", ...TIMELINE_GROUPS].map((g) => (
@@ -653,57 +657,107 @@ export default function DayOfPage() {
               </button>
             ))}
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {plan.timeline
               .map((item, i) => ({ item, i }))
-              .filter(({ item }) => timelineFilter === "All" || (item.forGroup || "Everyone") === timelineFilter)
-              .map(({ item, i }) => (
+              .filter(({ item }) => {
+                if (timelineFilter === "All") return true;
+                const groups = (item.forGroup || "Everyone").split(",").map((g) => g.trim());
+                return groups.includes(timelineFilter);
+              })
+              .map(({ item, i }) => {
+              const assignedGroups = (item.forGroup || "Everyone").split(",").map((g) => g.trim());
+              return (
               <div
                 key={i}
-                className="flex items-center gap-2 rounded-[12px] border border-border bg-white px-4 py-2"
+                className="group/row rounded-[12px] border border-border bg-white overflow-hidden"
               >
-                <input
-                  type="text"
-                  defaultValue={item.time}
-                  onBlur={(e) => updateTimeline(i, "time", e.target.value)}
-                  className="w-24 text-[15px] font-semibold text-violet border-0 bg-transparent"
-                  placeholder="Time"
-                />
-                <input
-                  type="text"
-                  defaultValue={item.event}
-                  onBlur={(e) => updateTimeline(i, "event", e.target.value)}
-                  className="flex-1 text-[15px] text-plum border-0 bg-transparent"
-                  placeholder="Event"
-                />
-                <select
-                  defaultValue={item.forGroup || "Everyone"}
-                  onChange={(e) => updateTimeline(i, "forGroup", e.target.value)}
-                  className="w-28 text-[11px] text-muted border-0 bg-transparent"
-                >
-                  {TIMELINE_GROUPS.map((g) => (
-                    <option key={g} value={g}>{g}</option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  defaultValue={item.notes}
-                  onBlur={(e) => updateTimeline(i, "notes", e.target.value)}
-                  placeholder="Notes"
-                  className="w-32 text-[12px] text-muted border-0 bg-transparent"
-                />
-                <button
-                  onClick={() => removeTimelineItem(i)}
-                  className="text-[10px] text-error hover:opacity-80 flex-shrink-0"
-                >
-                  x
-                </button>
+                {/* Main row */}
+                <div className="flex items-center gap-2 px-4 py-2">
+                  <input
+                    type="text"
+                    defaultValue={item.time}
+                    onBlur={(e) => updateTimeline(i, "time", e.target.value)}
+                    className="w-24 text-[15px] font-semibold text-violet border-0 bg-transparent flex-shrink-0"
+                    placeholder="Time"
+                  />
+                  <input
+                    type="text"
+                    defaultValue={item.event}
+                    onBlur={(e) => updateTimeline(i, "event", e.target.value)}
+                    className="flex-1 text-[15px] text-plum border-0 bg-transparent min-w-0"
+                    placeholder="Event name"
+                  />
+                  {item.duration ? (
+                    <span className="text-[11px] text-muted bg-lavender px-2 py-0.5 rounded-full flex-shrink-0">{item.duration}m</span>
+                  ) : null}
+                  <input
+                    type="number"
+                    defaultValue={item.duration || ""}
+                    onBlur={(e) => updateTimeline(i, "duration" as keyof TimelineItem, e.target.value)}
+                    placeholder="Min"
+                    min="0"
+                    className="w-14 text-[11px] text-muted border-0 bg-transparent text-right opacity-0 group-hover/row:opacity-100 transition-opacity flex-shrink-0"
+                    title="Duration in minutes"
+                  />
+                  <button
+                    onClick={() => removeTimelineItem(i)}
+                    aria-label="Remove event"
+                    className="opacity-0 group-hover/row:opacity-100 transition-opacity text-muted hover:text-error flex-shrink-0"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                      <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+                {/* Expanded details row */}
+                <div className="px-4 pb-2 flex items-center gap-2 flex-wrap">
+                  {/* Assignee chips */}
+                  <div className="flex gap-1 flex-wrap">
+                    {TIMELINE_GROUPS.map((g) => {
+                      const active = assignedGroups.includes(g);
+                      return (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => {
+                            let newGroups: string[];
+                            if (active) {
+                              newGroups = assignedGroups.filter((ag) => ag !== g);
+                              if (newGroups.length === 0) newGroups = ["Everyone"];
+                            } else {
+                              newGroups = [...assignedGroups.filter((ag) => ag !== "Everyone"), g];
+                              if (g === "Everyone") newGroups = ["Everyone"];
+                            }
+                            updateTimeline(i, "forGroup", newGroups.join(","));
+                          }}
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition ${
+                            active
+                              ? "bg-violet text-white"
+                              : "bg-lavender/60 text-muted hover:bg-lavender"
+                          }`}
+                        >
+                          {g}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <span className="text-border">|</span>
+                  <input
+                    type="text"
+                    defaultValue={item.notes}
+                    onBlur={(e) => updateTimeline(i, "notes", e.target.value)}
+                    placeholder="Add location, vendor, or reminder"
+                    className="flex-1 text-[12px] text-muted border-0 bg-transparent min-w-[180px]"
+                  />
+                  {item.vendorCategory && (
+                    <span className="text-[10px] text-violet bg-lavender px-2 py-0.5 rounded-full flex-shrink-0">{item.vendorCategory}</span>
+                  )}
+                </div>
               </div>
-            ))}
+              );
+            })}
           </div>
-          <button onClick={addTimelineItem} className="btn-ghost btn-sm mt-3">
-            Add event
-          </button>
         </div>
       )}
 
