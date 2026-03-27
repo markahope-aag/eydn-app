@@ -123,11 +123,11 @@ export default function VendorAnalyticsPage() {
       {/* Directory by Category */}
       <div className="card p-6">
         <h2 className="text-[15px] font-semibold text-plum mb-4">Directory by Category</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data.directory.byCategory} layout="vertical" margin={{ left: 120 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" />
-            <YAxis type="category" dataKey="category" width={110} tick={{ fontSize: 13 }} />
+        <ResponsiveContainer width="100%" height={Math.max(300, data.directory.byCategory.length * 36)}>
+          <BarChart data={data.directory.byCategory} layout="vertical" margin={{ left: 200, right: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+            <XAxis type="number" allowDecimals={false} />
+            <YAxis type="category" dataKey="category" width={190} tick={{ fontSize: 13 }} interval={0} />
             <RechartsTooltip />
             <Bar dataKey="count" fill="#2C3E2D" radius={[0, 4, 4, 0]} />
           </BarChart>
@@ -137,11 +137,11 @@ export default function VendorAnalyticsPage() {
       {/* Directory by Region */}
       <div className="card p-6">
         <h2 className="text-[15px] font-semibold text-plum mb-4">Directory by Region (Top 10)</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={top10States} layout="vertical" margin={{ left: 80 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" />
-            <YAxis type="category" dataKey="state" width={70} tick={{ fontSize: 13 }} />
+        <ResponsiveContainer width="100%" height={Math.max(300, top10States.length * 36)}>
+          <BarChart data={top10States} layout="vertical" margin={{ left: 80, right: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+            <XAxis type="number" allowDecimals={false} />
+            <YAxis type="category" dataKey="state" width={70} tick={{ fontSize: 13 }} interval={0} />
             <RechartsTooltip />
             <Bar dataKey="count" fill="#D4A5A5" radius={[0, 4, 4, 0]} />
           </BarChart>
