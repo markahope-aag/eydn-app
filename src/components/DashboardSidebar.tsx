@@ -215,6 +215,8 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
               Operations
             </p>
             <div className="flex flex-col gap-0.5 mt-0.5">
+              <NavLink item={{ href: "/dashboard/admin/database", label: "Database & Backups" }} active={isActive(pathname, "/dashboard/admin/database")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin/integrations", label: "AI & Integrations" }} active={isActive(pathname, "/dashboard/admin/integrations")} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin?tab=email", label: "Communications" }} active={pathname === "/dashboard/admin" && activeTab === "email"} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin?tab=cron-jobs", label: "Cron Jobs" }} active={pathname === "/dashboard/admin" && activeTab === "cron-jobs"} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin?tab=data-security", label: "Data & Security" }} active={pathname === "/dashboard/admin" && activeTab === "data-security"} onClick={() => setOpen(false)} />
