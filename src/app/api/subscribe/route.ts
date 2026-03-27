@@ -4,6 +4,7 @@ import { getStripe } from "@/lib/stripe";
 import { NextResponse } from "next/server";
 import { SUBSCRIPTION_PRICE } from "@/lib/subscription";
 import { safeParseJSON, isParseError } from "@/lib/validation";
+import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function GET() {
   const { userId } = await auth();
@@ -29,6 +30,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const ip = getClientIP(request);
+  const rl = await checkRateLimit(`subscribe:${ip}`, RATE_LIMITS.public);
+  if (rl.limited) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
