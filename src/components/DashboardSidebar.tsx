@@ -208,6 +208,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
               <NavLink item={{ href: "/dashboard/admin/blog", label: "Blog CMS" }} active={isActive(pathname, "/dashboard/admin/blog")} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin/promo-codes", label: "Promo Codes" }} active={isActive(pathname, "/dashboard/admin/promo-codes")} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin/waitlist", label: "Waitlist" }} active={isActive(pathname, "/dashboard/admin/waitlist")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin/lifecycle", label: "Account Lifecycle" }} active={isActive(pathname, "/dashboard/admin/lifecycle")} onClick={() => setOpen(false)} />
             </div>
 
             <p className="px-3 py-1.5 text-[15px] font-bold text-violet tracking-wide mt-3">
@@ -216,7 +217,6 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
             <div className="flex flex-col gap-0.5 mt-0.5">
               <NavLink item={{ href: "/dashboard/admin?tab=email", label: "Communications" }} active={pathname === "/dashboard/admin" && activeTab === "email"} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin?tab=cron-jobs", label: "Cron Jobs" }} active={pathname === "/dashboard/admin" && activeTab === "cron-jobs"} onClick={() => setOpen(false)} />
-              <NavLink item={{ href: "/dashboard/admin/lifecycle", label: "Account Lifecycle" }} active={isActive(pathname, "/dashboard/admin/lifecycle")} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin?tab=data-security", label: "Data & Security" }} active={pathname === "/dashboard/admin" && activeTab === "data-security"} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin?tab=settings", label: "Settings" }} active={pathname === "/dashboard/admin" && activeTab === "settings"} onClick={() => setOpen(false)} />
             </div>

@@ -56,6 +56,8 @@ export default function AdminBlogPage() {
   const [form, setForm] = useState(EMPTY_POST);
   const [saving, setSaving] = useState(false);
   const [tagsInput, setTagsInput] = useState("");
+  const [blogSearch, setBlogSearch] = useState("");
+  const [blogSort, setBlogSort] = useState<"newest" | "oldest" | "title">("newest");
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -173,6 +175,26 @@ export default function AdminBlogPage() {
 
   const isEditorOpen = creating || editing;
 
+  const filteredPosts = posts
+    .filter((post) => {
+      if (!blogSearch.trim()) return true;
+      const q = blogSearch.toLowerCase();
+      return post.title.toLowerCase().includes(q) || post.content.toLowerCase().includes(q);
+    })
+    .sort((a, b) => {
+      if (blogSort === "newest") {
+        const da = a.published_at || a.created_at;
+        const db = b.published_at || b.created_at;
+        return new Date(db).getTime() - new Date(da).getTime();
+      }
+      if (blogSort === "oldest") {
+        const da = a.published_at || a.created_at;
+        const db = b.published_at || b.created_at;
+        return new Date(da).getTime() - new Date(db).getTime();
+      }
+      return a.title.localeCompare(b.title);
+    });
+
   return (
     <div style={{ padding: 32, maxWidth: 1200, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
@@ -210,7 +232,24 @@ export default function AdminBlogPage() {
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {posts.map((post) => (
+              <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+                <input
+                  placeholder="Search posts..."
+                  value={blogSearch}
+                  onChange={(e) => setBlogSearch(e.target.value)}
+                  style={{ flex: 1, borderRadius: 10, border: "1px solid var(--border)", padding: "8px 12px", fontSize: 14 }}
+                />
+                <select
+                  value={blogSort}
+                  onChange={(e) => setBlogSort(e.target.value as "newest" | "oldest" | "title")}
+                  style={{ borderRadius: 10, border: "1px solid var(--border)", padding: "8px 12px", fontSize: 14 }}
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="title">Title A-Z</option>
+                </select>
+              </div>
+              {filteredPosts.map((post) => (
                 <button
                   key={post.id}
                   onClick={() => startEdit(post)}

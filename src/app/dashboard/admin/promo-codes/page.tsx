@@ -20,6 +20,7 @@ export default function PromoCodesPage() {
   const [codes, setCodes] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [promoSort, setPromoSort] = useState<"code" | "discount" | "status" | "created" | "expires">("created");
 
   // Create form state
   const [newCode, setNewCode] = useState("");
@@ -93,6 +94,32 @@ export default function PromoCodesPage() {
       toast.error("Failed to update");
     }
   }
+
+  const sortedCodes = [...codes].sort((a, b) => {
+    switch (promoSort) {
+      case "code":
+        return a.code.localeCompare(b.code);
+      case "discount":
+        return b.discount_value - a.discount_value;
+      case "status": {
+        const aExpired = a.expires_at && new Date(a.expires_at) < new Date();
+        const bExpired = b.expires_at && new Date(b.expires_at) < new Date();
+        const aActive = a.is_active && !aExpired ? 1 : 0;
+        const bActive = b.is_active && !bExpired ? 1 : 0;
+        return bActive - aActive;
+      }
+      case "created":
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      case "expires": {
+        if (!a.expires_at && !b.expires_at) return 0;
+        if (!a.expires_at) return 1;
+        if (!b.expires_at) return -1;
+        return new Date(a.expires_at).getTime() - new Date(b.expires_at).getTime();
+      }
+      default:
+        return 0;
+    }
+  });
 
   if (loading) return <p className="text-[15px] text-muted py-8">Loading...</p>;
 
@@ -212,38 +239,53 @@ export default function PromoCodesPage() {
 
       {/* Codes table */}
       <div className="mt-6">
+        {codes.length > 0 && (
+          <div className="mb-3 flex items-center gap-2">
+            <label className="text-[12px] font-semibold text-muted">Sort by</label>
+            <select
+              value={promoSort}
+              onChange={(e) => setPromoSort(e.target.value as typeof promoSort)}
+              className="rounded-[10px] border-border px-3 py-2 text-[14px]"
+            >
+              <option value="created">Created date</option>
+              <option value="code">Code name</option>
+              <option value="discount">Discount value</option>
+              <option value="status">Status (active first)</option>
+              <option value="expires">Expiration date</option>
+            </select>
+          </div>
+        )}
         {codes.length === 0 ? (
           <p className="text-[15px] text-muted text-center py-8">
             No promo codes yet. Create your first one above.
           </p>
         ) : (
           <div className="rounded-[12px] border border-border bg-white overflow-hidden">
-            <div className="grid grid-cols-[1fr_80px_80px_100px_80px_80px] gap-2 px-4 py-2 bg-lavender/30 text-[12px] font-semibold text-muted">
+            <div className="grid grid-cols-[1fr_80px_80px_100px_90px_90px_80px_80px] gap-2 px-4 py-2 bg-lavender/30 text-[12px] font-semibold text-muted">
               <span>Code</span>
               <span>Type</span>
               <span>Value</span>
               <span>Uses</span>
+              <span>Created</span>
+              <span>Expires</span>
               <span>Status</span>
               <span></span>
             </div>
-            {codes.map((code) => {
+            {sortedCodes.map((code) => {
               const expired = code.expires_at && new Date(code.expires_at) < new Date();
               const maxed = code.max_uses !== null && code.current_uses >= code.max_uses;
+              const isInactive = !code.is_active || expired;
 
               return (
                 <div
                   key={code.id}
-                  className="grid grid-cols-[1fr_80px_80px_100px_80px_80px] gap-2 px-4 py-3 border-t border-border items-center"
+                  className="grid grid-cols-[1fr_80px_80px_100px_90px_90px_80px_80px] gap-2 px-4 py-3 border-t border-border items-center"
+                  style={isInactive ? { opacity: 0.55 } : undefined}
                 >
                   <div>
                     <span className="font-mono text-[15px] font-semibold text-plum">{code.code}</span>
                     {code.description && (
                       <p className="text-[12px] text-muted mt-0.5">{code.description}</p>
-                    )}
-                    {code.expires_at && (
-                      <p className="text-[11px] text-muted">
-                        {expired ? "Expired" : `Expires ${new Date(code.expires_at).toLocaleDateString()}`}
-                      </p>
                     )}
                   </div>
                   <span className="text-[13px] text-muted">
@@ -256,8 +298,20 @@ export default function PromoCodesPage() {
                     {code.current_uses}{code.max_uses !== null ? ` / ${code.max_uses}` : ""}{" "}
                     {maxed && <span className="text-error text-[11px]">(maxed)</span>}
                   </span>
+                  <span className="text-[12px] text-muted">
+                    {new Date(code.created_at).toLocaleDateString()}
+                  </span>
+                  <span className="text-[12px] text-muted">
+                    {code.expires_at
+                      ? expired
+                        ? new Date(code.expires_at).toLocaleDateString()
+                        : new Date(code.expires_at).toLocaleDateString()
+                      : "--"}
+                  </span>
                   <span>
-                    {code.is_active && !expired ? (
+                    {expired ? (
+                      <span className="badge text-[11px] bg-rose-100 text-rose-600">Expired</span>
+                    ) : code.is_active ? (
                       <span className="badge-confirmed text-[11px]">Active</span>
                     ) : (
                       <span className="badge text-[11px] bg-whisper text-muted">Inactive</span>

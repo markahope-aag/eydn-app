@@ -519,23 +519,16 @@ export default function AdminPage() {
       {/* Email Tab */}
       {tab === "email" && (
         <div className="mt-6 space-y-8">
-          {/* Load data on tab open */}
-          {!emailData && !emailLoading && (
-            <button
-              onClick={() => {
-                setEmailLoading(true);
-                fetch("/api/admin/email")
-                  .then((r) => (r.ok ? r.json() : null))
-                  .then((data) => { if (data) setEmailData(data); })
-                  .catch(() => toast.error("Failed to load email data"))
-                  .finally(() => setEmailLoading(false));
-              }}
-              className="btn-primary"
-            >
-              Load Email Dashboard
-            </button>
-          )}
-          {emailLoading && <p className="text-[15px] text-muted py-8">Loading email data...</p>}
+          <AutoLoadEmail load={() => {
+            if (emailData || emailLoading) return;
+            setEmailLoading(true);
+            fetch("/api/admin/email")
+              .then((r) => (r.ok ? r.json() : null))
+              .then((data) => { if (data) setEmailData(data); })
+              .catch(() => toast.error("Failed to load communications data"))
+              .finally(() => setEmailLoading(false));
+          }} />
+          {emailLoading && <p className="text-[15px] text-muted py-8">Loading communications data...</p>}
 
           {emailData && (
             <>
@@ -1240,4 +1233,9 @@ function StatCard({
       {subtitle && <p className="mt-0.5 text-[12px] text-muted">{subtitle}</p>}
     </div>
   );
+}
+
+function AutoLoadEmail({ load }: { load: () => void }) {
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
 }
