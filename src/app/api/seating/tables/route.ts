@@ -1,6 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { safeParseJSON, isParseError, requireFields, pickFields, isOneOf, isValidNumber } from "@/lib/validation";
+import { safeParseJSON, isParseError, requireFields, pickFields, isOneOf, isValidNumber, MAX_CAPACITY } from "@/lib/validation";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -39,8 +39,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "shape must be one of: round, rectangle" }, { status: 400 });
   }
 
-  if (body.capacity !== undefined && !isValidNumber(body.capacity, 1)) {
-    return NextResponse.json({ error: "capacity must be a positive number" }, { status: 400 });
+  if (body.capacity !== undefined && !isValidNumber(body.capacity, 1, MAX_CAPACITY)) {
+    return NextResponse.json({ error: `capacity must be between 1 and ${MAX_CAPACITY}` }, { status: 400 });
   }
 
   const allowed = pickFields(body, ["name", "x", "y", "shape", "capacity"]);

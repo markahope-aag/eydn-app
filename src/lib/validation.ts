@@ -75,6 +75,11 @@ export function isSafeExternalUrl(value: string): boolean {
 }
 
 /** Validate a number is finite and optionally within a range. */
+/** Reasonable upper bounds for numeric fields */
+export const MAX_MONETARY_AMOUNT = 10_000_000; // $10M — generous ceiling for any wedding
+export const MAX_GUEST_COUNT = 10_000;
+export const MAX_CAPACITY = 1_000;
+
 export function isValidNumber(value: unknown, min?: number, max?: number): value is number {
   if (typeof value !== "number" || !isFinite(value)) return false;
   if (min !== undefined && value < min) return false;

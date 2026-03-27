@@ -1,6 +1,6 @@
 import { getWeddingForUser, invalidateWeddingCache } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { pickFields, safeParseJSON, isParseError } from "@/lib/validation";
+import { pickFields, safeParseJSON, isParseError, MAX_MONETARY_AMOUNT, MAX_GUEST_COUNT } from "@/lib/validation";
 import { TASK_TIMELINE } from "@/lib/tasks/task-timeline";
 
 const ALLOWED_FIELDS = [
@@ -35,12 +35,16 @@ export async function PATCH(
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
 
-  // Validate numeric fields are non-negative
-  if (updates.budget !== undefined && updates.budget !== null && (updates.budget as number) < 0) {
-    return NextResponse.json({ error: "Budget cannot be negative" }, { status: 400 });
+  // Validate numeric fields — non-negative with reasonable upper bounds
+  if (updates.budget !== undefined && updates.budget !== null) {
+    const v = updates.budget as number;
+    if (v < 0) return NextResponse.json({ error: "Budget cannot be negative" }, { status: 400 });
+    if (v > MAX_MONETARY_AMOUNT) return NextResponse.json({ error: `Budget cannot exceed $${MAX_MONETARY_AMOUNT.toLocaleString()}` }, { status: 400 });
   }
-  if (updates.guest_count_estimate !== undefined && updates.guest_count_estimate !== null && (updates.guest_count_estimate as number) < 0) {
-    return NextResponse.json({ error: "Guest count cannot be negative" }, { status: 400 });
+  if (updates.guest_count_estimate !== undefined && updates.guest_count_estimate !== null) {
+    const v = updates.guest_count_estimate as number;
+    if (v < 0) return NextResponse.json({ error: "Guest count cannot be negative" }, { status: 400 });
+    if (v > MAX_GUEST_COUNT) return NextResponse.json({ error: `Guest count cannot exceed ${MAX_GUEST_COUNT.toLocaleString()}` }, { status: 400 });
   }
 
   const { data, error } = await supabase

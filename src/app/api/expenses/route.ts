@@ -1,6 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { safeParseJSON, isParseError, requireFields, isValidNumber } from "@/lib/validation";
+import { safeParseJSON, isParseError, requireFields, isValidNumber, MAX_MONETARY_AMOUNT } from "@/lib/validation";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -56,14 +56,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `${missing} is required` }, { status: 400 });
   }
 
-  if (body.estimated !== undefined && !isValidNumber(body.estimated, 0)) {
-    return NextResponse.json({ error: "estimated must be a non-negative number" }, { status: 400 });
+  if (body.estimated !== undefined && !isValidNumber(body.estimated, 0, MAX_MONETARY_AMOUNT)) {
+    return NextResponse.json({ error: `estimated must be between 0 and ${MAX_MONETARY_AMOUNT.toLocaleString()}` }, { status: 400 });
   }
-  if (body.amount_paid !== undefined && !isValidNumber(body.amount_paid, 0)) {
-    return NextResponse.json({ error: "amount_paid must be a non-negative number" }, { status: 400 });
+  if (body.amount_paid !== undefined && !isValidNumber(body.amount_paid, 0, MAX_MONETARY_AMOUNT)) {
+    return NextResponse.json({ error: `amount_paid must be between 0 and ${MAX_MONETARY_AMOUNT.toLocaleString()}` }, { status: 400 });
   }
-  if (body.final_cost !== undefined && body.final_cost !== null && !isValidNumber(body.final_cost, 0)) {
-    return NextResponse.json({ error: "final_cost must be a non-negative number" }, { status: 400 });
+  if (body.final_cost !== undefined && body.final_cost !== null && !isValidNumber(body.final_cost, 0, MAX_MONETARY_AMOUNT)) {
+    return NextResponse.json({ error: `final_cost must be between 0 and ${MAX_MONETARY_AMOUNT.toLocaleString()}` }, { status: 400 });
   }
 
   const { data, error } = await supabase
