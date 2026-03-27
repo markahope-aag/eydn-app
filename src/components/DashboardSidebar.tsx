@@ -2,7 +2,7 @@
 
 import { useState, lazy, Suspense } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { NotificationBell } from "@/components/NotificationBell";
 
@@ -132,6 +132,8 @@ function CollapsibleSection({
 
 export function DashboardSidebar({ admin }: { admin: boolean }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get("tab");
   const [open, setOpen] = useState(false);
 
   const sidebarContent = (
@@ -185,9 +187,9 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
               Business
             </p>
             <div className="flex flex-col gap-0.5 mt-0.5">
-              <NavLink item={{ href: "/dashboard/admin?tab=overview", label: "Overview" }} active={pathname === "/dashboard/admin" && (!globalThis.location?.search || globalThis.location.search.includes("overview") || !globalThis.location.search.includes("tab="))} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin?tab=overview", label: "Overview" }} active={pathname === "/dashboard/admin" && (!activeTab || activeTab === "overview")} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin/analytics", label: "Analytics" }} active={isActive(pathname, "/dashboard/admin/analytics")} onClick={() => setOpen(false)} />
-              <NavLink item={{ href: "/dashboard/admin?tab=subscribers", label: "Subscribers" }} active={pathname === "/dashboard/admin" && globalThis.location?.search?.includes("tab=subscribers")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin?tab=subscribers", label: "Subscribers" }} active={pathname === "/dashboard/admin" && activeTab === "subscribers"} onClick={() => setOpen(false)} />
             </div>
 
             <p className="px-3 py-1.5 text-[15px] font-bold text-violet tracking-wide mt-3">
@@ -212,11 +214,11 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
               Operations
             </p>
             <div className="flex flex-col gap-0.5 mt-0.5">
-              <NavLink item={{ href: "/dashboard/admin?tab=email", label: "Communications" }} active={pathname === "/dashboard/admin" && globalThis.location?.search?.includes("tab=email")} onClick={() => setOpen(false)} />
-              <NavLink item={{ href: "/dashboard/admin?tab=cron-jobs", label: "Cron Jobs" }} active={pathname === "/dashboard/admin" && globalThis.location?.search?.includes("tab=cron")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin?tab=email", label: "Communications" }} active={pathname === "/dashboard/admin" && activeTab === "email"} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin?tab=cron-jobs", label: "Cron Jobs" }} active={pathname === "/dashboard/admin" && activeTab === "cron-jobs"} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin/lifecycle", label: "Account Lifecycle" }} active={isActive(pathname, "/dashboard/admin/lifecycle")} onClick={() => setOpen(false)} />
-              <NavLink item={{ href: "/dashboard/admin?tab=data-security", label: "Data & Security" }} active={pathname === "/dashboard/admin" && globalThis.location?.search?.includes("tab=data")} onClick={() => setOpen(false)} />
-              <NavLink item={{ href: "/dashboard/admin?tab=settings", label: "Settings" }} active={pathname === "/dashboard/admin" && globalThis.location?.search?.includes("tab=settings")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin?tab=data-security", label: "Data & Security" }} active={pathname === "/dashboard/admin" && activeTab === "data-security"} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin?tab=settings", label: "Settings" }} active={pathname === "/dashboard/admin" && activeTab === "settings"} onClick={() => setOpen(false)} />
             </div>
           </div>
         )}
