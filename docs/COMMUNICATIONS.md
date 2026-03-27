@@ -11,9 +11,9 @@ How Eydn communicates with users across every channel.
 | Date change banners | Supabase | Active | None (uses existing DB) |
 | Lifecycle banners | Supabase | Active | None (uses existing DB) |
 | Toast messages | Sonner | Active | None (client-side only) |
-| Web push | web-push (VAPID) | Pending setup | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` |
-| SMS | Twilio | Pending setup | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` |
-| Email tracking | Resend webhooks | Pending setup | `RESEND_WEBHOOK_SECRET` |
+| Web push | web-push (VAPID) | Active | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` |
+| SMS | Twilio | Active | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` |
+| Email tracking | Resend webhooks | Active | `RESEND_WEBHOOK_SECRET` |
 
 ---
 
@@ -173,14 +173,10 @@ toast("Guest removed"); // neutral
 **Library:** `web-push`
 **Files:** `src/lib/push.ts`, `src/app/api/push-subscription/route.ts`
 **Table:** `push_subscriptions`
-**Status:** Infrastructure built, pending VAPID key setup
+**Status:** Active — VAPID keys configured in Vercel
 
-### Setup
-1. Generate VAPID keys: `npx web-push generate-vapid-keys`
-2. Add to Vercel:
-   - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` — the public key
-   - `VAPID_PRIVATE_KEY` — the private key
-3. Add a service worker to the frontend (future: `public/sw.js`)
+### Future Enhancement
+Add a service worker (`public/sw.js`) to handle push events in the browser and show native OS notifications.
 
 ### Architecture
 - Users subscribe via `POST /api/push-subscription` with their browser's push subscription object
@@ -205,15 +201,7 @@ toast("Guest removed"); // neutral
 
 **Library:** `twilio`
 **Files:** `src/lib/sms.ts`
-**Status:** Infrastructure built, pending Twilio account setup
-
-### Setup
-1. Sign up at https://twilio.com
-2. Get a phone number from the Twilio console
-3. Add to Vercel:
-   - `TWILIO_ACCOUNT_SID`
-   - `TWILIO_AUTH_TOKEN`
-   - `TWILIO_PHONE_NUMBER` (E.164 format, e.g. `+15551234567`)
+**Status:** Active — Twilio credentials configured in Vercel
 
 ### Architecture
 - `sendSMS(to, body)` sends a single message
@@ -239,14 +227,7 @@ await smsToWedding(supabase, weddingId, "Reminder: cake tasting tomorrow at 2 PM
 
 **Webhook:** `src/app/api/webhooks/resend/route.ts`
 **Table:** `email_events`
-**Status:** Infrastructure built, pending Resend webhook configuration
-
-### Setup
-1. In Resend dashboard, go to Webhooks
-2. Add endpoint: `https://eydn.app/api/webhooks/resend`
-3. Select events: `email.delivered`, `email.opened`, `email.clicked`, `email.bounced`, `email.complained`
-4. Copy the signing secret
-5. Add to Vercel: `RESEND_WEBHOOK_SECRET`
+**Status:** Active — webhook secret configured in Vercel
 
 ### Tracked Events
 
@@ -317,27 +298,18 @@ When a collaborator creates a guest, vendor, or task, all OTHER users on the wed
 
 ## Environment Variables
 
-### Currently Active
+### All Configured (Vercel)
 ```
-RESEND_API_KEY=re_xxxxx          # Email delivery
-RESEND_FROM_EMAIL=Eydn <hello@eydn.app>  # From address
-CRON_SECRET=xxxxx                # Deadline + vendor reminder crons
-BACKUP_SECRET=xxxxx              # Lifecycle + backup crons
-```
-
-### Pending Setup
-```
-# Web Push (keys generated, need to add to Vercel)
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=BPICmMEqeiWcK3FPXEpkRgjNVN0Z5IEVKc-XkqUXsKRFSBnnbLCKihO179h_2PZlHCCI95dvvvaHR_cpclgVj70
-VAPID_PRIVATE_KEY=oWlMMpPZXRPwggrsMv_Wa8YETFDLOXDtoXo44lvWWAk
-
-# SMS
-TWILIO_ACCOUNT_SID=ACxxxxxxxx
-TWILIO_AUTH_TOKEN=xxxxxxxx
-TWILIO_PHONE_NUMBER=+1xxxxxxxxxx
-
-# Email Tracking
-RESEND_WEBHOOK_SECRET=whsec_xxxxxxxx
+RESEND_API_KEY=re_xxxxx                    # Email delivery
+RESEND_FROM_EMAIL=Eydn <hello@eydn.app>   # From address
+RESEND_WEBHOOK_SECRET=whsec_xxxxx          # Email tracking webhooks
+CRON_SECRET=xxxxx                          # Deadline + vendor reminder crons
+BACKUP_SECRET=xxxxx                        # Lifecycle + backup crons
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=xxxxx          # Web push (public)
+VAPID_PRIVATE_KEY=xxxxx                    # Web push (private)
+TWILIO_ACCOUNT_SID=ACxxxxx                 # SMS delivery
+TWILIO_AUTH_TOKEN=xxxxx                    # SMS auth
+TWILIO_PHONE_NUMBER=+1xxxxxxxxxx           # SMS from number
 ```
 
 ---
