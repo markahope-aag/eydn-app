@@ -2,6 +2,32 @@
 
 Items identified during development that are not blocking beta launch but should be addressed.
 
+## Major Features (Post-Launch)
+
+### Native Mobile App (App Stores)
+- Build Eydn as a native mobile app for iOS and Android
+- Options: React Native (share logic with Next.js), Capacitor/Ionic
+  (wrap the web app), or PWA (progressive web app — cheapest, no app
+  store but installable)
+- PWA is the fastest path: add a service worker, manifest.json, and
+  offline support to the existing Next.js app. Users can "Add to Home
+  Screen" and it behaves like a native app.
+- Full native: would need React Native with shared API layer
+- Priority: High — mobile is where couples plan
+
+### Honeymoon, Bachelorette & Bachelor Trip Planning
+- Dedicated planning sections for pre/post-wedding events
+- Honeymoon: flights, hotels, itinerary, packing list, passport/visa
+  checklist, budget tracker
+- Bachelorette/Bachelor: guest list (separate from wedding), venue,
+  activities, shared expenses/splitting, group chat
+- Could reuse existing patterns: task timeline, budget tracker, guest
+  list with RSVP
+- Data model: new `events` table with event_type (honeymoon,
+  bachelorette, bachelor, bridal_shower, etc.), each with their own
+  guests, tasks, and budget
+- Priority: Medium — differentiating feature, but not blocking beta
+
 ## Wedding Website (Post-Launch)
 
 ### Live Preview / Side-by-Side Editor
