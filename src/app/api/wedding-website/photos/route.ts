@@ -41,3 +41,27 @@ export async function DELETE(request: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
+
+export async function PATCH(request: Request) {
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  const { wedding, supabase } = result;
+
+  const body = await request.json();
+  const { id, approved } = body;
+
+  if (!id || typeof approved !== "boolean") {
+    return NextResponse.json({ error: "id and approved required" }, { status: 400 });
+  }
+
+  const { error } = await supabase
+    .from("wedding_photos")
+    .update({ approved })
+    .eq("id", id)
+    .eq("wedding_id", wedding.id);
+
+  if (error) {
+    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+  }
+  return NextResponse.json({ success: true });
+}

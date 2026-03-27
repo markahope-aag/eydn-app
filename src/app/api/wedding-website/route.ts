@@ -18,6 +18,11 @@ export async function GET() {
     cover_url: wedding.website_cover_url,
     couple_photo_url: wedding.website_couple_photo_url,
     enabled: wedding.website_enabled,
+    rsvp_deadline: (wedding as Record<string, unknown>).rsvp_deadline ?? null,
+    meal_options: (wedding as Record<string, unknown>).meal_options ?? [],
+    photo_approval_required: (wedding as Record<string, unknown>).photo_approval_required ?? false,
+    website_theme: (wedding as Record<string, unknown>).website_theme ?? {},
+    hotels: (wedding as Record<string, unknown>).website_hotels ?? [],
   });
 }
 
@@ -69,6 +74,11 @@ export async function PATCH(request: Request) {
   if (body.cover_url !== undefined) updates.website_cover_url = body.cover_url;
   if (body.couple_photo_url !== undefined) updates.website_couple_photo_url = body.couple_photo_url;
   if (body.enabled !== undefined) updates.website_enabled = body.enabled;
+  if (body.rsvp_deadline !== undefined) updates.rsvp_deadline = body.rsvp_deadline;
+  if (body.meal_options !== undefined) updates.meal_options = body.meal_options;
+  if (body.photo_approval_required !== undefined) updates.photo_approval_required = body.photo_approval_required;
+  if (body.website_theme !== undefined) updates.website_theme = body.website_theme;
+  if (body.hotels !== undefined) updates.website_hotels = body.hotels;
 
   const { error } = await supabase
     .from("weddings")

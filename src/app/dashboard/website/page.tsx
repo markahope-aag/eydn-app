@@ -7,6 +7,7 @@ import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { Tooltip } from "@/components/Tooltip";
 import { trackWebsitePublished } from "@/lib/analytics";
+import JSZip from "jszip";
 
 type Tab = "setup" | "schedule" | "registry" | "rsvp" | "gallery";
 
@@ -21,6 +22,8 @@ type RsvpToken = {
   guests: { name: string; email: string | null; rsvp_status: string; meal_preference: string | null; plus_one_name: string | null };
 };
 type Photo = { id: string; file_url: string; caption: string | null; uploader_name: string | null; approved: boolean; created_at: string };
+type ThemeConfig = { primaryColor?: string; accentColor?: string; fontFamily?: string };
+type Hotel = { name: string; url?: string; discountCode?: string; notes?: string };
 
 export default function WebsitePage() {
   const [tab, setTab] = useState<Tab>("setup");
@@ -57,6 +60,19 @@ export default function WebsitePage() {
   // Gallery state
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photoApprovalRequired, setPhotoApprovalRequired] = useState(false);
+  const [galleryFilter, setGalleryFilter] = useState<"all" | "pending" | "approved">("all");
+  const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState("");
+
+  // Theme state
+  const [theme, setTheme] = useState<ThemeConfig>({});
+
+  // Hotels state
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [newHotelName, setNewHotelName] = useState("");
+  const [newHotelUrl, setNewHotelUrl] = useState("");
+  const [newHotelCode, setNewHotelCode] = useState("");
+  const [newHotelNotes, setNewHotelNotes] = useState("");
 
   // Couple photo
   const [couplePhotoUrl, setCouplePhotoUrl] = useState("");
@@ -101,6 +117,8 @@ export default function WebsitePage() {
       setRsvpDeadline(data.rsvp_deadline || "");
       setMealOptions(data.meal_options || []);
       setPhotoApprovalRequired(data.photo_approval_required || false);
+      setTheme(data.website_theme || {});
+      setHotels(data.hotels || []);
     } catch {
       toast.error("Couldn't load website settings. Try refreshing.");
     } finally {
@@ -298,6 +316,110 @@ export default function WebsitePage() {
     }
   }
 
+  async function saveTheme(newTheme: ThemeConfig) {
+    setTheme(newTheme);
+    try {
+      const res = await fetch("/api/wedding-website", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ website_theme: newTheme }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Theme saved");
+    } catch {
+      toast.error("Failed to save theme");
+    }
+  }
+
+  async function saveHotels(updatedHotels: Hotel[]) {
+    setHotels(updatedHotels);
+    try {
+      const res = await fetch("/api/wedding-website", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hotels: updatedHotels }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Hotels saved");
+    } catch {
+      toast.error("Failed to save hotels");
+    }
+  }
+
+  function addHotel() {
+    if (!newHotelName.trim()) return;
+    const hotel: Hotel = {
+      name: newHotelName.trim(),
+      url: newHotelUrl.trim() || undefined,
+      discountCode: newHotelCode.trim() || undefined,
+      notes: newHotelNotes.trim() || undefined,
+    };
+    const updated = [...hotels, hotel];
+    saveHotels(updated);
+    setNewHotelName("");
+    setNewHotelUrl("");
+    setNewHotelCode("");
+    setNewHotelNotes("");
+  }
+
+  function removeHotel(index: number) {
+    const updated = hotels.filter((_, i) => i !== index);
+    saveHotels(updated);
+  }
+
+  async function approvePhoto(id: string) {
+    try {
+      const res = await fetch("/api/wedding-website/photos", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, approved: true }),
+      });
+      if (!res.ok) throw new Error();
+      setPhotos((prev) => prev.map((p) => (p.id === id ? { ...p, approved: true } : p)));
+      toast.success("Photo approved");
+    } catch {
+      toast.error("Failed to approve photo");
+    }
+  }
+
+  async function bulkApproveAll() {
+    const pending = photos.filter((p) => !p.approved);
+    for (const photo of pending) {
+      await approvePhoto(photo.id);
+    }
+  }
+
+  async function downloadAllPhotos() {
+    setDownloading(true);
+    try {
+      const zip = new JSZip();
+      const approved = photos.filter((p) => p.approved);
+      for (const [i, photo] of approved.entries()) {
+        setDownloadProgress(`${i + 1} of ${approved.length}`);
+        const res = await fetch(photo.file_url);
+        const blob = await res.blob();
+        zip.file(`photo-${i + 1}.jpg`, blob);
+      }
+      const content = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "wedding-photos.zip";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Download complete");
+    } catch {
+      toast.error("Failed to download photos");
+    } finally {
+      setDownloading(false);
+      setDownloadProgress("");
+    }
+  }
+
+  const filteredPhotos = galleryFilter === "all" ? photos : galleryFilter === "pending" ? photos.filter((p) => !p.approved) : photos.filter((p) => p.approved);
+  const pendingCount = photos.filter((p) => !p.approved).length;
+  const approvedCount = photos.filter((p) => p.approved).length;
+
   if (loading) {
     return <SkeletonList count={4} />;
   }
@@ -488,6 +610,77 @@ export default function WebsitePage() {
               />
             </div>
 
+            {/* Theme */}
+            <div>
+              <h3 className="text-[15px] font-semibold text-plum mb-4">Theme</h3>
+              <div className="space-y-4">
+                <div className="flex gap-6">
+                  <div>
+                    <label className="text-[13px] font-semibold text-muted block mb-1">Primary Color</label>
+                    <input
+                      type="color"
+                      value={theme.primaryColor || "#2C3E2D"}
+                      onChange={(e) => {
+                        const newTheme = { ...theme, primaryColor: e.target.value };
+                        saveTheme(newTheme);
+                      }}
+                      className="w-12 h-10 rounded-[8px] border border-border cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[13px] font-semibold text-muted block mb-1">Accent Color</label>
+                    <input
+                      type="color"
+                      value={theme.accentColor || "#D4A5A5"}
+                      onChange={(e) => {
+                        const newTheme = { ...theme, accentColor: e.target.value };
+                        saveTheme(newTheme);
+                      }}
+                      className="w-12 h-10 rounded-[8px] border border-border cursor-pointer"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[13px] font-semibold text-muted block mb-1">Font Family</label>
+                  <select
+                    value={theme.fontFamily || "default"}
+                    onChange={(e) => {
+                      const newTheme = { ...theme, fontFamily: e.target.value };
+                      saveTheme(newTheme);
+                    }}
+                    className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+                  >
+                    <option value="default">Default (system)</option>
+                    <option value="playfair">Playfair Display</option>
+                    <option value="cormorant">Cormorant Garamond</option>
+                    <option value="lora">Lora</option>
+                    <option value="great-vibes">Great Vibes</option>
+                  </select>
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-muted mb-2">Presets</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { label: "Classic", primary: "#2C3E2D", accent: "#D4A5A5", font: "cormorant" },
+                      { label: "Modern", primary: "#1a1a2e", accent: "#6366f1", font: "default" },
+                      { label: "Romantic", primary: "#be185d", accent: "#fbbf24", font: "great-vibes" },
+                      { label: "Garden", primary: "#166534", accent: "#a3e635", font: "lora" },
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        onClick={() => saveTheme({ primaryColor: preset.primary, accentColor: preset.accent, fontFamily: preset.font })}
+                        className="rounded-[10px] border border-border px-3 py-2 text-[13px] font-medium hover:border-violet/40 transition flex items-center gap-2"
+                      >
+                        <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: preset.primary }} />
+                        <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: preset.accent }} />
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <button onClick={saveSetup} className="btn-primary">
               Save
             </button>
@@ -554,9 +747,73 @@ export default function WebsitePage() {
               />
             </div>
 
+            {/* Hotels & Accommodations */}
+            <div>
+              <h3 className="text-[15px] font-semibold text-plum mb-4">Hotels & Accommodations</h3>
+              <div className="space-y-3">
+                {hotels.map((hotel, i) => (
+                  <div key={i} className="card p-4 space-y-1">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-[15px] font-semibold text-plum">{hotel.name}</p>
+                        {hotel.url && (
+                          <a href={hotel.url} target="_blank" rel="noopener noreferrer" className="text-[13px] text-violet hover:underline">
+                            {hotel.url}
+                          </a>
+                        )}
+                        {hotel.discountCode && (
+                          <p className="text-[13px] text-muted">Code: <span className="font-mono font-semibold">{hotel.discountCode}</span></p>
+                        )}
+                        {hotel.notes && (
+                          <p className="text-[13px] text-muted">{hotel.notes}</p>
+                        )}
+                      </div>
+                      <button onClick={() => removeHotel(i)} className="btn-ghost btn-sm text-red-500">
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="card p-4 space-y-3 mt-3">
+                <h4 className="text-[13px] font-semibold text-muted">Add Hotel</h4>
+                <input
+                  type="text"
+                  value={newHotelName}
+                  onChange={(e) => setNewHotelName(e.target.value)}
+                  placeholder="Hotel name (required)"
+                  className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+                />
+                <input
+                  type="url"
+                  value={newHotelUrl}
+                  onChange={(e) => setNewHotelUrl(e.target.value)}
+                  placeholder="Booking URL"
+                  className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+                />
+                <input
+                  type="text"
+                  value={newHotelCode}
+                  onChange={(e) => setNewHotelCode(e.target.value)}
+                  placeholder="Discount code"
+                  className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+                />
+                <input
+                  type="text"
+                  value={newHotelNotes}
+                  onChange={(e) => setNewHotelNotes(e.target.value)}
+                  placeholder="Notes (e.g. 5 min drive from venue)"
+                  className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+                />
+                <button onClick={addHotel} className="btn-primary btn-sm">
+                  Add Hotel
+                </button>
+              </div>
+            </div>
+
             <div>
               <label className="text-[13px] font-semibold text-muted block mb-1">
-                Accommodations
+                Additional Accommodation Notes
               </label>
               <textarea
                 value={accommodations}
@@ -916,9 +1173,49 @@ export default function WebsitePage() {
               </button>
             </div>
 
-            {photos.length > 0 ? (
+            {/* Filter buttons */}
+            {photos.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                {([
+                  { key: "all" as const, label: `All (${photos.length})` },
+                  { key: "pending" as const, label: `Pending (${pendingCount})` },
+                  { key: "approved" as const, label: `Approved (${approvedCount})` },
+                ] as const).map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => setGalleryFilter(f.key)}
+                    className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition ${
+                      galleryFilter === f.key
+                        ? "bg-violet text-white"
+                        : "bg-lavender/50 text-plum hover:bg-lavender"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+                {pendingCount > 0 && (
+                  <button
+                    onClick={bulkApproveAll}
+                    className="rounded-full px-4 py-1.5 text-[13px] font-medium bg-green-100 text-green-700 hover:bg-green-200 transition ml-2"
+                  >
+                    Bulk Approve All
+                  </button>
+                )}
+                {approvedCount > 0 && (
+                  <button
+                    onClick={downloadAllPhotos}
+                    disabled={downloading}
+                    className="rounded-full px-4 py-1.5 text-[13px] font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition ml-auto disabled:opacity-50"
+                  >
+                    {downloading ? `Downloading ${downloadProgress}...` : "Download All Photos"}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {filteredPhotos.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {photos.map((photo) => (
+                {filteredPhotos.map((photo) => (
                   <div key={photo.id} className="card overflow-hidden">
                     <div className="aspect-square relative">
                       <Image
@@ -926,7 +1223,7 @@ export default function WebsitePage() {
                         alt={photo.caption || "Wedding photo"}
                         className="object-cover"
                         fill
-                                             />
+                      />
                     </div>
                     <div className="p-3 space-y-2">
                       {photo.caption && (
@@ -945,17 +1242,31 @@ export default function WebsitePage() {
                         >
                           {photo.approved ? "Approved" : "Pending"}
                         </span>
-                        <button
-                          onClick={() => deletePhoto(photo.id)}
-                          className="btn-ghost btn-sm text-red-500 text-[12px]"
-                        >
-                          Remove
-                        </button>
+                        <div className="flex items-center gap-1">
+                          {!photo.approved && (
+                            <button
+                              onClick={() => approvePhoto(photo.id)}
+                              className="btn-ghost btn-sm text-green-600 text-[12px]"
+                            >
+                              Approve
+                            </button>
+                          )}
+                          <button
+                            onClick={() => deletePhoto(photo.id)}
+                            className="btn-ghost btn-sm text-red-500 text-[12px]"
+                          >
+                            {!photo.approved ? "Reject" : "Remove"}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+            ) : photos.length > 0 ? (
+              <p className="text-[15px] text-muted">
+                No photos match the current filter.
+              </p>
             ) : (
               <p className="text-[15px] text-muted">
                 No photos uploaded yet. Share the wedding website link with your guests so they can upload photos.

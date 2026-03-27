@@ -103,6 +103,8 @@ export default async function WeddingWebsitePage({
 
   const schedule = (wedding.website_schedule ?? []) as Array<{ time: string; event: string }>;
   const faq = (wedding.website_faq ?? []) as Array<{ question: string; answer: string }>;
+  const theme = ((wedding as Record<string, unknown>).website_theme ?? {}) as { primaryColor?: string; accentColor?: string; fontFamily?: string };
+  const hotels = ((wedding as Record<string, unknown>).website_hotels ?? []) as Array<{ name: string; url?: string; discountCode?: string; notes?: string }>;
   const coupleNames = `${wedding.partner1_name} & ${wedding.partner2_name}`;
   const weddingDate = wedding.date
     ? new Date(wedding.date).toLocaleDateString("en-US", {
@@ -120,14 +122,14 @@ export default async function WeddingWebsitePage({
   if (weddingParty.length > 0) sections.push({ id: "wedding-party", label: "Wedding Party" });
   if (schedule.length > 0) sections.push({ id: "schedule", label: "Schedule" });
   if (wedding.venue || wedding.website_travel_info) sections.push({ id: "travel", label: "Travel" });
-  if (wedding.website_accommodations) sections.push({ id: "accommodations", label: "Stay" });
+  if (wedding.website_accommodations || hotels.length > 0) sections.push({ id: "accommodations", label: "Stay" });
   if (faq.length > 0) sections.push({ id: "faq", label: "FAQ" });
   if (registryLinks.length > 0) sections.push({ id: "registry", label: "Registry" });
   if (photos.length > 0) sections.push({ id: "photos", label: "Photos" });
   sections.push({ id: "rsvp", label: "RSVP" });
 
   return (
-    <div className={`min-h-screen bg-whisper ${playfair.variable}`}>
+    <div className={`min-h-screen bg-whisper ${playfair.variable}`} style={{ '--theme-primary': theme.primaryColor || '#2C3E2D', '--theme-accent': theme.accentColor || '#D4A5A5' } as React.CSSProperties}>
       {/* Hero */}
       <section className="relative overflow-hidden">
         {wedding.website_cover_url ? (
@@ -162,7 +164,7 @@ export default async function WeddingWebsitePage({
             </div>
           </div>
         ) : (
-          <div className="relative overflow-hidden py-32 text-center px-6" style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))" }}>
+          <div className="relative overflow-hidden py-32 text-center px-6" style={{ background: `linear-gradient(135deg, var(--theme-primary), var(--theme-accent))` }}>
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 20% 80%, white 0%, transparent 50%), radial-gradient(circle at 80% 20%, white 0%, transparent 50%)" }} />
             <div className="relative z-10">
               <h1 className="text-[56px] md:text-[72px] font-[family-name:var(--font-serif)] font-normal text-white leading-tight">
@@ -193,7 +195,7 @@ export default async function WeddingWebsitePage({
         {/* Our Story */}
         {wedding.website_story && (
           <section id="our-story" className="text-center max-w-2xl mx-auto">
-            <h2 className="text-[32px] font-[family-name:var(--font-serif)] text-plum">Our Story</h2>
+            <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Our Story</h2>
             <SectionDivider />
             <div className="mt-6 text-[16px] text-muted leading-loose whitespace-pre-line">
               {wedding.website_story}
@@ -221,7 +223,7 @@ export default async function WeddingWebsitePage({
         {/* Wedding Party */}
         {weddingParty.length > 0 && (
           <section id="wedding-party" className="text-center">
-            <h2 className="text-[32px] font-[family-name:var(--font-serif)] text-plum">Wedding Party</h2>
+            <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Wedding Party</h2>
             <SectionDivider />
             <div className="mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {weddingParty.map((member) => (
@@ -242,7 +244,7 @@ export default async function WeddingWebsitePage({
         {/* Schedule */}
         {schedule.length > 0 && (
           <section id="schedule" className="text-center">
-            <h2 className="text-[32px] font-[family-name:var(--font-serif)] text-plum">Schedule</h2>
+            <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Schedule</h2>
             <SectionDivider />
             <div className="mt-10 max-w-md mx-auto">
               {schedule.map((item, i) => (
@@ -267,7 +269,7 @@ export default async function WeddingWebsitePage({
         {/* Travel */}
         {(wedding.venue || wedding.website_travel_info) && (
           <section id="travel" className="text-center">
-            <h2 className="text-[32px] font-[family-name:var(--font-serif)] text-plum">Travel</h2>
+            <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Travel</h2>
             <SectionDivider />
             <div className="mt-8 max-w-2xl mx-auto space-y-6">
               {wedding.venue && (
@@ -286,20 +288,45 @@ export default async function WeddingWebsitePage({
         )}
 
         {/* Accommodations */}
-        {wedding.website_accommodations && (
+        {(wedding.website_accommodations || hotels.length > 0) && (
           <section id="accommodations" className="text-center max-w-2xl mx-auto">
-            <h2 className="text-[32px] font-[family-name:var(--font-serif)] text-plum">Where to Stay</h2>
+            <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Where to Stay</h2>
             <SectionDivider />
-            <p className="mt-8 text-[16px] text-muted leading-loose whitespace-pre-line">
-              {wedding.website_accommodations}
-            </p>
+            {hotels.length > 0 && (
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {hotels.map((hotel, i) => (
+                  <div key={i} className="bg-white rounded-[20px] border border-border p-6 text-left">
+                    {hotel.url ? (
+                      <a href={hotel.url} target="_blank" rel="noopener noreferrer" className="text-[18px] font-[family-name:var(--font-serif)] hover:underline" style={{ color: 'var(--theme-primary)' }}>
+                        {hotel.name} &rarr;
+                      </a>
+                    ) : (
+                      <p className="text-[18px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>{hotel.name}</p>
+                    )}
+                    {hotel.discountCode && (
+                      <p className="mt-2 text-[14px] text-muted">
+                        Discount code: <span className="font-mono font-semibold text-plum">{hotel.discountCode}</span>
+                      </p>
+                    )}
+                    {hotel.notes && (
+                      <p className="mt-2 text-[14px] text-muted leading-relaxed">{hotel.notes}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {wedding.website_accommodations && (
+              <p className="mt-8 text-[16px] text-muted leading-loose whitespace-pre-line">
+                {wedding.website_accommodations}
+              </p>
+            )}
           </section>
         )}
 
         {/* FAQ */}
         {faq.length > 0 && (
           <section id="faq" className="text-center">
-            <h2 className="text-[32px] font-[family-name:var(--font-serif)] text-plum">FAQ</h2>
+            <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>FAQ</h2>
             <SectionDivider />
             <div className="mt-10 space-y-3 max-w-2xl mx-auto">
               {faq.map((item, i) => (
@@ -320,7 +347,7 @@ export default async function WeddingWebsitePage({
         {/* Registry */}
         {registryLinks.length > 0 && (
           <section id="registry" className="text-center">
-            <h2 className="text-[32px] font-[family-name:var(--font-serif)] text-plum">Registry</h2>
+            <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Registry</h2>
             <SectionDivider />
             <div className="mt-10 flex flex-wrap gap-4 justify-center">
               {registryLinks.map((link) => (
@@ -342,7 +369,7 @@ export default async function WeddingWebsitePage({
         {/* Photo Gallery */}
         {photos.length > 0 && (
           <section id="photos" className="text-center">
-            <h2 className="text-[32px] font-[family-name:var(--font-serif)] text-plum">Photos</h2>
+            <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Photos</h2>
             <SectionDivider />
             <div className="mt-10 grid grid-cols-2 md:grid-cols-3 gap-4">
               {photos.map((photo) => (
@@ -366,7 +393,7 @@ export default async function WeddingWebsitePage({
 
         {/* Photo Upload */}
         <section className="text-center">
-          <h2 className="text-[32px] font-[family-name:var(--font-serif)] text-plum">Share Your Photos</h2>
+          <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Share Your Photos</h2>
           <SectionDivider />
           <p className="mt-4 text-[16px] text-muted">
             Upload your favourite moments from the celebration
@@ -378,7 +405,7 @@ export default async function WeddingWebsitePage({
 
         {/* RSVP */}
         <section className="text-center" id="rsvp">
-          <h2 className="text-[32px] font-[family-name:var(--font-serif)] text-plum">RSVP</h2>
+          <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>RSVP</h2>
           <SectionDivider />
           {rsvpGuest ? (
             <div className="mt-8 max-w-md mx-auto">
