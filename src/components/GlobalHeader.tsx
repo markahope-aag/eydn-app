@@ -23,7 +23,7 @@ export function GlobalHeader() {
       <div className="flex items-center gap-8">
         <Link href="/" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="eydn" className="h-7" />
+          <img src="/logo.png" alt="eydn" className="h-[34px]" />
         </Link>
         <Show when="signed-out">
           <nav className="hidden sm:flex items-center gap-6">

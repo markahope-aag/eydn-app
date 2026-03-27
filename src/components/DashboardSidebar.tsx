@@ -136,14 +136,17 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
 
   const sidebarContent = (
     <>
-      <Link
-        href="/dashboard"
-        className="flex items-center"
-        onClick={() => setOpen(false)}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="eydn" className="h-[34px]" />
-      </Link>
+      {/* Logo — hidden on admin pages (already in site header) */}
+      {!pathname.startsWith("/dashboard/admin") && (
+        <Link
+          href="/dashboard"
+          className="flex items-center"
+          onClick={() => setOpen(false)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="eydn" className="h-7" />
+        </Link>
+      )}
 
       {/* Ask Eydn — pinned at top, hidden on admin pages */}
       {!pathname.startsWith("/dashboard/admin") && (
