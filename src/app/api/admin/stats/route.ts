@@ -43,19 +43,28 @@ export async function GET() {
     { count: onboardingCompleted },
     { count: paidCount },
     { data: weddingsData },
+    { count: memoryPlanActiveCount },
   ] = await Promise.all([
     supabase.from("weddings").select("*", { count: "exact", head: true }),
     supabase.from("chat_messages").select("*", { count: "exact", head: true }),
     supabase.from("questionnaire_responses").select("*", { count: "exact", head: true }).eq("completed", true),
     supabase.from("subscriber_purchases").select("*", { count: "exact", head: true }).eq("status", "active"),
-    supabase.from("weddings").select("trial_started_at, created_at"),
+    supabase.from("weddings").select("trial_started_at, created_at, date, memory_plan_active"),
+    supabase.from("weddings").select("*", { count: "exact", head: true }).eq("memory_plan_active", true),
   ]);
 
-  // Calculate trial metrics
+  // Calculate trial metrics and post-wedding stats
   const now = new Date();
-  const weddings = (weddingsData || []) as Array<{ trial_started_at: string | null; created_at: string }>;
+  const weddings = (weddingsData || []) as Array<{
+    trial_started_at: string | null;
+    created_at: string;
+    date: string | null;
+    memory_plan_active: boolean;
+  }>;
   let trialsActive = 0;
   let trialsExpired = 0;
+  let postWeddingTotal = 0;
+  let postWeddingExpired = 0;
 
   for (const w of weddings) {
     const trialStart = new Date(w.trial_started_at || w.created_at);
@@ -65,10 +74,19 @@ export async function GET() {
     } else {
       trialsExpired++;
     }
+
+    // Post-wedding: wedding date is in the past
+    if (w.date && new Date(w.date) < now) {
+      postWeddingTotal++;
+      if (!w.memory_plan_active) {
+        postWeddingExpired++;
+      }
+    }
   }
 
   // Expired trials that didn't convert = expired - paid
   const paid = paidCount ?? 0;
+  const memoryPlanActive = memoryPlanActiveCount ?? 0;
   const trialsExpiredUnconverted = Math.max(0, trialsExpired - paid);
 
   const withEvents = totalEvents ?? 0;
@@ -94,6 +112,10 @@ export async function GET() {
     trials_expired_unconverted: trialsExpiredUnconverted,
     paid_subscriptions: paid,
     paid_conversion_rate: paidConversionRate,
+    // Post-wedding retention
+    memory_plan_active: memoryPlanActive,
+    post_wedding_expired: postWeddingExpired,
+    post_wedding_total: postWeddingTotal,
   }, {
     headers: { "Cache-Control": "private, max-age=60, stale-while-revalidate=120" },
   });

@@ -17,6 +17,9 @@ type Stats = {
   trials_expired_unconverted: number;
   paid_subscriptions: number;
   paid_conversion_rate: number;
+  memory_plan_active: number;
+  post_wedding_expired: number;
+  post_wedding_total: number;
 };
 
 type User = {
@@ -333,6 +336,32 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
+
+          {/* Post-Wedding Retention */}
+          {stats.post_wedding_total > 0 && (
+            <div className="card p-5">
+              <h2 className="text-[15px] font-semibold text-plum mb-3">Post-Wedding Retention</h2>
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+                <div className="bg-violet/10 rounded-[12px] p-4 text-center">
+                  <p className="text-[12px] font-semibold text-violet">Memory Plan Active</p>
+                  <p className="text-[28px] font-bold text-violet mt-1">{stats.memory_plan_active}</p>
+                  <p className="text-[11px] text-muted mt-1">$29/yr recurring</p>
+                </div>
+                <div className="bg-whisper rounded-[12px] p-4 text-center">
+                  <p className="text-[12px] font-semibold text-muted">Expired / No Plan</p>
+                  <p className="text-[28px] font-bold text-muted mt-1">{stats.post_wedding_expired}</p>
+                  <p className="text-[11px] text-muted mt-1">Account winding down</p>
+                </div>
+                <div className="bg-lavender rounded-[12px] p-4 text-center">
+                  <p className="text-[12px] font-semibold text-plum">Retention Rate</p>
+                  <p className="text-[28px] font-bold text-plum mt-1">
+                    {Math.round((stats.memory_plan_active / stats.post_wedding_total) * 100)}%
+                  </p>
+                  <p className="text-[11px] text-muted mt-1">of {stats.post_wedding_total} post-wedding couples</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Secondary metrics */}
           <div className="grid gap-4 sm:grid-cols-3">
