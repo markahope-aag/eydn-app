@@ -97,7 +97,7 @@ function CollapsibleSection({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-semibold text-muted uppercase tracking-wider hover:text-plum transition"
+        className="w-full flex items-center justify-between px-3 py-1.5 text-[15px] font-bold text-plum tracking-wide hover:text-plum transition"
       >
         {section.label}
         <svg
@@ -181,7 +181,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
         ))}
         {admin && (
           <div>
-            <p className="px-3 py-1.5 text-[11px] font-semibold text-violet uppercase tracking-wider">
+            <p className="px-3 py-1.5 text-[15px] font-bold text-violet tracking-wide">
               Business
             </p>
             <div className="flex flex-col gap-0.5 mt-0.5">
@@ -190,7 +190,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
               <NavLink item={{ href: "/dashboard/admin?tab=subscribers", label: "Subscribers" }} active={pathname === "/dashboard/admin" && globalThis.location?.search?.includes("tab=subscribers")} onClick={() => setOpen(false)} />
             </div>
 
-            <p className="px-3 py-1.5 text-[11px] font-semibold text-violet uppercase tracking-wider mt-3">
+            <p className="px-3 py-1.5 text-[15px] font-bold text-violet tracking-wide mt-3">
               Vendors
             </p>
             <div className="flex flex-col gap-0.5 mt-0.5">
@@ -199,7 +199,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
               <NavLink item={{ href: "/dashboard/admin/placements", label: "Placements" }} active={isActive(pathname, "/dashboard/admin/placements")} onClick={() => setOpen(false)} />
             </div>
 
-            <p className="px-3 py-1.5 text-[11px] font-semibold text-violet uppercase tracking-wider mt-3">
+            <p className="px-3 py-1.5 text-[15px] font-bold text-violet tracking-wide mt-3">
               Content & Growth
             </p>
             <div className="flex flex-col gap-0.5 mt-0.5">
@@ -208,7 +208,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
               <NavLink item={{ href: "/dashboard/admin/waitlist", label: "Waitlist" }} active={isActive(pathname, "/dashboard/admin/waitlist")} onClick={() => setOpen(false)} />
             </div>
 
-            <p className="px-3 py-1.5 text-[11px] font-semibold text-violet uppercase tracking-wider mt-3">
+            <p className="px-3 py-1.5 text-[15px] font-bold text-violet tracking-wide mt-3">
               Operations
             </p>
             <div className="flex flex-col gap-0.5 mt-0.5">
