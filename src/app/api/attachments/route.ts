@@ -117,6 +117,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "File type not allowed. Accepted: images, PDF, Word, Excel, CSV." }, { status: 400 });
   }
 
+  // Verify file content is not a script disguised as an image
+  // (MIME type is client-controlled and can be spoofed)
+  if (file.type.startsWith("image/") || file.type === "application/pdf") {
+    try {
+      const header = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+      if (header.length >= 4) {
+        // Block files that start with script/HTML signatures despite claiming to be images
+        const textStart = String.fromCharCode(...header.slice(0, 8));
+        if (textStart.startsWith("<script") || textStart.startsWith("<html") || textStart.startsWith("<?php") || textStart.startsWith("#!/")) {
+          return NextResponse.json({ error: "File content does not match its type." }, { status: 400 });
+        }
+      }
+    } catch {
+      // If we can't read bytes, skip this check
+    }
+  }
+
   // Require premium for real task/vendor attachments (not website or mood-board uploads)
   if (!isSyntheticUpload(entityId)) {
     const paywall = await requirePremium();

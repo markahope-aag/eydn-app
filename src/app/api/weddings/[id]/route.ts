@@ -90,11 +90,12 @@ export async function PATCH(
       const dayShift = Math.round((newWeddingDate.getTime() - oldWeddingDate.getTime()) / (1000 * 60 * 60 * 24));
 
       if (dayShift !== 0) {
-        // Fetch ALL tasks with due dates — separate into auto-shift vs manual-review
+        // Fetch active tasks with due dates — exclude soft-deleted
         const { data: allTasks } = await supabase
           .from("tasks")
           .select("id, title, due_date, is_system_generated, completed")
           .eq("wedding_id", id)
+          .is("deleted_at", null)
           .not("due_date", "is", null);
 
         if (allTasks && allTasks.length > 0) {
@@ -131,7 +132,8 @@ export async function PATCH(
       const { data: allTasks } = await supabase
         .from("tasks")
         .select("id, title, due_date, is_system_generated, completed")
-        .eq("wedding_id", id);
+        .eq("wedding_id", id)
+        .is("deleted_at", null);
 
       if (allTasks && allTasks.length > 0) {
         const monthsMap = new Map<string, number>();

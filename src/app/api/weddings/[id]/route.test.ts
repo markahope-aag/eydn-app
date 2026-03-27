@@ -80,7 +80,11 @@ function createMockSupabase(overrides: {
       return {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            not: vi.fn().mockResolvedValue(tasksResolvedValue),
+            is: vi.fn().mockReturnValue({
+              not: vi.fn().mockResolvedValue(tasksResolvedValue),
+              // no-old-date path: select().eq().is() resolves directly
+              then: (resolve: (_v: unknown) => void) => resolve(tasksResolvedValue),
+            }),
             // no-old-date path: select().eq() resolves directly
             then: undefined,
           }),
@@ -273,7 +277,9 @@ describe("PATCH /api/weddings/[id]", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              not: vi.fn().mockResolvedValue({ data: [], error: null }),
+              is: vi.fn().mockReturnValue({
+                not: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
             }),
           }),
           update: vi.fn().mockReturnValue({
@@ -340,7 +346,9 @@ describe("PATCH /api/weddings/[id]", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              not: vi.fn().mockResolvedValue({ data: [systemTask], error: null }),
+              is: vi.fn().mockReturnValue({
+                not: vi.fn().mockResolvedValue({ data: [systemTask], error: null }),
+              }),
             }),
           }),
           update: taskUpdate,
@@ -405,7 +413,9 @@ describe("PATCH /api/weddings/[id]", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              not: vi.fn().mockResolvedValue({ data: [userTask], error: null }),
+              is: vi.fn().mockReturnValue({
+                not: vi.fn().mockResolvedValue({ data: [userTask], error: null }),
+              }),
             }),
           }),
           update: vi.fn().mockReturnValue({
@@ -522,7 +532,9 @@ describe("PATCH /api/weddings/[id]", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              not: vi.fn().mockResolvedValue({ data: [], error: null }),
+              is: vi.fn().mockReturnValue({
+                not: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
             }),
           }),
           update: vi.fn().mockReturnValue({

@@ -35,6 +35,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `${missing} is required` }, { status: 400 });
   }
 
+  if (!isValidNumber(body.table_number, 1, MAX_CAPACITY)) {
+    return NextResponse.json({ error: "table_number must be a positive number" }, { status: 400 });
+  }
+
   if (body.shape !== undefined && !isOneOf(body.shape, ["round", "rectangle"] as const)) {
     return NextResponse.json({ error: "shape must be one of: round, rectangle" }, { status: 400 });
   }

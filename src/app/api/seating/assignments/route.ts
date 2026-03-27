@@ -37,24 +37,26 @@ export async function POST(request: Request) {
   const guestId = body.guest_id as string;
   const tableId = body.seating_table_id as string;
 
-  // Verify guest belongs to this wedding
+  // Verify guest belongs to this wedding and is not deleted
   const { data: guest } = await supabase
     .from("guests")
     .select("id")
     .eq("id", guestId)
     .eq("wedding_id", wedding.id)
+    .is("deleted_at", null)
     .single();
 
   if (!guest) {
     return NextResponse.json({ error: "Guest not found" }, { status: 404 });
   }
 
-  // Verify table belongs to this wedding
+  // Verify table belongs to this wedding and is not deleted
   const { data: table } = await supabase
     .from("seating_tables")
     .select("id")
     .eq("id", tableId)
     .eq("wedding_id", wedding.id)
+    .is("deleted_at", null)
     .single();
 
   if (!table) {
