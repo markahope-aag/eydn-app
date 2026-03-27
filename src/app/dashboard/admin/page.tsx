@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 type Stats = {
@@ -122,7 +123,8 @@ export default function AdminPage() {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
-  const [tab, setTab] = useState<Tab>("overview");
+  const searchParams = useSearchParams();
+  const tab = (searchParams.get("tab") as Tab) || "overview";
   const [backupInfo, setBackupInfo] = useState<BackupInfo | null>(null);
   const [backupLoading, setBackupLoading] = useState(false);
   const [triggeringBackup, setTriggeringBackup] = useState(false);
@@ -244,22 +246,7 @@ export default function AdminPage() {
         </a>
       </div>
 
-      {/* Tabs */}
-      <div className="mt-4 flex gap-1 border-b border-border">
-        {(["overview", "subscribers", "settings", "data-security", "cron-jobs", "email"] as Tab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${
-              tab === t
-                ? "border-violet text-violet"
-                : "border-transparent text-plum/60 hover:text-plum"
-            }`}
-          >
-            {t === "data-security" ? "Data & Security" : t === "cron-jobs" ? "Cron Jobs" : t === "email" ? "Email" : t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </div>
+      {/* Navigation is in the sidebar — no horizontal tabs needed */}
 
       {/* Overview Tab */}
       {tab === "overview" && stats && (

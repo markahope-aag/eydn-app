@@ -187,7 +187,12 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
               Admin
             </p>
             <div className="flex flex-col gap-0.5 mt-0.5">
-              <NavLink item={{ href: "/dashboard/admin", label: "Dashboard" }} active={isActive(pathname, "/dashboard/admin") && !pathname.startsWith("/dashboard/admin/placements") && !pathname.startsWith("/dashboard/admin/lifecycle") && !pathname.startsWith("/dashboard/admin/promo-codes") && !pathname.startsWith("/dashboard/admin/blog") && !pathname.startsWith("/dashboard/admin/waitlist")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin?tab=overview", label: "Overview" }} active={pathname === "/dashboard/admin" && (!globalThis.location?.search || globalThis.location.search.includes("overview") || !globalThis.location.search.includes("tab="))} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin?tab=subscribers", label: "Subscribers" }} active={pathname === "/dashboard/admin" && globalThis.location?.search?.includes("tab=subscribers")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin?tab=cron-jobs", label: "Cron Jobs" }} active={pathname === "/dashboard/admin" && globalThis.location?.search?.includes("tab=cron")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin?tab=email", label: "Communications" }} active={pathname === "/dashboard/admin" && globalThis.location?.search?.includes("tab=email")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin?tab=data-security", label: "Data & Security" }} active={pathname === "/dashboard/admin" && globalThis.location?.search?.includes("tab=data")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin?tab=settings", label: "Settings" }} active={pathname === "/dashboard/admin" && globalThis.location?.search?.includes("tab=settings")} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin/placements", label: "Placements" }} active={isActive(pathname, "/dashboard/admin/placements")} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin/blog", label: "Blog CMS" }} active={isActive(pathname, "/dashboard/admin/blog")} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin/lifecycle", label: "Account Lifecycle" }} active={isActive(pathname, "/dashboard/admin/lifecycle")} onClick={() => setOpen(false)} />
