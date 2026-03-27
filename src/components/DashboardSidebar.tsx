@@ -18,8 +18,6 @@ const navSections: NavSection[] = [
     items: [
       { href: "/dashboard", label: "Overview" },
       { href: "/dashboard/tasks", label: "Tasks" },
-      { href: "/dashboard/budget", label: "Budget" },
-      { href: "/dashboard/guides", label: "Planning Guides" },
       { href: "/dashboard/mood-board", label: "Vision Board" },
     ],
   },
@@ -27,7 +25,6 @@ const navSections: NavSection[] = [
     label: "Vendors",
     items: [
       { href: "/dashboard/vendors", label: "Vendors" },
-      { href: "/dashboard/vendor-portal", label: "Vendor Portal" },
     ],
   },
   {
@@ -48,6 +45,8 @@ const navSections: NavSection[] = [
   {
     label: "Tools",
     items: [
+      { href: "/dashboard/budget", label: "Budget" },
+      { href: "/dashboard/guides", label: "Planning Guides" },
       { href: "/dashboard/website", label: "Wedding Website" },
       { href: "/dashboard/settings", label: "Settings" },
       { href: "/dashboard/help", label: "Help & Support" },

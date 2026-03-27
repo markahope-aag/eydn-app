@@ -43,7 +43,7 @@ export function TaskFilters({
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className={`flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-[14px] transition ${
+          className={`flex items-center gap-2 rounded-[12px] px-4 py-2.5 text-[15px] transition ${
             activeCount > 0
               ? "bg-violet/10 text-violet font-semibold"
               : "bg-whisper text-muted hover:bg-lavender hover:text-plum"

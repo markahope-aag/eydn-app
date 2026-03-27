@@ -43,6 +43,28 @@ Items identified during development that are not blocking beta launch but should
 - ZIP file generation of all guest-uploaded photos
 - Priority: Low
 
+## User Experience (Post-Launch)
+
+### Wedding Week Messaging
+- As the wedding date approaches (7 days, 3 days, 1 day, day-of), update
+  Eydn's messaging to be extra positive and encouraging
+- Dashboard could show a special celebratory card
+- Day-of: simplified read-only view with just the timeline and vendor contacts
+- Priority: Medium — nice for emotional engagement
+
+### Signup Payment & Promo Codes
+- Currently signup does not ask for payment info or offer promo code entry
+- Need Stripe Checkout integration in the signup flow, or a trial-to-paid
+  conversion flow after the 14-day trial
+- Promo code field on the pricing/upgrade page
+- Priority: High — revenue critical
+
+### Clerk Login Email Customization
+- The first login verification code email uses Clerk's default template
+- Customize in Clerk dashboard → Customization → Email templates
+- Match Eydn branding (gradient header, font, colors)
+- Priority: Medium — brand consistency
+
 ## Admin Monitoring (Post-Launch)
 
 ### Sentry Error Monitoring Integration

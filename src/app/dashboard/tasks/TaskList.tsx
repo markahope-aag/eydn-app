@@ -156,18 +156,22 @@ function SortableTaskItem({
         {STATUS_LABELS[task.status]}
       </button>
 
-      {/* Task title */}
+      {/* Task title — click to view details */}
       <button
         onClick={() => onSelect(task)}
-        className={`flex-1 text-[15px] text-left ${
+        className={`flex-1 text-[15px] text-left hover:underline decoration-violet/30 underline-offset-2 transition group/title ${
           task.status === "done"
             ? "text-muted line-through"
             : task.status === "in_progress"
             ? "text-violet"
             : "text-plum"
         }`}
+        title="Click to view details, notes, and Eydn's suggestions"
       >
         {task.title}
+        {(task.notes || task.edyn_message) && (
+          <span className="inline-block ml-1.5 w-1.5 h-1.5 rounded-full bg-violet/40 align-middle" title="Has notes or tips" />
+        )}
       </button>
 
       {task.category && (
