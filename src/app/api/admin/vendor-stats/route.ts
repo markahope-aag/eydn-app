@@ -6,20 +6,24 @@ export async function GET() {
   if ("error" in result) return result.error;
   const { supabase } = result;
 
-  // --- Directory stats (suggested_vendors) ---
+  // --- Directory stats (suggested_vendors) — exclude seed data ---
+  // Seed vendors have example.com websites or (555) phone numbers
+  const seedFilter = "website.neq.https://example.com";
+
   const [
     { count: totalDirectory },
     { count: activeDirectory },
     { count: featuredDirectory },
   ] = await Promise.all([
-    supabase.from("suggested_vendors").select("*", { count: "exact", head: true }),
-    supabase.from("suggested_vendors").select("*", { count: "exact", head: true }).eq("active", true),
-    supabase.from("suggested_vendors").select("*", { count: "exact", head: true }).eq("featured", true),
+    supabase.from("suggested_vendors").select("*", { count: "exact", head: true }).not("website", "eq", "https://example.com"),
+    supabase.from("suggested_vendors").select("*", { count: "exact", head: true }).eq("active", true).not("website", "eq", "https://example.com"),
+    supabase.from("suggested_vendors").select("*", { count: "exact", head: true }).eq("featured", true).not("website", "eq", "https://example.com"),
   ]);
 
   const { data: byCategoryDir } = await supabase
     .from("suggested_vendors")
-    .select("category");
+    .select("category")
+    .not("website", "eq", "https://example.com");
 
   const categoryMap: Record<string, number> = {};
   (byCategoryDir || []).forEach((r: { category: string }) => {
@@ -32,7 +36,8 @@ export async function GET() {
 
   const { data: byStateDir } = await supabase
     .from("suggested_vendors")
-    .select("state");
+    .select("state")
+    .not("website", "eq", "https://example.com");
 
   const stateMap: Record<string, number> = {};
   (byStateDir || []).forEach((r: { state: string }) => {
@@ -45,7 +50,8 @@ export async function GET() {
 
   const { data: byPriceDir } = await supabase
     .from("suggested_vendors")
-    .select("price_range");
+    .select("price_range")
+    .not("website", "eq", "https://example.com");
 
   const priceMap: Record<string, number> = {};
   (byPriceDir || []).forEach((r: { price_range: string | null }) => {
@@ -59,11 +65,13 @@ export async function GET() {
   // --- Usage stats (vendors table — what couples actually book) ---
   const { count: totalBookings } = await supabase
     .from("vendors")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .is("deleted_at", null);
 
   const { data: usageCatData } = await supabase
     .from("vendors")
-    .select("category");
+    .select("category")
+    .is("deleted_at", null);
 
   const usageCatMap: Record<string, number> = {};
   (usageCatData || []).forEach((r: { category: string }) => {
@@ -76,7 +84,8 @@ export async function GET() {
 
   const { data: usageNameData } = await supabase
     .from("vendors")
-    .select("name, category");
+    .select("name, category")
+    .is("deleted_at", null);
 
   const nameMap: Record<string, { name: string; category: string; count: number }> = {};
   (usageNameData || []).forEach((r: { name: string; category: string }) => {
@@ -92,7 +101,8 @@ export async function GET() {
 
   const { data: usageStatusData } = await supabase
     .from("vendors")
-    .select("status");
+    .select("status")
+    .is("deleted_at", null);
 
   const statusMap: Record<string, number> = {};
   (usageStatusData || []).forEach((r: { status: string }) => {
@@ -106,7 +116,8 @@ export async function GET() {
   // Average vendors per wedding
   const { data: weddingVendorCounts } = await supabase
     .from("vendors")
-    .select("wedding_id");
+    .select("wedding_id")
+    .is("deleted_at", null);
 
   const weddingMap: Record<string, number> = {};
   (weddingVendorCounts || []).forEach((r: { wedding_id: string }) => {

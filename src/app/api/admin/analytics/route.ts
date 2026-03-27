@@ -83,16 +83,18 @@ export async function GET() {
     .from("questionnaire_responses")
     .select("*", { count: "exact", head: true });
 
-  // Weddings with at least 1 vendor
+  // Weddings with at least 1 vendor (exclude deleted)
   const { data: vendorWeddings } = await supabase
     .from("vendors")
-    .select("wedding_id");
+    .select("wedding_id")
+    .is("deleted_at", null);
   const uniqueVendorWeddings = new Set((vendorWeddings || []).map((r: { wedding_id: string }) => r.wedding_id));
 
-  // Weddings with at least 1 guest
+  // Weddings with at least 1 guest (exclude deleted)
   const { data: guestWeddings } = await supabase
     .from("guests")
-    .select("wedding_id");
+    .select("wedding_id")
+    .is("deleted_at", null);
   const uniqueGuestWeddings = new Set((guestWeddings || []).map((r: { wedding_id: string }) => r.wedding_id));
 
   const funnel = {
@@ -104,6 +106,9 @@ export async function GET() {
   };
 
   // --- Feature adoption ---
+  // Tables with soft delete support
+  const SOFT_DELETE_TABLES = new Set(["vendors", "guests", "tasks", "mood_board_items", "seating_tables", "wedding_party"]);
+
   const featureTables = [
     { table: "vendors", feature: "Vendors" },
     { table: "guests", feature: "Guests" },
@@ -118,7 +123,11 @@ export async function GET() {
 
   const featureAdoption = await Promise.all(
     featureTables.map(async ({ table, feature }) => {
-      const { data } = await (supabase as any).from(table).select("wedding_id");
+      let query = (supabase as any).from(table).select("wedding_id");
+      if (SOFT_DELETE_TABLES.has(table)) {
+        query = query.is("deleted_at", null);
+      }
+      const { data } = await query;
       const unique = new Set((data || []).map((r: any) => r.wedding_id as string));
       return { feature, count: unique.size };
     })
