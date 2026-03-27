@@ -11,7 +11,7 @@ import { trackCollaboratorInvited, trackExport } from "@/lib/analytics";
 type Collaborator = {
   id: string;
   email: string;
-  role: "partner" | "coordinator";
+  role: "partner" | "coordinator" | "parent";
   invite_status: "pending" | "accepted";
   created_at: string;
 };
@@ -78,7 +78,7 @@ export default function SettingsPage() {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [isOwner, setIsOwner] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"partner" | "coordinator">("partner");
+  const [inviteRole, setInviteRole] = useState<"partner" | "coordinator" | "parent">("partner");
   const [inviting, setInviting] = useState(false);
 
   // Trash
@@ -258,24 +258,21 @@ export default function SettingsPage() {
   if (noWedding) return <NoWeddingState feature="Settings" />;
 
   return (
-    <div className="max-w-lg">
+    <div className="max-w-2xl">
       <h1>Settings</h1>
       <p className="mt-1 text-[15px] text-muted">
-        Manage your notification preferences
+        Manage your account and preferences
       </p>
 
-      <div className="mt-6">
-        <Link
-          href="/dashboard/onboarding?review=true"
-          className="inline-flex items-center gap-2 text-[15px] text-violet hover:text-plum transition font-semibold"
-        >
-          Review Questionnaire Answers
-          <span aria-hidden="true">&rarr;</span>
+      <div className="mt-6 card p-5 flex items-center justify-between">
+        <div>
+          <h3 className="text-[15px] font-semibold text-plum">Review Questionnaire Answers</h3>
+          <p className="text-[13px] text-muted mt-0.5">Update your wedding date, venue, budget, and other core details</p>
+          <Tooltip text="Go back through your onboarding answers to update wedding details. Changes to the wedding date will cascade to your rehearsal dinner and task dates." wide />
+        </div>
+        <Link href="/dashboard/onboarding?review=true" className="btn-primary btn-sm">
+          Review &rarr;
         </Link>
-        <Tooltip text="Go back through your onboarding answers to update wedding details. Changes to the wedding date will cascade to your rehearsal dinner and task dates." wide />
-        <p className="mt-1 text-[12px] text-muted">
-          Go back through the onboarding questions to update your wedding details
-        </p>
       </div>
 
       {/* Things eydn should know */}
@@ -306,6 +303,9 @@ export default function SettingsPage() {
           rows={6}
           className="mt-3 w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
         />
+        <p className="mt-2 text-[12px] text-violet bg-lavender/40 rounded-[10px] px-3 py-2">
+          Eydn reads these notes every time you chat — they shape suggestions, vendor briefs, and planning guidance.
+        </p>
       </div>
 
       <div className="mt-8 space-y-6">
@@ -342,6 +342,9 @@ export default function SettingsPage() {
             <option value={14}>14 days before</option>
             <option value={30}>30 days before</option>
           </select>
+          <p className="mt-2 text-[12px] text-muted">
+            You'll also receive in-app notifications via the bell icon. Push notifications can be enabled in your browser settings.
+          </p>
         </div>
 
         <button
@@ -355,7 +358,7 @@ export default function SettingsPage() {
       {/* Collaborators */}
       {isOwner && (
         <div className="mt-10">
-          <h2 className="text-[18px] font-semibold text-plum">Collaborators <Tooltip text="Partner: full access to view, edit, and manage everything. Coordinator: can view and edit tasks, vendors, and guests, but cannot delete the wedding or manage billing." wide /></h2>
+          <h2 className="text-[18px] font-semibold text-plum">Collaborators <Tooltip text="Partner: full access. Coordinator: can view and edit tasks, vendors, and guests. Parent: read-only access to view plans and progress." wide /></h2>
           <p className="mt-1 text-[12px] text-muted">
             Invite your partner or a wedding coordinator to share access to your wedding
           </p>
@@ -374,11 +377,12 @@ export default function SettingsPage() {
             <select
               value={inviteRole}
               aria-label="Collaborator role"
-              onChange={(e) => setInviteRole(e.target.value as "partner" | "coordinator")}
+              onChange={(e) => setInviteRole(e.target.value as "partner" | "coordinator" | "parent")}
               className="rounded-[10px] border-border px-3 py-2 text-[15px]"
             >
               <option value="partner">Partner</option>
               <option value="coordinator">Coordinator</option>
+              <option value="parent">Parent</option>
             </select>
             <button
               onClick={handleInvite}
@@ -400,7 +404,7 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-semibold text-white ${
-                        c.role === "partner" ? "bg-violet" : "bg-soft-violet"
+                        c.role === "partner" ? "bg-violet" : c.role === "coordinator" ? "bg-soft-violet" : "bg-muted"
                       }`}
                     >
                       {c.email[0].toUpperCase()}
@@ -438,11 +442,25 @@ export default function SettingsPage() {
             </p>
           )}
 
-          <p className="mt-3 text-[12px] text-muted">
-            When your collaborator signs up or signs in with the invited email, they will automatically get access to your wedding.
-          </p>
+          <div className="mt-4 bg-lavender/30 rounded-[12px] p-4 text-[13px] text-muted space-y-1">
+            <p className="font-semibold text-plum">How collaborator access works:</p>
+            <ul className="list-disc list-inside space-y-0.5">
+              <li>An invitation email is sent to the address you enter</li>
+              <li>When they sign up or sign in with that email, they automatically get access</li>
+              <li>Partners can edit everything; coordinators can manage tasks, vendors, and guests; parents can view only</li>
+            </ul>
+          </div>
         </div>
       )}
+
+      {/* Account */}
+      <div className="mt-10">
+        <h2 className="text-[18px] font-semibold text-plum">Account</h2>
+        <div className="mt-3 card p-5 space-y-3">
+          <p className="text-[13px] text-muted">Your account details (name, email, password) are managed through your profile.</p>
+          <p className="text-[13px] text-muted">Click your avatar in the bottom-left sidebar to update your account settings.</p>
+        </div>
+      </div>
 
       {/* Your Data */}
       <div className="mt-10">
