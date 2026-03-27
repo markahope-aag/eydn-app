@@ -145,26 +145,28 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
         <img src="/logo.png" alt="eydn" className="h-7" />
       </Link>
 
-      {/* Ask Eydn — pinned at top */}
-      <Link
-        href="/dashboard/chat"
-        onClick={() => setOpen(false)}
-        className={`mt-6 flex items-center gap-2 rounded-[12px] px-3 py-2.5 text-[15px] font-semibold transition ${
-          isActive(pathname, "/dashboard/chat")
-            ? "bg-violet text-white"
-            : "bg-brand-gradient text-white hover:opacity-90"
-        }`}
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v5a2 2 0 01-2 2H6.5L3 14V11H4a2 2 0 01-2-2V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-          <circle cx="6" cy="6.5" r="0.75" fill="currentColor" />
-          <circle cx="8" cy="6.5" r="0.75" fill="currentColor" />
-          <circle cx="10" cy="6.5" r="0.75" fill="currentColor" />
-        </svg>
-        Ask Eydn
-      </Link>
+      {/* Ask Eydn — pinned at top, hidden on admin pages */}
+      {!pathname.startsWith("/dashboard/admin") && (
+        <Link
+          href="/dashboard/chat"
+          onClick={() => setOpen(false)}
+          className={`mt-6 flex items-center gap-2 rounded-[12px] px-3 py-2.5 text-[15px] font-semibold transition ${
+            isActive(pathname, "/dashboard/chat")
+              ? "bg-violet text-white"
+              : "bg-brand-gradient text-white hover:opacity-90"
+          }`}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 4a2 2 0 012-2h8a2 2 0 012 2v5a2 2 0 01-2 2H6.5L3 14V11H4a2 2 0 01-2-2V4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+            <circle cx="6" cy="6.5" r="0.75" fill="currentColor" />
+            <circle cx="8" cy="6.5" r="0.75" fill="currentColor" />
+            <circle cx="10" cy="6.5" r="0.75" fill="currentColor" />
+          </svg>
+          Ask Eydn
+        </Link>
+      )}
 
-      <nav role="navigation" aria-label="Dashboard navigation" className="mt-4 flex flex-col gap-3 overflow-y-auto">
+      <nav role="navigation" aria-label="Dashboard navigation" className={`${pathname.startsWith("/dashboard/admin") ? "mt-6" : "mt-4"} flex flex-col gap-3 overflow-y-auto`}>
         {/* Hide couple-facing nav when viewing admin pages */}
         {!pathname.startsWith("/dashboard/admin") && navSections.map((section) => (
           <CollapsibleSection
@@ -176,14 +178,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
         ))}
         {admin && (
           <div>
-            {pathname.startsWith("/dashboard/admin") && (
-              <NavLink
-                item={{ href: "/dashboard", label: "\u2190 Back to Dashboard" }}
-                active={false}
-                onClick={() => setOpen(false)}
-              />
-            )}
-            <p className="px-3 py-1.5 text-[11px] font-semibold text-violet uppercase tracking-wider mt-1">
+            <p className="px-3 py-1.5 text-[11px] font-semibold text-violet uppercase tracking-wider">
               Admin
             </p>
             <div className="flex flex-col gap-0.5 mt-0.5">
