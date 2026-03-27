@@ -3,72 +3,72 @@
 import { useState } from "react";
 import Link from "next/link";
 
-type Tab = "guide" | "faq" | "shortcuts";
+type Tab = "guide" | "faq" | "shortcuts" | "whats-new";
 
 const FAQ = [
-  { q: "Can I change my wedding date after setting up my timeline?", a: "Yes! Go to Settings → Review Questionnaire Answers to update your date. Eydn will automatically regenerate your task timeline with adjusted deadlines." },
-  { q: "How do I invite my partner or coordinator?", a: "Go to Settings → Collaborators. Enter their email and choose their role (Partner or Coordinator). When they sign up with that email, they'll automatically get access to your wedding." },
-  { q: "What happens after my 14-day trial?", a: "Your dashboard becomes read-only. You can still view and export all your data. To restore full access, upgrade for $79 (one-time, forever). No data is ever deleted during this period." },
-  { q: "How do I export my data?", a: "Go to Settings → Your Data → Download My Data. This exports everything — guests, vendors, tasks, budget, chat history, and more — as a JSON file." },
-  { q: "Can I restore something I accidentally deleted?", a: "Yes! Go to Settings → Recently Deleted. All deleted items are kept for 30 days and can be restored with one click." },
-  { q: "How does the AI assistant remember my preferences?", a: "Go to Settings → Things Eydn should know. Add your style, allergies, priorities, and key decisions. Eydn uses this context in every conversation, plus the last 50 messages of chat history." },
-  { q: "How do I set up my wedding website?", a: "Go to Wedding Website → Setup. Choose a URL slug, toggle the site on, upload a cover image, and add your story. Share the link (eydn.app/w/your-slug) with guests." },
-  { q: "Can I use Eydn for my rehearsal dinner?", a: "Yes! There's a dedicated Rehearsal Dinner page in the sidebar where you can plan the venue, timeline, and guest list separately." },
-  { q: "How do I generate the day-of timeline?", a: "Go to Day-of Planner → enter your ceremony time → click Generate Timeline. It creates 18 events working backwards from your ceremony. You can then customize each event." },
-  { q: "What's the Memory Plan?", a: "After 12 months post-wedding, your account becomes read-only. The Memory Plan ($29/year) keeps your wedding website live and your data fully accessible indefinitely." },
-  { q: "How do I add vendor photos and reviews?", a: "Click into any vendor's detail page. Eydn automatically looks up their Google Business profile to show their photo, rating, reviews, and contact info." },
-  { q: "Can multiple people edit at the same time?", a: "Yes! Collaborators (partner or coordinator) can edit simultaneously. All changes sync in real-time. Use the Comments feature on tasks and vendors to coordinate." },
+  { q: "How do I share my wedding website?", a: "Go to Wedding Website → Setup. Your URL is eydn.app/w/your-slug. Copy it and share via email, text, or social media. You can also generate unique RSVP links per guest in the RSVP tab.", link: "/dashboard/website" },
+  { q: "Can my partner see everything?", a: "Yes! When you invite your partner as a collaborator, they get full access to view, edit, and manage everything — guests, vendors, tasks, budget, website, and more.", link: "/dashboard/settings" },
+  { q: "How do vendor emails get generated?", a: "Go to any vendor's detail page and click 'Send Email'. Eydn generates a professional inquiry email pre-filled with your wedding details. You can customize it before sending.", link: "/dashboard/vendors" },
+  { q: "Can I change my wedding date after setting up my timeline?", a: "Yes! Go to Settings → Review Questionnaire. Your rehearsal dinner date and all planning milestones will automatically update. Any appointments you've created will be flagged for manual rescheduling.", link: "/dashboard/settings" },
+  { q: "How do I invite my partner or coordinator?", a: "Go to Settings → Collaborators, or accept the invitation during onboarding. Partners get full access. Coordinators can manage tasks, vendors, and guests. Parents get read-only access.", link: "/dashboard/settings" },
+  { q: "What happens after my 14-day trial?", a: "Your dashboard becomes read-only. You can still view and export all your data. To restore full access, upgrade for $79 (one-time, forever). No data is ever deleted during this period.", link: "/dashboard/pricing" },
+  { q: "How does the AI assistant remember my preferences?", a: "Go to Settings → Things Eydn should know, or use the card on your dashboard. Add your style, allergies, priorities, and key decisions. Eydn uses this in every conversation.", link: "/dashboard/settings" },
+  { q: "Can I restore something I accidentally deleted?", a: "Yes! Go to Settings → Recently Deleted. All deleted items are kept for 30 days and can be restored with one click.", link: "/dashboard/settings" },
+  { q: "How do I generate QR codes for invitations?", a: "Go to Wedding Website → RSVP tab → Generate RSVP Links, then Generate QR Codes. Each guest gets a unique QR that links directly to their personalized RSVP page.", link: "/dashboard/website" },
+  { q: "How do I set up my wedding website?", a: "Go to Wedding Website → Setup. Choose a URL, toggle the site on, upload a cover image, pick a theme, and add your story. The live preview shows changes in real-time.", link: "/dashboard/website" },
+  { q: "What's the Memory Plan?", a: "After 12 months post-wedding, your account becomes read-only. The Memory Plan ($29/year) keeps your wedding website live and your data fully accessible indefinitely.", link: "/dashboard/pricing" },
+  { q: "Can multiple people edit at the same time?", a: "Yes! Collaborators can edit simultaneously. All changes sync automatically. Use Comments on tasks and vendors to coordinate.", link: "/dashboard/settings" },
 ];
 
-const GUIDE_SECTIONS = [
+type GuideItem = { label: string; desc: string; icon: string; link?: string; linkLabel?: string };
+type GuideSection = { title: string; items: GuideItem[] };
+
+const GUIDE_SECTIONS: GuideSection[] = [
   {
     title: "Getting Started",
     items: [
-      { label: "Complete your wedding profile", desc: "Add your date, venue, budget, and style in the onboarding questionnaire or Settings." },
-      { label: "Set your budget", desc: "36 line items are pre-populated. Go to Budget and fill in your estimated costs." },
-      { label: "Create your guest list", desc: "Add guests manually or import via CSV. Set RSVP statuses, meals, and groups." },
-      { label: "Invite your partner", desc: "Settings → Collaborators → enter their email as Partner role." },
-      { label: "Chat with Eydn", desc: "Ask Eydn anything about wedding planning. It knows your date, budget, vendors, and preferences." },
+      { label: "Chat with Eydn", desc: "Your AI wedding planning assistant. Ask anything — it knows your date, budget, vendors, guests, and preferences.", icon: "💬", link: "/dashboard/chat", linkLabel: "Start Chatting" },
+      { label: "Complete your wedding profile", desc: "Add your date, venue, budget, and style preferences to personalize your experience.", icon: "📋", link: "/dashboard/onboarding?review=true", linkLabel: "Review Profile" },
+      { label: "Set your budget", desc: "36 line items pre-populated with recommended allocations. Fill in estimates as you get quotes.", icon: "💰", link: "/dashboard/budget", linkLabel: "Go to Budget" },
+      { label: "Create your guest list", desc: "Add guests manually or import via CSV. Track RSVPs, meals, and groups.", icon: "👥", link: "/dashboard/guests", linkLabel: "Go to Guests" },
+      { label: "Invite your partner", desc: "Planning is better together. Your partner gets full access to everything.", icon: "💑", link: "/dashboard/settings", linkLabel: "Invite Partner" },
     ],
   },
   {
     title: "Planning Tools",
     items: [
-      { label: "Task timeline", desc: "50+ tasks auto-generated from your date, organized by phase. Mark as complete, add notes, drag to reorder." },
-      { label: "Vendor tracker", desc: "Track 13 categories through the pipeline: searching → contacted → booked → paid. Use email templates for outreach." },
-      { label: "Seating chart", desc: "Drag-and-drop tables. Click Edit on any table to change size, shape, or name. Drag guests from the sidebar onto tables." },
-      { label: "Vision board", desc: "Upload images or paste URLs (including Pinterest). Organize by category and venue location." },
-      { label: "Day-of planner", desc: "8 tabs: Timeline, Ceremony Script, Music, Speeches, Setup Tasks, Attire, Vendor Contacts, Packing Checklist." },
-      { label: "Rehearsal dinner", desc: "Separate page for venue, timeline, and guest list for the rehearsal." },
+      { label: "Task timeline", desc: "50+ tasks auto-generated from your date. Mark complete, add notes, drag to reorder.", icon: "✅", link: "/dashboard/tasks", linkLabel: "Go to Tasks" },
+      { label: "Vendor tracker", desc: "Track 13 categories through the pipeline: searching → booked → paid. Use email templates for outreach.", icon: "🏪", link: "/dashboard/vendors", linkLabel: "Go to Vendors" },
+      { label: "Seating chart", desc: "Drag-and-drop tables with seat positions. Round and rectangle tables with guest assignments.", icon: "🪑", link: "/dashboard/seating", linkLabel: "Go to Seating" },
+      { label: "Vision board", desc: "Upload images or paste URLs from Pinterest. Organize by category, link to vendors.", icon: "🎨", link: "/dashboard/mood-board", linkLabel: "Go to Vision Board" },
+      { label: "Day-of planner", desc: "Complete day-of timeline, ceremony script, music, speeches, setup tasks, and packing checklist.", icon: "📅", link: "/dashboard/day-of", linkLabel: "Go to Day-of" },
+      { label: "Planning guides", desc: "Step-by-step questionnaires for flowers, music, attire, and more. Generate vendor briefs automatically.", icon: "📖", link: "/dashboard/guides", linkLabel: "Go to Guides" },
     ],
   },
   {
     title: "Wedding Website",
     items: [
-      { label: "Setup", desc: "Choose your URL, upload cover/couple photos, write your story." },
-      { label: "Schedule & Info", desc: "Add schedule items, travel info, accommodations, and FAQ for guests." },
-      { label: "RSVP system", desc: "Generate unique RSVP links per guest. Track responses, meal preferences, and plus-ones." },
-      { label: "Photo gallery", desc: "Guests upload photos directly. You approve them before they appear on the site." },
-      { label: "Registry links", desc: "Add links to your registries (Amazon, Zola, etc.) for guests to find easily." },
-    ],
-  },
-  {
-    title: "Collaboration",
-    items: [
-      { label: "Invite collaborators", desc: "Settings → Collaborators. Partners get full access. Coordinators can view and edit planning data." },
-      { label: "Comments", desc: "Leave comments on any task or vendor. Your partner and coordinator see them instantly." },
-      { label: "Activity feed", desc: "The dashboard shows recent changes and comments so everyone stays in sync." },
+      { label: "Build your site", desc: "Choose a URL, pick a theme with your wedding colors, add your story, schedule, and travel info.", icon: "🌐", link: "/dashboard/website", linkLabel: "Go to Website" },
+      { label: "RSVP system", desc: "Generate unique RSVP links and QR codes per guest. Track responses, meals, and plus-ones.", icon: "💌", link: "/dashboard/website", linkLabel: "Manage RSVPs" },
+      { label: "Photo gallery", desc: "Guests upload photos directly. Moderate before publishing. Download all as ZIP after the wedding.", icon: "📸", link: "/dashboard/website", linkLabel: "Manage Gallery" },
     ],
   },
   {
     title: "Data & Security",
     items: [
-      { label: "Download your data", desc: "Settings → Your Data → Download My Data. Full JSON export of everything." },
-      { label: "Restore deleted items", desc: "Settings → Recently Deleted. 30-day recovery window for all deleted items." },
-      { label: "Activity log", desc: "Settings → Activity Log. See every create, update, delete, and restore action." },
-      { label: "Daily backups", desc: "Your data is backed up every night to redundant off-site servers." },
+      { label: "Download your data", desc: "Full export of everything — guests, vendors, tasks, budget, chat history — as JSON or PDF.", icon: "💾", link: "/dashboard/settings", linkLabel: "Go to Settings" },
+      { label: "Restore deleted items", desc: "All deleted items kept for 30 days. One-click restore from Settings → Recently Deleted.", icon: "♻️", link: "/dashboard/settings", linkLabel: "View Trash" },
+      { label: "Daily backups", desc: "Your data is backed up every night to redundant off-site servers.", icon: "🔒" },
     ],
   },
+];
+
+const WHATS_NEW = [
+  { date: "March 2026", title: "Wedding Website Overhaul", items: ["Live preview while editing", "Theme & color customization", "QR codes for physical invitations", "Gallery moderation queue", "Structured hotel/accommodation cards", "Schedule import from Day-of Planner"] },
+  { date: "March 2026", title: "Communication System", items: ["SMS notifications via Twilio", "Web push notifications", "Collaborator invitation emails", "Overdue task alerts", "Vendor payment reminders", "Email engagement tracking"] },
+  { date: "March 2026", title: "Data Integrity", items: ["Date/time synchronization across the app", "Cascading updates when wedding date changes", "Persistent warning banners for date changes", "Smart task shifting (milestones vs appointments)"] },
+  { date: "March 2026", title: "Inclusive Language", items: ["Replaced gendered terms throughout the app", "Partner 1/Partner 2 instead of bride/groom", "Attendant/Honor Attendant for wedding party roles"] },
+  { date: "March 2026", title: "Admin Dashboard", items: ["Analytics with recharts visualizations", "Vendor insights and directory management", "Database & backup monitoring", "AI & integrations health dashboard", "Cron job management with manual triggers"] },
 ];
 
 const SHORTCUTS = [
@@ -81,6 +81,18 @@ const SHORTCUTS = [
 export default function HelpPage() {
   const [tab, setTab] = useState<Tab>("guide");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
+
+  const filteredFaq = search
+    ? FAQ.filter((f) => f.q.toLowerCase().includes(search.toLowerCase()) || f.a.toLowerCase().includes(search.toLowerCase()))
+    : FAQ;
+
+  const filteredGuide = search
+    ? GUIDE_SECTIONS.map((s) => ({
+        ...s,
+        items: s.items.filter((i) => i.label.toLowerCase().includes(search.toLowerCase()) || i.desc.toLowerCase().includes(search.toLowerCase())),
+      })).filter((s) => s.items.length > 0)
+    : GUIDE_SECTIONS;
 
   return (
     <div className="max-w-3xl">
@@ -89,11 +101,38 @@ export default function HelpPage() {
         Everything you need to make the most of Eydn
       </p>
 
+      {/* Beta feedback banner */}
+      <div className="mt-4 rounded-[16px] bg-violet/5 border border-violet/20 p-4 flex items-center gap-4">
+        <div className="flex-1">
+          <p className="text-[14px] font-semibold text-plum">Beta feedback welcome!</p>
+          <p className="text-[12px] text-muted mt-0.5">Found a bug or have a suggestion? We want to hear it.</p>
+        </div>
+        <a href="mailto:feedback@eydn.app?subject=Eydn Beta Feedback" className="btn-primary btn-sm flex-shrink-0">
+          Send Feedback
+        </a>
+      </div>
+
+      {/* Search */}
+      <div className="mt-4 relative">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M11 11L14.5 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <input
+          type="text"
+          placeholder="Search help topics..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full rounded-[10px] border-border pl-9 pr-3 py-2 text-[15px]"
+        />
+      </div>
+
       {/* Tabs */}
-      <div className="mt-6 flex gap-1 border-b border-border">
+      <div className="mt-4 flex gap-1 border-b border-border">
         {([
           { key: "guide" as Tab, label: "User Guide" },
           { key: "faq" as Tab, label: "FAQ" },
+          { key: "whats-new" as Tab, label: "What's New" },
           { key: "shortcuts" as Tab, label: "Shortcuts" },
         ]).map((t) => (
           <button
@@ -113,26 +152,37 @@ export default function HelpPage() {
       {/* User Guide */}
       {tab === "guide" && (
         <div className="mt-8 space-y-10">
-          {GUIDE_SECTIONS.map((section) => (
+          {filteredGuide.map((section) => (
             <div key={section.title}>
               <h2 className="text-[18px] font-semibold text-plum">{section.title}</h2>
               <div className="mt-4 space-y-3">
                 {section.items.map((item) => (
-                  <div key={item.label} className="card p-4">
-                    <p className="text-[15px] font-semibold text-plum">{item.label}</p>
-                    <p className="mt-1 text-[14px] text-muted leading-relaxed">{item.desc}</p>
+                  <div key={item.label} className="card p-4 flex items-start gap-3">
+                    <span className="text-[20px] flex-shrink-0 mt-0.5">{item.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-semibold text-plum">{item.label}</p>
+                      <p className="mt-1 text-[14px] text-muted leading-relaxed">{item.desc}</p>
+                    </div>
+                    {item.link && (
+                      <Link href={item.link} className="text-[12px] text-violet font-semibold hover:text-plum transition flex-shrink-0 mt-1">
+                        {item.linkLabel || "Go"} &rarr;
+                      </Link>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
           ))}
+          {filteredGuide.length === 0 && (
+            <p className="text-[15px] text-muted text-center py-8">No results for &ldquo;{search}&rdquo;</p>
+          )}
         </div>
       )}
 
       {/* FAQ */}
       {tab === "faq" && (
         <div className="mt-8 space-y-2">
-          {FAQ.map((item, i) => (
+          {filteredFaq.map((item, i) => (
             <div key={i} className="card overflow-hidden">
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -146,8 +196,38 @@ export default function HelpPage() {
               {openFaq === i && (
                 <div className="px-5 pb-4">
                   <p className="text-[14px] text-muted leading-relaxed">{item.a}</p>
+                  {item.link && (
+                    <Link href={item.link} className="mt-2 inline-block text-[13px] text-violet font-semibold hover:text-plum transition">
+                      Go there &rarr;
+                    </Link>
+                  )}
                 </div>
               )}
+            </div>
+          ))}
+          {filteredFaq.length === 0 && (
+            <p className="text-[15px] text-muted text-center py-8">No results for &ldquo;{search}&rdquo;</p>
+          )}
+        </div>
+      )}
+
+      {/* What's New */}
+      {tab === "whats-new" && (
+        <div className="mt-8 space-y-8">
+          {WHATS_NEW.map((release, i) => (
+            <div key={i}>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-[12px] font-semibold text-violet bg-lavender px-2.5 py-0.5 rounded-full">{release.date}</span>
+                <h3 className="text-[16px] font-semibold text-plum">{release.title}</h3>
+              </div>
+              <ul className="space-y-1.5 ml-1">
+                {release.items.map((item, j) => (
+                  <li key={j} className="flex items-start gap-2 text-[14px] text-muted">
+                    <span className="text-violet mt-1 flex-shrink-0">+</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>
@@ -173,14 +253,27 @@ export default function HelpPage() {
       <div className="mt-12 card p-6 text-center">
         <h2 className="text-[18px] font-semibold text-plum">Still need help?</h2>
         <p className="mt-2 text-[14px] text-muted">
-          Chat with Eydn for instant answers, or reach out to our support team.
+          Chat with Eydn for instant answers, or reach out to our team directly.
         </p>
         <div className="mt-4 flex items-center justify-center gap-3">
           <Link href="/dashboard/chat" className="btn-primary btn-sm">
             Chat with Eydn
           </Link>
-          <a href="mailto:support@eydn.app" className="btn-ghost btn-sm">
+          <a
+            href="mailto:support@eydn.app?subject=Eydn Support Request"
+            className="btn-secondary btn-sm inline-flex items-center gap-1.5"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M1 5L8 9L15 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
             Email Support
+          </a>
+          <a
+            href="mailto:feedback@eydn.app?subject=Eydn Feedback"
+            className="btn-ghost btn-sm"
+          >
+            Send Feedback
           </a>
         </div>
       </div>
