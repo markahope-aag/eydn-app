@@ -142,7 +142,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
         onClick={() => setOpen(false)}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="eydn" className="h-7" />
+        <img src="/logo.png" alt="eydn" className="h-[34px]" />
       </Link>
 
       {/* Ask Eydn — pinned at top, hidden on admin pages */}
