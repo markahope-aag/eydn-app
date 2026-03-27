@@ -1,4 +1,5 @@
 import { getWeddingForUser } from "@/lib/auth";
+import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
 
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
       }
 
       const rsvpUrl = `${APP_URL}/w/${slug}?rsvp=${t.token}`;
-      const qrUrl = await generateQR(rsvpUrl, t.guests?.name || "Guest");
+      const qrUrl = await generateQR(rsvpUrl, t.guests?.name || "Guest", wedding.id);
 
       if (qrUrl) {
         // Cache the QR URL
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
   }
 
   const rsvpUrl = `${APP_URL}/w/${slug}?rsvp=${token.token}`;
-  const qrUrl = await generateQR(rsvpUrl, token.guests?.name || "Guest");
+  const qrUrl = await generateQR(rsvpUrl, token.guests?.name || "Guest", wedding.id);
 
   if (!qrUrl) {
     return NextResponse.json({ error: "Failed to generate QR code" }, { status: 500 });
@@ -115,9 +116,9 @@ export async function POST(request: Request) {
   return NextResponse.json({ qrUrl });
 }
 
-async function generateQR(url: string, label: string): Promise<string | null> {
+async function generateQR(url: string, label: string, weddingId: string): Promise<string | null> {
   try {
-    // Step 1: Create the QR code
+    // Step 1: Create the QR code on Uniqode
     const createRes = await fetch("https://api.uniqode.com/api/2.0/qrcodes/", {
       method: "POST",
       headers: {
@@ -147,7 +148,7 @@ async function generateQR(url: string, label: string): Promise<string | null> {
       return null;
     }
 
-    // Step 2: Get the download URL
+    // Step 2: Get the download URL from Uniqode
     const downloadRes = await fetch(`https://api.uniqode.com/api/2.0/qrcodes/${qrId}/download/`, {
       headers: {
         Authorization: `Token ${UNIQODE_API_KEY}`,
@@ -160,7 +161,41 @@ async function generateQR(url: string, label: string): Promise<string | null> {
     }
 
     const downloadData = await downloadRes.json();
-    return downloadData.urls?.png || null;
+    const externalPngUrl = downloadData.urls?.png;
+    if (!externalPngUrl) {
+      console.error("[QR] No PNG URL in download response");
+      return null;
+    }
+
+    // Step 3: Download the PNG and re-upload to our Supabase storage
+    const pngRes = await fetch(externalPngUrl);
+    if (!pngRes.ok) {
+      console.error("[QR] Failed to download PNG from Uniqode S3");
+      return externalPngUrl; // Fall back to external URL
+    }
+
+    const pngBuffer = Buffer.from(await pngRes.arrayBuffer());
+    const safeName = label.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
+    const storagePath = `${weddingId}/qr-${safeName}-${qrId}.png`;
+
+    const admin = createSupabaseAdmin();
+    const { error: uploadError } = await admin.storage
+      .from("wedding-photos")
+      .upload(storagePath, pngBuffer, {
+        contentType: "image/png",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("[QR] Storage upload failed:", uploadError.message);
+      return externalPngUrl; // Fall back to external URL
+    }
+
+    const { data: publicUrl } = admin.storage
+      .from("wedding-photos")
+      .getPublicUrl(storagePath);
+
+    return publicUrl.publicUrl;
   } catch (error) {
     console.error("[QR] Generation failed:", error instanceof Error ? error.message : error);
     return null;
