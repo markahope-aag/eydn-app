@@ -21,6 +21,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing file or wedding_slug" }, { status: 400 });
   }
 
+  // Validate slug format — alphanumeric and hyphens only, 3-100 chars
+  if (!/^[a-z0-9][a-z0-9-]{1,98}[a-z0-9]$/.test(weddingSlug)) {
+    return NextResponse.json({ error: "Invalid wedding slug" }, { status: 400 });
+  }
+
   // Validate file size (max 10MB)
   const MAX_SIZE = 10 * 1024 * 1024;
   if (file.size > MAX_SIZE) {

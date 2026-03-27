@@ -27,8 +27,11 @@ export async function GET(request: Request) {
 
   try {
     const photoRes = await fetch(
-      `${BASE_URL}/${ref}/media?maxWidthPx=400&key=${API_KEY}`,
-      { redirect: "follow" }
+      `${BASE_URL}/${ref}/media?maxWidthPx=400`,
+      {
+        headers: { "X-Goog-Api-Key": API_KEY },
+        redirect: "follow",
+      }
     );
 
     if (!photoRes.ok) {

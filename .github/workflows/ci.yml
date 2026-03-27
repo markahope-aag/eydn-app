@@ -124,16 +124,12 @@ jobs:
         with:
           path: node_modules
           key: nm-${{ hashFiles('package-lock.json') }}
-      - uses: actions/cache/restore@v4
-        with:
-          path: .next
-          key: next-build-${{ github.sha }}
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
-      - name: Start production server
-        run: npx next start --port 3000 &
+      - name: Start dev server
+        run: npx next dev --port 3000 &
       - name: Wait for server
-        run: npx wait-on http://localhost:3000 --timeout 30000
+        run: npx wait-on http://localhost:3000 --timeout 60000
       - name: Run public page tests
         run: npx playwright test --project=public
       - name: Run auth setup + dashboard tests

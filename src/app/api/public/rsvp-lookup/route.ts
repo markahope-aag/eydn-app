@@ -27,6 +27,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid name" }, { status: 400 });
   }
 
+  // Validate slug format — alphanumeric and hyphens only
+  if (typeof wedding_slug !== "string" || !/^[a-z0-9][a-z0-9-]{1,98}[a-z0-9]$/.test(wedding_slug)) {
+    return NextResponse.json({ error: "Invalid wedding slug" }, { status: 400 });
+  }
+
   // Look up the wedding
   const { data: wedding } = await supabase
     .from("weddings")

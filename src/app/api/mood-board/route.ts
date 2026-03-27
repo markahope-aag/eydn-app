@@ -38,34 +38,9 @@ export async function POST(request: Request) {
   const location = body.location as string | undefined;
   const vendor_id = body.vendor_id as string | undefined;
 
-  // Allow data:image URLs (used by color palette generator) or HTTPS URLs
-  const isDataImage = image_url?.startsWith("data:image/");
-
-  if (!image_url || (!isDataImage && (!isValidUrl(image_url) || !image_url.startsWith("https://") || !isSafeExternalUrl(image_url)))) {
+  // Only allow HTTPS URLs — reject data:, javascript:, and other schemes
+  if (!image_url || !isValidUrl(image_url) || !image_url.startsWith("https://") || !isSafeExternalUrl(image_url)) {
     return NextResponse.json({ error: "Valid HTTPS URL required" }, { status: 400 });
-  }
-
-  // Data URLs are stored directly — skip all URL resolution
-  if (isDataImage) {
-    const { data, error } = await supabase
-      .from("mood_board_items")
-      .insert({
-        wedding_id: wedding.id,
-        image_url: image_url,
-        caption: caption || null,
-        category: category || "General",
-        location: location || null,
-        vendor_id: vendor_id || null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("[API]", error.message);
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-    }
-
-    return NextResponse.json(data, { status: 201 });
   }
 
   // Determine if URL points directly to an image
