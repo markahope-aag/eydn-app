@@ -13,6 +13,10 @@ type Stats = {
   onboarding_completed: number;
   conversion_rate: number;
   total_ai_chats: number;
+  trials_active: number;
+  trials_expired_unconverted: number;
+  paid_subscriptions: number;
+  paid_conversion_rate: number;
 };
 
 type User = {
@@ -298,13 +302,35 @@ export default function AdminPage() {
             </div>
             <div className="card p-5">
               <p className="text-[13px] text-muted">Conversion Rate</p>
-              <p className="mt-1 text-[28px] font-bold text-plum">{stats.conversion_rate}%</p>
-              <p className="text-[12px] text-muted mt-1">Signup → Event created</p>
+              <p className="mt-1 text-[28px] font-bold text-plum">{stats.paid_conversion_rate}%</p>
+              <p className="text-[12px] text-muted mt-1">Trial → Paid subscriber</p>
             </div>
             <div className="card p-5">
               <p className="text-[13px] text-muted">Onboarding Completed</p>
               <p className="mt-1 text-[28px] font-bold text-plum">{stats.onboarding_completed.toLocaleString()}</p>
               <p className="text-[12px] text-muted mt-1">{stats.total_subscribers > 0 ? Math.round((stats.onboarding_completed / stats.total_subscribers) * 100) : 0}% completion rate</p>
+            </div>
+          </div>
+
+          {/* Subscription Funnel */}
+          <div className="card p-5">
+            <h2 className="text-[15px] font-semibold text-plum mb-3">Subscription Funnel</h2>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+              <div className="bg-emerald-50 rounded-[12px] p-4 text-center">
+                <p className="text-[12px] font-semibold text-emerald-700">Active Trials</p>
+                <p className="text-[28px] font-bold text-emerald-700 mt-1">{stats.trials_active}</p>
+                <p className="text-[11px] text-emerald-600 mt-1">Within 14-day window</p>
+              </div>
+              <div className="bg-amber-50 rounded-[12px] p-4 text-center">
+                <p className="text-[12px] font-semibold text-amber-700">Expired (No Purchase)</p>
+                <p className="text-[28px] font-bold text-amber-700 mt-1">{stats.trials_expired_unconverted}</p>
+                <p className="text-[11px] text-amber-600 mt-1">Trial ended without converting</p>
+              </div>
+              <div className="bg-violet/10 rounded-[12px] p-4 text-center">
+                <p className="text-[12px] font-semibold text-violet">Paid Subscriptions</p>
+                <p className="text-[28px] font-bold text-violet mt-1">{stats.paid_subscriptions}</p>
+                <p className="text-[11px] text-muted mt-1">{stats.paid_conversion_rate}% of weddings converted</p>
+              </div>
             </div>
           </div>
 
