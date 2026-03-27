@@ -19,7 +19,7 @@ type EmailParams = {
   html: string;
 };
 
-export async function sendEmail(params: EmailParams): Promise<{ success: boolean; error?: string }> {
+export async function sendEmail(params: EmailParams): Promise<{ success: boolean; error?: string; emailId?: string }> {
   if (!process.env.RESEND_API_KEY) {
     console.warn("[EMAIL] RESEND_API_KEY not configured, skipping email");
     return { success: false, error: "RESEND_API_KEY not configured" };
@@ -27,13 +27,13 @@ export async function sendEmail(params: EmailParams): Promise<{ success: boolean
 
   try {
     const resend = getResend();
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: FROM,
       to: params.to,
       subject: params.subject,
       html: params.html,
     });
-    return { success: true };
+    return { success: true, emailId: result.data?.id };
   } catch (error) {
     console.error("[EMAIL] Send failed:", error instanceof Error ? error.message : error);
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
@@ -224,4 +224,40 @@ export function getLifecycleEmail(
     default:
       return null;
   }
+}
+
+/**
+ * Send a collaborator invitation email.
+ */
+export async function sendCollaboratorInvite(
+  email: string,
+  partnerNames: string,
+  role: string
+): Promise<{ success: boolean; error?: string }> {
+  const safePartnerNames = escapeHtml(partnerNames);
+  const safeRole = escapeHtml(role);
+
+  return sendEmail({
+    to: email,
+    subject: `You've been invited to help plan a wedding on Eydn`,
+    html: `
+      <div style="max-width: 560px; margin: 0 auto; background: #FAF6F1; border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+        <div style="background: linear-gradient(135deg, #2C3E2D, #D4A5A5); padding: 32px; text-align: center; border-radius: 16px 16px 0 0;">
+          <h1 style="color: white; font-size: 24px; margin: 0;">Eydn</h1>
+        </div>
+        <div style="padding: 32px; color: #1A1A2E; font-size: 15px; line-height: 1.7;">
+          <h2 style="color: #1A1A2E; font-size: 22px;">You're invited!</h2>
+          <p>You've been invited to help plan <strong>${safePartnerNames}</strong>'s wedding on Eydn as a <strong>${safeRole}</strong>.</p>
+          <p>Sign in to Eydn to view the wedding dashboard, collaborate on tasks, and help make the big day perfect.</p>
+          <p style="text-align: center; margin-top: 24px;">
+            <a href="https://eydn.app/sign-in" style="display: inline-block; background: linear-gradient(135deg, #2C3E2D, #D4A5A5); color: white; padding: 12px 28px; border-radius: 999px; text-decoration: none; font-weight: 600;">Sign In to Eydn</a>
+          </p>
+        </div>
+        <div style="padding: 24px; text-align: center; color: #6B6B6B; font-size: 12px;">
+          <p>Eydn — Your AI Wedding Planning Guide</p>
+          <p style="margin-top: 8px;">Eydn App, 2921 Landmark Place, Suite 215, Madison, WI 53713</p>
+        </div>
+      </div>
+    `,
+  });
 }

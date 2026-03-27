@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields, pickFields } from "@/lib/validation";
+import { notifyCollaborators } from "@/lib/audit";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -24,7 +25,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
-  const { wedding, supabase } = result;
+  const { wedding, supabase, userId } = result;
 
   const parsed = await safeParseJSON(request);
   if (isParseError(parsed)) return parsed;
@@ -49,6 +50,8 @@ export async function POST(request: Request) {
   if (error) {
     console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+
+  notifyCollaborators({ weddingId: wedding.id, actorUserId: userId, action: "create", entityType: "tasks", entityName: (data as Record<string, unknown>).title as string });
 
   return NextResponse.json(data, { status: 201 });
 }

@@ -38,6 +38,7 @@ vi.mock("@/lib/auth", () => ({ getWeddingForUser: (...args: unknown[]) => mockGe
 vi.mock("@/lib/audit", () => ({
   logActivity: vi.fn(),
   softDelete: vi.fn(() => Promise.resolve({ error: null })),
+  notifyCollaborators: vi.fn(),
 }));
 
 import { GET, POST } from "./route";

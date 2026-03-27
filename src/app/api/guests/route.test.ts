@@ -50,6 +50,7 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/audit", () => ({
   logActivity: vi.fn(),
+  notifyCollaborators: vi.fn(),
 }));
 
 vi.mock("@/lib/validation", async (importOriginal) => {

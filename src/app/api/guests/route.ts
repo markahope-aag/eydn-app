@@ -1,7 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields, pickFields, isValidEmail } from "@/lib/validation";
-import { logActivity } from "@/lib/audit";
+import { logActivity, notifyCollaborators } from "@/lib/audit";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -56,6 +56,7 @@ export async function POST(request: Request) {
   }
 
   logActivity(supabase, { weddingId: wedding.id, userId, action: "create", entityType: "guests", entityId: (data as Record<string, unknown>).id as string, entityName: (data as Record<string, unknown>).name as string });
+  notifyCollaborators({ weddingId: wedding.id, actorUserId: userId, action: "create", entityType: "guests", entityName: (data as Record<string, unknown>).name as string });
 
   // Auto-add to wedding party if role is "wedding_party" (skip if flagged to prevent loops)
   if (body.role === "wedding_party" && !body._skip_sync) {

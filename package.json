@@ -35,7 +35,9 @@
     "resend": "^6.9.4",
     "sonner": "^2.0.7",
     "ssh2-sftp-client": "^12.1.0",
-    "stripe": "^20.4.1"
+    "stripe": "^20.4.1",
+    "twilio": "^5.13.1",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^16.2.1",
@@ -46,6 +48,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/ssh2-sftp-client": "^9.0.6",
+    "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.0",
     "eslint": "^9",

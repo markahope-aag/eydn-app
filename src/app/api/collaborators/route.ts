@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
+import { sendCollaboratorInvite } from "@/lib/email";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -64,6 +65,12 @@ export async function POST(request: Request) {
     }
     console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+
+  // Send invitation email (non-blocking — don't fail the request if email fails)
+  const partnerNames = `${wedding.partner1_name} & ${wedding.partner2_name}`;
+  sendCollaboratorInvite(email.toLowerCase().trim(), partnerNames, collabRole).catch((err) => {
+    console.error("[API] Failed to send collaborator invite email:", err);
+  });
 
   return NextResponse.json(data, { status: 201 });
 }
