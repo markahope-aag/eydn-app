@@ -47,6 +47,9 @@ export default function AdminVendorsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [filterCategory, setFilterCategory] = useState("");
+  const [filterState, setFilterState] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"all" | "featured" | "active" | "inactive">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState<"directory" | "submissions">("directory");
 
   // Add form state
@@ -212,9 +215,21 @@ export default function AdminVendorsPage() {
 
   const pendingSubmissions = submissions.filter((s) => s.status === "pending");
 
-  const filtered = filterCategory
-    ? vendors.filter((v) => v.category === filterCategory)
-    : vendors;
+  const filtered = vendors.filter((v) => {
+    if (filterCategory && v.category !== filterCategory) return false;
+    if (filterState && v.state !== filterState) return false;
+    if (filterStatus === "featured" && !v.featured) return false;
+    if (filterStatus === "active" && !v.active) return false;
+    if (filterStatus === "inactive" && v.active) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (!v.name.toLowerCase().includes(q) && !v.city?.toLowerCase().includes(q) && !v.email?.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  // Get unique states from actual data for the filter dropdown
+  const vendorStates = [...new Set(vendors.map((v) => v.state).filter(Boolean))].sort();
 
   if (loading) return <p className="text-[15px] text-muted py-8">Loading...</p>;
 
@@ -273,8 +288,21 @@ export default function AdminVendorsPage() {
       )}
 
       {tab === "directory" && <>
-      {/* Filter */}
-      <div className="mt-4">
+      {/* Search and filters */}
+      <div className="mt-4 flex gap-3 items-center flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M11 11L14.5 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search vendors..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-[10px] border-border pl-9 pr-3 py-1.5 text-[15px]"
+          />
+        </div>
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
@@ -285,6 +313,27 @@ export default function AdminVendorsPage() {
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
+        <select
+          value={filterState}
+          onChange={(e) => setFilterState(e.target.value)}
+          className="rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+        >
+          <option value="">All States</option>
+          {vendorStates.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
+          className="rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+        >
+          <option value="all">All Status</option>
+          <option value="featured">Featured Only</option>
+          <option value="active">Active Only</option>
+          <option value="inactive">Inactive Only</option>
+        </select>
+        <span className="text-[13px] text-muted">{filtered.length} shown</span>
       </div>
 
       {/* Import panel */}
