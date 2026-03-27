@@ -43,6 +43,26 @@ Items identified during development that are not blocking beta launch but should
 - ZIP file generation of all guest-uploaded photos
 - Priority: Low
 
+## Vision Board (Post-Launch)
+
+### Drag-to-Reorder Images
+- Let couples rearrange pins on the board by dragging
+- Needs: sortable library (dnd-kit or similar), sort_order field updates
+- Priority: Medium
+
+### Color Palette Extraction
+- Automatically pull dominant colors from saved images and suggest a
+  wedding palette
+- Needs: canvas-based image analysis (client-side) or a third-party API
+  like ColorThief.js or Vibrant.js
+- Would feed into the website theme color picker
+- Priority: Low — genuinely impressive "wow" feature but not essential
+
+### Zoom/Resize on the Board
+- Pinterest-style zoom into individual pins, resize images on the board
+- Needs: lightbox or modal expansion + resize handles
+- Priority: Low
+
 ## User Experience (Post-Launch)
 
 ### Wedding Week Messaging
