@@ -11,7 +11,8 @@ export async function GET() {
   const { data, error } = await supabase
     .from("seat_assignments")
     .select("*, seating_tables!inner(wedding_id)")
-    .eq("seating_tables.wedding_id", wedding.id);
+    .eq("seating_tables.wedding_id", wedding.id)
+    .is("deleted_at", null);
 
   if (error) {
     console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });

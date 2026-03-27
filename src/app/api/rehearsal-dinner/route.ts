@@ -52,6 +52,30 @@ export async function PUT(request: Request) {
   if (isParseError(parsed)) return parsed;
   const body = parsed;
 
+  // Validate JSON array fields
+  if (body.timeline !== undefined && !Array.isArray(body.timeline)) {
+    return NextResponse.json({ error: "timeline must be an array" }, { status: 400 });
+  }
+  if (body.guest_list !== undefined && !Array.isArray(body.guest_list)) {
+    return NextResponse.json({ error: "guest_list must be an array" }, { status: 400 });
+  }
+  // Validate each timeline entry has required shape
+  if (Array.isArray(body.timeline)) {
+    for (const entry of body.timeline) {
+      if (typeof entry !== "object" || entry === null) {
+        return NextResponse.json({ error: "Each timeline entry must be an object" }, { status: 400 });
+      }
+    }
+  }
+  // Validate each guest_list entry has a name
+  if (Array.isArray(body.guest_list)) {
+    for (const guest of body.guest_list) {
+      if (typeof guest !== "object" || guest === null) {
+        return NextResponse.json({ error: "Each guest_list entry must be an object" }, { status: 400 });
+      }
+    }
+  }
+
   const row: RehearsalDinnerInsert = {
     wedding_id: wedding.id,
     venue: (body.venue as string) ?? null,

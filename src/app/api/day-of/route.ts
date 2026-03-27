@@ -39,6 +39,11 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: `${missing} is required` }, { status: 400 });
   }
 
+  // Validate content is a plain object (not array, null, or primitive)
+  if (typeof body.content !== "object" || body.content === null || Array.isArray(body.content)) {
+    return NextResponse.json({ error: "content must be a JSON object" }, { status: 400 });
+  }
+
   const { data, error } = await supabase
     .from("day_of_plans")
     .upsert({
