@@ -469,7 +469,7 @@ function HeroTaskCard() {
       {tasks.map((t, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: i < tasks.length - 1 ? 10 : 0 }}>
           <span style={{ width: 10, height: 10, borderRadius: "50%", background: t.color, flexShrink: 0, opacity: t.done ? 0.5 : 1 }} />
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: t.done ? "#B09A87" : "#2A2018", textDecoration: t.done ? "line-through" : "none", flex: 1 }}>{t.label}</span>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: t.done ? "#6B5E50" : "#2A2018", textDecoration: t.done ? "line-through" : "none", flex: 1 }}>{t.label}</span>
           <span style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "#6B5E50" }}>{t.due}</span>
         </div>
       ))}
@@ -498,11 +498,11 @@ function HeroBudgetCard() {
         left: "5%",
       }}
     >
-      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.5)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Budget Tracker</p>
+      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.65)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Budget Tracker</p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "6px 14px", fontFamily: "var(--font-body)", fontSize: 11 }}>
-        <span style={{ color: "rgba(250,246,241,0.5)", fontWeight: 600 }}>Category</span>
-        <span style={{ color: "rgba(250,246,241,0.5)", fontWeight: 600 }}>Estimated</span>
-        <span style={{ color: "rgba(250,246,241,0.5)", fontWeight: 600 }}>Paid</span>
+        <span style={{ color: "rgba(250,246,241,0.65)", fontWeight: 600 }}>Category</span>
+        <span style={{ color: "rgba(250,246,241,0.65)", fontWeight: 600 }}>Estimated</span>
+        <span style={{ color: "rgba(250,246,241,0.65)", fontWeight: 600 }}>Paid</span>
         {rows.map((r, i) => (
           <div key={i} style={{ display: "contents" }}>
             <span style={{ fontSize: 13, color: "#FAF6F1" }}>{r.cat}</span>
@@ -592,9 +592,9 @@ function MiniBudgetTracker() {
         <span style={{ fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 600, color: "#E8C97A" }}>$26,500</span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "8px 16px", fontFamily: "var(--font-body)", fontSize: 11, marginBottom: 12 }}>
-        <span style={{ color: "rgba(250,246,241,0.5)", fontWeight: 600 }}>Category</span>
-        <span style={{ color: "rgba(250,246,241,0.5)", fontWeight: 600 }}>Estimated</span>
-        <span style={{ color: "rgba(250,246,241,0.5)", fontWeight: 600 }}>Paid</span>
+        <span style={{ color: "rgba(250,246,241,0.65)", fontWeight: 600 }}>Category</span>
+        <span style={{ color: "rgba(250,246,241,0.65)", fontWeight: 600 }}>Estimated</span>
+        <span style={{ color: "rgba(250,246,241,0.65)", fontWeight: 600 }}>Paid</span>
         {rows.map((r, i) => (
           <div key={i} style={{ display: "contents" }}>
             <span style={{ fontSize: 13, color: "#FAF6F1" }}>{r.cat}</span>
@@ -604,7 +604,7 @@ function MiniBudgetTracker() {
         ))}
       </div>
       <div style={{ borderTop: "1px solid rgba(250,246,241,0.15)", paddingTop: 10, display: "grid", gridTemplateColumns: "1fr auto auto", gap: "0 16px", fontFamily: "var(--font-body)", fontSize: 12 }}>
-        <span style={{ color: "rgba(250,246,241,0.5)" }}>Total</span>
+        <span style={{ color: "rgba(250,246,241,0.65)" }}>Total</span>
         <span style={{ color: "rgba(250,246,241,0.7)", fontWeight: 600 }}>$26,500</span>
         <span style={{ color: "#E8C97A", fontWeight: 600 }}>$9,600</span>
       </div>
@@ -688,7 +688,7 @@ function MiniDayOfBinder() {
     <div style={{ background: "#1E2E1F", borderRadius: 12, padding: 20, maxWidth: 340, border: "1px solid rgba(201,168,76,0.3)", position: "relative", boxShadow: "0 4px 20px rgba(0,0,0,.3)" }}>
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "linear-gradient(90deg, #C9A84C, #E8C97A)", borderRadius: "12px 12px 0 0" }} />
       <p style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: "#FAF6F1", marginBottom: 4 }}>Day-of Binder</p>
-      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "rgba(250,246,241,0.5)", marginBottom: 14 }}>Complete wedding guide &middot; PDF</p>
+      <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "rgba(250,246,241,0.65)", marginBottom: 14 }}>Complete wedding guide &middot; PDF</p>
       {["Ceremony Timeline", "Vendor Contact Sheet", "Music & Readings", "Setup Assignments", "Emergency Kit List"].map((s, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <span style={{ width: 16, height: 2, background: i < 3 ? "#E8C97A" : "rgba(250,246,241,0.2)", borderRadius: 2 }} />
@@ -904,9 +904,9 @@ export default function HomePage() {
             </ScrollReveal>
             <ScrollReveal>
               <p style={{ marginTop: 24, fontFamily: "var(--font-body)", fontSize: 13, color: "#6B5E50", letterSpacing: "0.02em" }}>
-                <span style={{ color: "#C9A84C" }}>&#10022;</span> 50+ Tasks &middot;{" "}
-                <span style={{ color: "#C9A84C" }}>&#10022;</span> AI That Knows You &middot;{" "}
-                <span style={{ color: "#C9A84C" }}>&#10022;</span> $79 One-Time
+                <span style={{ color: "#8B6D14" }}>&#10022;</span> 50+ Tasks &middot;{" "}
+                <span style={{ color: "#8B6D14" }}>&#10022;</span> AI That Knows You &middot;{" "}
+                <span style={{ color: "#8B6D14" }}>&#10022;</span> $79 One-Time
               </p>
             </ScrollReveal>
           </div>
@@ -951,8 +951,8 @@ export default function HomePage() {
           <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B5E50", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Task Timeline</p>
           {[{ label: "Book photographer", done: true }, { label: "Finalize guest list", done: false }, { label: "Cake tasting", done: false }].map((t, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <span style={{ width: 10, height: 10, borderRadius: "50%", background: t.done ? "#B09A87" : "#C9A84C", flexShrink: 0 }} />
-              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: t.done ? "#B09A87" : "#2A2018", textDecoration: t.done ? "line-through" : "none" }}>{t.label}</span>
+              <span style={{ width: 10, height: 10, borderRadius: "50%", background: t.done ? "#8A7A6A" : "#C9A84C", flexShrink: 0 }} />
+              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: t.done ? "#6B5E50" : "#2A2018", textDecoration: t.done ? "line-through" : "none" }}>{t.label}</span>
             </div>
           ))}
         </div>
@@ -1015,7 +1015,7 @@ export default function HomePage() {
           const textPanelBg = isDark ? "#2C3E2D" : "#F7EDED";
           const visualPanelBg = isDark ? "#233124" : "#F0E4CC";
           const textColor = isDark ? "#FAF6F1" : "#2A2018";
-          const mutedColor = isDark ? "rgba(250,246,241,0.6)" : "#8A7A6A";
+          const mutedColor = isDark ? "rgba(250,246,241,0.7)" : "#6B5E50";
           const scriptColor = isDark ? "#E8C97A" : "#C08080";
           const bulletColor = isDark ? "#E8C97A" : "#C9A84C";
           const numColor = isDark ? "rgba(250,246,241,0.05)" : "rgba(42,32,24,0.05)";
@@ -1043,6 +1043,7 @@ export default function HomePage() {
               >
                 {/* Large decorative number */}
                 <span
+                  aria-hidden="true"
                   style={{
                     position: "absolute",
                     top: -20,
@@ -1360,7 +1361,7 @@ export default function HomePage() {
                 >
                   $79
                 </p>
-                <p style={{ fontFamily: "var(--font-body)", fontSize: 15, color: "rgba(250,246,241,0.5)", marginTop: 8 }}>One-time payment &middot; 1 wedding &middot; Forever</p>
+                <p style={{ fontFamily: "var(--font-body)", fontSize: 15, color: "rgba(250,246,241,0.65)", marginTop: 8 }}>One-time payment &middot; 1 wedding &middot; Forever</p>
 
                 {/* Two-column feature list */}
                 <div
@@ -1589,36 +1590,36 @@ export default function HomePage() {
               <p style={{ fontFamily: "var(--font-script)", fontSize: 16, color: "rgba(212,165,165,0.7)", marginTop: 8 }}>
                 From engagement to &ldquo;I do.&rdquo;
               </p>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", lineHeight: 1.7, marginTop: 12 }}>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", lineHeight: 1.7, marginTop: 12 }}>
                 Your AI-powered wedding planning guide.
               </p>
             </div>
             <div>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.5)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Product</p>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.65)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Product</p>
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                <Link href="/#features" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>Features</Link>
-                <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>Pricing</Link>
-                <Link href="/#how-it-works" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>How It Works</Link>
+                <Link href="/#features" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Features</Link>
+                <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Pricing</Link>
+                <Link href="/#how-it-works" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>How It Works</Link>
                 <Link href="/blog" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#E8C97A", textDecoration: "none" }}>The Playbook</Link>
               </div>
             </div>
             <div>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.5)", textTransform: "uppercase", letterSpacing: "0.15em" }}>For Vendors</p>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.65)", textTransform: "uppercase", letterSpacing: "0.15em" }}>For Vendors</p>
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                <Link href="/dashboard/vendor-portal" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>Vendor Portal</Link>
-                <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>Placement Tiers</Link>
+                <Link href="/dashboard/vendor-portal" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Vendor Portal</Link>
+                <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Placement Tiers</Link>
               </div>
             </div>
             <div>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.5)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Company</p>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.65)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Company</p>
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                <a href="mailto:support@eydn.app" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}>Contact</a>
+                <a href="mailto:support@eydn.app" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Contact</a>
               </div>
             </div>
           </div>
           <div style={{ marginTop: 64, paddingTop: 32, borderTop: "1px solid rgba(250,246,241,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
             <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.55)" }}>&copy; {new Date().getFullYear()} Eydn. All rights reserved.</p>
-            <div style={{ display: "flex", gap: 24 }}>
+            <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
               <Link href="/privacy" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.55)", textDecoration: "none" }}>Privacy</Link>
               <Link href="/terms" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.55)", textDecoration: "none" }}>Terms</Link>
               <Link href="/cookies" style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(250,246,241,0.55)", textDecoration: "none" }}>Cookie Policy</Link>

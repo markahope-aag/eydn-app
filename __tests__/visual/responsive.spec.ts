@@ -47,8 +47,10 @@ for (const viewport of VIEWPORTS) {
       ).toBe(false);
 
       // Fail on accessibility violations (catches many layout issues too)
+      // Exclude decorative aria-hidden elements from contrast checks
       const results = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa"])
+        .exclude("[aria-hidden='true']")
         .analyze();
 
       expect(

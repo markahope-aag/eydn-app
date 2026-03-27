@@ -204,7 +204,7 @@ export default async function BlogListingPage({
                   fontWeight: 600,
                   textTransform: "uppercase",
                   letterSpacing: "0.1em",
-                  color: "#C9A84C",
+                  color: "#6B5500",
                 }}
               >
                 Featured &middot; {CATEGORIES.find((c) => c.value === featured.category)?.label || featured.category}
@@ -313,7 +313,7 @@ function BlogCard({ post }: { post: Post }) {
             fontWeight: 600,
             textTransform: "uppercase",
             letterSpacing: "0.08em",
-            color: "#C9A84C",
+            color: "#6B5500",
           }}
         >
           {catLabel}
