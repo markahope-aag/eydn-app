@@ -1,22 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-
-type Task = {
-  id: string;
-  title: string;
-  description: string | null;
-  category: string | null;
-  due_date: string | null;
-  completed: boolean;
-  status: "not_started" | "in_progress" | "done";
-  priority: "high" | "medium" | "low";
-  edyn_message: string | null;
-  timeline_phase: string | null;
-  is_system_generated: boolean;
-  notes: string | null;
-  parent_task_id: string | null;
-};
+import type { Task } from "./types";
 
 type Props = {
   tasks: Task[];

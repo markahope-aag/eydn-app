@@ -10,6 +10,7 @@ import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { TaskFilters } from "./TaskFilters";
 import { Tooltip } from "@/components/Tooltip";
 import { trackTaskCreated, trackTaskCompleted } from "@/lib/analytics";
+import type { Task } from "./types";
 
 // Dynamic imports for heavy components (dnd-kit, react-pdf in detail)
 const TaskList = dynamic(() => import("./TaskList").then((m) => ({ default: m.TaskList })), {
@@ -19,22 +20,6 @@ const TaskDetail = dynamic(() => import("./TaskDetail").then((m) => ({ default: 
 const TaskCalendar = dynamic(() => import("./TaskCalendar").then((m) => ({ default: m.TaskCalendar })), {
   loading: () => <SkeletonList count={4} />,
 });
-
-type Task = {
-  id: string;
-  title: string;
-  description: string | null;
-  category: string | null;
-  due_date: string | null;
-  completed: boolean;
-  status: "not_started" | "in_progress" | "done";
-  priority: "high" | "medium" | "low";
-  edyn_message: string | null;
-  timeline_phase: string | null;
-  is_system_generated: boolean;
-  notes: string | null;
-  parent_task_id: string | null;
-};
 
 const ADD_CATEGORIES = [
   "Venue",

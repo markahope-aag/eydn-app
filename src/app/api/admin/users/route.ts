@@ -4,13 +4,17 @@ import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
 import { supabaseError } from "@/lib/api-error";
 
-export async function GET() {
+export async function GET(request: Request) {
   const result = await requireAdmin();
   if ("error" in result) return result.error;
   const { supabase } = result;
 
+  const url = new URL(request.url);
+  const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 100, 1), 500);
+  const offset = Math.max(Number(url.searchParams.get("offset")) || 0, 0);
+
   const client = await clerkClient();
-  const clerkUsers = await client.users.getUserList({ limit: 100 });
+  const clerkUsers = await client.users.getUserList({ limit, offset });
 
   // Get roles
   const { data: roles } = await supabase
@@ -40,7 +44,7 @@ export async function GET() {
     last_sign_in: u.lastSignInAt,
   }));
 
-  return NextResponse.json(users);
+  return NextResponse.json({ users, totalCount: clerkUsers.totalCount });
 }
 
 export async function PATCH(request: Request) {

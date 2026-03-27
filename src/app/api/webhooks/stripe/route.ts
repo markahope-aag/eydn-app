@@ -112,7 +112,7 @@ export async function POST(request: Request) {
         });
 
       if (placementError) {
-        console.error("Failed to create placement:", placementError.message);
+        console.error("[WEBHOOK] Failed to create placement:", placementError.message);
       }
 
       // Mark vendor account as preferred and update matching suggested_vendor as featured

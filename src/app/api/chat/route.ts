@@ -397,7 +397,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Claude API error:", error);
+    console.error("[CHAT] Claude API error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Couldn't reach Eydn. Try again." },
       { status: 500 }

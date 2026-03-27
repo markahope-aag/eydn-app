@@ -9,6 +9,7 @@ import { formatDueDate } from "@/lib/date-utils";
 import { Comments } from "@/components/Comments";
 import Link from "next/link";
 import { TASK_GUIDE_MAP } from "@/lib/tasks/task-guide-map";
+import type { Task } from "./types";
 
 // Map task categories to email template vendor categories
 const TASK_TO_EMAIL_CATEGORY: Record<string, string> = {
@@ -36,22 +37,6 @@ function getEmailTemplate(taskCategory: string | null, taskTitle: string) {
   }
   return null;
 }
-
-type Task = {
-  id: string;
-  title: string;
-  description: string | null;
-  category: string | null;
-  due_date: string | null;
-  completed: boolean;
-  status: "not_started" | "in_progress" | "done";
-  priority: "high" | "medium" | "low";
-  edyn_message: string | null;
-  timeline_phase: string | null;
-  is_system_generated: boolean;
-  notes: string | null;
-  parent_task_id: string | null;
-};
 
 type TaskResource = {
   id: string;

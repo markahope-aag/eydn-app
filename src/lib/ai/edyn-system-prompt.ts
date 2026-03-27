@@ -1,6 +1,4 @@
-import type { Database } from "@/lib/supabase/types";
-
-type Wedding = Database["public"]["Tables"]["weddings"]["Row"];
+import type { Wedding } from "@/lib/types";
 
 type WeddingContext = {
   wedding: Wedding;

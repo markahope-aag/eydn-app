@@ -1,10 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
-import type { Database } from "@/lib/supabase/types";
+import type { Wedding } from "@/lib/types";
 import { formatDueDate } from "@/lib/date-utils";
 import Link from "next/link";
-
-type Wedding = Database["public"]["Tables"]["weddings"]["Row"];
 
 export default async function DashboardPage() {
   const { userId } = await auth();

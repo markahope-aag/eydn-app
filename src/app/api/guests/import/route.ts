@@ -75,9 +75,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "CSV must have a 'name' column" }, { status: 400 });
   }
 
+  // Determine the minimum number of columns each row must have
+  const requiredIndices = [nameIdx, emailIdx, groupIdx].filter((i) => i >= 0);
+  const minColumns = requiredIndices.length > 0 ? Math.max(...requiredIndices) + 1 : 1;
+
   const guests = [];
+  let skippedCount = 0;
   for (let i = 1; i < lines.length; i++) {
     const cols = parseCsvLine(lines[i]);
+    if (cols.length < minColumns) {
+      skippedCount++;
+      continue;
+    }
     const name = cols[nameIdx];
     if (!name) continue;
 
@@ -100,5 +109,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to import guests" }, { status: 500 });
   }
 
-  return NextResponse.json({ imported: guests.length }, { status: 201 });
+  return NextResponse.json({ imported: guests.length, skipped: skippedCount }, { status: 201 });
 }
