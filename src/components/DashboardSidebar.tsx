@@ -165,7 +165,8 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
       </Link>
 
       <nav role="navigation" aria-label="Dashboard navigation" className="mt-4 flex flex-col gap-3 overflow-y-auto">
-        {navSections.map((section) => (
+        {/* Hide couple-facing nav when viewing admin pages */}
+        {!pathname.startsWith("/dashboard/admin") && navSections.map((section) => (
           <CollapsibleSection
             key={section.label}
             section={section}
@@ -175,7 +176,14 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
         ))}
         {admin && (
           <div>
-            <p className="px-3 py-1.5 text-[11px] font-semibold text-violet uppercase tracking-wider">
+            {pathname.startsWith("/dashboard/admin") && (
+              <NavLink
+                item={{ href: "/dashboard", label: "\u2190 Back to Dashboard" }}
+                active={false}
+                onClick={() => setOpen(false)}
+              />
+            )}
+            <p className="px-3 py-1.5 text-[11px] font-semibold text-violet uppercase tracking-wider mt-1">
               Admin
             </p>
             <div className="flex flex-col gap-0.5 mt-0.5">
