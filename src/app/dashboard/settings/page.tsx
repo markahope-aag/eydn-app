@@ -343,7 +343,7 @@ export default function SettingsPage() {
             <option value={30}>30 days before</option>
           </select>
           <p className="mt-2 text-[12px] text-muted">
-            You'll also receive in-app notifications via the bell icon. Push notifications can be enabled in your browser settings.
+            You&apos;ll also receive in-app notifications via the bell icon. Push notifications can be enabled in your browser settings.
           </p>
         </div>
 

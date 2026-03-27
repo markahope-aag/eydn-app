@@ -117,9 +117,10 @@ export default async function WeddingWebsitePage({
       })
     : null;
 
-  // Countdown
+  // Countdown — computed at request time (server component renders once per request)
+  const requestTime = new Date();
   const daysUntil = wedding.date
-    ? Math.ceil((new Date(wedding.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    ? Math.ceil((new Date(wedding.date).getTime() - requestTime.getTime()) / (1000 * 60 * 60 * 24))
     : null;
 
   // Build sections for sticky nav

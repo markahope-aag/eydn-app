@@ -135,6 +135,7 @@ export function PhotoUpload({ weddingSlug, hasPhotos = false }: Props) {
             />
             {preview ? (
               <div className="space-y-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={preview}
                   alt="Preview"
