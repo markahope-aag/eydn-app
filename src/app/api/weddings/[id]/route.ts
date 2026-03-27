@@ -35,6 +35,14 @@ export async function PATCH(
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
 
+  // Validate numeric fields are non-negative
+  if (updates.budget !== undefined && updates.budget !== null && (updates.budget as number) < 0) {
+    return NextResponse.json({ error: "Budget cannot be negative" }, { status: 400 });
+  }
+  if (updates.guest_count_estimate !== undefined && updates.guest_count_estimate !== null && (updates.guest_count_estimate as number) < 0) {
+    return NextResponse.json({ error: "Guest count cannot be negative" }, { status: 400 });
+  }
+
   const { data, error } = await supabase
     .from("weddings")
     .update({
