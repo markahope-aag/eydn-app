@@ -66,9 +66,10 @@ for (const viewport of VIEWPORTS) {
         `${page.path} has horizontal overflow at ${viewport.name}`
       ).toBe(false);
 
-      // Accessibility audit
+      // Accessibility audit — exclude decorative aria-hidden elements
       const results = await new AxeBuilder({ page: p })
         .withTags(["wcag2a", "wcag2aa"])
+        .exclude("[aria-hidden='true']")
         .analyze();
 
       expect(
