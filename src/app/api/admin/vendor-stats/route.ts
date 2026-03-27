@@ -114,6 +114,9 @@ export async function GET() {
     ? Math.round(((totalBookings ?? 0) / weddingCount) * 10) / 10
     : 0;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+
   // --- Vendor accounts ---
   const [
     { count: totalAccounts },
@@ -121,14 +124,14 @@ export async function GET() {
     { count: approvedAccounts },
     { count: suspendedAccounts },
   ] = await Promise.all([
-    (supabase as any).from("vendor_accounts").select("*", { count: "exact", head: true }),
-    (supabase as any).from("vendor_accounts").select("*", { count: "exact", head: true }).eq("status", "pending"),
-    (supabase as any).from("vendor_accounts").select("*", { count: "exact", head: true }).eq("status", "approved"),
-    (supabase as any).from("vendor_accounts").select("*", { count: "exact", head: true }).eq("status", "suspended"),
+    sb.from("vendor_accounts").select("*", { count: "exact", head: true }),
+    sb.from("vendor_accounts").select("*", { count: "exact", head: true }).eq("status", "pending"),
+    sb.from("vendor_accounts").select("*", { count: "exact", head: true }).eq("status", "approved"),
+    sb.from("vendor_accounts").select("*", { count: "exact", head: true }).eq("status", "suspended"),
   ]);
 
   // --- Placements ---
-  const { data: activePlacementsData } = await (supabase as any)
+  const { data: activePlacementsData } = await sb
     .from("vendor_placements")
     .select("id, tier_id, placement_tiers(name, price_monthly)")
     .eq("status", "active");
@@ -136,7 +139,7 @@ export async function GET() {
   const activePlacements = (activePlacementsData || []).length;
   let mrr = 0;
   const tierMap: Record<string, { tier: string; count: number; revenue: number }> = {};
-  (activePlacementsData || []).forEach((p: any) => {
+  (activePlacementsData || []).forEach((p: { placement_tiers?: { name?: string; price_monthly?: number } }) => {
     const tierName = p.placement_tiers?.name || "Unknown";
     const price = p.placement_tiers?.price_monthly || 0;
     mrr += price;
@@ -154,9 +157,9 @@ export async function GET() {
     { count: approvedSubs },
     { count: rejectedSubs },
   ] = await Promise.all([
-    (supabase as any).from("vendor_submissions").select("*", { count: "exact", head: true }).eq("status", "pending"),
-    (supabase as any).from("vendor_submissions").select("*", { count: "exact", head: true }).eq("status", "approved"),
-    (supabase as any).from("vendor_submissions").select("*", { count: "exact", head: true }).eq("status", "rejected"),
+    sb.from("vendor_submissions").select("*", { count: "exact", head: true }).eq("status", "pending"),
+    sb.from("vendor_submissions").select("*", { count: "exact", head: true }).eq("status", "approved"),
+    sb.from("vendor_submissions").select("*", { count: "exact", head: true }).eq("status", "rejected"),
   ]);
 
   return NextResponse.json({

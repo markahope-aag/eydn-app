@@ -37,6 +37,7 @@ export async function POST(request: Request) {
   return NextResponse.json({ success: true });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function DELETE(_request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;

@@ -5,6 +5,8 @@ export async function GET() {
   const result = await requireAdmin();
   if ("error" in result) return result.error;
   const { supabase } = result;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
 
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -51,9 +53,9 @@ export async function GET() {
     { count: bouncesLast7d },
     { count: complaintsLast7d },
   ] = await Promise.all([
-    (supabase as any).from("email_events").select("*", { count: "exact", head: true }).gte("created_at", sevenDaysAgo),
-    (supabase as any).from("email_events").select("*", { count: "exact", head: true }).gte("created_at", sevenDaysAgo).eq("event_type", "bounced"),
-    (supabase as any).from("email_events").select("*", { count: "exact", head: true }).gte("created_at", sevenDaysAgo).eq("event_type", "complained"),
+    sb.from("email_events").select("*", { count: "exact", head: true }).gte("created_at", sevenDaysAgo),
+    sb.from("email_events").select("*", { count: "exact", head: true }).gte("created_at", sevenDaysAgo).eq("event_type", "bounced"),
+    sb.from("email_events").select("*", { count: "exact", head: true }).gte("created_at", sevenDaysAgo).eq("event_type", "complained"),
   ]);
 
   const sent = sentLast7d ?? 0;
