@@ -427,6 +427,75 @@ function AIScreen({
   );
 }
 
+// Screen 7 — Invite Partner (optional)
+function InvitePartnerStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  async function sendInvite() {
+    if (!email.trim()) return;
+    setSending(true);
+    try {
+      const res = await fetch("/api/collaborators", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), role: "partner" }),
+      });
+      if (!res.ok) throw new Error();
+      setSent(true);
+      toast.success("Invitation sent!");
+      setTimeout(onNext, 1500);
+    } catch {
+      toast.error("Couldn't send the invitation. You can do this later in Settings.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="max-w-md mx-auto text-center">
+      <h1 className="text-[24px] sm:text-[28px] font-semibold text-plum">
+        Invite your partner
+      </h1>
+      <p className="mt-2 text-[15px] text-muted leading-relaxed">
+        Planning is better together. Your partner will get full access to view, edit, and manage your wedding.
+      </p>
+      {sent ? (
+        <div className="mt-6 bg-confirmed-bg rounded-[12px] p-4">
+          <p className="text-[15px] text-confirmed-text font-semibold">Invitation sent to {email}!</p>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-3">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Partner's email address"
+            className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px] text-center"
+          />
+          <button
+            onClick={sendInvite}
+            disabled={!email.trim() || sending}
+            className="btn-primary w-full disabled:opacity-50"
+          >
+            {sending ? "Sending..." : "Send Invitation"}
+          </button>
+          <p className="text-[13px] text-muted">
+            They&apos;ll get an email with a link to sign in and access your wedding.
+          </p>
+        </div>
+      )}
+      <button
+        onClick={onSkip}
+        className="mt-4 text-[13px] text-muted hover:text-plum transition"
+      >
+        Skip — I&apos;ll do this later
+      </button>
+    </div>
+  );
+}
+
 // ─── Budget Category Allocations ─────────────────────────────────────────────
 
 const BUDGET_ALLOCATIONS = [
@@ -448,9 +517,10 @@ const BUDGET_ALLOCATIONS = [
 // 3: Budget + Guest Count
 // 4: Venue Status
 // 5: Booked Vendors
-// 6: AI (intro + greeting + input)
+// 6: Invite Partner
+// 7: AI (intro + greeting + input)
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 8;
 const PROGRESS_STEPS = TOTAL_STEPS - 1; // exclude Welcome
 
 export default function OnboardingPage() {
@@ -641,8 +711,8 @@ export default function OnboardingPage() {
     );
   }
 
-  // Screen 7 — AI screen (no back button, no standard nav)
-  if (step === 6) {
+  // Screen 8 — AI screen (no back button, no standard nav)
+  if (step === 7) {
     return (
       <div className="px-6 py-8 max-w-2xl mx-auto" ref={contentRef}>
         <div className="flex gap-1 mb-10">
@@ -733,38 +803,46 @@ export default function OnboardingPage() {
           onToggle={toggleVendor}
         />
       )}
+      {step === 6 && (
+        <InvitePartnerStep
+          onNext={() => setStep(7)}
+          onSkip={() => setStep(7)}
+        />
+      )}
 
-      {/* Navigation */}
-      <div className="mt-10 max-w-md mx-auto">
-        <button
-          type="button"
-          onClick={handleNext}
-          disabled={!canProceed()}
-          className="btn-primary w-full disabled:opacity-40"
-        >
-          {getCTALabel()}
-        </button>
-
-        {skipLabel && (
+      {/* Navigation (hidden for invite step which has its own buttons) */}
+      {step !== 6 && (
+        <div className="mt-10 max-w-md mx-auto">
           <button
             type="button"
-            onClick={() => setStep((s) => s + 1)}
-            className="block mx-auto mt-3 text-[14px] text-muted hover:text-plum transition"
+            onClick={handleNext}
+            disabled={!canProceed()}
+            className="btn-primary w-full disabled:opacity-40"
           >
-            {skipLabel}
+            {getCTALabel()}
           </button>
-        )}
 
-        {step > 1 && (
-          <button
-            type="button"
-            onClick={() => setStep((s) => s - 1)}
-            className="block mx-auto mt-4 text-[14px] text-muted hover:text-plum transition"
-          >
-            Back
-          </button>
-        )}
-      </div>
+          {skipLabel && (
+            <button
+              type="button"
+              onClick={() => setStep((s) => s + 1)}
+              className="block mx-auto mt-3 text-[14px] text-muted hover:text-plum transition"
+            >
+              {skipLabel}
+            </button>
+          )}
+
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={() => setStep((s) => s - 1)}
+              className="block mx-auto mt-4 text-[14px] text-muted hover:text-plum transition"
+            >
+              Back
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -372,6 +372,23 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
+      {/* Things Eydn Should Know */}
+      <div className="card p-5 mt-6">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-[15px] font-semibold text-plum">Things Eydn Should Know</h2>
+          <Link href="/dashboard/settings" className="text-[12px] text-violet hover:text-plum transition">Edit</Link>
+        </div>
+        {wedding.key_decisions ? (
+          <p className="text-[13px] text-muted leading-relaxed line-clamp-3">{wedding.key_decisions}</p>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-[13px] text-muted">Tell Eydn about your wedding preferences, allergies, must-haves, and key decisions.</p>
+            <Link href="/dashboard/settings" className="text-[13px] text-violet font-semibold mt-2 inline-block">Add Notes &rarr;</Link>
+          </div>
+        )}
+        <p className="text-[11px] text-muted mt-2">These notes shape every conversation with your AI planning assistant.</p>
+      </div>
+
       {/* Upcoming tasks — sorted by urgency with priority indicators */}
       {upcomingTasks && upcomingTasks.length > 0 && (
         <div className="mt-8">
