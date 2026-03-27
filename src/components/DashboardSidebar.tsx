@@ -255,7 +255,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 rounded-[12px] bg-white border border-border p-2 shadow-sm"
+        className="lg:hidden fixed top-4 left-4 z-50 rounded-[12px] bg-white border border-border p-2 shadow-sm"
         aria-label="Open navigation menu"
         aria-expanded={open}
       >
@@ -279,7 +279,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
       {/* Mobile overlay sidebar */}
       {open && (
         <div
-          className="md:hidden fixed inset-0 z-50"
+          className="lg:hidden fixed inset-0 z-50"
           onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
         >
           {/* Backdrop */}
@@ -315,7 +315,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-64 border-r border-border bg-white p-6 flex-col shrink-0">
+      <aside className="hidden lg:flex w-64 border-r border-border bg-white p-6 flex-col shrink-0">
         {sidebarContent}
       </aside>
 

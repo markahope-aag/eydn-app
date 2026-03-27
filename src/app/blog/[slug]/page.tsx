@@ -151,7 +151,7 @@ export default async function BlogPostPage({
             {CATEGORIES[p.category] || p.category}
           </Link>
           <span style={{ color: "#E8D5B7" }}>&middot;</span>
-          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#8A7A6A" }}>
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6B5E50" }}>
             {p.read_time_minutes} min read
           </span>
         </div>
@@ -193,7 +193,7 @@ export default async function BlogPostPage({
               {p.author_name}
             </p>
             {p.published_at && (
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8A7A6A" }}>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6B5E50" }}>
                 {new Date(p.published_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </p>
             )}
@@ -279,7 +279,7 @@ export default async function BlogPostPage({
                     >
                       {r.title}
                     </h3>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#8A7A6A", marginTop: 8, lineHeight: 1.5 }}>
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6B5E50", marginTop: 8, lineHeight: 1.5 }}>
                       {r.excerpt}
                     </p>
                   </div>

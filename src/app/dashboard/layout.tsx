@@ -15,11 +15,11 @@ export default async function DashboardLayout({
   const admin = await isAdmin();
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen overflow-x-hidden">
       <DashboardSidebar admin={admin} />
 
       {/* Main content — add left padding on mobile for hamburger button */}
-      <main id="main-content" className="flex-1 bg-whisper p-4 sm:p-6 md:p-8 pt-16 md:pt-8">
+      <main id="main-content" className="flex-1 bg-whisper p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 overflow-x-hidden">
         <Suspense fallback={<SkeletonList count={5} />}>
           <ArchiveBanner />
           <DateSyncBanner />

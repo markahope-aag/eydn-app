@@ -477,6 +477,7 @@ export default function MoodBoardPage() {
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); setConfirmDelete(item.id); }}
+                    aria-label="Remove image"
                     className="w-6 h-6 bg-black/40 hover:bg-error text-white rounded-full text-[11px] flex items-center justify-center transition flex-shrink-0"
                   >
                     <svg width="10" height="10" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -538,6 +539,7 @@ export default function MoodBoardPage() {
               />
               <button
                 onClick={() => setLightbox(null)}
+                aria-label="Close preview"
                 className="absolute top-3 right-3 w-8 h-8 bg-white/90 hover:bg-white text-plum rounded-full text-[18px] flex items-center justify-center shadow transition"
               >
                 &times;

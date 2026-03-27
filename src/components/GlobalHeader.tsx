@@ -19,7 +19,7 @@ export function GlobalHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-white/95 backdrop-blur pl-16 md:pl-6 pr-6 py-3">
+    <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-white/95 backdrop-blur pl-16 lg:pl-6 pr-6 py-3">
       <div className="flex items-center gap-8">
         <Link href="/" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -165,7 +165,7 @@ export default async function BlogListingPage({
       <section style={{ maxWidth: 1100, margin: "0 auto", padding: "60px 24px 120px" }}>
         {allPosts.length === 0 && (
           <div style={{ textAlign: "center", padding: "80px 0" }}>
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "#8A7A6A" }}>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 16, color: "#6B5E50" }}>
               No articles yet. Check back soon!
             </p>
           </div>
@@ -225,7 +225,7 @@ export default async function BlogListingPage({
                 style={{
                   fontFamily: "'DM Sans', sans-serif",
                   fontSize: 15,
-                  color: "#8A7A6A",
+                  color: "#6B5E50",
                   lineHeight: 1.65,
                   marginTop: 12,
                 }}
@@ -233,11 +233,11 @@ export default async function BlogListingPage({
                 {featured.excerpt}
               </p>
               <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#8A7A6A" }}>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6B5E50" }}>
                   {featured.author_name}
                 </span>
                 <span style={{ color: "#E8D5B7" }}>&middot;</span>
-                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#8A7A6A" }}>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6B5E50" }}>
                   {featured.read_time_minutes} min read
                 </span>
               </div>
@@ -334,7 +334,7 @@ function BlogCard({ post }: { post: Post }) {
           style={{
             fontFamily: "'DM Sans', sans-serif",
             fontSize: 14,
-            color: "#8A7A6A",
+            color: "#6B5E50",
             lineHeight: 1.6,
             marginTop: 8,
             flex: 1,
@@ -343,13 +343,13 @@ function BlogCard({ post }: { post: Post }) {
           {post.excerpt}
         </p>
         <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8A7A6A" }}>
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6B5E50" }}>
             {post.read_time_minutes} min read
           </span>
           {post.published_at && (
             <>
               <span style={{ color: "#E8D5B7" }}>&middot;</span>
-              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#8A7A6A" }}>
+              <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#6B5E50" }}>
                 {new Date(post.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
               </span>
             </>

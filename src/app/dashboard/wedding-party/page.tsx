@@ -362,10 +362,11 @@ export default function WeddingPartyPage() {
           <div key={member.id} className="group/member rounded-[16px] border-border bg-white overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-3">
               {/* Photo avatar — click to upload */}
-              <div
+              <button
+                type="button"
                 className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 relative cursor-pointer group/avatar"
                 onClick={() => { photoTargetId.current = member.id; photoRef.current?.click(); }}
-                title={member.photo_url ? "Change photo" : "Add photo"}
+                aria-label={member.photo_url ? `Change photo for ${member.name}` : `Add photo for ${member.name}`}
               >
                 {member.photo_url ? (
                   <>
@@ -383,7 +384,7 @@ export default function WeddingPartyPage() {
                     </span>
                   </div>
                 )}
-              </div>
+              </button>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
