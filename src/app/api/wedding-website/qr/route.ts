@@ -117,7 +117,8 @@ export async function POST(request: Request) {
 
 async function generateQR(url: string, label: string): Promise<string | null> {
   try {
-    const res = await fetch("https://app.beaconstac.com/api/2.0/qrcodes/", {
+    // Step 1: Create the QR code
+    const createRes = await fetch("https://api.uniqode.com/api/2.0/qrcodes/", {
       method: "POST",
       headers: {
         Authorization: `Token ${UNIQODE_API_KEY}`,
@@ -125,30 +126,41 @@ async function generateQR(url: string, label: string): Promise<string | null> {
       },
       body: JSON.stringify({
         organization: Number(UNIQODE_ORG_ID),
-        qr_type: 2, // URL type
+        qr_type: 2,
         campaign: {
-          content_type: 1, // URL
+          content_type: 1,
           custom_url: url,
         },
         name: `RSVP: ${label}`,
-        attributes: {
-          color: "#2C3E2D",
-          backgroundColor: "#FFFFFF",
-          margin: 1,
-          isVCard: false,
-          frameText: "",
-        },
       }),
     });
 
-    if (!res.ok) {
-      console.error("[QR] Uniqode API error:", res.status, await res.text().catch(() => ""));
+    if (!createRes.ok) {
+      console.error("[QR] Uniqode create error:", createRes.status, await createRes.text().catch(() => ""));
       return null;
     }
 
-    const data = await res.json();
-    // Uniqode returns the QR image URL in the response
-    return data.qr_code_image || data.image_url || data.qr_image || null;
+    const createData = await createRes.json();
+    const qrId = createData.id;
+    if (!qrId) {
+      console.error("[QR] No ID returned from Uniqode");
+      return null;
+    }
+
+    // Step 2: Get the download URL
+    const downloadRes = await fetch(`https://api.uniqode.com/api/2.0/qrcodes/${qrId}/download/`, {
+      headers: {
+        Authorization: `Token ${UNIQODE_API_KEY}`,
+      },
+    });
+
+    if (!downloadRes.ok) {
+      console.error("[QR] Uniqode download error:", downloadRes.status);
+      return null;
+    }
+
+    const downloadData = await downloadRes.json();
+    return downloadData.urls?.png || null;
   } catch (error) {
     console.error("[QR] Generation failed:", error instanceof Error ? error.message : error);
     return null;
