@@ -6,27 +6,23 @@ export async function GET() {
   if ("error" in result) return result.error;
   const { supabase } = result;
 
-  // --- Directory stats (suggested_vendors) — exclude seed data ---
-  // Seed vendors have example.com websites or (555) phone numbers
-  const seedFilter = "website.neq.https://example.com";
-
-  const [
-    { count: totalDirectory },
-    { count: activeDirectory },
-    { count: featuredDirectory },
-  ] = await Promise.all([
-    supabase.from("suggested_vendors").select("*", { count: "exact", head: true }).not("website", "eq", "https://example.com"),
-    supabase.from("suggested_vendors").select("*", { count: "exact", head: true }).eq("active", true).not("website", "eq", "https://example.com"),
-    supabase.from("suggested_vendors").select("*", { count: "exact", head: true }).eq("featured", true).not("website", "eq", "https://example.com"),
-  ]);
-
-  const { data: byCategoryDir } = await supabase
+  // --- Directory stats (suggested_vendors) ---
+  // Fetch all vendors, then filter out seed data client-side
+  // Seed data: website = "https://example.com" AND phone starts with "(555)"
+  const { data: allDirVendors } = await supabase
     .from("suggested_vendors")
-    .select("category")
-    .not("website", "eq", "https://example.com");
+    .select("category, state, price_range, featured, active, website, phone");
+
+  const realVendors = (allDirVendors || []).filter((v: { website: string | null; phone: string | null }) =>
+    !(v.website === "https://example.com" && v.phone?.startsWith("(555)"))
+  );
+
+  const totalDirectory = realVendors.length;
+  const activeDirectory = realVendors.filter((v: { active: boolean }) => v.active).length;
+  const featuredDirectory = realVendors.filter((v: { featured: boolean }) => v.featured).length;
 
   const categoryMap: Record<string, number> = {};
-  (byCategoryDir || []).forEach((r: { category: string }) => {
+  realVendors.forEach((r: { category: string }) => {
     const cat = r.category || "Unknown";
     categoryMap[cat] = (categoryMap[cat] || 0) + 1;
   });
@@ -34,13 +30,8 @@ export async function GET() {
     .map(([category, count]) => ({ category, count }))
     .sort((a, b) => b.count - a.count);
 
-  const { data: byStateDir } = await supabase
-    .from("suggested_vendors")
-    .select("state")
-    .not("website", "eq", "https://example.com");
-
   const stateMap: Record<string, number> = {};
-  (byStateDir || []).forEach((r: { state: string }) => {
+  realVendors.forEach((r: { state: string }) => {
     const st = r.state || "Unknown";
     stateMap[st] = (stateMap[st] || 0) + 1;
   });
@@ -48,13 +39,8 @@ export async function GET() {
     .map(([state, count]) => ({ state, count }))
     .sort((a, b) => b.count - a.count);
 
-  const { data: byPriceDir } = await supabase
-    .from("suggested_vendors")
-    .select("price_range")
-    .not("website", "eq", "https://example.com");
-
   const priceMap: Record<string, number> = {};
-  (byPriceDir || []).forEach((r: { price_range: string | null }) => {
+  realVendors.forEach((r: { price_range: string | null }) => {
     const range = r.price_range || "Not specified";
     priceMap[range] = (priceMap[range] || 0) + 1;
   });
