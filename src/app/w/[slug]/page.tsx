@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Playfair_Display } from "next/font/google";
 import { StickyNav } from "./StickyNav";
-import { RsvpForm } from "./RsvpForm";
+import { RsvpForm, RsvpNameLookup } from "./RsvpForm";
 import { PhotoUpload } from "./PhotoUpload";
 import type { Database } from "@/lib/supabase/types";
 
@@ -30,18 +30,19 @@ function SectionDivider() {
   );
 }
 
-// Revalidate public wedding websites every 5 minutes
-export const revalidate = 300;
+// Revalidate public wedding websites every 60 seconds for fresh data
+export const revalidate = 60;
 
 export default async function WeddingWebsitePage({
   params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ rsvp?: string }>;
+  searchParams: Promise<{ rsvp?: string; token?: string }>;
 }) {
   const { slug } = await params;
-  const { rsvp } = await searchParams;
+  const { rsvp, token } = await searchParams;
+  const rsvpToken = token || rsvp;
   const supabase = createSupabaseAdmin();
 
   const { data: weddingRaw } = await supabase
@@ -79,13 +80,13 @@ export default async function WeddingWebsitePage({
   const photos = (photosRaw ?? []) as WeddingPhoto[];
   const weddingParty = (weddingPartyRaw ?? []) as WeddingPartyMember[];
 
-  // RSVP token lookup
+  // RSVP token lookup (supports ?token=xxx or legacy ?rsvp=xxx)
   let rsvpGuest: { id: string; name: string; token: string; responded: boolean } | null = null;
-  if (rsvp) {
+  if (rsvpToken) {
     const { data: tokenDataRaw } = await supabase
       .from("rsvp_tokens")
       .select("*, guests(id, name)")
-      .eq("token", rsvp)
+      .eq("token", rsvpToken)
       .eq("wedding_id", wedding.id)
       .maybeSingle();
 
@@ -371,7 +372,7 @@ export default async function WeddingWebsitePage({
             Upload your favourite moments from the celebration
           </p>
           <div className="mt-8 max-w-md mx-auto">
-            <PhotoUpload weddingSlug={slug} />
+            <PhotoUpload weddingSlug={slug} hasPhotos={photos.length > 0} />
           </div>
         </section>
 
@@ -398,10 +399,7 @@ export default async function WeddingWebsitePage({
             </div>
           ) : (
             <div className="mt-8 max-w-md mx-auto">
-              <p className="text-[16px] text-muted mb-6">
-                Enter your RSVP code to respond to this invitation.
-              </p>
-              <RsvpCodeInput slug={slug} />
+              <RsvpNameLookup weddingSlug={slug} />
             </div>
           )}
         </section>
@@ -422,22 +420,3 @@ export default async function WeddingWebsitePage({
   );
 }
 
-function RsvpCodeInput({ slug }: { slug: string }) {
-  return (
-    <form
-      action={`/w/${slug}`}
-      method="get"
-      className="flex gap-3 items-center justify-center"
-    >
-      <input
-        type="text"
-        name="rsvp"
-        placeholder="Enter your code"
-        className="rounded-[12px] border border-border px-5 py-3 text-[16px] w-52 focus:outline-none focus:ring-2 focus:ring-violet/30"
-      />
-      <button type="submit" className="btn-primary">
-        Go
-      </button>
-    </form>
-  );
-}

@@ -2,6 +2,47 @@
 
 Items identified during development that are not blocking beta launch but should be addressed.
 
+## Wedding Website (Post-Launch)
+
+### Live Preview / Side-by-Side Editor
+- Real-time preview of the guest-facing website while editing
+- Either iframe-based split view or "Preview" button that opens in new tab
+- Priority: High — biggest UX gap in the website builder
+
+### Auto-Save
+- Replace manual "Save" button with auto-save on field blur
+- Show subtle "Saved" / "Saving..." indicator
+- Priority: Medium
+
+### URL Availability Checker
+- Inline check when typing the website slug
+- Show checkmark (available) or X (taken) in real-time
+- Query suggested_vendors or weddings table for slug conflicts
+- Priority: Medium
+
+### Theme & Color Customization
+- Let couples match their website to wedding colors
+- Default to Eydn theme, allow custom primary/accent/background colors
+- Store in website_theme JSON field (migration already created)
+- Priority: Medium
+
+### QR Code Generation for Invites
+- Generate unique QR codes per guest linking to their RSVP page
+- Downloadable as PNG for printing on physical invitations
+- Each QR encodes the guest's unique RSVP token URL
+- Priority: High — critical for physical invitation workflow
+
+### Structured Travel & Accommodation Fields
+- Replace plain text with structured fields: hotel name, booking link,
+  discount code, distance from venue
+- Display as formatted cards on the guest-facing site
+- Priority: Low
+
+### Gallery Download All
+- "Download All Photos" button for couples after the wedding
+- ZIP file generation of all guest-uploaded photos
+- Priority: Low
+
 ## Admin Monitoring (Post-Launch)
 
 ### Sentry Error Monitoring Integration

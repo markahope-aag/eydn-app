@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+function titleCase(s: string) {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 type Props = {
   token: string;
   guestName: string;
@@ -119,7 +123,7 @@ export function RsvpForm({ token, guestName }: Props) {
             <input
               type="text"
               value={plusOneName}
-              onChange={(e) => setPlusOneName(e.target.value)}
+              onChange={(e) => setPlusOneName(titleCase(e.target.value))}
               placeholder="Guest name"
               className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
             />
@@ -136,6 +140,99 @@ export function RsvpForm({ token, guestName }: Props) {
           {submitting ? "Sending..." : "Submit RSVP"}
         </button>
       )}
+    </form>
+  );
+}
+
+type NameLookupProps = {
+  weddingSlug: string;
+};
+
+export function RsvpNameLookup({ weddingSlug }: NameLookupProps) {
+  const [name, setName] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState("");
+  const [foundGuest, setFoundGuest] = useState<{
+    token: string;
+    guest_id: string;
+    guest_name: string;
+    responded: boolean;
+  } | null>(null);
+
+  async function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    setSearching(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/public/rsvp-lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), wedding_slug: weddingSlug }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Something went wrong. Please try again.");
+        return;
+      }
+
+      const data = await res.json();
+      setFoundGuest(data);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  if (foundGuest) {
+    if (foundGuest.responded) {
+      return (
+        <div className="bg-white border border-border rounded-[20px] p-10">
+          <p className="text-[16px] text-muted">
+            Thank you, <span className="font-semibold text-plum">{foundGuest.guest_name}</span>! Your RSVP has already been recorded.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <RsvpForm
+        token={foundGuest.token}
+        guestName={foundGuest.guest_name}
+        guestId={foundGuest.guest_id}
+        weddingSlug={weddingSlug}
+      />
+    );
+  }
+
+  return (
+    <form onSubmit={handleSearch} className="card p-8 text-center">
+      <p className="text-[16px] text-muted mb-6">
+        Find your name to RSVP
+      </p>
+      <div className="space-y-4">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(titleCase(e.target.value))}
+          placeholder="Your full name"
+          className="w-full rounded-[12px] border border-border px-5 py-3 text-[16px] text-center focus:outline-none focus:ring-2 focus:ring-violet/30"
+        />
+        {error && (
+          <p className="text-[14px] text-red-500">{error}</p>
+        )}
+        <button
+          type="submit"
+          disabled={searching || !name.trim()}
+          className="btn-primary w-full"
+        >
+          {searching ? "Searching..." : "Find My Name"}
+        </button>
+      </div>
     </form>
   );
 }

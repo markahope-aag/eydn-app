@@ -50,9 +50,13 @@ export default function WebsitePage() {
   // RSVP state
   const [rsvpTokens, setRsvpTokens] = useState<RsvpToken[]>([]);
   const [generatingTokens, setGeneratingTokens] = useState(false);
+  const [rsvpDeadline, setRsvpDeadline] = useState("");
+  const [mealOptions, setMealOptions] = useState<string[]>([]);
+  const [newMealOption, setNewMealOption] = useState("");
 
   // Gallery state
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [photoApprovalRequired, setPhotoApprovalRequired] = useState(false);
 
   // Couple photo
   const [couplePhotoUrl, setCouplePhotoUrl] = useState("");
@@ -94,6 +98,9 @@ export default function WebsitePage() {
       setTravel(data.travel || "");
       setAccommodations(data.accommodations || "");
       setFaq(data.faq || []);
+      setRsvpDeadline(data.rsvp_deadline || "");
+      setMealOptions(data.meal_options || []);
+      setPhotoApprovalRequired(data.photo_approval_required || false);
     } catch {
       toast.error("Couldn't load website settings. Try refreshing.");
     } finally {
@@ -168,7 +175,7 @@ export default function WebsitePage() {
       const res = await fetch("/api/wedding-website", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ schedule, travel, accommodations, faq }),
+        body: JSON.stringify({ schedule, travel, accommodations, faq, rsvp_deadline: rsvpDeadline, meal_options: mealOptions, photo_approval_required: photoApprovalRequired }),
       });
       if (!res.ok) throw new Error();
       toast.success("Schedule & details saved");
@@ -596,6 +603,22 @@ export default function WebsitePage() {
                   </div>
                 ))}
               </div>
+              {faq.length === 0 && (
+                <div className="mt-3">
+                  <p className="text-[12px] text-muted mb-2">Quick add a common question:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {["Is there parking at the venue?", "What's the dress code?", "Are children welcome?"].map((q) => (
+                      <button
+                        key={q}
+                        onClick={() => setFaq([...faq, { question: q, answer: "" }])}
+                        className="rounded-full border border-violet/30 bg-lavender/50 px-3 py-1 text-[13px] text-violet hover:bg-lavender transition"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <button
                 onClick={() => setFaq([...faq, { question: "", answer: "" }])}
                 className="btn-ghost btn-sm mt-3 text-violet"
@@ -641,8 +664,27 @@ export default function WebsitePage() {
               )}
             </div>
 
+            <p className="text-[12px] text-muted italic">
+              Tip: It&apos;s thoughtful to include a brief note to guests about your registry preferences on your website.
+            </p>
+
             <div className="card p-4 space-y-3">
               <h3 className="text-[15px] font-semibold text-plum">Add Registry Link</h3>
+              <div className="flex flex-wrap gap-2">
+                {["Amazon Wedding Registry", "Zola", "Target", "Crate & Barrel", "Honeyfund"].map((name) => (
+                  <button
+                    key={name}
+                    onClick={() => setNewRegistryName(name)}
+                    className={`rounded-[10px] border px-3 py-1.5 text-[13px] font-medium transition ${
+                      newRegistryName === name
+                        ? "border-violet bg-lavender text-violet"
+                        : "border-border bg-white text-plum hover:border-violet/40 hover:bg-lavender/30"
+                    }`}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
               <input
                 type="text"
                 value={newRegistryName}
@@ -667,6 +709,95 @@ export default function WebsitePage() {
         {/* RSVP Tab */}
         {tab === "rsvp" && (
           <div className="space-y-6">
+            <div className="max-w-lg space-y-6">
+              <div>
+                <label className="text-[13px] font-semibold text-muted block mb-1">
+                  RSVP Deadline <Tooltip text="Guests will see this deadline on your RSVP page. Set it 2-4 weeks before the wedding to give your caterer final numbers." wide />
+                </label>
+                <input
+                  type="date"
+                  value={rsvpDeadline}
+                  onChange={(e) => setRsvpDeadline(e.target.value)}
+                  className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+                />
+              </div>
+
+              <div>
+                <h3 className="text-[15px] font-semibold text-plum mb-3">Meal Options</h3>
+                <p className="text-[12px] text-muted mb-3">
+                  Define the meal choices guests will see when they RSVP.
+                </p>
+                {mealOptions.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {mealOptions.map((option, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 rounded-full bg-lavender px-3 py-1 text-[13px] text-violet font-medium"
+                      >
+                        {option}
+                        <button
+                          onClick={() => setMealOptions(mealOptions.filter((_, j) => j !== i))}
+                          className="ml-1 text-violet/60 hover:text-red-500 transition"
+                          aria-label={`Remove ${option}`}
+                        >
+                          &times;
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newMealOption}
+                    onChange={(e) => setNewMealOption(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newMealOption.trim()) {
+                        e.preventDefault();
+                        setMealOptions([...mealOptions, newMealOption.trim()]);
+                        setNewMealOption("");
+                      }
+                    }}
+                    placeholder="Add a meal option..."
+                    className="flex-1 rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+                  />
+                  <button
+                    onClick={() => {
+                      if (newMealOption.trim()) {
+                        setMealOptions([...mealOptions, newMealOption.trim()]);
+                        setNewMealOption("");
+                      }
+                    }}
+                    className="btn-primary btn-sm"
+                  >
+                    Add
+                  </button>
+                </div>
+                {mealOptions.length === 0 && (
+                  <div className="mt-3">
+                    <p className="text-[12px] text-muted mb-2">Suggestions:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {["Chicken", "Fish", "Vegetarian", "Vegan"].map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => setMealOptions([...mealOptions, opt])}
+                          className="rounded-full border border-violet/30 bg-lavender/50 px-3 py-1 text-[13px] text-violet hover:bg-lavender transition"
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button onClick={saveSchedule} className="btn-primary">
+                Save RSVP Settings
+              </button>
+            </div>
+
+            <hr className="border-border" />
+
             <div className="flex items-center gap-4">
               <button
                 onClick={generateRsvpTokens}
@@ -759,6 +890,31 @@ export default function WebsitePage() {
                 </button>
               </div>
             )}
+
+            <div className="card p-4 flex items-center gap-3">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  aria-checked={photoApprovalRequired}
+                  checked={photoApprovalRequired}
+                  onChange={(e) => setPhotoApprovalRequired(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-violet transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5" />
+              </label>
+              <div>
+                <span className="text-[15px] text-plum font-semibold">
+                  Approve guest photos before they appear publicly
+                </span>
+                <p className="text-[12px] text-muted mt-0.5">
+                  When enabled, photos uploaded by guests won&apos;t be visible until you approve them.
+                </p>
+              </div>
+              <button onClick={saveSchedule} className="btn-primary btn-sm ml-auto">
+                Save
+              </button>
+            </div>
 
             {photos.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

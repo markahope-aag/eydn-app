@@ -1930,6 +1930,10 @@ export type Database = {
           guest_count_estimate: number | null
           has_honeymoon: boolean | null
           has_pre_wedding_events: boolean | null
+          meal_options: Json
+          photo_approval_required: boolean
+          rsvp_deadline: string | null
+          website_theme: Json
           has_wedding_party: boolean | null
           id: string
           key_decisions: string | null
@@ -1964,6 +1968,10 @@ export type Database = {
           guest_count_estimate?: number | null
           has_honeymoon?: boolean | null
           has_pre_wedding_events?: boolean | null
+          meal_options?: Json
+          photo_approval_required?: boolean
+          rsvp_deadline?: string | null
+          website_theme?: Json
           has_wedding_party?: boolean | null
           id?: string
           key_decisions?: string | null
@@ -1998,6 +2006,10 @@ export type Database = {
           guest_count_estimate?: number | null
           has_honeymoon?: boolean | null
           has_pre_wedding_events?: boolean | null
+          meal_options?: Json
+          photo_approval_required?: boolean
+          rsvp_deadline?: string | null
+          website_theme?: Json
           has_wedding_party?: boolean | null
           id?: string
           key_decisions?: string | null

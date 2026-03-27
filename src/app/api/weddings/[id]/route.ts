@@ -9,6 +9,7 @@ const ALLOWED_FIELDS = [
   "has_wedding_party", "wedding_party_count",
   "has_pre_wedding_events", "has_honeymoon", "key_decisions",
   "shared_attire_note", "ceremony_time",
+  "rsvp_deadline", "photo_approval_required", "meal_options", "website_theme",
 ];
 
 export async function PATCH(
