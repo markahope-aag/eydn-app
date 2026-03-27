@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { BarChart, Bar, LineChart, Line, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 
 type Stats = {
   total_subscribers: number;
@@ -138,6 +139,12 @@ export default function AdminPage() {
   const [testSmsTo, setTestSmsTo] = useState("");
   const [sendingSms, setSendingSms] = useState(false);
   const [sendingPush, setSendingPush] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<{
+    dailySignups: { date: string; count: number }[];
+    weeklyActive: { week: string; count: number }[];
+    funnel: { signedUp: number; startedOnboarding: number; completedOnboarding: number; addedFirstVendor: number; addedFirstGuest: number };
+    featureAdoption: { feature: string; count: number }[];
+  } | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -150,11 +157,13 @@ export default function AdminPage() {
       }),
       fetch("/api/admin/users").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : DEFAULT_SETTINGS)),
+      fetch("/api/admin/analytics").then((r) => (r.ok ? r.json() : null)),
     ])
-      .then(([s, u, st]) => {
+      .then(([s, u, st, a]) => {
         if (s) setStats(s);
         setUsers(u || []);
         setSettings({ ...DEFAULT_SETTINGS, ...st });
+        if (a) setAnalyticsData(a);
       })
       .catch(() => toast.error("Failed to load admin data"))
       .finally(() => setLoading(false));
@@ -237,32 +246,90 @@ export default function AdminPage() {
     );
   }
 
+  // Sparkline data — last 14 days of signups for the overview card
+  const recentSignups = analyticsData?.dailySignups?.slice(-14) || [];
+  const recentWAU = analyticsData?.weeklyActive?.slice(-6) || [];
+
   return (
     <div>
-      <div>
-        <h1>Platform Admin</h1>
-      </div>
-
-      {/* Navigation is in the sidebar — no horizontal tabs needed */}
+      {tab === "overview" && <h1>Overview</h1>}
+      {tab === "subscribers" && <h1>Subscribers</h1>}
+      {tab === "cron-jobs" && <h1>Cron Jobs</h1>}
+      {tab === "email" && <h1>Communications</h1>}
+      {tab === "data-security" && <h1>Data & Security</h1>}
+      {tab === "settings" && <h1>Settings</h1>}
 
       {/* Overview Tab */}
       {tab === "overview" && stats && (
         <div className="mt-6 space-y-6">
+          {/* Key metrics with sparklines */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Total Subscribers" value={stats.total_subscribers} />
-            <StatCard label="New Signups (7d)" value={stats.new_signups_7d} />
-            <StatCard label="Active Users (7d)" value={stats.active_users_7d} />
+            <div className="card p-5">
+              <p className="text-[13px] text-muted">Total Subscribers</p>
+              <p className="mt-1 text-[28px] font-bold text-plum">{stats.total_subscribers.toLocaleString()}</p>
+              <p className="text-[12px] text-muted mt-1">{stats.new_signups_7d} new this week</p>
+              {recentSignups.length > 2 && (
+                <div className="mt-2 h-[40px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={recentSignups}>
+                      <Line type="monotone" dataKey="count" stroke="#2C3E2D" strokeWidth={2} dot={false} />
+                      <RechartsTooltip content={() => null} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+            <div className="card p-5">
+              <p className="text-[13px] text-muted">Active Users (7d)</p>
+              <p className="mt-1 text-[28px] font-bold text-plum">{stats.active_users_7d.toLocaleString()}</p>
+              <p className="text-[12px] text-muted mt-1">{stats.total_subscribers > 0 ? Math.round((stats.active_users_7d / stats.total_subscribers) * 100) : 0}% of subscribers</p>
+              {recentWAU.length > 2 && (
+                <div className="mt-2 h-[40px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={recentWAU}>
+                      <Bar dataKey="count" fill="#D4A5A5" radius={[2, 2, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+            <div className="card p-5">
+              <p className="text-[13px] text-muted">Conversion Rate</p>
+              <p className="mt-1 text-[28px] font-bold text-plum">{stats.conversion_rate}%</p>
+              <p className="text-[12px] text-muted mt-1">Signup → Event created</p>
+            </div>
+            <div className="card p-5">
+              <p className="text-[13px] text-muted">Onboarding Completed</p>
+              <p className="mt-1 text-[28px] font-bold text-plum">{stats.onboarding_completed.toLocaleString()}</p>
+              <p className="text-[12px] text-muted mt-1">{stats.total_subscribers > 0 ? Math.round((stats.onboarding_completed / stats.total_subscribers) * 100) : 0}% completion rate</p>
+            </div>
+          </div>
+
+          {/* Secondary metrics */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <StatCard label="Total Weddings" value={stats.total_events} subtitle="Events in system" />
+            <StatCard label="AI Chat Messages" value={stats.total_ai_chats.toLocaleString()} subtitle="Eydn conversations" />
             <StatCard
-              label="Conversion Rate"
-              value={`${stats.conversion_rate}%`}
-              subtitle="Signup → Event created"
+              label="Onboarding Funnel"
+              value={analyticsData?.funnel ? `${analyticsData.funnel.completedOnboarding} / ${analyticsData.funnel.signedUp}` : "—"}
+              subtitle={analyticsData?.funnel ? `${analyticsData.funnel.addedFirstVendor} added a vendor, ${analyticsData.funnel.addedFirstGuest} added a guest` : "Loading..."}
             />
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard label="Total Events" value={stats.total_events} />
-            <StatCard label="Onboarding Completed" value={stats.onboarding_completed} />
-            <StatCard label="AI Chat Messages" value={stats.total_ai_chats} />
-          </div>
+
+          {/* Feature adoption quick view */}
+          {analyticsData?.featureAdoption && analyticsData.featureAdoption.length > 0 && (
+            <div className="card p-5">
+              <h2 className="text-[15px] font-semibold text-plum mb-3">Feature Adoption</h2>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {analyticsData.featureAdoption.slice(0, 9).map((f) => (
+                  <div key={f.feature} className="flex items-center justify-between bg-lavender/30 rounded-[10px] px-3 py-2">
+                    <span className="text-[13px] text-plum">{f.feature}</span>
+                    <span className="text-[13px] font-semibold text-violet">{f.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
