@@ -42,6 +42,46 @@ export async function GET() {
     { type: "deadline_reminder", label: "Task Deadline Reminder", trigger: "7 days before task due date" },
   ];
 
+  // Push notification config
+  const pushConfigured = !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  let pushSubscriptionCount = 0;
+  if (pushConfigured) {
+    const { count } = await (supabase as any)
+      .from("push_subscriptions")
+      .select("*", { count: "exact", head: true });
+    pushSubscriptionCount = count || 0;
+  }
+
+  // SMS (Twilio) config
+  const smsConfigured = !!process.env.TWILIO_ACCOUNT_SID;
+  const smsFromNumber = process.env.TWILIO_FROM_NUMBER || null;
+
+  // Email tracking config
+  const trackingConfigured = !!process.env.RESEND_WEBHOOK_SECRET;
+  let totalTrackingEvents = 0;
+  if (trackingConfigured) {
+    const { count } = await (supabase as any)
+      .from("email_events")
+      .select("*", { count: "exact", head: true });
+    totalTrackingEvents = count || 0;
+  }
+
+  // Notification stats
+  const { count: totalNotifications } = await (supabase as any)
+    .from("notifications")
+    .select("*", { count: "exact", head: true });
+  const { count: unreadNotifications } = await (supabase as any)
+    .from("notifications")
+    .select("*", { count: "exact", head: true })
+    .eq("read", false);
+  const { data: notificationRows } = await (supabase as any)
+    .from("notifications")
+    .select("type");
+  const byType: Record<string, number> = {};
+  for (const n of notificationRows || []) {
+    byType[n.type] = (byType[n.type] || 0) + 1;
+  }
+
   return NextResponse.json({
     config: {
       resendConfigured,
@@ -53,6 +93,14 @@ export async function GET() {
     })),
     recentEmails,
     totalSent: (lifecycleEmails || []).length,
+    pushConfig: { configured: pushConfigured, subscriptionCount: pushSubscriptionCount },
+    smsConfig: { configured: smsConfigured, fromNumber: smsFromNumber },
+    trackingConfig: { configured: trackingConfigured, totalEvents: totalTrackingEvents },
+    notificationStats: {
+      total: totalNotifications || 0,
+      unread: unreadNotifications || 0,
+      byType,
+    },
   });
 }
 
@@ -73,6 +121,94 @@ export async function POST(request: Request) {
   const parsed = await safeParseJSON(request);
   if (isParseError(parsed)) return parsed;
   const body = parsed;
+  const action = (body.action as string) || "test_email";
+
+  // Handle test SMS
+  if (action === "test_sms") {
+    const to = body.to as string | undefined;
+    const message = (body.message as string) || "Test SMS from Eydn admin";
+    if (!to) {
+      return NextResponse.json({ error: "to phone number is required" }, { status: 400 });
+    }
+    if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_FROM_NUMBER) {
+      return NextResponse.json({ error: "Twilio is not configured" }, { status: 400 });
+    }
+    try {
+      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_ACCOUNT_SID}/Messages.json`;
+      const auth = Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString("base64");
+      const params = new URLSearchParams({
+        To: to,
+        From: process.env.TWILIO_FROM_NUMBER,
+        Body: message,
+      });
+      const smsRes = await fetch(twilioUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params.toString(),
+      });
+      const smsData = await smsRes.json();
+      if (!smsRes.ok) {
+        return NextResponse.json({ success: false, error: smsData.message || "Failed to send SMS" });
+      }
+      return NextResponse.json({ success: true, sid: smsData.sid });
+    } catch (err) {
+      return NextResponse.json({ success: false, error: "SMS send failed" });
+    }
+  }
+
+  // Handle test push notification
+  if (action === "test_push") {
+    const { supabase: adminSupabase, userId } = result;
+    // Get admin's wedding
+    const { data: wedding } = await adminSupabase
+      .from("weddings")
+      .select("id")
+      .eq("user_id", userId)
+      .limit(1)
+      .single();
+    if (!wedding) {
+      return NextResponse.json({ error: "No wedding found for admin user" }, { status: 400 });
+    }
+    // Get all push subscriptions for this wedding
+    const { data: subscriptions } = await (adminSupabase as any)
+      .from("push_subscriptions")
+      .select("*")
+      .eq("wedding_id", wedding.id);
+    if (!subscriptions || subscriptions.length === 0) {
+      return NextResponse.json({ error: "No push subscriptions found" }, { status: 400 });
+    }
+    const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!vapidPrivateKey || !vapidPublicKey) {
+      return NextResponse.json({ error: "VAPID keys not configured" }, { status: 400 });
+    }
+    // We send a simple JSON payload to each subscription endpoint
+    let sent = 0;
+    let failed = 0;
+    for (const sub of subscriptions) {
+      try {
+        const endpoint = sub.endpoint as string;
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: "Eydn Test Push",
+            body: "This is a test push notification from the admin panel.",
+          }),
+        });
+        if (res.ok || res.status === 201) sent++;
+        else failed++;
+      } catch {
+        failed++;
+      }
+    }
+    return NextResponse.json({ success: true, sent, failed, total: subscriptions.length });
+  }
+
+  // Default: test_email
   const to = body.to as string | undefined;
   const templateType = body.templateType as string | undefined;
 

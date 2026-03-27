@@ -108,6 +108,10 @@ type EmailData = {
   emailTypes: Array<{ type: string; label: string; trigger: string; sent: number }>;
   recentEmails: Array<{ email_type: string; wedding_id: string; sent_at: string }>;
   totalSent: number;
+  pushConfig: { configured: boolean; subscriptionCount: number };
+  smsConfig: { configured: boolean; fromNumber: string | null };
+  trackingConfig: { configured: boolean; totalEvents: number };
+  notificationStats: { total: number; unread: number; byType: Record<string, number> };
 };
 
 type Tab = "overview" | "subscribers" | "settings" | "data-security" | "cron-jobs" | "email";
@@ -129,6 +133,9 @@ export default function AdminPage() {
   const [testEmailTo, setTestEmailTo] = useState("");
   const [testEmailType, setTestEmailType] = useState("post_wedding_welcome");
   const [sendingTest, setSendingTest] = useState(false);
+  const [testSmsTo, setTestSmsTo] = useState("");
+  const [sendingSms, setSendingSms] = useState(false);
+  const [sendingPush, setSendingPush] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -439,6 +446,46 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {/* Communications Status */}
+              <div>
+                <h2 className="text-[18px] font-semibold text-plum">Communications Status</h2>
+                <div className="mt-3 grid gap-4 sm:grid-cols-3">
+                  <div className="card p-4 flex items-center gap-3">
+                    <span className={`w-3 h-3 rounded-full ${emailData.pushConfig.configured ? "bg-green-500" : "bg-red-500"}`} />
+                    <div>
+                      <p className="text-[15px] font-semibold text-plum">
+                        Push Notifications {emailData.pushConfig.configured ? "Active" : "Not Configured"}
+                      </p>
+                      <p className="text-[12px] text-muted">
+                        {emailData.pushConfig.subscriptionCount} subscription{emailData.pushConfig.subscriptionCount !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="card p-4 flex items-center gap-3">
+                    <span className={`w-3 h-3 rounded-full ${emailData.smsConfig.configured ? "bg-green-500" : "bg-red-500"}`} />
+                    <div>
+                      <p className="text-[15px] font-semibold text-plum">
+                        SMS (Twilio) {emailData.smsConfig.configured ? "Active" : "Not Configured"}
+                      </p>
+                      <p className="text-[12px] text-muted">
+                        {emailData.smsConfig.fromNumber ? `From: ${emailData.smsConfig.fromNumber}` : "No from number set"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="card p-4 flex items-center gap-3">
+                    <span className={`w-3 h-3 rounded-full ${emailData.trackingConfig.configured ? "bg-green-500" : "bg-red-500"}`} />
+                    <div>
+                      <p className="text-[15px] font-semibold text-plum">
+                        Email Tracking {emailData.trackingConfig.configured ? "Active" : "Not Configured"}
+                      </p>
+                      <p className="text-[12px] text-muted">
+                        {emailData.trackingConfig.totalEvents} tracked event{emailData.trackingConfig.totalEvents !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Send Test Email */}
               <div>
                 <h2 className="text-[18px] font-semibold text-plum">Send Test Email</h2>
@@ -487,6 +534,103 @@ export default function AdminPage() {
                   >
                     {sendingTest ? "Sending..." : "Send Test"}
                   </button>
+                </div>
+              </div>
+
+              {/* Test SMS */}
+              <div>
+                <h2 className="text-[18px] font-semibold text-plum">Test SMS</h2>
+                <p className="mt-1 text-[13px] text-muted">Send a test SMS via Twilio to verify your configuration.</p>
+                <div className="mt-3 flex gap-3 items-end">
+                  <div className="flex-1">
+                    <label className="text-[12px] font-semibold text-muted">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={testSmsTo}
+                      onChange={(e) => setTestSmsTo(e.target.value)}
+                      placeholder="+1234567890"
+                      className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                    />
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!testSmsTo) { toast.error("Enter a phone number"); return; }
+                      setSendingSms(true);
+                      try {
+                        const res = await fetch("/api/admin/email", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ action: "test_sms", to: testSmsTo, message: "Test SMS from Eydn admin" }),
+                        });
+                        const data = await res.json();
+                        if (data.success) toast.success("Test SMS sent!");
+                        else toast.error(data.error || "Failed to send SMS");
+                      } catch { toast.error("Failed to send test SMS"); }
+                      finally { setSendingSms(false); }
+                    }}
+                    disabled={sendingSms || !testSmsTo}
+                    className="btn-primary disabled:opacity-50"
+                  >
+                    {sendingSms ? "Sending..." : "Send Test SMS"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Test Push */}
+              <div>
+                <h2 className="text-[18px] font-semibold text-plum">Test Push Notification</h2>
+                <p className="mt-1 text-[13px] text-muted">Send a test push notification to all subscriptions on your wedding.</p>
+                <div className="mt-3">
+                  <button
+                    onClick={async () => {
+                      setSendingPush(true);
+                      try {
+                        const res = await fetch("/api/admin/email", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ action: "test_push" }),
+                        });
+                        const data = await res.json();
+                        if (data.success) toast.success(`Test push sent to ${data.sent}/${data.total} subscriptions`);
+                        else toast.error(data.error || "Failed to send push");
+                      } catch { toast.error("Failed to send test push"); }
+                      finally { setSendingPush(false); }
+                    }}
+                    disabled={sendingPush}
+                    className="btn-primary disabled:opacity-50"
+                  >
+                    {sendingPush ? "Sending..." : "Send Test Push"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Notification Stats */}
+              <div>
+                <h2 className="text-[18px] font-semibold text-plum">Notification Stats</h2>
+                <div className="mt-3 grid gap-4 sm:grid-cols-3">
+                  <div className="card p-4">
+                    <p className="text-[15px] font-semibold text-plum">{emailData.notificationStats.total}</p>
+                    <p className="text-[12px] text-muted">Total notifications</p>
+                  </div>
+                  <div className="card p-4">
+                    <p className="text-[15px] font-semibold text-plum">{emailData.notificationStats.unread}</p>
+                    <p className="text-[12px] text-muted">Unread</p>
+                  </div>
+                  <div className="card p-4">
+                    <p className="text-[12px] font-semibold text-muted uppercase tracking-wide">By Type</p>
+                    <div className="mt-2 space-y-1">
+                      {Object.keys(emailData.notificationStats.byType).length > 0 ? (
+                        Object.entries(emailData.notificationStats.byType).map(([type, count]) => (
+                          <div key={type} className="flex justify-between text-[13px]">
+                            <span className="text-muted">{type.replace(/_/g, " ")}</span>
+                            <span className="font-semibold text-plum">{count}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-[13px] text-muted">No notifications yet</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -665,6 +809,7 @@ function CronJobsTab({
   cronLoading: boolean;
   onLoad: () => void;
 }) {
+  const [runningJob, setRunningJob] = useState<string | null>(null);
   useEffect(() => { onLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (cronLoading) {
@@ -691,7 +836,7 @@ function CronJobsTab({
       {/* Job Status Cards */}
       <div>
         <h2 className="text-[18px] font-semibold text-plum">Scheduled Jobs</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {cronData.jobs.map((job) => (
             <div key={job.name} className="card p-5">
               <div className="flex items-center justify-between">
@@ -729,6 +874,26 @@ function CronJobsTab({
                   </span>
                 </div>
               </div>
+              <button
+                onClick={async () => {
+                  setRunningJob(job.name);
+                  try {
+                    const res = await fetch("/api/admin/cron", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ job: job.name }),
+                    });
+                    const data = await res.json();
+                    if (data.success) toast.success(`${job.name} completed successfully`);
+                    else toast.error(`${job.name} failed: ${data.result?.error || "Unknown error"}`);
+                  } catch { toast.error(`Failed to trigger ${job.name}`); }
+                  finally { setRunningJob(null); }
+                }}
+                disabled={runningJob !== null}
+                className="mt-3 w-full btn-ghost btn-sm disabled:opacity-50 text-[13px]"
+              >
+                {runningJob === job.name ? "Running..." : "Run Now"}
+              </button>
             </div>
           ))}
         </div>
