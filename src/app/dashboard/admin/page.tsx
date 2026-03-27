@@ -239,11 +239,8 @@ export default function AdminPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div>
         <h1>Platform Admin</h1>
-        <a href="/dashboard/admin/vendors" className="btn-secondary">
-          Vendor Directory
-        </a>
       </div>
 
       {/* Navigation is in the sidebar — no horizontal tabs needed */}
