@@ -378,7 +378,7 @@ export default function AdminPage() {
                 placeholder="Search by name or email..."
                 value={subSearch}
                 onChange={(e) => setSubSearch(e.target.value)}
-                className="w-full rounded-[10px] border-border pl-8 pr-3 py-1.5 text-[15px]"
+                className="w-full rounded-[10px] border-border pl-9 pr-3 py-1.5 text-[15px]"
               />
             </div>
             <select
