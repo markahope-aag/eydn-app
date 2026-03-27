@@ -5,6 +5,7 @@ import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 import { safeParseJSON, isParseError } from "@/lib/validation";
 import { getClaudeClient } from "@/lib/ai/claude-client";
 import { buildEdynSystemPrompt } from "@/lib/ai/edyn-system-prompt";
+import { AI, PAGE_SIZE, CHAT_CONTEXT } from "@/lib/config";
 import type { Database } from "@/lib/supabase/types";
 
 type Wedding = Database["public"]["Tables"]["weddings"]["Row"];
@@ -19,7 +20,7 @@ export async function GET() {
     .select()
     .eq("wedding_id", wedding.id)
     .order("created_at", { ascending: true })
-    .limit(50);
+    .limit(PAGE_SIZE.CHAT_HISTORY);
 
   return NextResponse.json(data || []);
 }
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Message required" }, { status: 400 });
   }
 
-  if (typeof userMessage !== "string" || userMessage.length > 10000) {
+  if (typeof userMessage !== "string" || userMessage.length > AI.MAX_MESSAGE_LENGTH) {
     return NextResponse.json({ error: "Message too long (max 10,000 characters)" }, { status: 400 });
   }
 
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
     .select("role, content")
     .eq("wedding_id", wedding.id)
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(PAGE_SIZE.CHAT_HISTORY);
 
   // Get ALL wedding context for system prompt
   const [
@@ -101,7 +102,7 @@ export async function POST(request: Request) {
       const r = g.responses;
       const entries = Object.entries(r).filter(([, v]) => v != null && v !== "" && !(Array.isArray(v) && v.length === 0));
       if (entries.length > 0) {
-        const summary = entries.slice(0, 8).map(([, v]) => Array.isArray(v) ? v.join(", ") : String(v)).join(" | ");
+        const summary = entries.slice(0, CHAT_CONTEXT.GUIDE_RESPONSES).map(([, v]) => Array.isArray(v) ? v.join(", ") : String(v)).join(" | ");
         lines.push(`- ${g.guide_slug}: ${summary}`);
       }
     }
@@ -121,17 +122,17 @@ export async function POST(request: Request) {
     const lines: string[] = [];
     lines.push(`Completed: ${completed.length} of ${(allTasks as TaskRow[]).length}`);
     if (overdue.length > 0) {
-      lines.push(`OVERDUE (${overdue.length}): ${overdue.slice(0, 5).map(t => t.title).join(", ")}${overdue.length > 5 ? ` + ${overdue.length - 5} more` : ""}`);
+      lines.push(`OVERDUE (${overdue.length}): ${overdue.slice(0, CHAT_CONTEXT.OVERDUE_TASKS_PREVIEW).map(t => t.title).join(", ")}${overdue.length > CHAT_CONTEXT.OVERDUE_TASKS_PREVIEW ? ` + ${overdue.length - CHAT_CONTEXT.OVERDUE_TASKS_PREVIEW} more` : ""}`);
     }
     if (dueSoon.length > 0) {
-      lines.push(`Due in next 14 days (${dueSoon.length}): ${dueSoon.slice(0, 5).map(t => `${t.title}${t.due_date ? ` (${t.due_date})` : ""}`).join(", ")}${dueSoon.length > 5 ? ` + ${dueSoon.length - 5} more` : ""}`);
+      lines.push(`Due in next 14 days (${dueSoon.length}): ${dueSoon.slice(0, CHAT_CONTEXT.DUE_SOON_TASKS_PREVIEW).map(t => `${t.title}${t.due_date ? ` (${t.due_date})` : ""}`).join(", ")}${dueSoon.length > CHAT_CONTEXT.DUE_SOON_TASKS_PREVIEW ? ` + ${dueSoon.length - CHAT_CONTEXT.DUE_SOON_TASKS_PREVIEW} more` : ""}`);
     }
     if (incomplete.length > 0) {
       lines.push("All upcoming:");
-      for (const t of incomplete.slice(0, 20)) {
-        lines.push(`- ${t.title} (${t.category})${t.due_date ? ` — due ${t.due_date}` : ""}${t.notes ? ` [note: ${t.notes.slice(0, 80)}]` : ""}`);
+      for (const t of incomplete.slice(0, CHAT_CONTEXT.INCOMPLETE_TASKS_LIST)) {
+        lines.push(`- ${t.title} (${t.category})${t.due_date ? ` — due ${t.due_date}` : ""}${t.notes ? ` [note: ${t.notes.slice(0, CHAT_CONTEXT.TEXT_TRUNCATE_LONG)}]` : ""}`);
       }
-      if (incomplete.length > 20) lines.push(`  ...and ${incomplete.length - 20} more`);
+      if (incomplete.length > CHAT_CONTEXT.INCOMPLETE_TASKS_LIST) lines.push(`  ...and ${incomplete.length - CHAT_CONTEXT.INCOMPLETE_TASKS_LIST} more`);
     }
     tasksSummary = lines.join("\n");
   }
@@ -158,7 +159,7 @@ export async function POST(request: Request) {
       if (v.amount) line += `, total: $${v.amount}`;
       if (v.amount_paid) line += `, paid: $${v.amount_paid}`;
       if (v.arrival_time) line += `, arrives: ${v.arrival_time}`;
-      if (v.notes) line += ` [note: ${v.notes.slice(0, 60)}]`;
+      if (v.notes) line += ` [note: ${v.notes.slice(0, CHAT_CONTEXT.TEXT_TRUNCATE_SHORT)}]`;
       lines.push(line);
     }
     vendorsSummary = lines.join("\n");
@@ -175,7 +176,7 @@ export async function POST(request: Request) {
     const rsvpRate = guests.length > 0 ? Math.round(((accepted + declined) / guests.length) * 100) : 0;
     const lines = [`Total: ${guests.length} — Attending: ${accepted}, Declined: ${declined}, Awaiting RSVP: ${pending} (${rsvpRate}% response rate)`];
     // List guests with notable info
-    for (const g of guests.slice(0, 40)) {
+    for (const g of guests.slice(0, CHAT_CONTEXT.GUEST_LIST_PREVIEW)) {
       let line = `- ${g.name} (${g.rsvp_status})`;
       if (g.role) line += ` [${g.role}]`;
       if (g.group_name) line += ` group: ${g.group_name}`;
@@ -183,7 +184,7 @@ export async function POST(request: Request) {
       if (g.plus_one_name) line += ` +1: ${g.plus_one_name}`;
       lines.push(line);
     }
-    if (guests.length > 40) lines.push(`  ...and ${guests.length - 40} more guests`);
+    if (guests.length > CHAT_CONTEXT.GUEST_LIST_PREVIEW) lines.push(`  ...and ${guests.length - CHAT_CONTEXT.GUEST_LIST_PREVIEW} more guests`);
     guestsSummary = lines.join("\n");
   }
 
@@ -266,7 +267,7 @@ export async function POST(request: Request) {
   if (blogPosts && blogPosts.length > 0) {
     type BlogRow = { title: string; slug: string; excerpt: string | null };
     blogReference = (blogPosts as BlogRow[]).map((b) =>
-      `- "${b.title}" — /blog/${b.slug}${b.excerpt ? `: ${b.excerpt.slice(0, 80)}` : ""}`
+      `- "${b.title}" — /blog/${b.slug}${b.excerpt ? `: ${b.excerpt.slice(0, CHAT_CONTEXT.BLOG_EXCERPT_LENGTH)}` : ""}`
     ).join("\n");
   }
 
@@ -311,14 +312,13 @@ export async function POST(request: Request) {
     let finalText = "";
     const actionsTaken: string[] = [];
     let iterations = 0;
-    const MAX_ITERATIONS = 5;
 
-    while (iterations < MAX_ITERATIONS) {
+    while (iterations < AI.MAX_TOOL_ITERATIONS) {
       iterations++;
 
       const response = await claude.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1024,
+        model: AI.MODEL,
+        max_tokens: AI.MAX_TOKENS,
         system: systemPrompt,
         messages: currentMessages as Parameters<typeof claude.messages.create>[0]["messages"],
         tools: EYDN_TOOLS,

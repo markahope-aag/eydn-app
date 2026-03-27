@@ -2,6 +2,7 @@ import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
 import { sendCollaboratorInvite } from "@/lib/email";
+import { apiError, supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -18,9 +19,8 @@ export async function GET() {
     .eq("wedding_id", wedding.id)
     .order("created_at", { ascending: true });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "collaborators");
+  if (err) return err;
 
   return NextResponse.json(data);
 }
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     if (error.code === "23505") {
       return NextResponse.json({ error: "This person has already been invited" }, { status: 409 });
     }
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiError(error.message, 500, "collaborators");
   }
 
   // Send invitation email (non-blocking — don't fail the request if email fails)

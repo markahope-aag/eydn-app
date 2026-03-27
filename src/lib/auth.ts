@@ -1,6 +1,7 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { CACHE_TTL } from "@/lib/config";
 import type { Database } from "@/lib/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -21,7 +22,6 @@ type AuthError = {
 // Avoids hitting the DB on every API call for the same user within 60 seconds.
 type CachedResult = { wedding: Wedding; role: "owner" | "partner" | "coordinator"; expiresAt: number };
 const weddingCache = new Map<string, CachedResult>();
-const CACHE_TTL = 60_000; // 60 seconds
 
 /** Clear cached wedding data for a user (call after wedding updates). */
 export function invalidateWeddingCache(userId: string) {
@@ -50,7 +50,7 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
     .single();
 
   if (owned) {
-    weddingCache.set(userId, { wedding: owned as Wedding, role: "owner", expiresAt: Date.now() + CACHE_TTL });
+    weddingCache.set(userId, { wedding: owned as Wedding, role: "owner", expiresAt: Date.now() + CACHE_TTL.AUTH_WEDDING });
     return { wedding: owned as Wedding, supabase, userId, role: "owner" };
   }
 
@@ -71,7 +71,7 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
 
     if (wedding) {
       const role = collab.role as "partner" | "coordinator";
-      weddingCache.set(userId, { wedding: wedding as Wedding, role, expiresAt: Date.now() + CACHE_TTL });
+      weddingCache.set(userId, { wedding: wedding as Wedding, role, expiresAt: Date.now() + CACHE_TTL.AUTH_WEDDING });
       return { wedding: wedding as Wedding, supabase, userId, role };
     }
   }
@@ -105,7 +105,7 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
 
         if (wedding) {
           const role = pending.role as "partner" | "coordinator";
-          weddingCache.set(userId, { wedding: wedding as Wedding, role, expiresAt: Date.now() + CACHE_TTL });
+          weddingCache.set(userId, { wedding: wedding as Wedding, role, expiresAt: Date.now() + CACHE_TTL.AUTH_WEDDING });
           return { wedding: wedding as Wedding, supabase, userId, role };
         }
       }

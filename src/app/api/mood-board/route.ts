@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { isValidUrl, isSafeExternalUrl, safeParseJSON, isParseError } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -15,9 +16,8 @@ export async function GET() {
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "mood-board");
+  if (err) return err;
 
   return NextResponse.json(data);
 }
@@ -128,9 +128,8 @@ export async function POST(request: Request) {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "mood-board");
+  if (err) return err;
 
   return NextResponse.json(data, { status: 201 });
 }

@@ -2,6 +2,7 @@ import { getWeddingForUser } from "@/lib/auth";
 import { restoreRecord, logActivity } from "@/lib/audit";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 const ENTITY_TYPE_TO_TABLE: Record<string, string> = {
   guest: "guests",
@@ -42,9 +43,8 @@ export async function POST(request: Request) {
   }
 
   const { error } = await restoreRecord(supabase, table, entityId, wedding.id);
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "trash/restore");
+  if (err) return err;
 
   logActivity(supabase, {
     weddingId: wedding.id,

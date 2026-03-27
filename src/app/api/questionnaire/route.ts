@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -41,9 +42,8 @@ export async function PATCH(request: Request) {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "questionnaire");
+  if (err) return err;
 
   return NextResponse.json(data);
 }

@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/admin";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -66,9 +67,8 @@ export async function PATCH(request: Request) {
     .from("user_roles")
     .upsert({ user_id, role });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/users");
+  if (err) return err;
 
   return NextResponse.json({ success: true });
 }

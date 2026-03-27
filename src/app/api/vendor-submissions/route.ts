@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function POST(request: Request) {
   const { userId } = await auth();
@@ -34,9 +35,8 @@ export async function POST(request: Request) {
       notes: (body.notes as string) || null,
     });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "vendor-submissions");
+  if (err) return err;
 
   return NextResponse.json({ success: true }, { status: 201 });
 }

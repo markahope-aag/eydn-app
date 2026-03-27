@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
+
+type AuthResult = Awaited<ReturnType<typeof import("@/lib/auth").getWeddingForUser>>;
 
 // --- Mocks ---
 
@@ -86,11 +87,11 @@ describe("GET /api/guests", () => {
     vi.clearAllMocks();
     mockSupabase = createMockSupabase();
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
   });
 
   it("returns guest list", async () => {
@@ -100,11 +101,11 @@ describe("GET /api/guests", () => {
     ];
     mockSupabase = createMockSupabase({ selectData: guests });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const response = await GET();
     const data = await response.json();
@@ -131,22 +132,22 @@ describe("POST /api/guests", () => {
     vi.clearAllMocks();
     mockSupabase = createMockSupabase();
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
   });
 
   it("creates a guest with valid data", async () => {
     const guestData = { id: "guest-1", name: "Jane Doe" };
     mockSupabase = createMockSupabase({ insertData: guestData });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const response = await POST(mockRequest({ name: "Jane Doe" }));
     const data = await response.json();
@@ -184,11 +185,11 @@ describe("POST /api/guests", () => {
     const guestData = { id: "guest-1", name: "Jane", email: "jane@example.com" };
     mockSupabase = createMockSupabase({ insertData: guestData });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const response = await POST(mockRequest({ name: "Jane", email: "jane@example.com" }));
 

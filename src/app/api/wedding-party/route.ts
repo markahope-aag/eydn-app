@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields, pickFields } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -14,9 +15,8 @@ export async function GET() {
     .is("deleted_at", null)
     .order("sort_order", { ascending: true });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "wedding-party");
+  if (err) return err;
 
   return NextResponse.json(data);
 }
@@ -47,9 +47,8 @@ export async function POST(request: Request) {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "wedding-party");
+  if (err) return err;
 
   // Auto-add as guest if not already on guest list (skip if flagged to prevent loops)
   if (!body._skip_sync) {

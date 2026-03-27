@@ -2,6 +2,7 @@ import { getWeddingForUser, invalidateWeddingCache } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { pickFields, safeParseJSON, isParseError, MAX_MONETARY_AMOUNT, MAX_GUEST_COUNT } from "@/lib/validation";
 import { TASK_TIMELINE } from "@/lib/tasks/task-timeline";
+import { supabaseError } from "@/lib/api-error";
 
 const ALLOWED_FIELDS = [
   "partner1_name", "partner2_name", "date", "venue", "budget",
@@ -57,9 +58,8 @@ export async function PATCH(
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "weddings");
+  if (err) return err;
 
   // Invalidate cached wedding data so subsequent requests get fresh data
   invalidateWeddingCache(userId);

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // --- Mocks ---
@@ -119,7 +118,7 @@ describe("GET /api/day-of", () => {
     (partyChain as Record<string, unknown>).eq = vi.fn().mockResolvedValue({ data: [] });
 
     // For the upsert, capture what was saved
-    let savedContent: any = null;
+    let savedContent: Record<string, unknown> | null = null;
     const upsertChain = chain();
     (upsertChain as Record<string, unknown>).upsert = vi.fn().mockImplementation((data: Record<string, unknown>) => {
       savedContent = data.content as Record<string, unknown>;
@@ -140,7 +139,7 @@ describe("GET /api/day-of", () => {
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    const contacts = json.content?.vendorContacts || savedContent?.vendorContacts;
+    const contacts = json.content?.vendorContacts || (savedContent as Record<string, unknown> | null)?.vendorContacts;
     expect(contacts).toBeDefined();
     if (contacts) {
       expect(contacts).toHaveLength(1);
@@ -158,7 +157,7 @@ describe("GET /api/day-of", () => {
     const partyChain = chain();
     (partyChain as Record<string, unknown>).eq = vi.fn().mockResolvedValue({ data: [] });
 
-    let savedContent: any = null;
+    let savedContent: Record<string, unknown> | null = null;
     const upsertChain = chain();
     (upsertChain as Record<string, unknown>).upsert = vi.fn().mockImplementation((data: Record<string, unknown>) => {
       savedContent = data.content as Record<string, unknown>;
@@ -179,10 +178,10 @@ describe("GET /api/day-of", () => {
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    const timeline = json.content?.timeline || savedContent?.timeline;
+    const timeline = json.content?.timeline || (savedContent as Record<string, unknown> | null)?.timeline;
     expect(timeline).toBeDefined();
     if (timeline) {
-      expect((timeline as any[]).length).toBe(18);
+      expect((timeline as unknown[]).length).toBe(18);
     }
   });
 
@@ -195,8 +194,8 @@ describe("GET /api/day-of", () => {
     const partyChain = chain();
     (partyChain as Record<string, unknown>).eq = vi.fn().mockResolvedValue({ data: [] });
 
-     
-    let savedContent: any = null;
+
+    let savedContent: Record<string, unknown> | null = null;
     const upsertChain = chain();
     (upsertChain as Record<string, unknown>).upsert = vi.fn().mockImplementation((data: Record<string, unknown>) => {
       savedContent = data.content as Record<string, unknown>;
@@ -217,10 +216,10 @@ describe("GET /api/day-of", () => {
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    const checklist = json.content?.packingChecklist || savedContent?.packingChecklist;
+    const checklist = json.content?.packingChecklist || (savedContent as Record<string, unknown> | null)?.packingChecklist;
     expect(checklist).toBeDefined();
     if (checklist) {
-      expect((checklist as any[]).length).toBeGreaterThan(10);
+      expect((checklist as unknown[]).length).toBeGreaterThan(10);
     }
   });
 

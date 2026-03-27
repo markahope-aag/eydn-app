@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -11,9 +12,8 @@ export async function GET() {
     .select("id, user_id, partner1_name, partner2_name, date, venue, budget, created_at")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/events");
+  if (err) return err;
 
   const events = await Promise.all(
     (weddings || []).map(async (w: { id: string; user_id: string; partner1_name: string; partner2_name: string; date: string | null; venue: string | null; budget: number | null; created_at: string }) => {

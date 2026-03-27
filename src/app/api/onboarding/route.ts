@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { generateTasks } from "@/lib/tasks/seed-tasks";
 import { BUDGET_TEMPLATE } from "@/lib/budget/budget-template";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function POST(request: Request) {
   const { userId } = await auth();
@@ -86,9 +87,8 @@ export async function POST(request: Request) {
       .update(weddingFields)
       .eq("id", weddingId);
 
-    if (error) {
-      console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-    }
+    const err = supabaseError(error, "onboarding");
+    if (err) return err;
 
     // CASCADE: If wedding date changed, update rehearsal dinner date
     if (date && currentWedding?.date !== date) {

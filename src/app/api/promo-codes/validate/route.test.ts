@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
 // --- Mocks ---
@@ -30,7 +29,7 @@ function jsonRequest(body: Record<string, unknown>): Request {
 }
 
 function mockAuth(userId: string | null) {
-  vi.mocked(auth).mockResolvedValue({ userId } as any);
+  vi.mocked(auth).mockResolvedValue({ userId } as unknown as Awaited<ReturnType<typeof auth>>);
 }
 
 function mockSupabase(overrides: {
@@ -67,7 +66,7 @@ function mockSupabase(overrides: {
     }),
   };
 
-  vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as any);
+  vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as unknown as ReturnType<typeof createSupabaseAdmin>);
   return supabase;
 }
 

@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { supabaseError } from "@/lib/api-error";
 
 const PAGE_SIZE = 25;
 
@@ -52,10 +53,8 @@ export async function GET(request: Request) {
 
   const { data, error, count } = await query;
 
-  if (error) {
-    console.error("[API]", error.message);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "suggested-vendors");
+  if (err) return err;
 
   // Sort placements within the page (paid placements bubble to top)
   type SuggestedVendor = { placement_tier: string | null; placement_expires_at: string | null; featured: boolean; vendor_account_id?: string; [key: string]: unknown };

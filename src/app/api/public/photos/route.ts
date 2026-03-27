@@ -2,6 +2,7 @@ import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
+import { UPLOAD } from "@/lib/config";
 
 export async function POST(request: Request) {
   const ip = getClientIP(request);
@@ -27,14 +28,12 @@ export async function POST(request: Request) {
   }
 
   // Validate file size (max 10MB)
-  const MAX_SIZE = 10 * 1024 * 1024;
-  if (file.size > MAX_SIZE) {
+  if (file.size > UPLOAD.MAX_FILE_SIZE) {
     return NextResponse.json({ error: "File too large. Maximum size is 10MB." }, { status: 413 });
   }
 
   // Validate file type (images only)
-  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"];
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (!(UPLOAD.ALLOWED_IMAGE_TYPES as readonly string[]).includes(file.type)) {
     return NextResponse.json({ error: "Invalid file type. Only JPEG, PNG, WebP, GIF, and HEIC images are allowed." }, { status: 400 });
   }
 

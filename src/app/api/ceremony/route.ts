@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields, isOneOf } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -13,9 +14,8 @@ export async function GET() {
     .eq("wedding_id", wedding.id)
     .order("position_order", { ascending: true });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "ceremony");
+  if (err) return err;
 
   return NextResponse.json(data);
 }
@@ -56,9 +56,8 @@ export async function POST(request: Request) {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "ceremony");
+  if (err) return err;
 
   return NextResponse.json(data, { status: 201 });
 }
@@ -94,9 +93,8 @@ export async function PATCH(request: Request) {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "ceremony");
+  if (err) return err;
 
   return NextResponse.json(data);
 }
@@ -118,9 +116,8 @@ export async function DELETE(request: Request) {
     .eq("id", id)
     .eq("wedding_id", wedding.id);
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "ceremony");
+  if (err) return err;
 
   return NextResponse.json({ success: true });
 }

@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function PATCH(
   request: Request,
@@ -42,9 +43,8 @@ export async function PATCH(
     .update({ status: body.status as "pending" | "approved" | "rejected" })
     .eq("id", id);
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/vendor-submissions");
+  if (err) return err;
 
   return NextResponse.json({ success: true });
 }

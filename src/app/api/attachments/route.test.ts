@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
+
+type AuthResult = Awaited<ReturnType<typeof import("@/lib/auth").getWeddingForUser>>;
 
 // --- Mocks ---
 
@@ -100,11 +101,11 @@ function createMockFile(name = "photo.jpg", type = "image/jpeg", size = 1024): F
 function mockAuthSuccess() {
   mockSupabase = createMockSupabase();
   vi.mocked(getWeddingForUser).mockResolvedValue({
-    wedding: mockWedding as any,
-    supabase: mockSupabase as any,
+    wedding: mockWedding,
+    supabase: mockSupabase,
     userId: "user-1",
     role: "owner",
-  });
+  } as unknown as AuthResult);
 }
 
 // --- Tests ---
@@ -120,11 +121,11 @@ describe("GET /api/attachments", () => {
     const attachments = [{ id: "a1", file_name: "photo.jpg", file_url: "https://storage.example.com/photo.jpg" }];
     mockSupabase = createMockSupabase({ selectData: attachments });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const request = new Request("http://localhost/api/attachments");
     const response = await GET(request);
@@ -246,11 +247,11 @@ describe("POST /api/attachments", () => {
   it("returns 404 when real task entity is not found", async () => {
     mockSupabase = createMockSupabase({ entityLookup: null });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const file = createMockFile();
     const request = mockFormDataRequest({
@@ -269,11 +270,11 @@ describe("POST /api/attachments", () => {
   it("returns 404 when real vendor entity is not found", async () => {
     mockSupabase = createMockSupabase({ entityLookup: null });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const file = createMockFile();
     const request = mockFormDataRequest({
@@ -292,11 +293,11 @@ describe("POST /api/attachments", () => {
   it("allows upload when real task entity exists", async () => {
     mockSupabase = createMockSupabase({ entityLookup: { id: "real-task-1" } });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const file = createMockFile();
     const request = mockFormDataRequest({

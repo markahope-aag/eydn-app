@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
 // --- Mocks ---
@@ -67,6 +66,8 @@ function createMockSupabase(
   const callIndices: Record<string, number> = {};
   const updateCalls: { table: string; values: unknown; eqCalls: [string, unknown][] }[] = [];
 
+  type QueryChain = Record<string, ReturnType<typeof vi.fn>>;
+
   const supabase = {
     from: vi.fn((table: string) => {
       if (!(table in callIndices)) callIndices[table] = 0;
@@ -78,8 +79,8 @@ function createMockSupabase(
         return results[idx] ?? { data: null, error: null };
       }
 
-      function makeQueryChain(): any {
-        const chain: any = {
+      function makeQueryChain(): QueryChain {
+        const chain: QueryChain = {
           eq: vi.fn(() => chain),
           single: vi.fn(() => nextResult()),
           order: vi.fn(() => nextResult()),
@@ -92,7 +93,7 @@ function createMockSupabase(
         update: vi.fn((values: unknown) => {
           const entry = { table, values, eqCalls: [] as [string, unknown][] };
           updateCalls.push(entry);
-          const chain: any = {
+          const chain: QueryChain = {
             eq: vi.fn((col: string, val: unknown) => {
               entry.eqCalls.push([col, val]);
               return chain;
@@ -116,23 +117,23 @@ describe("getWeddingForUser", () => {
   });
 
   it("returns 401 error when userId is null", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: null } as any);
+    vi.mocked(auth).mockResolvedValue({ userId: null } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const result = await getWeddingForUser();
 
     expect("error" in result).toBe(true);
     if ("error" in result) {
-      expect((result.error as any).status).toBe(401);
+      expect((result.error as { status: number }).status).toBe(401);
     }
   });
 
   it("returns wedding with role 'owner' when direct ownership found", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: "user-1" } as any);
+    vi.mocked(auth).mockResolvedValue({ userId: "user-1" } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const supabase = createMockSupabase({
       weddings: [{ data: fakeWedding, error: null }],
     });
-    vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as any);
+    vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as unknown as ReturnType<typeof createSupabaseAdmin>);
 
     const result = await getWeddingForUser();
 
@@ -145,7 +146,7 @@ describe("getWeddingForUser", () => {
   });
 
   it("returns wedding with role from accepted collaborator when owner lookup fails", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: "user-2" } as any);
+    vi.mocked(auth).mockResolvedValue({ userId: "user-2" } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const collabRecord = { wedding_id: "w-1", role: "partner" };
 
@@ -158,7 +159,7 @@ describe("getWeddingForUser", () => {
       // 1st collab call: accepted collaborator lookup -> found
       wedding_collaborators: [{ data: collabRecord, error: null }],
     });
-    vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as any);
+    vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as unknown as ReturnType<typeof createSupabaseAdmin>);
 
     const result = await getWeddingForUser();
 
@@ -171,7 +172,7 @@ describe("getWeddingForUser", () => {
   });
 
   it("returns coordinator role from collaborator record", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: "user-3" } as any);
+    vi.mocked(auth).mockResolvedValue({ userId: "user-3" } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const collabRecord = { wedding_id: "w-1", role: "coordinator" };
 
@@ -182,7 +183,7 @@ describe("getWeddingForUser", () => {
       ],
       wedding_collaborators: [{ data: collabRecord, error: null }],
     });
-    vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as any);
+    vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as unknown as ReturnType<typeof createSupabaseAdmin>);
 
     const result = await getWeddingForUser();
 
@@ -193,7 +194,7 @@ describe("getWeddingForUser", () => {
   });
 
   it("auto-accepts pending invite when email matches", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: "user-4" } as any);
+    vi.mocked(auth).mockResolvedValue({ userId: "user-4" } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const pendingRecord = { id: "collab-99", wedding_id: "w-1", role: "partner" };
 
@@ -209,7 +210,7 @@ describe("getWeddingForUser", () => {
         { data: pendingRecord, error: null },
       ],
     });
-    vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as any);
+    vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as unknown as ReturnType<typeof createSupabaseAdmin>);
 
     const mockClerkClientInstance = {
       users: {
@@ -218,7 +219,7 @@ describe("getWeddingForUser", () => {
         }),
       },
     };
-    vi.mocked(clerkClient).mockResolvedValue(mockClerkClientInstance as any);
+    vi.mocked(clerkClient).mockResolvedValue(mockClerkClientInstance as unknown as Awaited<ReturnType<typeof clerkClient>>);
 
     const result = await getWeddingForUser();
 
@@ -231,7 +232,7 @@ describe("getWeddingForUser", () => {
   });
 
   it("auto-accept updates the collaborator record with user_id and accepted status", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: "user-5" } as any);
+    vi.mocked(auth).mockResolvedValue({ userId: "user-5" } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const pendingRecord = { id: "collab-42", wedding_id: "w-1", role: "coordinator" };
 
@@ -245,7 +246,7 @@ describe("getWeddingForUser", () => {
         { data: pendingRecord, error: null },
       ],
     });
-    vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as any);
+    vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as unknown as ReturnType<typeof createSupabaseAdmin>);
 
     const mockClerkClientInstance = {
       users: {
@@ -254,7 +255,7 @@ describe("getWeddingForUser", () => {
         }),
       },
     };
-    vi.mocked(clerkClient).mockResolvedValue(mockClerkClientInstance as any);
+    vi.mocked(clerkClient).mockResolvedValue(mockClerkClientInstance as unknown as Awaited<ReturnType<typeof clerkClient>>);
 
     await getWeddingForUser();
 
@@ -271,7 +272,7 @@ describe("getWeddingForUser", () => {
   });
 
   it("returns 404 when no ownership, no collaborator, and no pending invite", async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: "user-6" } as any);
+    vi.mocked(auth).mockResolvedValue({ userId: "user-6" } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const supabase = createMockSupabase({
       weddings: [{ data: null, error: null }],
@@ -280,7 +281,7 @@ describe("getWeddingForUser", () => {
         { data: null, error: null },
       ],
     });
-    vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as any);
+    vi.mocked(createSupabaseAdmin).mockReturnValue(supabase as unknown as ReturnType<typeof createSupabaseAdmin>);
 
     const mockClerkClientInstance = {
       users: {
@@ -289,13 +290,13 @@ describe("getWeddingForUser", () => {
         }),
       },
     };
-    vi.mocked(clerkClient).mockResolvedValue(mockClerkClientInstance as any);
+    vi.mocked(clerkClient).mockResolvedValue(mockClerkClientInstance as unknown as Awaited<ReturnType<typeof clerkClient>>);
 
     const result = await getWeddingForUser();
 
     expect("error" in result).toBe(true);
     if ("error" in result) {
-      expect((result.error as any).status).toBe(404);
+      expect((result.error as { status: number }).status).toBe(404);
     }
   });
 });

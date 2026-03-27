@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -11,9 +12,8 @@ export async function GET() {
     .from("app_settings")
     .select("key, value");
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/settings");
+  if (err) return err;
 
   // Convert array to object
   const settings: Record<string, unknown> = {};
@@ -43,9 +43,8 @@ export async function PATCH(request: Request) {
     .from("app_settings")
     .upsert({ key, value, updated_at: new Date().toISOString() });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/settings");
+  if (err) return err;
 
   return NextResponse.json({ success: true });
 }

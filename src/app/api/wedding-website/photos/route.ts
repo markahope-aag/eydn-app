@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -12,9 +13,8 @@ export async function GET() {
     .eq("wedding_id", wedding.id)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "wedding-website/photos");
+  if (err) return err;
 
   return NextResponse.json(data);
 }
@@ -35,9 +35,8 @@ export async function DELETE(request: NextRequest) {
     .eq("id", id)
     .eq("wedding_id", wedding.id);
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "wedding-website/photos");
+  if (err) return err;
 
   return NextResponse.json({ success: true });
 }

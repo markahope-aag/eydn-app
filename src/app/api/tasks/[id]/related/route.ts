@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET(
   _request: Request,
@@ -17,9 +18,8 @@ export async function GET(
     .select("related_task_id")
     .eq("task_id", id);
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "tasks/related");
+  if (err) return err;
 
   return NextResponse.json(data);
 }
@@ -45,9 +45,8 @@ export async function POST(
       { task_id: body.related_task_id as string, related_task_id: id },
     ]);
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "tasks/related");
+  if (err) return err;
 
   return NextResponse.json({ success: true }, { status: 201 });
 }

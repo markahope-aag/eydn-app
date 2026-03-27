@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const { userId } = await auth();
@@ -27,9 +28,8 @@ export async function GET() {
     .eq("vendor_account_id", vendor.id)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "vendor-portal/placements");
+  if (err) return err;
 
   return NextResponse.json(data);
 }

@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { supabaseError } from "@/lib/api-error";
 
 /** List all guide responses for the current wedding. */
 export async function GET() {
@@ -13,10 +14,8 @@ export async function GET() {
     .eq("wedding_id", wedding.id)
     .order("updated_at", { ascending: false });
 
-  if (error) {
-    console.error("[API]", error.message);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "guides");
+  if (err) return err;
 
   return NextResponse.json(data);
 }

@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
+import { apiError, supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -12,10 +13,8 @@ export async function GET() {
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("[API]", error.message);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/promo-codes");
+  if (err) return err;
 
   return NextResponse.json(data, {
     headers: { "Cache-Control": "private, max-age=10" },
@@ -74,8 +73,7 @@ export async function POST(request: Request) {
     if (error.message.includes("unique") || error.message.includes("duplicate")) {
       return NextResponse.json({ error: "This promo code already exists" }, { status: 409 });
     }
-    console.error("[API]", error.message);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiError(error.message, 500, "admin/promo-codes");
   }
 
   return NextResponse.json(data, { status: 201 });
@@ -106,10 +104,8 @@ export async function PATCH(request: Request) {
     .update(updates)
     .eq("id", id);
 
-  if (error) {
-    console.error("[API]", error.message);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/promo-codes");
+  if (err) return err;
 
   return NextResponse.json({ success: true });
 }

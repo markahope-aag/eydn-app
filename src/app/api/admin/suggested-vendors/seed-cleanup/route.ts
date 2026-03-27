@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
+import { supabaseError } from "@/lib/api-error";
 
 /**
  * GET  — Preview seed vendors that would be deleted (dry run)
@@ -21,10 +22,8 @@ export async function GET() {
     .select("id, name, category, city, state, website, phone")
     .or(`website.eq.${SEED_INDICATORS.website},phone.like.${SEED_INDICATORS.phonePrefix}%`);
 
-  if (error) {
-    console.error("[API]", error.message);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/suggested-vendors/seed-cleanup");
+  if (err) return err;
 
   return NextResponse.json({
     count: data?.length || 0,
@@ -56,10 +55,8 @@ export async function POST() {
     .delete()
     .in("id", ids);
 
-  if (error) {
-    console.error("[API]", error.message);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/suggested-vendors/seed-cleanup");
+  if (err) return err;
 
   return NextResponse.json({
     deleted: count,

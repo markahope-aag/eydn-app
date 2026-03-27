@@ -2,6 +2,7 @@ import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
 import type { Database } from "@/lib/supabase/types";
+import { supabaseError } from "@/lib/api-error";
 
 type RehearsalDinnerInsert = Database["public"]["Tables"]["rehearsal_dinner"]["Insert"];
 
@@ -36,9 +37,8 @@ export async function GET() {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "rehearsal-dinner");
+  if (err) return err;
 
   return NextResponse.json(created);
 }
@@ -96,9 +96,8 @@ export async function PUT(request: Request) {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "rehearsal-dinner");
+  if (err) return err;
 
   return NextResponse.json(data);
 }

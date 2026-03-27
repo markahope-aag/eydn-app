@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
 import { pickFields, safeParseJSON, isParseError } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 const ALLOWED_FIELDS = [
   "name", "category", "description", "website", "phone", "email",
@@ -29,9 +30,8 @@ export async function PATCH(
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/suggested-vendors");
+  if (err) return err;
 
   return NextResponse.json(data);
 }
@@ -51,9 +51,8 @@ export async function DELETE(
     .delete()
     .eq("id", id);
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/suggested-vendors");
+  if (err) return err;
 
   return NextResponse.json({ success: true });
 }

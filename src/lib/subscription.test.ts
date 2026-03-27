@@ -57,7 +57,7 @@ function buildMockSupabase(overrides?: {
     return buildChain(weddingResult);
   });
 
-  return { from: mockFrom } as any as ReturnType<typeof createSupabaseAdmin>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  return { from: mockFrom } as unknown as ReturnType<typeof createSupabaseAdmin>;
 }
 
 beforeEach(() => {

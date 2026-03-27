@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { requirePremium } from "@/lib/subscription";
+import { UPLOAD } from "@/lib/config";
 
 // Synthetic entity IDs used by website and vision board uploads — not real DB records
 const SYNTHETIC_IDS = new Set(["website-cover", "website-couple-photo", "mood-board", "wedding-party-photo"]);
@@ -100,20 +101,12 @@ export async function POST(request: Request) {
   }
 
   // Validate file size (max 10MB)
-  const MAX_SIZE = 10 * 1024 * 1024;
-  if (file.size > MAX_SIZE) {
+  if (file.size > UPLOAD.MAX_FILE_SIZE) {
     return NextResponse.json({ error: "File too large. Maximum size is 10MB." }, { status: 413 });
   }
 
   // Validate file type
-  const ALLOWED_TYPES = [
-    "image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/tiff", "image/heic", "image/heif", "image/svg+xml", "image/avif",
-    "application/pdf",
-    "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "text/csv", "text/plain",
-  ];
-  if (!ALLOWED_TYPES.includes(file.type) && file.type !== "application/octet-stream") {
+  if (!(UPLOAD.ALLOWED_DOCUMENT_TYPES as readonly string[]).includes(file.type) && file.type !== "application/octet-stream") {
     return NextResponse.json({ error: "File type not allowed. Accepted: images, PDF, Word, Excel, CSV." }, { status: 400 });
   }
 

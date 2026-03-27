@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
+
+type AuthResult = Awaited<ReturnType<typeof import("@/lib/auth").getWeddingForUser>>;
 
 // --- Mocks ---
 
@@ -64,11 +65,11 @@ describe("GET /api/chat", () => {
     vi.clearAllMocks();
     mockSupabase = createMockSupabase();
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
   });
 
   it("returns chat history", async () => {
@@ -78,11 +79,11 @@ describe("GET /api/chat", () => {
     ];
     mockSupabase = createMockSupabase({ selectData: messages });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const response = await GET();
     const data = await response.json();
@@ -107,11 +108,11 @@ describe("POST /api/chat", () => {
     mockSupabase = createMockSupabase();
     vi.mocked(requirePremium).mockResolvedValue(null);
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
   });
 
   it("returns 403 when premium check fails", async () => {
@@ -186,11 +187,11 @@ describe("Chat History Access Policy", () => {
       ],
     });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const response = await GET();
     const data = await response.json();
@@ -206,11 +207,11 @@ describe("Chat History Access Policy", () => {
       NextResponse.json({ error: "Premium required", trialExpired: true }, { status: 403 })
     );
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const response = await POST(mockRequest({ message: "New question" }));
     const data = await response.json();

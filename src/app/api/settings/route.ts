@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, isValidNumber } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -37,9 +38,8 @@ export async function PUT(request: Request) {
       reminder_days_before: body.reminder_days_before as number,
     });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "settings");
+  if (err) return err;
 
   return NextResponse.json({ success: true });
 }

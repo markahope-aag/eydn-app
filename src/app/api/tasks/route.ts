@@ -2,6 +2,7 @@ import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields, pickFields } from "@/lib/validation";
 import { notifyCollaborators } from "@/lib/audit";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -15,9 +16,8 @@ export async function GET() {
     .is("deleted_at", null)
     .order("created_at", { ascending: true });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "tasks");
+  if (err) return err;
 
   return NextResponse.json(data);
 }
@@ -47,9 +47,8 @@ export async function POST(request: Request) {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "tasks");
+  if (err) return err;
 
   notifyCollaborators({ weddingId: wedding.id, actorUserId: userId, action: "create", entityType: "tasks", entityName: (data as Record<string, unknown>).title as string });
 

@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET(
   _request: Request,
@@ -18,9 +19,8 @@ export async function GET(
     .eq("task_id", id)
     .order("created_at", { ascending: true });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "tasks/resources");
+  if (err) return err;
 
   return NextResponse.json(data);
 }
@@ -48,9 +48,8 @@ export async function POST(
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "tasks/resources");
+  if (err) return err;
 
   return NextResponse.json(data, { status: 201 });
 }
@@ -73,9 +72,8 @@ export async function DELETE(request: Request, _ctx: RouteContext<"/api/tasks/[i
     .delete()
     .eq("id", resourceId);
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "tasks/resources");
+  if (err) return err;
 
   return NextResponse.json({ success: true });
 }

@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const { userId } = await auth();
@@ -32,9 +33,8 @@ export async function GET() {
     .eq("vendor_account_id", vendor.id)
     .gte("created_at", since);
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "vendor-portal/analytics");
+  if (err) return err;
 
   const impressions = (analytics || []).filter(
     (a) => a.event_type === "impression"

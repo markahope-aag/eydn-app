@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
+
+type AuthResult = Awaited<ReturnType<typeof import("@/lib/auth").getWeddingForUser>>;
 
 // --- Mocks ---
 
@@ -57,21 +58,21 @@ function mockRequest(body: unknown): Request {
 function mockAuthAsOwner() {
   mockSupabase = createMockSupabase();
   vi.mocked(getWeddingForUser).mockResolvedValue({
-    wedding: mockWedding as any,
-    supabase: mockSupabase as any,
+    wedding: mockWedding,
+    supabase: mockSupabase,
     userId: "user-1",
     role: "owner",
-  });
+  } as unknown as AuthResult);
 }
 
 function mockAuthAsNonOwner(role: "partner" | "coordinator" = "partner") {
   mockSupabase = createMockSupabase();
   vi.mocked(getWeddingForUser).mockResolvedValue({
-    wedding: mockWedding as any,
-    supabase: mockSupabase as any,
+    wedding: mockWedding,
+    supabase: mockSupabase,
     userId: "user-2",
     role,
-  });
+  } as unknown as AuthResult);
 }
 
 // --- Tests ---
@@ -88,11 +89,11 @@ describe("GET /api/collaborators", () => {
     ];
     mockSupabase = createMockSupabase({ selectData: collabs });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const response = await GET();
     const data = await response.json();
@@ -141,11 +142,11 @@ describe("POST /api/collaborators", () => {
     const collabData = { id: "c1", email: "partner@example.com", role: "partner" };
     mockSupabase = createMockSupabase({ insertData: collabData });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const response = await POST(mockRequest({ email: "partner@example.com", role: "partner" }));
     const data = await response.json();
@@ -197,11 +198,11 @@ describe("POST /api/collaborators", () => {
     const collabData = { id: "c1", email: "coord@example.com", role: "coordinator" };
     mockSupabase = createMockSupabase({ insertData: collabData });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const response = await POST(mockRequest({ email: "coord@example.com", role: "coordinator" }));
     expect(response.status).toBe(201);
@@ -212,11 +213,11 @@ describe("POST /api/collaborators", () => {
       insertError: { message: "duplicate key", code: "23505" },
     });
     vi.mocked(getWeddingForUser).mockResolvedValue({
-      wedding: mockWedding as any,
-      supabase: mockSupabase as any,
+      wedding: mockWedding,
+      supabase: mockSupabase,
       userId: "user-1",
       role: "owner",
-    });
+    } as unknown as AuthResult);
 
     const response = await POST(mockRequest({ email: "already@invited.com", role: "partner" }));
     const data = await response.json();

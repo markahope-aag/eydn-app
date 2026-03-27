@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const { userId } = await auth();
@@ -72,9 +73,8 @@ export async function POST(request: Request) {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "vendor-portal/account");
+  if (err) return err;
 
   // Ensure user has a role record
   const { data: existingRole } = await supabase
@@ -132,9 +132,8 @@ export async function PATCH(request: Request) {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "vendor-portal/account");
+  if (err) return err;
 
   return NextResponse.json(data);
 }

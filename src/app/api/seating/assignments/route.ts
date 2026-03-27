@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -14,9 +15,8 @@ export async function GET() {
     .eq("seating_tables.wedding_id", wedding.id)
     .is("deleted_at", null);
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "seating/assignments");
+  if (err) return err;
 
   return NextResponse.json(data);
 }
@@ -80,9 +80,8 @@ export async function POST(request: Request) {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "seating/assignments");
+  if (err) return err;
 
   return NextResponse.json(data, { status: 201 });
 }
@@ -116,9 +115,8 @@ export async function DELETE(request: Request) {
     .delete()
     .eq("guest_id", guestId);
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "seating/assignments");
+  if (err) return err;
 
   return NextResponse.json({ success: true });
 }

@@ -2,6 +2,7 @@ import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { pickFields, safeParseJSON, isParseError } from "@/lib/validation";
 import { softDelete, logActivity } from "@/lib/audit";
+import { supabaseError } from "@/lib/api-error";
 
 const ALLOWED_FIELDS = [
   "name", "role", "email", "phone", "job_assignment", "photo_url", "attire", "sort_order",
@@ -34,9 +35,8 @@ export async function PATCH(
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "wedding-party");
+  if (err) return err;
 
   logActivity(supabase, { weddingId: wedding.id, userId, action: "update", entityType: "wedding_party", entityId: id, entityName: (data as Record<string, unknown>).name as string });
 
@@ -55,9 +55,8 @@ export async function DELETE(
 
   const { error } = await softDelete(supabase, "wedding_party", id, wedding.id);
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "wedding-party");
+  if (err) return err;
 
   logActivity(supabase, { weddingId: wedding.id, userId, action: "delete", entityType: "wedding_party", entityId: id });
 

@@ -2,6 +2,7 @@ import { getWeddingForUser } from "@/lib/auth";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET(request: Request) {
   const result = await getWeddingForUser();
@@ -24,9 +25,8 @@ export async function GET(request: Request) {
     .eq("entity_id", entityId)
     .order("created_at", { ascending: true });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "comments");
+  if (err) return err;
 
   return NextResponse.json(data);
 }
@@ -70,9 +70,8 @@ export async function POST(request: Request) {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "comments");
+  if (err) return err;
 
   return NextResponse.json(data, { status: 201 });
 }

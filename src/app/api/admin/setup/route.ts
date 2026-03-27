@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { supabaseError } from "@/lib/api-error";
 
 /**
  * One-time setup: makes the current user an admin if no admins exist yet.
@@ -38,9 +39,8 @@ export async function POST() {
     .from("user_roles")
     .upsert({ user_id: userId, role: "admin" });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/setup");
+  if (err) return err;
 
   return NextResponse.json({ success: true, message: "You are now an admin." });
 }

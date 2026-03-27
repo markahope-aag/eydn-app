@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { supabaseError } from "@/lib/api-error";
 
 export async function DELETE(
   _request: Request,
@@ -21,9 +22,8 @@ export async function DELETE(
     .eq("id", id)
     .eq("wedding_id", wedding.id);
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "collaborators");
+  if (err) return err;
 
   return NextResponse.json({ success: true });
 }

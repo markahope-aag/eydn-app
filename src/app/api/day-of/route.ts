@@ -2,6 +2,7 @@ import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import type { Database } from "@/lib/supabase/types";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
+import { supabaseError } from "@/lib/api-error";
 
 type Wedding = Database["public"]["Tables"]["weddings"]["Row"];
 
@@ -54,9 +55,8 @@ export async function PUT(request: Request) {
     .select()
     .single();
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "day-of");
+  if (err) return err;
 
   return NextResponse.json(data);
 }

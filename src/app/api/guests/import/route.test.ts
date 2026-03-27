@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
+
+type AuthResult = Awaited<ReturnType<typeof import("@/lib/auth").getWeddingForUser>>;
 
 // --- Mocks ---
 
@@ -30,11 +31,11 @@ function createMockSupabase(overrides: {
 function mockAuthSuccess(supabaseOverrides?: Parameters<typeof createMockSupabase>[0]) {
   const mockSupabase = createMockSupabase(supabaseOverrides);
   vi.mocked(getWeddingForUser).mockResolvedValue({
-    wedding: mockWedding as any,
-    supabase: mockSupabase as any,
+    wedding: mockWedding,
+    supabase: mockSupabase,
     userId: "user-1",
     role: "owner",
-  });
+  } as unknown as AuthResult);
   return mockSupabase;
 }
 

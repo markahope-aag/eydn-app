@@ -1,6 +1,7 @@
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
+import { AI, CACHE_TTL } from "@/lib/config";
 
 /**
  * Tools that Eydn can use to take actions in the app.
@@ -9,23 +10,21 @@ import type { Database } from "@/lib/supabase/types";
 
 // ─── Search rate limiting (10 searches/user/day) ────────────────────────────
 const searchCounts = new Map<string, { count: number; resetAt: number }>();
-const SEARCH_DAILY_LIMIT = 10;
 
 function canSearch(userId: string): boolean {
   const now = Date.now();
   const entry = searchCounts.get(userId);
   if (!entry || now > entry.resetAt) {
-    searchCounts.set(userId, { count: 1, resetAt: now + 24 * 60 * 60 * 1000 });
+    searchCounts.set(userId, { count: 1, resetAt: now + CACHE_TTL.WEB_SEARCH });
     return true;
   }
-  if (entry.count >= SEARCH_DAILY_LIMIT) return false;
+  if (entry.count >= AI.SEARCH_DAILY_LIMIT) return false;
   entry.count++;
   return true;
 }
 
 // ─── Search result cache (24h) ──────────────────────────────────────────────
 const searchCache = new Map<string, { results: string; expiresAt: number }>();
-const CACHE_TTL = 24 * 60 * 60 * 1000;
 
 export const EYDN_TOOLS: Tool[] = [
   {
@@ -326,7 +325,7 @@ export async function executeTool(
         const resultText = `Search results for "${query}":\n\n${formatted}`;
 
         // Cache results
-        searchCache.set(cacheKey, { results: resultText, expiresAt: Date.now() + CACHE_TTL });
+        searchCache.set(cacheKey, { results: resultText, expiresAt: Date.now() + CACHE_TTL.WEB_SEARCH });
 
         return resultText;
       }

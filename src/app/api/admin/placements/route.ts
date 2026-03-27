@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
+import { supabaseError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -15,9 +16,8 @@ export async function GET() {
     `)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+  const err = supabaseError(error, "admin/placements");
+  if (err) return err;
 
   // Calculate revenue totals
   const totalRevenue = (data || [])
