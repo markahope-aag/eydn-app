@@ -40,6 +40,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Playwright
+playwright/.auth/
+__tests__/visual/screenshots/
+/test-results/
+/playwright-report/
+
 # Sentry Config File
 .env.sentry-build-plugin
 
