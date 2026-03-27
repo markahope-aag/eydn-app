@@ -139,6 +139,9 @@ export default function AdminPage() {
   const [testSmsTo, setTestSmsTo] = useState("");
   const [sendingSms, setSendingSms] = useState(false);
   const [sendingPush, setSendingPush] = useState(false);
+  const [subSearch, setSubSearch] = useState("");
+  const [subFilter, setSubFilter] = useState<"all" | "active" | "no-event" | "admin">("all");
+  const [subSort, setSubSort] = useState<{ key: "joined" | "last_sign_in"; dir: "asc" | "desc" }>({ key: "joined", dir: "desc" });
   const [analyticsData, setAnalyticsData] = useState<{
     dailySignups: { date: string; count: number }[];
     weeklyActive: { week: string; count: number }[];
@@ -334,14 +337,72 @@ export default function AdminPage() {
       )}
 
       {/* Subscribers Tab */}
-      {tab === "subscribers" && (
+      {tab === "subscribers" && (() => {
+        const filtered = users
+          .filter((u) => {
+            if (subSearch) {
+              const q = subSearch.toLowerCase();
+              if (!u.name.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false;
+            }
+            if (subFilter === "active") return u.has_event;
+            if (subFilter === "no-event") return !u.has_event;
+            if (subFilter === "admin") return u.role === "admin";
+            return true;
+          })
+          .sort((a, b) => {
+            const aVal = a[subSort.key] || 0;
+            const bVal = b[subSort.key] || 0;
+            return subSort.dir === "desc" ? (bVal > aVal ? 1 : -1) : (aVal > bVal ? 1 : -1);
+          });
+
+        const noNameCount = users.filter((u) => u.name === "—").length;
+
+        function toggleSort(key: "joined" | "last_sign_in") {
+          setSubSort((prev) => prev.key === key ? { key, dir: prev.dir === "desc" ? "asc" : "desc" } : { key, dir: "desc" });
+        }
+
+        const sortArrow = (key: "joined" | "last_sign_in") =>
+          subSort.key === key ? (subSort.dir === "desc" ? " ↓" : " ↑") : "";
+
+        return (
         <div className="mt-6">
-          <p className="text-[15px] text-muted mb-4">
-            {users.length} registered {users.length === 1 ? "subscriber" : "subscribers"}
-          </p>
-          {users.length === 0 ? (
+          {/* Search and filter bar */}
+          <div className="flex gap-3 items-center flex-wrap mb-4">
+            <div className="relative flex-1 min-w-[200px] max-w-sm">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M11 11L14.5 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              <input
+                type="text"
+                placeholder="Search by name or email..."
+                value={subSearch}
+                onChange={(e) => setSubSearch(e.target.value)}
+                className="w-full rounded-[10px] border-border pl-8 pr-3 py-1.5 text-[15px]"
+              />
+            </div>
+            <select
+              value={subFilter}
+              onChange={(e) => setSubFilter(e.target.value as typeof subFilter)}
+              className="rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+            >
+              <option value="all">All ({users.length})</option>
+              <option value="active">Active ({users.filter((u) => u.has_event).length})</option>
+              <option value="no-event">No event ({users.filter((u) => !u.has_event).length})</option>
+              <option value="admin">Admins ({users.filter((u) => u.role === "admin").length})</option>
+            </select>
+            <span className="text-[13px] text-muted">{filtered.length} shown</span>
+          </div>
+
+          {noNameCount > 0 && (
+            <div className="mb-4 rounded-[10px] bg-amber-50 border border-amber-200 px-4 py-2 text-[13px] text-amber-800">
+              {noNameCount} subscriber{noNameCount > 1 ? "s have" : " has"} no name set. Require first/last name in your <a href="https://dashboard.clerk.com" target="_blank" rel="noopener noreferrer" className="font-semibold underline">Clerk dashboard</a> under User &amp; Authentication → Email, Phone, Username → Name (toggle to Required).
+            </div>
+          )}
+
+          {filtered.length === 0 ? (
             <p className="text-[15px] text-muted py-8 text-center">
-              No subscribers yet.
+              {users.length === 0 ? "No subscribers yet." : "No subscribers match your search."}
             </p>
           ) : (
             <div className="overflow-x-auto rounded-[16px] border-border bg-white">
@@ -351,27 +412,27 @@ export default function AdminPage() {
                     <th className="px-4 py-3 text-left font-semibold text-muted">Name</th>
                     <th className="px-4 py-3 text-left font-semibold text-muted">Email</th>
                     <th className="px-4 py-3 text-left font-semibold text-muted">Status</th>
-                    <th className="px-4 py-3 text-left font-semibold text-muted">Joined</th>
-                    <th className="px-4 py-3 text-left font-semibold text-muted">Last Active</th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted cursor-pointer hover:text-plum select-none" onClick={() => toggleSort("joined")}>
+                      Joined{sortArrow("joined")}
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-muted cursor-pointer hover:text-plum select-none" onClick={() => toggleSort("last_sign_in")}>
+                      Last Active{sortArrow("last_sign_in")}
+                    </th>
                     <th className="px-4 py-3 text-left font-semibold text-muted">Role</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {users.map((user) => (
+                  {filtered.map((user) => (
                     <tr key={user.user_id}>
                       <td className="px-4 py-3 font-semibold text-plum">
-                        {user.name}
+                        {user.name === "—" ? <span className="text-amber-500 italic">No name</span> : user.name}
                       </td>
                       <td className="px-4 py-3 text-muted">{user.email}</td>
                       <td className="px-4 py-3">
                         {user.has_event ? (
-                          <span className="badge badge-confirmed">
-                            Active
-                          </span>
+                          <span className="badge badge-confirmed">Active</span>
                         ) : (
-                          <span className="badge badge-pending">
-                            No event
-                          </span>
+                          <span className="badge badge-pending">No event</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-muted">
@@ -380,7 +441,7 @@ export default function AdminPage() {
                       <td className="px-4 py-3 text-muted">
                         {user.last_sign_in
                           ? new Date(user.last_sign_in).toLocaleDateString()
-                          : "Never"}
+                          : <span className="text-muted/50">Never</span>}
                       </td>
                       <td className="px-4 py-3">
                         <select
@@ -403,7 +464,8 @@ export default function AdminPage() {
             </div>
           )}
         </div>
-      )}
+        );
+      })()}
 
       {/* Data & Security Tab */}
       {tab === "data-security" && (
