@@ -221,6 +221,17 @@ export default function WebsitePage() {
   async function handleCoverUpload() {
     const file = coverRef.current?.files?.[0];
     if (!file) return;
+
+    // Pre-validate before uploading
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 10 MB.`);
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error(`Invalid file type: ${file.type}. Please upload an image (JPG, PNG, WebP).`);
+      return;
+    }
+
     setUploadingCover(true);
 
     const formData = new FormData();
@@ -233,13 +244,17 @@ export default function WebsitePage() {
         method: "POST",
         body: formData,
       });
-      if (!res.ok) throw new Error();
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || `Upload failed (${res.status})`);
+      }
       setCoverUrl(data.file_url);
       autoSaveImmediate({ cover_url: data.file_url });
       toast.success("Cover image uploaded");
-    } catch {
-      toast.error("Cover image didn't upload. Try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`Cover upload failed: ${msg}`);
+      console.error("[COVER UPLOAD]", msg);
     } finally {
       setUploadingCover(false);
       if (coverRef.current) coverRef.current.value = "";
@@ -249,6 +264,16 @@ export default function WebsitePage() {
   async function handleCouplePhotoUpload() {
     const file = couplePhotoRef.current?.files?.[0];
     if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 10 MB.`);
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error(`Invalid file type: ${file.type}. Please upload an image (JPG, PNG, WebP).`);
+      return;
+    }
+
     setUploadingCouplePhoto(true);
 
     const formData = new FormData();
@@ -261,13 +286,17 @@ export default function WebsitePage() {
         method: "POST",
         body: formData,
       });
-      if (!res.ok) throw new Error();
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || `Upload failed (${res.status})`);
+      }
       setCouplePhotoUrl(data.file_url);
       autoSaveImmediate({ couple_photo_url: data.file_url });
       toast.success("Couple photo uploaded");
-    } catch {
-      toast.error("Photo didn't upload. Try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`Photo upload failed: ${msg}`);
+      console.error("[COUPLE PHOTO UPLOAD]", msg);
     } finally {
       setUploadingCouplePhoto(false);
       if (couplePhotoRef.current) couplePhotoRef.current.value = "";
