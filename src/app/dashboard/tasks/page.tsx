@@ -425,14 +425,14 @@ export default function TasksPage() {
   return (
     <div>
       <Confetti />
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1>Tasks</h1>
           <p className="mt-1 text-[15px] text-muted">
             {completed}/{total} completed
           </p>
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           <button
             onClick={() => setViewMode("list")}
             className={viewMode === "list" ? "btn-primary btn-sm" : "btn-ghost btn-sm"}

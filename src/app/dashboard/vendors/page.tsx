@@ -180,7 +180,7 @@ export default function VendorsPage() {
   return (
     <div>
       <Confetti />
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1>Vendors <Tooltip text="Track every vendor through your booking pipeline — from initial search to final payment. Each vendor moves through stages so you always know where things stand." wide /></h1>
           <p className="mt-1 text-[15px] text-muted">
@@ -190,11 +190,11 @@ export default function VendorsPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setShowAdd(!showAdd)}
-            className="btn-secondary"
+            className="btn-secondary text-[13px] sm:text-[15px]"
           >
             Add Your Own
           </button>
-          <Link href="/dashboard/vendors/directory" className="btn-primary">
+          <Link href="/dashboard/vendors/directory" className="btn-primary text-[13px] sm:text-[15px]">
             Browse Directory
           </Link>
         </div>
@@ -271,83 +271,87 @@ export default function VendorsPage() {
               {catVendors.map((vendor) => (
                 <div
                   key={vendor.id}
-                  className="flex items-center gap-3 rounded-[16px] border-border bg-white px-4 py-3"
+                  className="rounded-[16px] border-border bg-white px-4 py-3"
                 >
-                  {/* Vendor photo */}
-                  <a href={`/dashboard/vendors/${vendor.id}`} className="flex-shrink-0">
-                    {vendor.gmb_data?.photoUrl ? (
-                      <div className="w-12 h-12 rounded-[10px] overflow-hidden relative">
-                        <Image
-                          src={vendor.gmb_data.photoUrl}
-                          alt={vendor.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-12 h-12 rounded-[10px] bg-lavender flex items-center justify-center">
-                        <span className="text-[18px] font-semibold text-violet">{vendor.name.charAt(0)}</span>
-                      </div>
-                    )}
-                  </a>
-                  <a
-                    href={`/dashboard/vendors/${vendor.id}`}
-                    className="flex-1 min-w-0"
-                  >
-                    <span className="text-[15px] font-semibold text-plum hover:text-violet block truncate">{vendor.name}</span>
-                    {vendor.gmb_data?.rating && (
+                  {/* Top row: photo + name + status */}
+                  <div className="flex items-center gap-3">
+                    <a href={`/dashboard/vendors/${vendor.id}`} className="flex-shrink-0">
+                      {vendor.gmb_data?.photoUrl ? (
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[10px] overflow-hidden relative">
+                          <Image
+                            src={vendor.gmb_data.photoUrl}
+                            alt={vendor.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[10px] bg-lavender flex items-center justify-center">
+                          <span className="text-[16px] sm:text-[18px] font-semibold text-violet">{vendor.name.charAt(0)}</span>
+                        </div>
+                      )}
+                    </a>
+                    <a
+                      href={`/dashboard/vendors/${vendor.id}`}
+                      className="flex-1 min-w-0"
+                    >
+                      <span className="text-[15px] font-semibold text-plum hover:text-violet block truncate">{vendor.name}</span>
+                      {vendor.gmb_data?.rating && (
+                        <span className="text-[12px] text-muted">
+                          {"★".repeat(Math.round(vendor.gmb_data.rating))} {vendor.gmb_data.rating}
+                          {vendor.gmb_data.userRatingCount ? ` (${vendor.gmb_data.userRatingCount})` : ""}
+                        </span>
+                      )}
+                      {!vendor.gmb_data?.rating && vendor.poc_name && (
+                        <span className="text-[12px] text-muted">{vendor.poc_name}</span>
+                      )}
+                    </a>
+                    <select
+                      value={vendor.status}
+                      onChange={(e) => updateStatus(vendor.id, e.target.value)}
+                      aria-label={`Status for ${vendor.name}`}
+                      className={`rounded-full px-2 py-0.5 text-[12px] font-semibold border-0 flex-shrink-0 ${
+                        STATUS_COLORS[vendor.status] || ""
+                      }`}
+                    >
+                      {VENDOR_STATUSES.map((s) => (
+                        <option key={s.value} value={s.value}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Bottom row: price + actions */}
+                  <div className="flex items-center gap-2 mt-2 ml-[52px] sm:ml-[60px] flex-wrap">
+                    {vendor.amount !== null && (
                       <span className="text-[12px] text-muted">
-                        {"★".repeat(Math.round(vendor.gmb_data.rating))} {vendor.gmb_data.rating}
-                        {vendor.gmb_data.userRatingCount ? ` (${vendor.gmb_data.userRatingCount})` : ""}
+                        ${vendor.amount.toLocaleString()}
                       </span>
                     )}
-                    {!vendor.gmb_data?.rating && vendor.poc_name && (
-                      <span className="text-[12px] text-muted">{vendor.poc_name}</span>
-                    )}
-                  </a>
-                  <select
-                    value={vendor.status}
-                    onChange={(e) => updateStatus(vendor.id, e.target.value)}
-                    aria-label={`Status for ${vendor.name}`}
-                    className={`rounded-full px-2 py-0.5 text-[12px] font-semibold border-0 ${
-                      STATUS_COLORS[vendor.status] || ""
-                    }`}
-                  >
-                    {VENDOR_STATUSES.map((s) => (
-                      <option key={s.value} value={s.value}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                  {vendor.amount !== null && (
-                    <span className="text-[12px] text-muted">
-                      ${vendor.amount.toLocaleString()}
-                    </span>
-                  )}
-                  {/* Email template button on vendor card */}
-                  <button
-                    onClick={() => setEmailCategory(vendor.category)}
-                    className="btn-ghost btn-sm text-[12px] flex items-center gap-1"
-                    title="Email template"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="1" y="3" width="12" height="9" rx="1.5" />
-                      <path d="M1 4.5L7 8.5L13 4.5" />
-                    </svg>
-                    Email
-                  </button>
-                  <a
-                    href={`/dashboard/vendors/${vendor.id}`}
-                    className="btn-secondary btn-sm"
-                  >
-                    Details
-                  </a>
-                  <button
-                    onClick={() => setConfirmDelete(vendor.id)}
-                    className="text-[12px] text-error hover:opacity-80"
-                  >
-                    Delete
-                  </button>
+                    <button
+                      onClick={() => setEmailCategory(vendor.category)}
+                      className="btn-ghost btn-sm text-[12px] flex items-center gap-1"
+                      title="Email template"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="1" y="3" width="12" height="9" rx="1.5" />
+                        <path d="M1 4.5L7 8.5L13 4.5" />
+                      </svg>
+                      Email
+                    </button>
+                    <a
+                      href={`/dashboard/vendors/${vendor.id}`}
+                      className="btn-secondary btn-sm text-[12px]"
+                    >
+                      Details
+                    </a>
+                    <button
+                      onClick={() => setConfirmDelete(vendor.id)}
+                      className="text-[12px] text-error hover:opacity-80"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

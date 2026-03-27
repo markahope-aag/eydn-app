@@ -247,7 +247,7 @@ export default function MoodBoardPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1>Vision Board</h1>
           <p className="mt-1 text-[15px] text-muted">

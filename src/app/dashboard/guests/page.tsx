@@ -564,7 +564,7 @@ export default function GuestsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1>Guest List <Tooltip text="Manage your wedding guests, track RSVPs, assign roles, and organize guests into groups. Use filters to quickly find specific guests." wide /></h1>
         <div className="flex gap-2">
           <input ref={fileInput} type="file" accept=".csv" onChange={importCSV} aria-label="Import CSV file" className="hidden" />

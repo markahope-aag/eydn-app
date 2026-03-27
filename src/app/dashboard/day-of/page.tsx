@@ -594,7 +594,7 @@ export default function DayOfPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1>Day-of Planner</h1>
         <div className="flex items-center gap-2">
           <PremiumButton onClick={exportPDF} className="btn-secondary btn-sm">

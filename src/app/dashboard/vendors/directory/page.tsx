@@ -294,13 +294,13 @@ export default function VendorDirectoryPage() {
       </div>
 
       {/* Search + filter button */}
-      <div className="mt-4 flex gap-3">
+      <div className="mt-4 flex flex-col sm:flex-row gap-3">
         <input
           type="text"
           placeholder="Search by name or location..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
+          className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1 min-w-0"
         />
         <button
           type="button"
@@ -325,11 +325,11 @@ export default function VendorDirectoryPage() {
 
       {/* Expandable filters */}
       {showFilters && (
-        <div className="mt-2 flex flex-wrap gap-3 items-center">
+        <div className="mt-2 grid grid-cols-2 sm:flex sm:flex-wrap gap-3 items-center">
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="rounded-[10px] border-border px-3 py-1.5 text-[14px]"
+            className="rounded-[10px] border-border px-3 py-1.5 text-[14px] w-full sm:w-auto"
           >
             <option value="">All Categories</option>
             {VENDOR_CATEGORIES.map((c) => (

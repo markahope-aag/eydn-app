@@ -178,12 +178,12 @@ export default function VendorDetailPage({
         <label className="text-[12px] font-semibold text-muted uppercase">
           Status <Tooltip text="Click any stage to update this vendor's progress. Stages: Searching (researching) → Contacted (reached out) → Quote Received (got pricing) → Booked (confirmed!) → Deposit Paid (partial payment) → Paid in Full (complete)." wide />
         </label>
-        <div className="mt-2 flex gap-1">
+        <div className="mt-2 flex gap-1 flex-wrap sm:flex-nowrap">
           {VENDOR_STATUSES.map((s, i) => (
             <button
               key={s.value}
               onClick={() => updateField("status", s.value)}
-              className={`flex-1 py-1.5 text-[12px] font-semibold rounded-[10px] transition ${
+              className={`flex-1 min-w-[60px] py-1.5 text-[11px] sm:text-[12px] font-semibold rounded-[10px] transition ${
                 i <= statusIdx
                   ? STATUS_COLORS[vendor.status] || "bg-lavender"
                   : "bg-whisper text-muted"

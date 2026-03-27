@@ -403,19 +403,23 @@ export default async function DashboardPage() {
               const dueDateInfo = task.due_date ? formatDueDate(task.due_date) : null;
               const isOverdue = dueDateInfo?.isOverdue;
               return (
-                <div key={i} className="card-list flex items-center gap-3 px-4 py-3">
-                  <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${priorityDot[task.priority] || priorityDot.medium}`} title={`${task.priority} priority`} />
-                  <span className="flex-1 text-[15px] text-plum">
-                    {task.title}
-                  </span>
-                  {task.category && (
-                    <span className="badge badge-booked">{task.category}</span>
-                  )}
-                  {dueDateInfo && (
-                    <span className={`text-[12px] flex-shrink-0 ${isOverdue ? "text-error font-semibold" : dueDateInfo.isToday ? "text-violet font-semibold" : "text-muted"}`}>
-                      {dueDateInfo.formatted} · {dueDateInfo.relative}
+                <div key={i} className="card-list px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${priorityDot[task.priority] || priorityDot.medium}`} title={`${task.priority} priority`} />
+                    <span className="flex-1 text-[15px] text-plum truncate">
+                      {task.title}
                     </span>
-                  )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1 ml-[18px]">
+                    {task.category && (
+                      <span className="badge badge-booked text-[11px]">{task.category}</span>
+                    )}
+                    {dueDateInfo && (
+                      <span className={`text-[12px] ${isOverdue ? "text-error font-semibold" : dueDateInfo.isToday ? "text-violet font-semibold" : "text-muted"}`}>
+                        {dueDateInfo.formatted} · {dueDateInfo.relative}
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })}

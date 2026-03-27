@@ -174,7 +174,7 @@ function LandingNav() {
         <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
           <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="eydn" decoding="async" style={{ height: 24 }} />
+            <img src="/logo.png" alt="eydn" decoding="async" style={{ height: 30 }} />
           </Link>
           <nav
             style={{ display: "flex", alignItems: "center", gap: 24 }}

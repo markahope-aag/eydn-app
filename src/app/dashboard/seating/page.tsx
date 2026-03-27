@@ -409,7 +409,7 @@ export default function SeatingPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h1>Seating Chart</h1>
         <div className="flex gap-1">
           <button

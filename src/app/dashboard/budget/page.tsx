@@ -472,7 +472,7 @@ export default function BudgetPage() {
       )}
 
       {/* Add custom line item */}
-      <form onSubmit={addExpense} className="mt-8 flex gap-3">
+      <form onSubmit={addExpense} className="mt-8 flex flex-col sm:flex-row gap-3">
         <input
           type="text"
           placeholder="Add a line item..."
@@ -532,7 +532,7 @@ export default function BudgetPage() {
               </div>
 
               {/* Column headers */}
-              <div className="grid grid-cols-[1fr_100px_100px_100px_60px] gap-2 px-4 py-2 border-b border-border text-[12px] font-semibold text-muted">
+              <div className="hidden sm:grid grid-cols-[1fr_100px_100px_100px_60px] gap-2 px-4 py-2 border-b border-border text-[12px] font-semibold text-muted">
                 <span>Item</span>
                 <span className="text-right">Estimated <Tooltip text="Your best guess at the cost. Update as you get quotes." /></span>
                 <span className="text-right">Paid <Tooltip text="Amount paid so far — deposits, installments, or full payment." /></span>
@@ -543,7 +543,7 @@ export default function BudgetPage() {
               {/* Line items */}
               <div className="divide-y divide-border">
                 {items.map((exp) => (
-                  <div key={exp.id} className="group/row grid grid-cols-[1fr_100px_100px_100px_60px] gap-2 px-4 py-2 items-center">
+                  <div key={exp.id} className="group/row flex flex-col sm:grid sm:grid-cols-[1fr_100px_100px_100px_60px] gap-2 px-4 py-2 sm:items-center">
                     <div>
                       <span className="text-[15px] text-plum">{exp.description}</span>
                       {exp.vendor_name && (
