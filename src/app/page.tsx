@@ -946,8 +946,8 @@ export default function HomePage() {
           padding: "40px 20px",
         }}
       >
-        <div className="flex flex-col sm:flex-row gap-4 sm:overflow-x-auto sm:items-center" style={{ scrollbarWidth: "none" }}>
-        <div style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", boxShadow: "0 8px 32px rgba(180,140,130,.2)" }} className="sm:min-w-[260px] sm:flex-shrink-0">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+        <div style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", boxShadow: "0 8px 32px rgba(180,140,130,.2)" }}>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B5E50", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Task Timeline</p>
           {[{ label: "Book photographer", done: true }, { label: "Finalize guest list", done: false }, { label: "Cake tasting", done: false }].map((t, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -956,11 +956,11 @@ export default function HomePage() {
             </div>
           ))}
         </div>
-        <div style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", boxShadow: "0 8px 32px rgba(180,140,130,.2)" }} className="sm:min-w-[260px] sm:flex-shrink-0">
+        <div style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", boxShadow: "0 8px 32px rgba(180,140,130,.2)" }}>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B5E50", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Budget</p>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#2A2018" }}>$9,600 of $26,500 paid</p>
         </div>
-        <div style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", boxShadow: "0 8px 32px rgba(180,140,130,.2)" }} className="sm:min-w-[260px] sm:flex-shrink-0">
+        <div style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", boxShadow: "0 8px 32px rgba(180,140,130,.2)" }}>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "#6B5E50", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>AI Chat</p>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#2A2018" }}>Ask Eydn anything</p>
         </div>
