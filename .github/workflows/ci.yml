@@ -1,8 +1,9 @@
 name: CI
 
 on:
-  push:
-    branches: [master]
+  # Manual trigger — run from GitHub Actions tab or gh CLI
+  workflow_dispatch:
+  # PRs still run automatically
   pull_request:
     branches: [master]
 
