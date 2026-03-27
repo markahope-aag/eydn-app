@@ -61,19 +61,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Table not found" }, { status: 404 });
   }
 
-  // Remove existing assignment for this guest
-  await supabase
-    .from("seat_assignments")
-    .delete()
-    .eq("guest_id", guestId);
-
+  // Atomic upsert — avoids race condition where two concurrent drags
+  // of the same guest could cause ghost seats (DELETE then INSERT
+  // was not atomic; two requests could interleave)
   const { data, error } = await supabase
     .from("seat_assignments")
-    .insert({
-      seating_table_id: tableId,
-      guest_id: guestId,
-      seat_number: (body.seat_number as number) || null,
-    })
+    .upsert(
+      {
+        seating_table_id: tableId,
+        guest_id: guestId,
+        seat_number: (body.seat_number as number) || null,
+      },
+      { onConflict: "guest_id" }
+    )
     .select()
     .single();
 
