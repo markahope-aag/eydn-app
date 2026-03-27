@@ -6,18 +6,14 @@ on:
   pull_request:
     branches: [master]
 
-env:
-  NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: placeholder
-  CLERK_SECRET_KEY: placeholder
-  SENTRY_ORG: placeholder
-  SENTRY_PROJECT: placeholder
-  NEXT_PUBLIC_SENTRY_DSN: placeholder
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-lint-typecheck:
-    name: Build, Lint & Type Check
+  # ── Step 1: Install dependencies once, cache for downstream jobs ────────
+  install:
+    name: Install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -26,23 +22,76 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Build (generates RouteContext types)
-        run: npx next build
+      - uses: actions/cache/save@v4
+        with:
+          path: node_modules
+          key: nm-${{ hashFiles('package-lock.json') }}
+
+  # ── Step 2: Build (needed by lint, typecheck, and Playwright) ───────────
+  build:
+    name: Build
+    needs: install
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: placeholder
+      CLERK_SECRET_KEY: placeholder
+      SENTRY_ORG: placeholder
+      SENTRY_PROJECT: placeholder
+      NEXT_PUBLIC_SENTRY_DSN: placeholder
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: nm-${{ hashFiles('package-lock.json') }}
+      - run: npx next build
+      - uses: actions/cache/save@v4
+        with:
+          path: .next
+          key: next-build-${{ github.sha }}
+
+  # ── Step 3a: Type check + Lint (after build generates route types) ──────
+  typecheck-lint:
+    name: Type Check & Lint
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: nm-${{ hashFiles('package-lock.json') }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: .next
+          key: next-build-${{ github.sha }}
       - name: Type Check
         run: npx tsc --noEmit
       - name: Lint
         run: npx eslint src/
 
+  # ── Step 3b: Unit tests (parallel with lint) ────────────────────────────
   test:
-    name: Tests
+    name: Unit Tests
+    needs: install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: nm-${{ hashFiles('package-lock.json') }}
       - run: npx vitest run --coverage
       - name: Upload coverage
         if: always()
@@ -51,8 +100,10 @@ jobs:
           name: coverage-report
           path: coverage/
 
+  # ── Step 3c: Playwright responsive + a11y (after build) ─────────────────
   playwright:
-    name: Responsive & Accessibility Audit
+    name: Responsive & Accessibility
+    needs: build
     runs-on: ubuntu-latest
     env:
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
@@ -69,12 +120,18 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: nm-${{ hashFiles('package-lock.json') }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: .next
+          key: next-build-${{ github.sha }}
       - name: Install Playwright Chromium
-        run: npx playwright install chromium
-      - name: Start dev server
-        run: npx next dev --port 3000 &
+        run: npx playwright install --with-deps chromium
+      - name: Start production server
+        run: npx next start --port 3000 &
       - name: Wait for server
         run: npx wait-on http://localhost:3000 --timeout 30000
       - name: Run public page tests
@@ -88,14 +145,18 @@ jobs:
           name: playwright-screenshots
           path: __tests__/visual/screenshots/
 
+  # ── Step 3d: Security audit (parallel) ──────────────────────────────────
   security-audit:
     name: Security Audit
+    needs: install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: nm-${{ hashFiles('package-lock.json') }}
       - run: npm audit --omit=dev --audit-level=high
