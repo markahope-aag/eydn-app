@@ -71,8 +71,9 @@ export default async function WeddingWebsitePage({
         .order("created_at", { ascending: false }),
       supabase
         .from("wedding_party")
-        .select("id, name, role, sort_order")
+        .select("id, name, role, sort_order, photo_url")
         .eq("wedding_id", wedding.id)
+        .is("deleted_at", null)
         .order("sort_order", { ascending: true }),
     ]);
 
@@ -106,6 +107,7 @@ export default async function WeddingWebsitePage({
   const theme = ((wedding as Record<string, unknown>).website_theme ?? {}) as { primaryColor?: string; accentColor?: string; fontFamily?: string };
   const hotels = ((wedding as Record<string, unknown>).website_hotels ?? []) as Array<{ name: string; url?: string; discountCode?: string; notes?: string }>;
   const coupleNames = `${wedding.partner1_name} & ${wedding.partner2_name}`;
+  const rsvpDeadline = (wedding as Record<string, unknown>).rsvp_deadline as string | null;
   const weddingDate = wedding.date
     ? new Date(wedding.date).toLocaleDateString("en-US", {
         weekday: "long",
@@ -113,6 +115,11 @@ export default async function WeddingWebsitePage({
         month: "long",
         day: "numeric",
       })
+    : null;
+
+  // Countdown
+  const daysUntil = wedding.date
+    ? Math.ceil((new Date(wedding.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null;
 
   // Build sections for sticky nav
@@ -161,10 +168,15 @@ export default async function WeddingWebsitePage({
                   {wedding.website_headline}
                 </p>
               )}
+              {daysUntil !== null && daysUntil > 0 && (
+                <p className="mt-4 text-[14px] text-white/60 tracking-widest uppercase">{daysUntil} days to go</p>
+              )}
             </div>
           </div>
         ) : (
           <div className="relative overflow-hidden py-32 text-center px-6" style={{ background: `linear-gradient(135deg, var(--theme-primary), var(--theme-accent))` }}>
+            {/* Subtle decorative pattern */}
+            <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 20% 80%, white 0%, transparent 50%), radial-gradient(circle at 80% 20%, white 0%, transparent 50%)" }} />
             <div className="relative z-10">
               <h1 className="text-[56px] md:text-[72px] font-[family-name:var(--font-serif)] font-normal text-white leading-tight">
@@ -182,6 +194,9 @@ export default async function WeddingWebsitePage({
                 <p className="mt-4 text-[16px] text-white/70 max-w-lg mx-auto italic">
                   {wedding.website_headline}
                 </p>
+              )}
+              {daysUntil !== null && daysUntil > 0 && (
+                <p className="mt-4 text-[14px] text-white/60 tracking-widest uppercase">{daysUntil} days to go</p>
               )}
             </div>
           </div>
@@ -228,11 +243,17 @@ export default async function WeddingWebsitePage({
             <div className="mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {weddingParty.map((member) => (
                 <div key={member.id} className="group">
-                  <div className="w-20 h-20 rounded-full bg-lavender mx-auto flex items-center justify-center">
-                    <span className="text-[24px] font-[family-name:var(--font-serif)] text-violet">
-                      {member.name.charAt(0)}
-                    </span>
-                  </div>
+                  {(member as Record<string, unknown>).photo_url ? (
+                    <div className="w-20 h-20 rounded-full mx-auto overflow-hidden relative">
+                      <Image src={(member as Record<string, unknown>).photo_url as string} alt={member.name} className="object-cover" fill />
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-lavender mx-auto flex items-center justify-center">
+                      <span className="text-[24px] font-[family-name:var(--font-serif)] text-violet">
+                        {member.name.charAt(0)}
+                      </span>
+                    </div>
+                  )}
                   <p className="mt-3 text-[16px] font-semibold text-plum">{member.name}</p>
                   <p className="text-[13px] text-muted">{member.role}</p>
                 </div>
@@ -396,7 +417,7 @@ export default async function WeddingWebsitePage({
           <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Share Your Photos</h2>
           <SectionDivider />
           <p className="mt-4 text-[16px] text-muted">
-            Upload your favourite moments from the celebration
+            Upload your favorite moments from the celebration
           </p>
           <div className="mt-8 max-w-md mx-auto">
             <PhotoUpload weddingSlug={slug} hasPhotos={photos.length > 0} />
@@ -407,6 +428,12 @@ export default async function WeddingWebsitePage({
         <section className="text-center" id="rsvp">
           <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>RSVP</h2>
           <SectionDivider />
+          <p className="mt-4 text-[16px] text-muted">We can&apos;t wait to celebrate with you!</p>
+          {rsvpDeadline && (
+            <p className="mt-2 text-[14px] text-violet font-semibold">
+              Please respond by {new Date(rsvpDeadline + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            </p>
+          )}
           {rsvpGuest ? (
             <div className="mt-8 max-w-md mx-auto">
               {rsvpGuest.responded ? (
@@ -436,6 +463,7 @@ export default async function WeddingWebsitePage({
       <footer className="border-t border-border/50 py-12 text-center space-y-2">
         <p className="text-[18px] font-[family-name:var(--font-serif)] text-plum/60">{coupleNames}</p>
         {weddingDate && <p className="text-[13px] text-muted/60">{weddingDate}</p>}
+        {wedding.venue && <p className="text-[13px] text-muted/50">{wedding.venue}</p>}
         <p className="text-[11px] text-muted/40 pt-4">
           Made with love using{" "}
           <Link href="/" className="text-violet/60 hover:underline">
