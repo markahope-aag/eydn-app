@@ -335,6 +335,7 @@ export default function SettingsPage() {
           <select
             value={reminderDays}
             onChange={(e) => setReminderDays(Number(e.target.value))}
+            aria-label="Reminder days before deadline"
             className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
           >
             <option value={3}>3 days before</option>

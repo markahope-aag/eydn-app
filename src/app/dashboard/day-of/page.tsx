@@ -654,7 +654,7 @@ export default function DayOfPage() {
             className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition whitespace-nowrap ${
               tab === t
                 ? "border-violet text-violet"
-                : "border-transparent text-plum/60 hover:text-plum"
+                : "border-transparent text-muted hover:text-plum"
             }`}
           >
             {

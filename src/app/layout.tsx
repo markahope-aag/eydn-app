@@ -75,7 +75,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.className} h-full antialiased`} suppressHydrationWarning>
       <head />
-      <body className="min-h-full flex flex-col bg-whisper text-plum" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-whisper text-plum overflow-x-hidden" suppressHydrationWarning>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg focus:text-plum"

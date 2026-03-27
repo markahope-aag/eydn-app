@@ -411,7 +411,7 @@ export default function SeatingPage() {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h1>Seating Chart</h1>
-        <div className="flex gap-1">
+        <div className="flex gap-1" role="tablist">
           <button
             role="tab"
             aria-selected={tab === "reception"}
@@ -478,6 +478,9 @@ export default function SeatingPage() {
             <div
               ref={canvasRef}
               className="relative bg-white rounded-[16px] border border-border flex-1 overflow-auto"
+              tabIndex={0}
+              role="region"
+              aria-label="Seating chart canvas"
               style={{ minHeight: 500 }}
               onDragOver={(e) => e.preventDefault()}
             >

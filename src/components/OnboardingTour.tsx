@@ -107,7 +107,7 @@ export function OnboardingTour() {
           ) : <div />}
           <div style={{ display: "flex", gap: 8 }}>
             {!isLast && (
-              <button onClick={complete} style={{ padding: "8px 16px", fontSize: 14, fontWeight: 500, color: "#9ca3af", backgroundColor: "transparent", border: "none", cursor: "pointer" }}>Skip</button>
+              <button onClick={complete} style={{ padding: "8px 16px", fontSize: 14, fontWeight: 500, color: "#6b7280", backgroundColor: "transparent", border: "none", cursor: "pointer" }}>Skip</button>
             )}
             <button
               onClick={() => { if (isLast) complete(); else setStep((s) => s + 1); }}

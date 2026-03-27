@@ -440,7 +440,7 @@ export default function WebsitePage() {
       </div>
 
       {/* Tabs */}
-      <div className="mt-6 flex gap-1 border-b border-border">
+      <div className="mt-6 flex gap-1 border-b border-border" role="tablist">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -450,7 +450,7 @@ export default function WebsitePage() {
             className={`px-4 py-2 text-[15px] font-semibold rounded-t-[10px] transition ${
               tab === t.key
                 ? "text-violet bg-lavender border-b-2 border-violet"
-                : "text-plum/60 hover:text-violet"
+                : "text-muted hover:text-violet"
             }`}
           >
             {t.label}
@@ -502,6 +502,7 @@ export default function WebsitePage() {
                 <input
                   type="checkbox"
                   role="switch"
+                  aria-label="Enable wedding website"
                   aria-checked={enabled}
                   checked={enabled}
                   onChange={(e) => {

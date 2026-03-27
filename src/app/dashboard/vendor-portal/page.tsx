@@ -320,7 +320,7 @@ function VendorDashboard({
             className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${
               tab === t
                 ? "border-violet text-violet"
-                : "border-transparent text-plum/60 hover:text-plum"
+                : "border-transparent text-muted hover:text-plum"
             }`}
           >
             {t.charAt(0).toUpperCase() + t.slice(1)}

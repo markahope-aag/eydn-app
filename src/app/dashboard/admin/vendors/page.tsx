@@ -254,10 +254,10 @@ export default function AdminVendorsPage() {
 
       {/* Tabs */}
       <div className="mt-4 flex gap-1 border-b border-border">
-        <button onClick={() => setTab("directory")} className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${tab === "directory" ? "border-violet text-violet" : "border-transparent text-plum/60"}`}>
+        <button onClick={() => setTab("directory")} className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${tab === "directory" ? "border-violet text-violet" : "border-transparent text-muted"}`}>
           Directory ({vendors.length})
         </button>
-        <button onClick={() => setTab("submissions")} className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${tab === "submissions" ? "border-violet text-violet" : "border-transparent text-plum/60"}`}>
+        <button onClick={() => setTab("submissions")} className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${tab === "submissions" ? "border-violet text-violet" : "border-transparent text-muted"}`}>
           Submissions {pendingSubmissions.length > 0 && <span className="ml-1 bg-violet text-white text-[10px] rounded-full px-1.5 py-0.5">{pendingSubmissions.length}</span>}
         </button>
       </div>
