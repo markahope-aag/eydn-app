@@ -16,5 +16,5 @@ ALTER TABLE date_change_alerts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can manage their own alerts"
   ON date_change_alerts
   FOR ALL
-  USING (wedding_id IN (SELECT id FROM weddings WHERE user_id = auth.uid()))
-  WITH CHECK (wedding_id IN (SELECT id FROM weddings WHERE user_id = auth.uid()));
+  USING (wedding_id IN (SELECT id FROM weddings WHERE user_id = auth.uid()::text))
+  WITH CHECK (wedding_id IN (SELECT id FROM weddings WHERE user_id = auth.uid()::text));
