@@ -42,11 +42,14 @@ export async function GET() {
     { type: "deadline_reminder", label: "Task Deadline Reminder", trigger: "7 days before task due date" },
   ];
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
+
   // Push notification config
   const pushConfigured = !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   let pushSubscriptionCount = 0;
   if (pushConfigured) {
-    const { count } = await (supabase as any)
+    const { count } = await sb
       .from("push_subscriptions")
       .select("*", { count: "exact", head: true });
     pushSubscriptionCount = count || 0;
@@ -60,21 +63,21 @@ export async function GET() {
   const trackingConfigured = !!process.env.RESEND_WEBHOOK_SECRET;
   let totalTrackingEvents = 0;
   if (trackingConfigured) {
-    const { count } = await (supabase as any)
+    const { count } = await sb
       .from("email_events")
       .select("*", { count: "exact", head: true });
     totalTrackingEvents = count || 0;
   }
 
   // Notification stats
-  const { count: totalNotifications } = await (supabase as any)
+  const { count: totalNotifications } = await sb
     .from("notifications")
     .select("*", { count: "exact", head: true });
-  const { count: unreadNotifications } = await (supabase as any)
+  const { count: unreadNotifications } = await sb
     .from("notifications")
     .select("*", { count: "exact", head: true })
     .eq("read", false);
-  const { data: notificationRows } = await (supabase as any)
+  const { data: notificationRows } = await sb
     .from("notifications")
     .select("type");
   const byType: Record<string, number> = {};
@@ -154,7 +157,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: smsData.message || "Failed to send SMS" });
       }
       return NextResponse.json({ success: true, sid: smsData.sid });
-    } catch (err) {
+    } catch {
       return NextResponse.json({ success: false, error: "SMS send failed" });
     }
   }
@@ -173,6 +176,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No wedding found for admin user" }, { status: 400 });
     }
     // Get all push subscriptions for this wedding
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: subscriptions } = await (adminSupabase as any)
       .from("push_subscriptions")
       .select("*")

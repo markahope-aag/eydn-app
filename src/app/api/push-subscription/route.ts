@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   return NextResponse.json({ success: true });
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(_request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
   const { wedding, supabase, userId } = result;

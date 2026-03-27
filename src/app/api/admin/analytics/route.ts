@@ -121,14 +121,16 @@ export async function GET() {
     { table: "ceremony_positions", feature: "Ceremony Positions" },
   ];
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
   const featureAdoption = await Promise.all(
     featureTables.map(async ({ table, feature }) => {
-      let query = (supabase as any).from(table).select("wedding_id");
+      let query = sb.from(table).select("wedding_id");
       if (SOFT_DELETE_TABLES.has(table)) {
         query = query.is("deleted_at", null);
       }
       const { data } = await query;
-      const unique = new Set((data || []).map((r: any) => r.wedding_id as string));
+      const unique = new Set((data || []).map((r: { wedding_id: string }) => r.wedding_id));
       return { feature, count: unique.size };
     })
   );

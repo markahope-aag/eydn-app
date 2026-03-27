@@ -11,29 +11,8 @@ export async function GET() {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   // --- Table row counts (exclude soft-deleted where applicable) ---
-  const softDeleteTables = [
-    "guests",
-    "vendors",
-    "tasks",
-    "expenses",
-    "wedding_party",
-    "mood_board_items",
-    "seating_tables",
-  ] as const;
-
-  const plainTables = [
-    "weddings",
-    "seat_assignments",
-    "chat_messages",
-    "notifications",
-    "attachments",
-    "blog_posts",
-    "suggested_vendors",
-    "activity_log",
-    "cron_log",
-    "email_events",
-    "date_change_alerts",
-  ] as const;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any;
 
   // Fire all queries in parallel
   const [
@@ -82,7 +61,7 @@ export async function GET() {
     supabase.from("vendors").select("*", { count: "exact", head: true }).is("deleted_at", null),
     supabase.from("tasks").select("*", { count: "exact", head: true }).is("deleted_at", null),
     supabase.from("expenses").select("*", { count: "exact", head: true }).is("deleted_at", null),
-    (supabase as any).from("wedding_party").select("*", { count: "exact", head: true }).is("deleted_at", null),
+    sb.from("wedding_party").select("*", { count: "exact", head: true }).is("deleted_at", null),
     supabase.from("mood_board_items").select("*", { count: "exact", head: true }).is("deleted_at", null),
     supabase.from("seating_tables").select("*", { count: "exact", head: true }).is("deleted_at", null),
     // Soft-deleted counts
@@ -90,21 +69,21 @@ export async function GET() {
     supabase.from("vendors").select("*", { count: "exact", head: true }).not("deleted_at", "is", null),
     supabase.from("tasks").select("*", { count: "exact", head: true }).not("deleted_at", "is", null),
     supabase.from("expenses").select("*", { count: "exact", head: true }).not("deleted_at", "is", null),
-    (supabase as any).from("wedding_party").select("*", { count: "exact", head: true }).not("deleted_at", "is", null),
+    sb.from("wedding_party").select("*", { count: "exact", head: true }).not("deleted_at", "is", null),
     supabase.from("mood_board_items").select("*", { count: "exact", head: true }).not("deleted_at", "is", null),
     supabase.from("seating_tables").select("*", { count: "exact", head: true }).not("deleted_at", "is", null),
     // Plain tables
     supabase.from("weddings").select("*", { count: "exact", head: true }),
-    (supabase as any).from("seat_assignments").select("*", { count: "exact", head: true }),
+    sb.from("seat_assignments").select("*", { count: "exact", head: true }),
     supabase.from("chat_messages").select("*", { count: "exact", head: true }),
-    (supabase as any).from("notifications").select("*", { count: "exact", head: true }),
-    (supabase as any).from("attachments").select("*", { count: "exact", head: true }),
-    (supabase as any).from("blog_posts").select("*", { count: "exact", head: true }),
-    (supabase as any).from("suggested_vendors").select("*", { count: "exact", head: true }),
+    sb.from("notifications").select("*", { count: "exact", head: true }),
+    sb.from("attachments").select("*", { count: "exact", head: true }),
+    sb.from("blog_posts").select("*", { count: "exact", head: true }),
+    sb.from("suggested_vendors").select("*", { count: "exact", head: true }),
     supabase.from("activity_log").select("*", { count: "exact", head: true }),
-    (supabase as any).from("cron_log").select("*", { count: "exact", head: true }),
-    (supabase as any).from("email_events").select("*", { count: "exact", head: true }),
-    (supabase as any).from("date_change_alerts").select("*", { count: "exact", head: true }),
+    sb.from("cron_log").select("*", { count: "exact", head: true }),
+    sb.from("email_events").select("*", { count: "exact", head: true }),
+    sb.from("date_change_alerts").select("*", { count: "exact", head: true }),
     // Growth — weddings
     supabase.from("weddings").select("*", { count: "exact", head: true }).gte("created_at", sevenDaysAgo.toISOString()),
     supabase.from("weddings").select("*", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo.toISOString()),
@@ -116,20 +95,20 @@ export async function GET() {
     supabase.from("chat_messages").select("*", { count: "exact", head: true }).gte("created_at", sevenDaysAgo.toISOString()),
     supabase.from("chat_messages").select("*", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo.toISOString()),
     // Last backup from cron_log
-    (supabase as any)
+    sb
       .from("cron_log")
       .select("*")
       .eq("job_name", "backup")
       .order("started_at", { ascending: false })
       .limit(1),
     // Backups in last 7 days
-    (supabase as any)
+    sb
       .from("cron_log")
       .select("*", { count: "exact", head: true })
       .eq("job_name", "backup")
       .gte("started_at", sevenDaysAgo.toISOString()),
     // Backup errors in last 7 days
-    (supabase as any)
+    sb
       .from("cron_log")
       .select("*", { count: "exact", head: true })
       .eq("job_name", "backup")
