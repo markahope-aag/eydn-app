@@ -454,7 +454,7 @@ function TierForm({
 
   return (
     <form onSubmit={handleSubmit} className="card p-6 space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-[13px] text-muted">Tier Name *</label>
           <input
@@ -477,7 +477,7 @@ function TierForm({
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-[13px] text-muted">Quarterly Price ($)</label>
           <input

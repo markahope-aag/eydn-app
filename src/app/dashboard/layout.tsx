@@ -19,7 +19,7 @@ export default async function DashboardLayout({
       <DashboardSidebar admin={admin} />
 
       {/* Main content — add left padding on mobile for hamburger button */}
-      <main id="main-content" className="flex-1 bg-whisper p-8 pt-16 md:pt-8">
+      <main id="main-content" className="flex-1 bg-whisper p-4 sm:p-6 md:p-8 pt-16 md:pt-8">
         <Suspense fallback={<SkeletonList count={5} />}>
           <ArchiveBanner />
           <DateSyncBanner />

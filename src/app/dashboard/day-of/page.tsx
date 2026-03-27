@@ -516,7 +516,7 @@ export default function DayOfPage() {
         <p className="mt-2 text-[15px] text-muted">
           Generate your day-of timeline, vendor contact sheet, and packing checklist.
         </p>
-        <div className="mt-8 card p-8 text-center space-y-5">
+        <div className="mt-8 card p-4 sm:p-6 md:p-8 text-center space-y-5">
           <div>
             <p className="text-[17px] font-semibold text-plum">Set your ceremony time to generate your timeline</p>
             <p className="text-[13px] text-muted mt-1">Everything else — hair &amp; makeup, photos, dinner, dancing — is scheduled around this time.</p>

@@ -195,7 +195,7 @@ function RegistrationForm({ onSuccess }: { onSuccess: (_a: VendorAccount) => voi
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="text-[13px] text-muted">City</label>
             <input
@@ -389,17 +389,17 @@ function VendorDashboard({
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="card p-6">
               <p className="text-[13px] text-muted">Impressions</p>
-              <p className="mt-1 text-3xl font-semibold text-plum">{analytics.impressions}</p>
+              <p className="mt-1 text-2xl sm:text-3xl font-semibold text-plum">{analytics.impressions}</p>
               <p className="text-[12px] text-muted mt-1">Times your listing was shown</p>
             </div>
             <div className="card p-6">
               <p className="text-[13px] text-muted">Clicks</p>
-              <p className="mt-1 text-3xl font-semibold text-plum">{analytics.clicks}</p>
+              <p className="mt-1 text-2xl sm:text-3xl font-semibold text-plum">{analytics.clicks}</p>
               <p className="text-[12px] text-muted mt-1">Times couples clicked your listing</p>
             </div>
             <div className="card p-6">
               <p className="text-[13px] text-muted">Leads</p>
-              <p className="mt-1 text-3xl font-semibold text-plum">{analytics.leads}</p>
+              <p className="mt-1 text-2xl sm:text-3xl font-semibold text-plum">{analytics.leads}</p>
               <p className="text-[12px] text-muted mt-1">Couples who contacted you</p>
             </div>
           </div>
@@ -498,7 +498,7 @@ function ProfileEditor({
           className="mt-1 w-full rounded-[10px] border border-border px-3 py-2 text-[15px]"
         />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-[13px] text-muted">City</label>
           <input

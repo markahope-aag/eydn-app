@@ -431,7 +431,7 @@ export default function AdminVendorsPage() {
               {importResult.dry_run && (
                 <p className="font-semibold text-violet">Preview (no changes made)</p>
               )}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 {importResult.total_remote != null && (
                   <div><span className="text-muted">Remote records:</span> {importResult.total_remote}</div>
                 )}

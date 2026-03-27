@@ -425,7 +425,7 @@ export default function RehearsalDinnerPage() {
             value={newTimelineTime}
             onChange={(e) => setNewTimelineTime(e.target.value)}
             placeholder="e.g. 6:30 PM"
-            className="w-[130px] rounded-[10px] border-border px-3 py-1.5 text-[14px]"
+            className="w-full sm:w-[130px] rounded-[10px] border-border px-3 py-1.5 text-[14px]"
           />
           <input
             type="text"

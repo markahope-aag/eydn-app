@@ -502,7 +502,7 @@ export default function MoodBoardPage() {
       ) : (
         <div className="mt-8 text-center">
           {/* Placeholder grid to set expectations */}
-          <div className="grid grid-cols-3 gap-3 max-w-lg mx-auto mb-8 opacity-30">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-lg mx-auto mb-8 opacity-30">
             {[120, 160, 100, 140, 110, 150].map((h, i) => (
               <div key={i} className="bg-lavender rounded-[12px]" style={{ height: h }} />
             ))}

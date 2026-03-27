@@ -94,7 +94,7 @@ export default function PricingPage() {
         Your free trial has ended. Get full access to plan your perfect wedding.
       </p>
 
-      <div className="mt-8 card-summary p-8">
+      <div className="mt-8 card-summary p-4 sm:p-6 md:p-8">
         <div
           style={{
             background: "linear-gradient(135deg, var(--violet), var(--soft-violet))",

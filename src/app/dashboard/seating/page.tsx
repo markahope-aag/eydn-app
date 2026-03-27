@@ -764,9 +764,9 @@ export default function SeatingPage() {
           {/* Altar visualization — prominent at top */}
           <div className="bg-white rounded-[16px] border border-border overflow-hidden">
             {/* Altar — large, prominent */}
-            <div className="bg-gradient-to-b from-lavender to-white px-8 pt-8 pb-6 text-center">
+            <div className="bg-gradient-to-b from-lavender to-white px-4 sm:px-8 pt-4 sm:pt-8 pb-4 sm:pb-6 text-center">
               <p className="text-[11px] text-muted uppercase font-semibold tracking-widest mb-3">Altar</p>
-              <div className="inline-block bg-white rounded-[16px] px-10 py-5 min-w-[280px] shadow-sm border border-border">
+              <div className="inline-block bg-white rounded-[16px] px-4 sm:px-10 py-4 sm:py-5 min-w-0 sm:min-w-[280px] w-full sm:w-auto shadow-sm border border-border">
                 {centerPositions.length === 0 && (
                   <p className="text-[13px] text-muted">Add the officiant and couple below</p>
                 )}
@@ -785,7 +785,7 @@ export default function SeatingPage() {
             </div>
 
             {/* Two sides with aisle line between */}
-            <div className="px-8 py-6">
+            <div className="px-4 sm:px-8 py-4 sm:py-6">
               <div className="grid grid-cols-[1fr_40px_1fr] gap-0 max-w-2xl mx-auto">
                 {/* Left side */}
                 <div>
