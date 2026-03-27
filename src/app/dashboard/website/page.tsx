@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { Tooltip } from "@/components/Tooltip";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { trackWebsitePublished } from "@/lib/analytics";
-import JSZip from "jszip";
 
 type Tab = "setup" | "schedule" | "registry" | "rsvp" | "gallery";
 
@@ -22,8 +22,6 @@ type RsvpToken = {
   guests: { name: string; email: string | null; rsvp_status: string; meal_preference: string | null; plus_one_name: string | null };
 };
 type Photo = { id: string; file_url: string; caption: string | null; uploader_name: string | null; approved: boolean; created_at: string };
-type ThemeConfig = { primaryColor?: string; accentColor?: string; fontFamily?: string };
-type Hotel = { name: string; url?: string; discountCode?: string; notes?: string };
 
 export default function WebsitePage() {
   const [tab, setTab] = useState<Tab>("setup");
@@ -36,8 +34,10 @@ export default function WebsitePage() {
   const [headline, setHeadline] = useState("");
   const [story, setStory] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
-  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
-  const [slugChecking, setSlugChecking] = useState(false);
+
+  // Slug availability
+  const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const slugCheckTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
   // Schedule state
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
@@ -60,19 +60,6 @@ export default function WebsitePage() {
   // Gallery state
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photoApprovalRequired, setPhotoApprovalRequired] = useState(false);
-  const [galleryFilter, setGalleryFilter] = useState<"all" | "pending" | "approved">("all");
-  const [downloading, setDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState("");
-
-  // Theme state
-  const [theme, setTheme] = useState<ThemeConfig>({});
-
-  // Hotels state
-  const [hotels, setHotels] = useState<Hotel[]>([]);
-  const [newHotelName, setNewHotelName] = useState("");
-  const [newHotelUrl, setNewHotelUrl] = useState("");
-  const [newHotelCode, setNewHotelCode] = useState("");
-  const [newHotelNotes, setNewHotelNotes] = useState("");
 
   // Couple photo
   const [couplePhotoUrl, setCouplePhotoUrl] = useState("");
@@ -86,6 +73,51 @@ export default function WebsitePage() {
   const [uploadingCouplePhoto, setUploadingCouplePhoto] = useState(false);
 
   const originalSlug = useRef("");
+
+  // Auto-save state
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>(null);
+  const savedFadeTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Schedule import state
+  const [importConfirmOpen, setImportConfirmOpen] = useState(false);
+  const [importItems, setImportItems] = useState<ScheduleItem[]>([]);
+
+  // Auto-save function
+  const autoSave = useCallback(
+    (fields: Record<string, unknown>, debounceMs = 1500) => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      if (savedFadeTimer.current) clearTimeout(savedFadeTimer.current);
+      setSaveStatus("saving");
+      saveTimer.current = setTimeout(async () => {
+        try {
+          const res = await fetch("/api/wedding-website", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fields),
+          });
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || "Failed to save");
+          }
+          setSaveStatus("saved");
+          savedFadeTimer.current = setTimeout(() => setSaveStatus("idle"), 2000);
+        } catch (err) {
+          setSaveStatus("error");
+          toast.error(err instanceof Error ? err.message : "Failed to save");
+        }
+      }, debounceMs);
+    },
+    []
+  );
+
+  // Immediate save (no debounce) for toggles
+  const autoSaveImmediate = useCallback(
+    (fields: Record<string, unknown>) => {
+      autoSave(fields, 0);
+    },
+    [autoSave]
+  );
 
   useEffect(() => {
     loadWebsite();
@@ -117,8 +149,6 @@ export default function WebsitePage() {
       setRsvpDeadline(data.rsvp_deadline || "");
       setMealOptions(data.meal_options || []);
       setPhotoApprovalRequired(data.photo_approval_required || false);
-      setTheme(data.website_theme || {});
-      setHotels(data.hotels || []);
     } catch {
       toast.error("Couldn't load website settings. Try refreshing.");
     } finally {
@@ -156,50 +186,34 @@ export default function WebsitePage() {
     }
   }
 
-  async function checkSlug(value: string) {
+  function handleSlugChange(value: string) {
+    setSlug(value);
     if (!value || value === originalSlug.current) {
-      setSlugAvailable(null);
+      setSlugStatus("idle");
       return;
     }
-    setSlugChecking(true);
-    try {
-      // We check by trying to save - for now show as available if it's a valid slug format
-      setSlugAvailable(/^[a-z0-9-]+$/.test(value) && value.length >= 3);
-    } finally {
-      setSlugChecking(false);
+    if (!/^[a-z0-9-]+$/.test(value) || value.length < 3) {
+      setSlugStatus("taken");
+      return;
     }
-  }
-
-  async function saveSetup() {
-    try {
-      const res = await fetch("/api/wedding-website", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, enabled, headline, story, cover_url: coverUrl, couple_photo_url: couplePhotoUrl }),
-      });
-      if (!res.ok) {
+    setSlugStatus("checking");
+    if (slugCheckTimer.current) clearTimeout(slugCheckTimer.current);
+    slugCheckTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/wedding-website/check-slug?slug=${encodeURIComponent(value)}`);
+        if (!res.ok) throw new Error();
         const data = await res.json();
-        throw new Error(data.error || "Failed to save");
+        if (data.available) {
+          setSlugStatus("available");
+          autoSave({ slug: value });
+          originalSlug.current = value;
+        } else {
+          setSlugStatus("taken");
+        }
+      } catch {
+        setSlugStatus("idle");
       }
-      originalSlug.current = slug;
-      toast.success("Website settings saved");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save");
-    }
-  }
-
-  async function saveSchedule() {
-    try {
-      const res = await fetch("/api/wedding-website", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ schedule, travel, accommodations, faq, rsvp_deadline: rsvpDeadline, meal_options: mealOptions, photo_approval_required: photoApprovalRequired }),
-      });
-      if (!res.ok) throw new Error();
-      toast.success("Schedule & details saved");
-    } catch {
-      toast.error("Failed to save");
-    }
+    }, 300);
   }
 
   async function handleCoverUpload() {
@@ -220,6 +234,7 @@ export default function WebsitePage() {
       if (!res.ok) throw new Error();
       const data = await res.json();
       setCoverUrl(data.file_url);
+      autoSaveImmediate({ cover_url: data.file_url });
       toast.success("Cover image uploaded");
     } catch {
       toast.error("Cover image didn't upload. Try again.");
@@ -247,6 +262,7 @@ export default function WebsitePage() {
       if (!res.ok) throw new Error();
       const data = await res.json();
       setCouplePhotoUrl(data.file_url);
+      autoSaveImmediate({ couple_photo_url: data.file_url });
       toast.success("Couple photo uploaded");
     } catch {
       toast.error("Photo didn't upload. Try again.");
@@ -316,109 +332,34 @@ export default function WebsitePage() {
     }
   }
 
-  async function saveTheme(newTheme: ThemeConfig) {
-    setTheme(newTheme);
+  async function importFromDayOfPlanner() {
     try {
-      const res = await fetch("/api/wedding-website", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ website_theme: newTheme }),
-      });
+      const res = await fetch("/api/day-of");
       if (!res.ok) throw new Error();
-      toast.success("Theme saved");
-    } catch {
-      toast.error("Failed to save theme");
-    }
-  }
-
-  async function saveHotels(updatedHotels: Hotel[]) {
-    setHotels(updatedHotels);
-    try {
-      const res = await fetch("/api/wedding-website", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hotels: updatedHotels }),
-      });
-      if (!res.ok) throw new Error();
-      toast.success("Hotels saved");
-    } catch {
-      toast.error("Failed to save hotels");
-    }
-  }
-
-  function addHotel() {
-    if (!newHotelName.trim()) return;
-    const hotel: Hotel = {
-      name: newHotelName.trim(),
-      url: newHotelUrl.trim() || undefined,
-      discountCode: newHotelCode.trim() || undefined,
-      notes: newHotelNotes.trim() || undefined,
-    };
-    const updated = [...hotels, hotel];
-    saveHotels(updated);
-    setNewHotelName("");
-    setNewHotelUrl("");
-    setNewHotelCode("");
-    setNewHotelNotes("");
-  }
-
-  function removeHotel(index: number) {
-    const updated = hotels.filter((_, i) => i !== index);
-    saveHotels(updated);
-  }
-
-  async function approvePhoto(id: string) {
-    try {
-      const res = await fetch("/api/wedding-website/photos", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, approved: true }),
-      });
-      if (!res.ok) throw new Error();
-      setPhotos((prev) => prev.map((p) => (p.id === id ? { ...p, approved: true } : p)));
-      toast.success("Photo approved");
-    } catch {
-      toast.error("Failed to approve photo");
-    }
-  }
-
-  async function bulkApproveAll() {
-    const pending = photos.filter((p) => !p.approved);
-    for (const photo of pending) {
-      await approvePhoto(photo.id);
-    }
-  }
-
-  async function downloadAllPhotos() {
-    setDownloading(true);
-    try {
-      const zip = new JSZip();
-      const approved = photos.filter((p) => p.approved);
-      for (const [i, photo] of approved.entries()) {
-        setDownloadProgress(`${i + 1} of ${approved.length}`);
-        const res = await fetch(photo.file_url);
-        const blob = await res.blob();
-        zip.file(`photo-${i + 1}.jpg`, blob);
+      const data = await res.json();
+      const timeline = data?.content?.timeline;
+      if (!timeline || timeline.length === 0) {
+        toast.error("Create a Day-of Plan first");
+        return;
       }
-      const content = await zip.generateAsync({ type: "blob" });
-      const url = URL.createObjectURL(content);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "wedding-photos.zip";
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success("Download complete");
+      const mapped: ScheduleItem[] = timeline.map((item: { time: string; event: string }) => ({
+        time: item.time,
+        event: item.event,
+      }));
+      setImportItems(mapped);
+      setImportConfirmOpen(true);
     } catch {
-      toast.error("Failed to download photos");
-    } finally {
-      setDownloading(false);
-      setDownloadProgress("");
+      toast.error("Create a Day-of Plan first");
     }
   }
 
-  const filteredPhotos = galleryFilter === "all" ? photos : galleryFilter === "pending" ? photos.filter((p) => !p.approved) : photos.filter((p) => p.approved);
-  const pendingCount = photos.filter((p) => !p.approved).length;
-  const approvedCount = photos.filter((p) => p.approved).length;
+  function confirmImport() {
+    setSchedule(importItems);
+    autoSave({ schedule: importItems }, 0);
+    setImportConfirmOpen(false);
+    setImportItems([]);
+    toast.success("Schedule imported from Day-of Plan");
+  }
 
   if (loading) {
     return <SkeletonList count={4} />;
@@ -437,11 +378,22 @@ export default function WebsitePage() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <div>
-          <h1>Wedding Website</h1>
-          <p className="mt-1 text-[15px] text-muted">
-            Create and manage your wedding website for guests
-          </p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1>Wedding Website</h1>
+            <p className="mt-1 text-[15px] text-muted">
+              Create and manage your wedding website for guests
+            </p>
+          </div>
+          {saveStatus === "saving" && (
+            <span className="text-[13px] text-muted animate-pulse">Saving...</span>
+          )}
+          {saveStatus === "saved" && (
+            <span className="text-[13px] text-green-600">Saved</span>
+          )}
+          {saveStatus === "error" && (
+            <span className="text-[13px] text-red-500">Error saving</span>
+          )}
         </div>
         {slug && enabled && (
           <a
@@ -491,24 +443,27 @@ export default function WebsitePage() {
                   aria-label="Wedding website URL slug"
                   onChange={(e) => {
                     const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
-                    setSlug(val);
-                    checkSlug(val);
+                    handleSlugChange(val);
                   }}
                   placeholder="your-wedding"
                   className="flex-1 rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
                 />
+                {slugStatus === "checking" && (
+                  <span className="text-[12px] text-muted animate-pulse">Checking...</span>
+                )}
+                {slugStatus === "available" && (
+                  <span className="text-[12px] text-green-600 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    Available
+                  </span>
+                )}
+                {slugStatus === "taken" && (
+                  <span className="text-[12px] text-red-500 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    Taken
+                  </span>
+                )}
               </div>
-              {slugChecking && (
-                <p className="text-[12px] text-muted mt-1">Checking availability...</p>
-              )}
-              {slugAvailable === true && (
-                <p className="text-[12px] text-green-600 mt-1">Available!</p>
-              )}
-              {slugAvailable === false && (
-                <p className="text-[12px] text-red-500 mt-1">
-                  Must be at least 3 characters, lowercase letters, numbers, and hyphens only
-                </p>
-              )}
             </div>
 
             <div className="flex items-center gap-3">
@@ -519,8 +474,10 @@ export default function WebsitePage() {
                   aria-checked={enabled}
                   checked={enabled}
                   onChange={(e) => {
-                    setEnabled(e.target.checked);
-                    if (e.target.checked) trackWebsitePublished();
+                    const newVal = e.target.checked;
+                    setEnabled(newVal);
+                    if (newVal) trackWebsitePublished();
+                    autoSaveImmediate({ enabled: newVal });
                   }}
                   className="sr-only peer"
                 />
@@ -591,7 +548,10 @@ export default function WebsitePage() {
               <input
                 type="text"
                 value={headline}
-                onChange={(e) => setHeadline(e.target.value)}
+                onChange={(e) => {
+                  setHeadline(e.target.value);
+                  autoSave({ headline: e.target.value });
+                }}
                 placeholder="We're getting married!"
                 className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
               />
@@ -603,87 +563,15 @@ export default function WebsitePage() {
               </label>
               <textarea
                 value={story}
-                onChange={(e) => setStory(e.target.value)}
+                onChange={(e) => {
+                  setStory(e.target.value);
+                  autoSave({ story: e.target.value });
+                }}
                 placeholder="Share how you met, your proposal story, etc."
                 rows={6}
                 className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30 resize-none"
               />
             </div>
-
-            {/* Theme */}
-            <div>
-              <h3 className="text-[15px] font-semibold text-plum mb-4">Theme</h3>
-              <div className="space-y-4">
-                <div className="flex gap-6">
-                  <div>
-                    <label className="text-[13px] font-semibold text-muted block mb-1">Primary Color</label>
-                    <input
-                      type="color"
-                      value={theme.primaryColor || "#2C3E2D"}
-                      onChange={(e) => {
-                        const newTheme = { ...theme, primaryColor: e.target.value };
-                        saveTheme(newTheme);
-                      }}
-                      className="w-12 h-10 rounded-[8px] border border-border cursor-pointer"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[13px] font-semibold text-muted block mb-1">Accent Color</label>
-                    <input
-                      type="color"
-                      value={theme.accentColor || "#D4A5A5"}
-                      onChange={(e) => {
-                        const newTheme = { ...theme, accentColor: e.target.value };
-                        saveTheme(newTheme);
-                      }}
-                      className="w-12 h-10 rounded-[8px] border border-border cursor-pointer"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[13px] font-semibold text-muted block mb-1">Font Family</label>
-                  <select
-                    value={theme.fontFamily || "default"}
-                    onChange={(e) => {
-                      const newTheme = { ...theme, fontFamily: e.target.value };
-                      saveTheme(newTheme);
-                    }}
-                    className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
-                  >
-                    <option value="default">Default (system)</option>
-                    <option value="playfair">Playfair Display</option>
-                    <option value="cormorant">Cormorant Garamond</option>
-                    <option value="lora">Lora</option>
-                    <option value="great-vibes">Great Vibes</option>
-                  </select>
-                </div>
-                <div>
-                  <p className="text-[13px] font-semibold text-muted mb-2">Presets</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { label: "Classic", primary: "#2C3E2D", accent: "#D4A5A5", font: "cormorant" },
-                      { label: "Modern", primary: "#1a1a2e", accent: "#6366f1", font: "default" },
-                      { label: "Romantic", primary: "#be185d", accent: "#fbbf24", font: "great-vibes" },
-                      { label: "Garden", primary: "#166534", accent: "#a3e635", font: "lora" },
-                    ].map((preset) => (
-                      <button
-                        key={preset.label}
-                        onClick={() => saveTheme({ primaryColor: preset.primary, accentColor: preset.accent, fontFamily: preset.font })}
-                        className="rounded-[10px] border border-border px-3 py-2 text-[13px] font-medium hover:border-violet/40 transition flex items-center gap-2"
-                      >
-                        <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: preset.primary }} />
-                        <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: preset.accent }} />
-                        {preset.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <button onClick={saveSetup} className="btn-primary">
-              Save
-            </button>
           </div>
         )}
 
@@ -691,7 +579,15 @@ export default function WebsitePage() {
         {tab === "schedule" && (
           <div className="max-w-lg space-y-8">
             <div>
-              <h3 className="text-[15px] font-semibold text-plum mb-4">Schedule</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[15px] font-semibold text-plum">Schedule</h3>
+                <button
+                  onClick={importFromDayOfPlanner}
+                  className="btn-secondary btn-sm text-violet"
+                >
+                  Import from Day-of Planner
+                </button>
+              </div>
               <div className="space-y-3">
                 {schedule.map((item, i) => (
                   <div key={i} className="flex gap-2 items-center">
@@ -702,6 +598,7 @@ export default function WebsitePage() {
                         const updated = [...schedule];
                         updated[i] = { ...updated[i], time: e.target.value };
                         setSchedule(updated);
+                        autoSave({ schedule: updated }, 2000);
                       }}
                       placeholder="4:30 PM"
                       className="w-32 rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
@@ -713,12 +610,17 @@ export default function WebsitePage() {
                         const updated = [...schedule];
                         updated[i] = { ...updated[i], event: e.target.value };
                         setSchedule(updated);
+                        autoSave({ schedule: updated }, 2000);
                       }}
                       placeholder="Ceremony begins"
                       className="flex-1 rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
                     />
                     <button
-                      onClick={() => setSchedule(schedule.filter((_, j) => j !== i))}
+                      onClick={() => {
+                        const updated = schedule.filter((_, j) => j !== i);
+                        setSchedule(updated);
+                        autoSave({ schedule: updated }, 2000);
+                      }}
                       className="btn-ghost btn-sm text-red-500"
                     >
                       Remove
@@ -727,7 +629,10 @@ export default function WebsitePage() {
                 ))}
               </div>
               <button
-                onClick={() => setSchedule([...schedule, { time: "", event: "" }])}
+                onClick={() => {
+                  const updated = [...schedule, { time: "", event: "" }];
+                  setSchedule(updated);
+                }}
                 className="btn-ghost btn-sm mt-3 text-violet"
               >
                 + Add Schedule Item
@@ -740,84 +645,26 @@ export default function WebsitePage() {
               </label>
               <textarea
                 value={travel}
-                onChange={(e) => setTravel(e.target.value)}
+                onChange={(e) => {
+                  setTravel(e.target.value);
+                  autoSave({ travel: e.target.value });
+                }}
                 placeholder="Airport info, driving directions, parking details..."
                 rows={4}
                 className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30 resize-none"
               />
             </div>
 
-            {/* Hotels & Accommodations */}
-            <div>
-              <h3 className="text-[15px] font-semibold text-plum mb-4">Hotels & Accommodations</h3>
-              <div className="space-y-3">
-                {hotels.map((hotel, i) => (
-                  <div key={i} className="card p-4 space-y-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-[15px] font-semibold text-plum">{hotel.name}</p>
-                        {hotel.url && (
-                          <a href={hotel.url} target="_blank" rel="noopener noreferrer" className="text-[13px] text-violet hover:underline">
-                            {hotel.url}
-                          </a>
-                        )}
-                        {hotel.discountCode && (
-                          <p className="text-[13px] text-muted">Code: <span className="font-mono font-semibold">{hotel.discountCode}</span></p>
-                        )}
-                        {hotel.notes && (
-                          <p className="text-[13px] text-muted">{hotel.notes}</p>
-                        )}
-                      </div>
-                      <button onClick={() => removeHotel(i)} className="btn-ghost btn-sm text-red-500">
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="card p-4 space-y-3 mt-3">
-                <h4 className="text-[13px] font-semibold text-muted">Add Hotel</h4>
-                <input
-                  type="text"
-                  value={newHotelName}
-                  onChange={(e) => setNewHotelName(e.target.value)}
-                  placeholder="Hotel name (required)"
-                  className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
-                />
-                <input
-                  type="url"
-                  value={newHotelUrl}
-                  onChange={(e) => setNewHotelUrl(e.target.value)}
-                  placeholder="Booking URL"
-                  className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
-                />
-                <input
-                  type="text"
-                  value={newHotelCode}
-                  onChange={(e) => setNewHotelCode(e.target.value)}
-                  placeholder="Discount code"
-                  className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
-                />
-                <input
-                  type="text"
-                  value={newHotelNotes}
-                  onChange={(e) => setNewHotelNotes(e.target.value)}
-                  placeholder="Notes (e.g. 5 min drive from venue)"
-                  className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
-                />
-                <button onClick={addHotel} className="btn-primary btn-sm">
-                  Add Hotel
-                </button>
-              </div>
-            </div>
-
             <div>
               <label className="text-[13px] font-semibold text-muted block mb-1">
-                Additional Accommodation Notes
+                Accommodations
               </label>
               <textarea
                 value={accommodations}
-                onChange={(e) => setAccommodations(e.target.value)}
+                onChange={(e) => {
+                  setAccommodations(e.target.value);
+                  autoSave({ accommodations: e.target.value });
+                }}
                 placeholder="Hotel blocks, nearby lodging options..."
                 rows={4}
                 className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30 resize-none"
@@ -836,6 +683,7 @@ export default function WebsitePage() {
                         const updated = [...faq];
                         updated[i] = { ...updated[i], question: e.target.value };
                         setFaq(updated);
+                        autoSave({ faq: updated }, 2000);
                       }}
                       placeholder="Question"
                       className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] font-semibold focus:outline-none focus:ring-2 focus:ring-violet/30"
@@ -846,13 +694,18 @@ export default function WebsitePage() {
                         const updated = [...faq];
                         updated[i] = { ...updated[i], answer: e.target.value };
                         setFaq(updated);
+                        autoSave({ faq: updated }, 2000);
                       }}
                       placeholder="Answer"
                       rows={2}
                       className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30 resize-none"
                     />
                     <button
-                      onClick={() => setFaq(faq.filter((_, j) => j !== i))}
+                      onClick={() => {
+                        const updated = faq.filter((_, j) => j !== i);
+                        setFaq(updated);
+                        autoSave({ faq: updated }, 2000);
+                      }}
                       className="btn-ghost btn-sm text-red-500"
                     >
                       Remove
@@ -867,7 +720,11 @@ export default function WebsitePage() {
                     {["Is there parking at the venue?", "What's the dress code?", "Are children welcome?"].map((q) => (
                       <button
                         key={q}
-                        onClick={() => setFaq([...faq, { question: q, answer: "" }])}
+                        onClick={() => {
+                          const updated = [...faq, { question: q, answer: "" }];
+                          setFaq(updated);
+                          autoSave({ faq: updated }, 2000);
+                        }}
                         className="rounded-full border border-violet/30 bg-lavender/50 px-3 py-1 text-[13px] text-violet hover:bg-lavender transition"
                       >
                         {q}
@@ -877,16 +734,15 @@ export default function WebsitePage() {
                 </div>
               )}
               <button
-                onClick={() => setFaq([...faq, { question: "", answer: "" }])}
+                onClick={() => {
+                  const updated = [...faq, { question: "", answer: "" }];
+                  setFaq(updated);
+                }}
                 className="btn-ghost btn-sm mt-3 text-violet"
               >
                 + Add FAQ
               </button>
             </div>
-
-            <button onClick={saveSchedule} className="btn-primary">
-              Save Schedule & Details
-            </button>
           </div>
         )}
 
@@ -974,7 +830,10 @@ export default function WebsitePage() {
                 <input
                   type="date"
                   value={rsvpDeadline}
-                  onChange={(e) => setRsvpDeadline(e.target.value)}
+                  onChange={(e) => {
+                    setRsvpDeadline(e.target.value);
+                    autoSave({ rsvp_deadline: e.target.value });
+                  }}
                   className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
                 />
               </div>
@@ -993,7 +852,11 @@ export default function WebsitePage() {
                       >
                         {option}
                         <button
-                          onClick={() => setMealOptions(mealOptions.filter((_, j) => j !== i))}
+                          onClick={() => {
+                            const updated = mealOptions.filter((_, j) => j !== i);
+                            setMealOptions(updated);
+                            autoSave({ meal_options: updated }, 2000);
+                          }}
                           className="ml-1 text-violet/60 hover:text-red-500 transition"
                           aria-label={`Remove ${option}`}
                         >
@@ -1011,8 +874,10 @@ export default function WebsitePage() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && newMealOption.trim()) {
                         e.preventDefault();
-                        setMealOptions([...mealOptions, newMealOption.trim()]);
+                        const updated = [...mealOptions, newMealOption.trim()];
+                        setMealOptions(updated);
                         setNewMealOption("");
+                        autoSave({ meal_options: updated }, 2000);
                       }
                     }}
                     placeholder="Add a meal option..."
@@ -1021,8 +886,10 @@ export default function WebsitePage() {
                   <button
                     onClick={() => {
                       if (newMealOption.trim()) {
-                        setMealOptions([...mealOptions, newMealOption.trim()]);
+                        const updated = [...mealOptions, newMealOption.trim()];
+                        setMealOptions(updated);
                         setNewMealOption("");
+                        autoSave({ meal_options: updated }, 2000);
                       }
                     }}
                     className="btn-primary btn-sm"
@@ -1037,7 +904,11 @@ export default function WebsitePage() {
                       {["Chicken", "Fish", "Vegetarian", "Vegan"].map((opt) => (
                         <button
                           key={opt}
-                          onClick={() => setMealOptions([...mealOptions, opt])}
+                          onClick={() => {
+                            const updated = [...mealOptions, opt];
+                            setMealOptions(updated);
+                            autoSave({ meal_options: updated }, 2000);
+                          }}
                           className="rounded-full border border-violet/30 bg-lavender/50 px-3 py-1 text-[13px] text-violet hover:bg-lavender transition"
                         >
                           {opt}
@@ -1047,10 +918,6 @@ export default function WebsitePage() {
                   </div>
                 )}
               </div>
-
-              <button onClick={saveSchedule} className="btn-primary">
-                Save RSVP Settings
-              </button>
             </div>
 
             <hr className="border-border" />
@@ -1155,7 +1022,11 @@ export default function WebsitePage() {
                   role="switch"
                   aria-checked={photoApprovalRequired}
                   checked={photoApprovalRequired}
-                  onChange={(e) => setPhotoApprovalRequired(e.target.checked)}
+                  onChange={(e) => {
+                    const newVal = e.target.checked;
+                    setPhotoApprovalRequired(newVal);
+                    autoSaveImmediate({ photo_approval_required: newVal });
+                  }}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-violet transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5" />
@@ -1168,54 +1039,11 @@ export default function WebsitePage() {
                   When enabled, photos uploaded by guests won&apos;t be visible until you approve them.
                 </p>
               </div>
-              <button onClick={saveSchedule} className="btn-primary btn-sm ml-auto">
-                Save
-              </button>
             </div>
 
-            {/* Filter buttons */}
-            {photos.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                {([
-                  { key: "all" as const, label: `All (${photos.length})` },
-                  { key: "pending" as const, label: `Pending (${pendingCount})` },
-                  { key: "approved" as const, label: `Approved (${approvedCount})` },
-                ] as const).map((f) => (
-                  <button
-                    key={f.key}
-                    onClick={() => setGalleryFilter(f.key)}
-                    className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition ${
-                      galleryFilter === f.key
-                        ? "bg-violet text-white"
-                        : "bg-lavender/50 text-plum hover:bg-lavender"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-                {pendingCount > 0 && (
-                  <button
-                    onClick={bulkApproveAll}
-                    className="rounded-full px-4 py-1.5 text-[13px] font-medium bg-green-100 text-green-700 hover:bg-green-200 transition ml-2"
-                  >
-                    Bulk Approve All
-                  </button>
-                )}
-                {approvedCount > 0 && (
-                  <button
-                    onClick={downloadAllPhotos}
-                    disabled={downloading}
-                    className="rounded-full px-4 py-1.5 text-[13px] font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition ml-auto disabled:opacity-50"
-                  >
-                    {downloading ? `Downloading ${downloadProgress}...` : "Download All Photos"}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {filteredPhotos.length > 0 ? (
+            {photos.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredPhotos.map((photo) => (
+                {photos.map((photo) => (
                   <div key={photo.id} className="card overflow-hidden">
                     <div className="aspect-square relative">
                       <Image
@@ -1223,7 +1051,7 @@ export default function WebsitePage() {
                         alt={photo.caption || "Wedding photo"}
                         className="object-cover"
                         fill
-                      />
+                                             />
                     </div>
                     <div className="p-3 space-y-2">
                       {photo.caption && (
@@ -1242,31 +1070,17 @@ export default function WebsitePage() {
                         >
                           {photo.approved ? "Approved" : "Pending"}
                         </span>
-                        <div className="flex items-center gap-1">
-                          {!photo.approved && (
-                            <button
-                              onClick={() => approvePhoto(photo.id)}
-                              className="btn-ghost btn-sm text-green-600 text-[12px]"
-                            >
-                              Approve
-                            </button>
-                          )}
-                          <button
-                            onClick={() => deletePhoto(photo.id)}
-                            className="btn-ghost btn-sm text-red-500 text-[12px]"
-                          >
-                            {!photo.approved ? "Reject" : "Remove"}
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => deletePhoto(photo.id)}
+                          className="btn-ghost btn-sm text-red-500 text-[12px]"
+                        >
+                          Remove
+                        </button>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            ) : photos.length > 0 ? (
-              <p className="text-[15px] text-muted">
-                No photos match the current filter.
-              </p>
             ) : (
               <p className="text-[15px] text-muted">
                 No photos uploaded yet. Share the wedding website link with your guests so they can upload photos.
@@ -1275,6 +1089,17 @@ export default function WebsitePage() {
           </div>
         )}
       </div>
+
+      {/* Import from Day-of Planner confirmation dialog */}
+      <ConfirmDialog
+        open={importConfirmOpen}
+        onConfirm={confirmImport}
+        onCancel={() => { setImportConfirmOpen(false); setImportItems([]); }}
+        title="Import Schedule"
+        message={`Import ${importItems.length} items from your Day-of Plan? This will replace your current schedule.`}
+        confirmLabel="Import"
+        destructive={false}
+      />
     </div>
   );
 }
