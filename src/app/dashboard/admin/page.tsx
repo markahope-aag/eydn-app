@@ -158,7 +158,7 @@ export default function AdminPage() {
         }
         return r.ok ? r.json() : null;
       }),
-      fetch("/api/admin/users").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/admin/users").then((r) => (r.ok ? r.json().then((d: { users?: User[] }) => d.users || []) : [])),
       fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : DEFAULT_SETTINGS)),
       fetch("/api/admin/analytics").then((r) => (r.ok ? r.json() : null)),
     ])
