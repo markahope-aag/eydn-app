@@ -53,6 +53,8 @@ export default function WebsitePage() {
   // RSVP state
   const [rsvpTokens, setRsvpTokens] = useState<RsvpToken[]>([]);
   const [generatingTokens, setGeneratingTokens] = useState(false);
+  const [qrGenerating, setQrGenerating] = useState(false);
+  const [qrCodes, setQrCodes] = useState<{ guestId: string; guestName: string; qrUrl: string }[]>([]);
   const [rsvpDeadline, setRsvpDeadline] = useState("");
   const [mealOptions, setMealOptions] = useState<string[]>([]);
   const [newMealOption, setNewMealOption] = useState("");
@@ -934,6 +936,93 @@ export default function WebsitePage() {
                 Creates unique RSVP links for all guests who don&apos;t have one yet <Tooltip text="Each guest gets a unique link they can use to RSVP, select a meal preference, and add a plus-one. Responses update your guest list automatically." wide />
               </p>
             </div>
+
+            {/* QR Codes for Physical Invitations */}
+            {rsvpTokens.length > 0 && (
+              <div className="card p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[15px] font-semibold text-plum">QR Codes for Invitations</h3>
+                  <button
+                    onClick={async () => {
+                      setQrGenerating(true);
+                      try {
+                        const res = await fetch("/api/wedding-website/qr", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ bulk: true }),
+                        });
+                        if (!res.ok) throw new Error((await res.json()).error || "Failed");
+                        const data = await res.json();
+                        setQrCodes(data.results || []);
+                        toast.success(`Generated ${data.generated} QR codes`);
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "QR generation failed");
+                      } finally {
+                        setQrGenerating(false);
+                      }
+                    }}
+                    disabled={qrGenerating}
+                    className="btn-primary btn-sm disabled:opacity-50"
+                  >
+                    {qrGenerating ? "Generating..." : qrCodes.length > 0 ? "Regenerate All" : "Generate QR Codes"}
+                  </button>
+                </div>
+                <div className="bg-lavender/30 rounded-[12px] p-4 text-[13px] text-muted space-y-2">
+                  <p className="font-semibold text-plum">How to use QR codes on your invitations:</p>
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>Click &quot;Generate QR Codes&quot; to create a unique QR code for each guest</li>
+                    <li>Download individual QR images or the full ZIP file</li>
+                    <li>Send the QR image files to your invitation designer or print shop</li>
+                    <li>Each guest&apos;s invite gets their unique QR code printed on it</li>
+                    <li>When a guest scans their QR code, they land directly on their personalized RSVP page — no codes to type, no names to search</li>
+                  </ol>
+                  <p className="text-[12px] mt-2">Each QR code is unique to one guest. Do not mix them up — the wrong QR on the wrong invite means the wrong person RSVPs.</p>
+                </div>
+                {qrCodes.length > 0 && (
+                  <>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          const JSZip = (await import("jszip")).default;
+                          const zip = new JSZip();
+                          for (const qr of qrCodes) {
+                            try {
+                              const res = await fetch(qr.qrUrl);
+                              const blob = await res.blob();
+                              const safeName = qr.guestName.replace(/[^a-zA-Z0-9]/g, "-");
+                              zip.file(`${safeName}-RSVP-QR.png`, blob);
+                            } catch { /* skip failed downloads */ }
+                          }
+                          const content = await zip.generateAsync({ type: "blob" });
+                          const url = URL.createObjectURL(content);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = "rsvp-qr-codes.zip";
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          toast.success("QR codes downloaded");
+                        }}
+                        className="btn-secondary btn-sm"
+                      >
+                        Download All as ZIP
+                      </button>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                      {qrCodes.map((qr) => (
+                        <div key={qr.guestId} className="card p-3 text-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={qr.qrUrl} alt={`QR for ${qr.guestName}`} className="w-full aspect-square object-contain" />
+                          <p className="text-[13px] font-semibold text-plum mt-2 truncate">{qr.guestName}</p>
+                          <a href={qr.qrUrl} download={`${qr.guestName.replace(/[^a-zA-Z0-9]/g, "-")}-RSVP-QR.png`} className="text-[11px] text-violet hover:text-plum mt-1 inline-block">
+                            Download PNG
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {rsvpTokens.length > 0 ? (
               <div className="card-list">
