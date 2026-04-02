@@ -695,7 +695,7 @@ export default function GuestsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search guests by name or email"
-            className="w-full rounded-[10px] border-border pl-8 pr-3 py-1.5 text-[15px]"
+            className="w-full rounded-[10px] border-border pl-9 pr-3 py-1.5 text-[15px]"
           />
         </div>
         <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} aria-label="Filter by role" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]">
