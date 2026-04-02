@@ -197,6 +197,13 @@ function WeddingDate({
   );
 }
 
+// Format a raw number string as currency display (e.g. "30000" → "30,000")
+function formatCurrency(raw: string): string {
+  const digits = raw.replace(/[^0-9]/g, "");
+  if (!digits) return "";
+  return Number(digits).toLocaleString("en-US");
+}
+
 // Screen 4 — Budget + Guest Count (combined, both skippable)
 function BudgetAndGuests({
   budget,
@@ -209,6 +216,16 @@ function BudgetAndGuests({
   onBudgetChange: (_v: string) => void;
   onGuestCountChange: (_v: string) => void;
 }) {
+  // Display formatted value but store raw digits
+  const [budgetDisplay, setBudgetDisplay] = useState(() => formatCurrency(budget));
+  const [notSureYet, setNotSureYet] = useState(false);
+
+  function handleBudgetChange(display: string) {
+    const digits = display.replace(/[^0-9]/g, "");
+    setBudgetDisplay(digits ? Number(digits).toLocaleString("en-US") : "");
+    onBudgetChange(digits);
+  }
+
   return (
     <div className="max-w-md mx-auto">
       <h1 className="text-[24px] sm:text-[28px] font-semibold text-plum">Budget and guest count</h1>
@@ -222,13 +239,12 @@ function BudgetAndGuests({
           <div className="flex items-center gap-2">
             <span className="text-muted text-[20px] font-medium">$</span>
             <input
-              type="number"
-              value={budget}
-              onChange={(e) => onBudgetChange(e.target.value)}
+              type="text"
+              inputMode="numeric"
+              value={budgetDisplay}
+              onChange={(e) => handleBudgetChange(e.target.value)}
               className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
               placeholder="e.g. 30,000"
-              min="1"
-              step="500"
               aria-label="Total budget"
               autoFocus
             />
@@ -240,19 +256,39 @@ function BudgetAndGuests({
 
         <div>
           <label className="block text-[14px] font-medium text-muted mb-1">Estimated guest count</label>
-          <input
-            type="number"
-            value={guestCount}
-            onChange={(e) => onGuestCountChange(e.target.value)}
-            className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
-            placeholder="e.g. 120"
-            min="1"
-            step="1"
-            aria-label="Estimated guest count"
-          />
-          <p className="mt-1.5 text-[12px] text-muted">
-            This is your planning number — not a commitment. Most couples adjust it several times.
-          </p>
+          {!notSureYet ? (
+            <input
+              type="number"
+              value={guestCount}
+              onChange={(e) => onGuestCountChange(e.target.value)}
+              className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
+              placeholder="e.g. 120"
+              min="1"
+              step="1"
+              aria-label="Estimated guest count"
+            />
+          ) : (
+            <div className="w-full rounded-[10px] border-border bg-lavender/30 px-4 py-3.5 text-[15px] text-muted">
+              No worries — you can add this later in Settings.
+            </div>
+          )}
+          <div className="mt-1.5 flex items-center gap-3">
+            <p className="text-[12px] text-muted flex-1">
+              {notSureYet
+                ? "A rough estimate helps with venue and catering planning, but it's completely optional."
+                : "This is your planning number — not a commitment. Most couples adjust it several times."}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setNotSureYet(!notSureYet);
+                if (!notSureYet) onGuestCountChange("");
+              }}
+              className="text-[12px] text-violet font-medium whitespace-nowrap hover:underline"
+            >
+              {notSureYet ? "Add an estimate" : "Not sure yet"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
