@@ -222,6 +222,47 @@ export default function GuestsPage() {
     URL.revokeObjectURL(url);
   }
 
+  async function importFromContacts() {
+    const contactsApi = "contacts" in navigator && "ContactsManager" in window;
+    if (!contactsApi) {
+      toast.error("Contact import is only available on mobile devices (Android Chrome or iOS Safari).");
+      return;
+    }
+    try {
+      const contacts = await (navigator as unknown as { contacts: { select: (props: string[], opts: { multiple: boolean }) => Promise<Array<{ name?: string[]; email?: string[]; tel?: string[] }>> } }).contacts.select(
+        ["name", "email", "tel"],
+        { multiple: true }
+      );
+      if (!contacts || contacts.length === 0) return;
+
+      let imported = 0;
+      for (const contact of contacts) {
+        const name = contact.name?.[0]?.trim();
+        if (!name) continue;
+        const res = await fetch("/api/guests", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            email: contact.email?.[0]?.trim() || null,
+            phone: contact.tel?.[0]?.trim() || null,
+          }),
+        });
+        if (res.ok) imported++;
+      }
+      if (imported > 0) {
+        trackGuestImport(imported);
+        toast.success(`Imported ${imported} contacts`);
+        const reload = await fetch("/api/guests");
+        if (reload.ok) setGuests(await reload.json());
+      } else {
+        toast.info("No contacts with names were selected.");
+      }
+    } catch {
+      toast.error("Contact import was cancelled or isn't supported on this device.");
+    }
+  }
+
   async function importCSV() {
     const file = fileInput.current?.files?.[0];
     if (!file) return;
@@ -608,6 +649,9 @@ export default function GuestsPage() {
               </>
             )}
           </div>
+          <button onClick={importFromContacts} className="btn-ghost btn-sm sm:hidden">
+            Contacts
+          </button>
           <button onClick={() => fileInput.current?.click()} className="btn-ghost btn-sm">
             Import CSV
           </button>
