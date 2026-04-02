@@ -69,6 +69,16 @@ export default function WebsitePage() {
   // Hero layout
   const [heroLayout, setHeroLayout] = useState<"fullscreen" | "side-by-side">("fullscreen");
 
+  // Preview panel
+  const [showPreview, setShowPreview] = useState(false);
+  const previewRef = useRef<HTMLIFrameElement>(null);
+
+  function refreshPreview() {
+    if (previewRef.current) {
+      previewRef.current.src = previewRef.current.src;
+    }
+  }
+
   // Cover upload
   const coverRef = useRef<HTMLInputElement>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -107,6 +117,8 @@ export default function WebsitePage() {
           }
           setSaveStatus("saved");
           savedFadeTimer.current = setTimeout(() => setSaveStatus("idle"), 2000);
+          // Refresh preview iframe after save
+          if (previewRef.current) previewRef.current.src = previewRef.current.src;
         } catch (err) {
           setSaveStatus("error");
           toast.error(err instanceof Error ? err.message : "Failed to save");
@@ -411,7 +423,8 @@ export default function WebsitePage() {
   ];
 
   return (
-    <div>
+    <div className={showPreview ? "flex gap-6" : ""}>
+    <div className={showPreview ? "flex-1 min-w-0" : ""}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div>
@@ -430,17 +443,31 @@ export default function WebsitePage() {
             <span className="text-[13px] text-red-500">Error saving</span>
           )}
         </div>
-        {slug && enabled && (
-          <a
-            href={`/w/${slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary btn-sm inline-flex items-center gap-2"
-          >
-            View Website
-            <span aria-hidden="true">&rarr;</span>
-          </a>
-        )}
+        <div className="flex items-center gap-2">
+          {slug && enabled && (
+            <button
+              onClick={() => { setShowPreview(!showPreview); if (!showPreview) setTimeout(refreshPreview, 100); }}
+              className={`btn-sm hidden lg:inline-flex items-center gap-1.5 ${showPreview ? "btn-primary" : "btn-secondary"}`}
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                <line x1="8" y1="2" x2="8" y2="14" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+              {showPreview ? "Hide Preview" : "Live Preview"}
+            </button>
+          )}
+          {slug && enabled && (
+            <a
+              href={`/w/${slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary btn-sm inline-flex items-center gap-2"
+            >
+              View Website
+              <span aria-hidden="true">&rarr;</span>
+            </a>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -1244,6 +1271,31 @@ export default function WebsitePage() {
         confirmLabel="Import"
         destructive={false}
       />
+    </div>
+
+    {/* Live preview panel */}
+    {showPreview && slug && enabled && (
+      <div className="hidden lg:flex flex-col w-[420px] flex-shrink-0 sticky top-0 h-[calc(100vh-4rem)]">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[12px] font-semibold text-muted uppercase tracking-wide">Preview</span>
+          <button
+            onClick={refreshPreview}
+            className="text-[11px] text-violet hover:underline"
+          >
+            Refresh
+          </button>
+        </div>
+        <div className="flex-1 rounded-[12px] border border-border overflow-hidden bg-white shadow-sm">
+          <iframe
+            ref={previewRef}
+            src={`/w/${slug}`}
+            className="w-full h-full"
+            title="Wedding website preview"
+            style={{ transform: "scale(0.55)", transformOrigin: "top left", width: "182%", height: "182%" }}
+          />
+        </div>
+      </div>
+    )}
     </div>
   );
 }
