@@ -66,6 +66,9 @@ export default function WebsitePage() {
   // Couple photo
   const [couplePhotoUrl, setCouplePhotoUrl] = useState("");
 
+  // Hero layout
+  const [heroLayout, setHeroLayout] = useState<"fullscreen" | "side-by-side">("fullscreen");
+
   // Cover upload
   const coverRef = useRef<HTMLInputElement>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -151,6 +154,7 @@ export default function WebsitePage() {
       setRsvpDeadline(data.rsvp_deadline || "");
       setMealOptions(data.meal_options || []);
       setPhotoApprovalRequired(data.photo_approval_required || false);
+      setHeroLayout(data.website_theme?.heroLayout || "fullscreen");
     } catch {
       toast.error("Couldn't load website settings. Try refreshing.");
     } finally {
@@ -248,8 +252,8 @@ export default function WebsitePage() {
       if (!res.ok) {
         throw new Error(data.error || `Upload failed (${res.status})`);
       }
-      setCoverUrl(data.file_url);
-      autoSaveImmediate({ cover_url: data.file_url });
+      setCoverUrl(data.signed_url || data.file_url);
+      autoSaveImmediate({ cover_url: data.file_url }); // save storage path, not signed URL
       toast.success("Cover image uploaded");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -290,8 +294,8 @@ export default function WebsitePage() {
       if (!res.ok) {
         throw new Error(data.error || `Upload failed (${res.status})`);
       }
-      setCouplePhotoUrl(data.file_url);
-      autoSaveImmediate({ couple_photo_url: data.file_url });
+      setCouplePhotoUrl(data.signed_url || data.file_url);
+      autoSaveImmediate({ couple_photo_url: data.file_url }); // save storage path, not signed URL
       toast.success("Couple photo uploaded");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -543,6 +547,27 @@ export default function WebsitePage() {
               >
                 {uploadingCover ? "Uploading..." : coverUrl ? "Change Cover" : "Upload Cover"}
               </button>
+            </div>
+
+            <div>
+              <label className="text-[13px] font-semibold text-muted block mb-1">
+                Hero Layout
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setHeroLayout("fullscreen"); autoSaveImmediate({ website_theme: { heroLayout: "fullscreen" } }); }}
+                  className={`flex-1 px-3 py-2 text-[13px] font-semibold rounded-[10px] transition ${heroLayout === "fullscreen" ? "bg-violet text-white" : "bg-lavender text-violet"}`}
+                >
+                  Full Screen
+                </button>
+                <button
+                  onClick={() => { setHeroLayout("side-by-side"); autoSaveImmediate({ website_theme: { heroLayout: "side-by-side" } }); }}
+                  className={`flex-1 px-3 py-2 text-[13px] font-semibold rounded-[10px] transition ${heroLayout === "side-by-side" ? "bg-violet text-white" : "bg-lavender text-violet"}`}
+                >
+                  Side by Side
+                </button>
+              </div>
+              <p className="text-[11px] text-muted mt-1">Full screen uses the cover image as a full-bleed background. Side by side shows the image next to your names.</p>
             </div>
 
             <div>

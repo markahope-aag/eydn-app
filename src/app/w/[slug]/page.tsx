@@ -55,6 +55,16 @@ export default async function WeddingWebsitePage({
   const wedding = weddingRaw as Wedding | null;
   if (!wedding) notFound();
 
+  // Generate fresh signed URLs for storage paths
+  if (wedding.website_cover_url && !wedding.website_cover_url.startsWith("http")) {
+    const { data: signed } = await supabase.storage.from("attachments").createSignedUrl(wedding.website_cover_url, 3600);
+    if (signed?.signedUrl) (wedding as Record<string, unknown>).website_cover_url = signed.signedUrl;
+  }
+  if (wedding.website_couple_photo_url && !wedding.website_couple_photo_url.startsWith("http")) {
+    const { data: signed } = await supabase.storage.from("attachments").createSignedUrl(wedding.website_couple_photo_url, 3600);
+    if (signed?.signedUrl) (wedding as Record<string, unknown>).website_couple_photo_url = signed.signedUrl;
+  }
+
   // Parallel data fetches
   const [{ data: registryLinksRaw }, { data: photosRaw }, { data: weddingPartyRaw }] =
     await Promise.all([
@@ -104,7 +114,7 @@ export default async function WeddingWebsitePage({
 
   const schedule = (wedding.website_schedule ?? []) as Array<{ time: string; event: string }>;
   const faq = (wedding.website_faq ?? []) as Array<{ question: string; answer: string }>;
-  const theme = ((wedding as Record<string, unknown>).website_theme ?? {}) as { primaryColor?: string; accentColor?: string; fontFamily?: string };
+  const theme = ((wedding as Record<string, unknown>).website_theme ?? {}) as { primaryColor?: string; accentColor?: string; fontFamily?: string; heroLayout?: string };
   const hotels = ((wedding as Record<string, unknown>).website_hotels ?? []) as Array<{ name: string; url?: string; discountCode?: string; notes?: string }>;
   const coupleNames = `${wedding.partner1_name} & ${wedding.partner2_name}`;
   const rsvpDeadline = (wedding as Record<string, unknown>).rsvp_deadline as string | null;
@@ -140,7 +150,40 @@ export default async function WeddingWebsitePage({
     <div className={`min-h-screen bg-whisper ${playfair.variable}`} style={{ '--theme-primary': theme.primaryColor || '#2C3E2D', '--theme-accent': theme.accentColor || '#D4A5A5' } as React.CSSProperties}>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        {wedding.website_cover_url ? (
+        {wedding.website_cover_url && theme.heroLayout === "side-by-side" ? (
+          /* Side-by-side layout: image left, text right */
+          <div className="flex flex-col md:flex-row min-h-[520px]">
+            <div className="relative w-full md:w-1/2 min-h-[300px] md:min-h-[520px]">
+              <Image
+                src={wedding.website_cover_url}
+                alt={`${coupleNames} wedding cover photo`}
+                className="object-cover"
+                fill
+                priority
+              />
+            </div>
+            <div className="w-full md:w-1/2 flex flex-col items-center justify-center text-center px-8 py-16" style={{ background: `linear-gradient(135deg, var(--theme-primary), var(--theme-accent))` }}>
+              <h1 className="text-[48px] md:text-[60px] font-[family-name:var(--font-serif)] font-normal text-white leading-tight">
+                {wedding.partner1_name}
+                <span className="block text-[22px] md:text-[26px] font-[family-name:var(--font-serif)] italic text-white/80 my-2">&</span>
+                {wedding.partner2_name}
+              </h1>
+              {weddingDate && (
+                <p className="mt-4 text-[18px] text-white/90 tracking-wide">{weddingDate}</p>
+              )}
+              {wedding.venue && (
+                <p className="mt-1 text-[16px] text-white/75">{wedding.venue}</p>
+              )}
+              {wedding.website_headline && (
+                <p className="mt-4 text-[16px] text-white/70 max-w-sm italic">{wedding.website_headline}</p>
+              )}
+              {daysUntil !== null && daysUntil > 0 && (
+                <p className="mt-4 text-[14px] text-white/60 tracking-widest uppercase">{daysUntil} days to go</p>
+              )}
+            </div>
+          </div>
+        ) : wedding.website_cover_url ? (
+          /* Fullscreen layout: image background with text overlay */
           <div className="relative h-[80vh] min-h-[520px]">
             <Image
               src={wedding.website_cover_url}

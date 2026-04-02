@@ -187,13 +187,13 @@ export async function POST(request: Request) {
     console.error("[API]", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
-  // Return a signed URL so callers (mood board, website) can use it immediately
+  // Return both the storage path and a signed URL for immediate display
   const { data: signed } = await supabase.storage
     .from("attachments")
     .createSignedUrl(storagePath, 3600);
 
   return NextResponse.json(
-    { ...data, file_url: signed?.signedUrl || storagePath },
+    { ...data, file_url: storagePath, signed_url: signed?.signedUrl || storagePath },
     { status: 201 }
   );
 }

@@ -3,10 +3,24 @@ import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
 import { supabaseError } from "@/lib/api-error";
 
+async function signStorageUrl(supabase: ReturnType<typeof import("@/lib/supabase/server").createSupabaseAdmin>, path: string | null): Promise<string | null> {
+  if (!path) return null;
+  // Already a full URL (legacy or external) — pass through
+  if (path.startsWith("http")) return path;
+  const { data } = await supabase.storage.from("attachments").createSignedUrl(path, 3600);
+  return data?.signedUrl || path;
+}
+
 export async function GET() {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
-  const { wedding } = result;
+  const { wedding, supabase } = result;
+
+  // Generate fresh signed URLs for storage paths
+  const [coverUrl, couplePhotoUrl] = await Promise.all([
+    signStorageUrl(supabase, wedding.website_cover_url),
+    signStorageUrl(supabase, wedding.website_couple_photo_url),
+  ]);
 
   return NextResponse.json({
     slug: wedding.website_slug,
@@ -16,8 +30,8 @@ export async function GET() {
     travel: wedding.website_travel_info,
     accommodations: wedding.website_accommodations,
     faq: wedding.website_faq,
-    cover_url: wedding.website_cover_url,
-    couple_photo_url: wedding.website_couple_photo_url,
+    cover_url: coverUrl,
+    couple_photo_url: couplePhotoUrl,
     enabled: wedding.website_enabled,
     rsvp_deadline: (wedding as Record<string, unknown>).rsvp_deadline ?? null,
     meal_options: (wedding as Record<string, unknown>).meal_options ?? [],
