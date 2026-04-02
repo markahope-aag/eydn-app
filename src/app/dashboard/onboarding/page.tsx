@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { trackOnboardingComplete } from "@/lib/analytics";
@@ -295,6 +295,9 @@ function BudgetAndGuests({
   );
 }
 
+// Venue search result from the directory
+type VenueSuggestion = { id: string; name: string; city: string; state: string; rating?: number };
+
 // Screen 5 — Venue Status
 function VenueStatus({
   status,
@@ -311,6 +314,59 @@ function VenueStatus({
   onVenueNameChange: (_v: string) => void;
   onVenueCityChange: (_v: string) => void;
 }) {
+  const [suggestions, setSuggestions] = useState<VenueSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const searchVenues = useCallback((query: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (query.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    setSearchLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/suggested-vendors?category=Venue&q=${encodeURIComponent(query)}&limit=6`);
+        if (res.ok) {
+          const data = await res.json();
+          const results = (data.vendors || []).map((v: { id: string; name: string; city: string; state: string }) => ({
+            id: v.id,
+            name: v.name,
+            city: v.city,
+            state: v.state,
+          }));
+          setSuggestions(results);
+          setShowSuggestions(results.length > 0);
+        }
+      } catch {
+        // Silently fail — user can still type manually
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+  }, []);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  function selectVenue(venue: VenueSuggestion) {
+    onVenueNameChange(venue.name);
+    onVenueCityChange(`${venue.city}, ${venue.state}`);
+    setShowSuggestions(false);
+  }
+
   return (
     <div className="max-w-md mx-auto">
       <h1 className="text-[24px] sm:text-[28px] font-semibold text-plum">Have you booked a venue yet?</h1>
@@ -332,17 +388,45 @@ function VenueStatus({
       </div>
       {status === "booked" && (
         <div className="mt-5 space-y-3">
-          <div>
+          <div ref={wrapperRef} className="relative">
             <label className="block text-[14px] font-medium text-muted mb-1">Venue name</label>
-            <input
-              type="text"
-              value={venueName}
-              onChange={(e) => onVenueNameChange(e.target.value)}
-              className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
-              placeholder="e.g. The Barn at Cedar Grove"
-              aria-label="Venue name"
-              autoFocus
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={venueName}
+                onChange={(e) => {
+                  onVenueNameChange(e.target.value);
+                  searchVenues(e.target.value);
+                }}
+                onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
+                placeholder="Search our directory or type your venue"
+                aria-label="Venue name"
+                autoFocus
+                autoComplete="off"
+              />
+              {searchLoading && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-muted animate-pulse">Searching...</span>
+              )}
+            </div>
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-border rounded-[12px] shadow-lg overflow-hidden">
+                {suggestions.map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => selectVenue(v)}
+                    className="w-full text-left px-4 py-3 hover:bg-lavender transition border-b border-border last:border-b-0"
+                  >
+                    <span className="text-[15px] font-medium text-plum">{v.name}</span>
+                    <span className="block text-[12px] text-muted">{v.city}, {v.state}</span>
+                  </button>
+                ))}
+                <div className="px-4 py-2 bg-lavender/30">
+                  <p className="text-[11px] text-muted">Don&apos;t see it? Just type your venue name above.</p>
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-[14px] font-medium text-muted mb-1">City</label>
