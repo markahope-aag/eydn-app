@@ -48,6 +48,7 @@ export default function TasksPage() {
   const [showCalendarMenu, setShowCalendarMenu] = useState(false);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const calendarMenuRef = useRef<HTMLDivElement>(null);
+  const sessionCompletions = useRef(0);
 
   // Close calendar menu on outside click
   useEffect(() => {
@@ -189,6 +190,17 @@ export default function TasksPage() {
 
       if (newStatus === "done") {
         trackTaskCompleted();
+        sessionCompletions.current++;
+
+        // "On a roll" streak message from Eydn
+        if (sessionCompletions.current === 3) {
+          toast("You're on a roll! Keep that momentum going 💛", { icon: "✨" });
+        } else if (sessionCompletions.current === 5) {
+          toast("5 tasks done in one session — unstoppable! 🔥", { icon: "🎉" });
+        } else if (sessionCompletions.current === 10) {
+          toast("10 tasks! You're a planning machine. Take a break — you've earned it ☕", { icon: "💪" });
+        }
+
         // Check if all tasks in this phase are now complete
         if (task.timeline_phase) {
           const phaseTasks = tasks.filter(
