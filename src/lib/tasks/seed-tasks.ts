@@ -64,8 +64,31 @@ function isVendorTaskAlreadyBooked(
   return vendorCategory ? bookedVendors.includes(vendorCategory) : false;
 }
 
+// Tasks that should stay open even if their due date has passed,
+// because the user likely still needs to do them.
+const KEEP_OPEN_TITLES = new Set([
+  "Set Budget",
+  "Create Guest List Draft",
+  "Choose Wedding Party",
+  "Create Wedding Website",
+  "Book Venue",
+  "Book Photographer",
+  "Book Videographer",
+  "Book Caterer",
+  "Book DJ or Band",
+  "Book Officiant",
+  "Book Florist",
+  "Book Rentals",
+  "Book Hair Stylist",
+  "Book Makeup Artist",
+  "Book Transportation",
+  "Book Cake/Dessert Baker",
+  "Apply for Marriage License",
+]);
+
 export function generateTasks(ctx: WeddingContext): TaskInsert[] {
   const weddingDate = new Date(ctx.weddingDate);
+  const today = new Date().toISOString().split("T")[0];
   const tasks: TaskInsert[] = [];
   let sortOrder = 0;
 
@@ -74,17 +97,29 @@ export function generateTasks(ctx: WeddingContext): TaskInsert[] {
 
     const isBooked = isVendorTaskAlreadyBooked(taskDef.title, ctx.bookedVendors);
 
-    const dueDate =
+    let dueDate =
       taskDef.monthsBefore >= 0
         ? addMonths(weddingDate, -taskDef.monthsBefore)
         : addMonths(weddingDate, Math.abs(taskDef.monthsBefore));
+
+    // For tasks whose due date is already past: if it's a critical task the
+    // user likely still needs to do, bump the due date to today so it shows
+    // as current rather than overdue. Otherwise auto-complete it so new users
+    // aren't bombarded with dozens of overdue items.
+    const isPast = dueDate < today;
+    const keepOpen = KEEP_OPEN_TITLES.has(taskDef.title);
+    const autoComplete = isPast && !keepOpen && !isBooked;
+
+    if (isPast && keepOpen && !isBooked) {
+      dueDate = today;
+    }
 
     const parentTask: TaskInsert = {
       wedding_id: ctx.weddingId,
       title: taskDef.title,
       category: taskDef.category,
       due_date: dueDate,
-      completed: isBooked,
+      completed: isBooked || autoComplete,
       edyn_message: taskDef.edynMessage,
       sort_order: sortOrder++,
       timeline_phase: taskDef.phase,
@@ -97,17 +132,24 @@ export function generateTasks(ctx: WeddingContext): TaskInsert[] {
     // Sub-tasks will be inserted with parent_task_id set after parent insertion
     if (taskDef.subTasks) {
       for (const sub of taskDef.subTasks) {
-        const subDueDate =
+        let subDueDate =
           sub.monthsBefore >= 0
             ? addMonths(weddingDate, -sub.monthsBefore)
             : addMonths(weddingDate, Math.abs(sub.monthsBefore));
+
+        const subIsPast = subDueDate < today;
+
+        // Auto-complete past sub-tasks; bump critical parent's sub-tasks to today
+        if (subIsPast && keepOpen) {
+          subDueDate = today;
+        }
 
         tasks.push({
           wedding_id: ctx.weddingId,
           title: sub.title,
           category: taskDef.category,
           due_date: subDueDate,
-          completed: false,
+          completed: autoComplete || (subIsPast && !keepOpen),
           edyn_message: sub.edynMessage || null,
           sort_order: sortOrder++,
           timeline_phase: taskDef.phase,
