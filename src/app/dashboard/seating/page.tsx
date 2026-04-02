@@ -662,7 +662,7 @@ export default function SeatingPage() {
                     {/* Edit popover */}
                     {editingTable === table.id && (
                       <div
-                        className="absolute top-full left-0 mt-4 z-20 bg-white border border-border rounded-[12px] shadow-lg p-3 space-y-3 w-52"
+                        className="absolute top-full left-0 mt-4 z-20 bg-white border border-border rounded-[12px] shadow-lg p-3 space-y-3 w-64 sm:w-72"
                         onClick={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
                       >
@@ -717,7 +717,7 @@ export default function SeatingPage() {
                         {tableGuests.length > 0 && (
                           <div>
                             <label className="text-[11px] font-semibold text-muted">Seated</label>
-                            <div className="mt-0.5 space-y-1">
+                            <div className="mt-1 space-y-2">
                               {tableGuests.map((g) => {
                                 const assignment = assignments.find((a) => a.guest_id === g.id);
                                 const takenSeats = new Set(
@@ -726,25 +726,35 @@ export default function SeatingPage() {
                                     .map((a) => a.seat_number)
                                 );
                                 return (
-                                  <div key={g.id} className="flex items-center gap-1 text-[11px]">
-                                    <span className="text-plum truncate flex-1">{g.name}</span>
-                                    <select
-                                      value={assignment?.seat_number ?? ""}
-                                      onChange={(e) => {
-                                        const val = e.target.value ? Number(e.target.value) : null;
-                                        updateSeatNumber(g.id, table.id, val);
-                                      }}
-                                      className="rounded border-border px-1 py-0.5 text-[10px] w-14"
-                                      title="Assign to specific seat"
-                                    >
-                                      <option value="">Auto</option>
-                                      {Array.from({ length: table.capacity }, (_, i) => i + 1).map((n) => (
-                                        <option key={n} value={n} disabled={takenSeats.has(n)}>
-                                          Seat {n}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    <button onClick={() => unassignGuest(g.id)} className="text-muted hover:text-error text-[10px]">unseat</button>
+                                  <div key={g.id} className="rounded-[8px] bg-lavender/30 px-2.5 py-2">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[13px] text-plum font-medium truncate">{g.name}</span>
+                                      <button onClick={() => unassignGuest(g.id)} className="text-muted hover:text-error text-[12px] font-medium px-1">unseat</button>
+                                    </div>
+                                    <div className="mt-1.5 flex gap-1 flex-wrap">
+                                      {Array.from({ length: table.capacity }, (_, i) => i + 1).map((n) => {
+                                        const isActive = assignment?.seat_number === n;
+                                        const isTaken = takenSeats.has(n);
+                                        return (
+                                          <button
+                                            key={n}
+                                            type="button"
+                                            disabled={isTaken}
+                                            onClick={() => updateSeatNumber(g.id, table.id, isActive ? null : n)}
+                                            className={`w-8 h-8 rounded-full text-[11px] font-semibold transition ${
+                                              isActive
+                                                ? "bg-violet text-white"
+                                                : isTaken
+                                                  ? "bg-gray-100 text-gray-300 cursor-not-allowed"
+                                                  : "bg-white border border-border text-muted hover:border-violet hover:text-violet"
+                                            }`}
+                                            title={isTaken ? `Seat ${n} is taken` : isActive ? `Remove from seat ${n}` : `Assign to seat ${n}`}
+                                          >
+                                            {n}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
                                   </div>
                                 );
                               })}
@@ -805,7 +815,7 @@ export default function SeatingPage() {
                     onChange={(e) => { if (e.target.value) assignGuest(guest.id, e.target.value); }}
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
-                    className="text-[11px] text-violet bg-transparent border-0 cursor-pointer p-0 min-h-6"
+                    className="text-[13px] text-violet bg-transparent border-0 cursor-pointer p-0 min-h-8"
                   >
                     <option value="">Table...</option>
                     {tables.map((t) => (
