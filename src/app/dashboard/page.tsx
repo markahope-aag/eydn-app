@@ -3,6 +3,7 @@ import { createSupabaseAdmin } from "@/lib/supabase/server";
 import type { Wedding } from "@/lib/types";
 import { formatDueDate } from "@/lib/date-utils";
 import Link from "next/link";
+import Image from "next/image";
 
 function buildGreeting(ctx: { name: string; both: string; days: number | null; totalTasks: number; doneTasks: number; taskPct: number }): string {
   const { name, both, days, totalTasks, doneTasks, taskPct } = ctx;
@@ -196,6 +197,18 @@ export default async function DashboardPage() {
   const budgetTotal = wedding.budget ?? 0;
   const budgetRemaining = budgetTotal - budgetSpent;
 
+  // Sign couple photo URL if it's a storage path
+  let couplePhotoUrl: string | null = null;
+  const rawPhotoUrl = (wedding as Record<string, unknown>).website_couple_photo_url as string | null;
+  if (rawPhotoUrl) {
+    if (rawPhotoUrl.startsWith("http")) {
+      couplePhotoUrl = rawPhotoUrl;
+    } else {
+      const { data: signed } = await supabase.storage.from("attachments").createSignedUrl(rawPhotoUrl, 3600);
+      couplePhotoUrl = signed?.signedUrl || null;
+    }
+  }
+
   // ─── Greeting message tailored to timeline ──────────────────────────────
   const greeting = buildGreeting({
     name: wedding.partner1_name,
@@ -361,43 +374,66 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <h1>
-        {wedding.partner1_name} & {wedding.partner2_name}
-      </h1>
-      {wedding.date && (
-        <div className="mt-4">
-          <p className="text-[15px] text-muted">
-            {new Date(wedding.date).toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-          {daysUntilWedding !== null && daysUntilWedding > 0 && (
-            <div className="mt-3">
-              <div
-                className="inline-flex items-baseline gap-2"
-                style={{
-                  background: "linear-gradient(135deg, var(--violet), var(--soft-violet))",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                <span className="text-[48px] font-semibold leading-none" style={{ letterSpacing: "-1px" }}>
-                  {daysUntilWedding}
-                </span>
-                <span className="text-[18px] font-semibold">
-                  days to go
-                </span>
-              </div>
-              {/* Progress bar toward wedding date */}
-              <CountdownBar weddingDate={wedding.date} />
+      <div className="flex items-start gap-6">
+        {/* Couple photo */}
+        {couplePhotoUrl ? (
+          <div className="hidden sm:block flex-shrink-0 w-24 h-24 rounded-full overflow-hidden relative border-2 border-lavender shadow-sm">
+            <Image src={couplePhotoUrl} alt={`${wedding.partner1_name} & ${wedding.partner2_name}`} fill className="object-cover" unoptimized />
+          </div>
+        ) : (
+          <Link
+            href="/dashboard/website"
+            className="hidden sm:flex flex-shrink-0 w-24 h-24 rounded-full border-2 border-dashed border-border items-center justify-center hover:border-violet hover:bg-lavender/30 transition group"
+            title="Add a couple photo on your website page"
+          >
+            <div className="text-center">
+              <svg className="mx-auto text-muted group-hover:text-violet transition" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M10 4V16M4 10H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              <span className="text-[9px] text-muted group-hover:text-violet transition mt-0.5 block">Add photo</span>
+            </div>
+          </Link>
+        )}
+
+        <div className="flex-1 min-w-0">
+          <h1>
+            {wedding.partner1_name} & {wedding.partner2_name}
+          </h1>
+          {wedding.date && (
+            <div className="mt-2">
+              <p className="text-[15px] text-muted">
+                {new Date(wedding.date).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+              {daysUntilWedding !== null && daysUntilWedding > 0 && (
+                <div className="mt-3">
+                  <div
+                    className="inline-flex items-baseline gap-2"
+                    style={{
+                      background: "linear-gradient(135deg, var(--violet), var(--soft-violet))",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    <span className="text-[48px] font-semibold leading-none" style={{ letterSpacing: "-1px" }}>
+                      {daysUntilWedding}
+                    </span>
+                    <span className="text-[18px] font-semibold">
+                      days to go
+                    </span>
+                  </div>
+                  <CountdownBar weddingDate={wedding.date} />
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
+      </div>
 
       {/* Stats — Progress ring is larger and more prominent */}
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
