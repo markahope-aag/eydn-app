@@ -4,6 +4,7 @@ import type { Wedding } from "@/lib/types";
 import { formatDueDate } from "@/lib/date-utils";
 import Link from "next/link";
 import Image from "next/image";
+import { MilestoneCelebration } from "@/components/MilestoneCelebration";
 
 function buildGreeting(ctx: { name: string; both: string; days: number | null; totalTasks: number; doneTasks: number; taskPct: number }): string {
   const { name, both, days, totalTasks, doneTasks, taskPct } = ctx;
@@ -297,14 +298,8 @@ export default async function DashboardPage() {
     }
   }
 
-  // Milestone celebrations
-  if (taskPct >= 50 && taskPct < 75 && doneTasks > 5) {
-    nudges.push({ message: `You're over halfway done with your planning tasks — ${taskPct}% complete! You're crushing it.`, type: "celebrate" });
-  } else if (taskPct >= 75 && taskPct < 100) {
-    nudges.push({ message: `${taskPct}% of tasks done — you're in the home stretch! Almost everything is locked in.`, type: "celebrate" });
-  } else if (taskPct === 100 && totalTasks > 10) {
-    nudges.push({ message: "Every single task is done. You're officially the most organized couple ever. Enjoy your day!", type: "celebrate" });
-  }
+  // Milestone celebrations are handled by the MilestoneCelebration client component
+  // with confetti animation — no duplicate nudges needed here
 
   // Budget check
   if (budgetTotal > 0) {
@@ -373,6 +368,8 @@ export default async function DashboardPage() {
           </div>
         </div>
       )}
+
+      <MilestoneCelebration taskPct={taskPct} name={wedding.partner1_name} />
 
       <div className="flex items-start gap-6">
         {/* Couple photo */}
