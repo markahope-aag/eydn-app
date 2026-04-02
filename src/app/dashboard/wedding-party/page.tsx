@@ -237,7 +237,7 @@ export default function WeddingPartyPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1>Wedding Party</h1>
-          <p className="mt-1 text-[15px] text-muted">{members.length} members</p>
+          <p className="mt-1 text-[15px] text-muted">{members.length} members{members.length > 0 && !members.every((m) => m.photo_url) ? " \u00B7 Tap a photo circle to add a picture" : ""}</p>
         </div>
         <button onClick={() => setShowAdd(!showAdd)} className="btn-primary">
           {showAdd ? "Cancel" : "Add Member"}
