@@ -91,6 +91,15 @@ export default async function WeddingWebsitePage({
   const photos = (photosRaw ?? []) as WeddingPhoto[];
   const weddingParty = (weddingPartyRaw ?? []) as WeddingPartyMember[];
 
+  // Sign wedding party photo storage paths
+  for (const member of weddingParty) {
+    const photoUrl = (member as Record<string, unknown>).photo_url as string | null;
+    if (photoUrl && !photoUrl.startsWith("http")) {
+      const { data: signed } = await supabase.storage.from("attachments").createSignedUrl(photoUrl, 3600);
+      if (signed?.signedUrl) (member as Record<string, unknown>).photo_url = signed.signedUrl;
+    }
+  }
+
   // RSVP token lookup (supports ?token=xxx or legacy ?rsvp=xxx)
   let rsvpGuest: { id: string; name: string; token: string; responded: boolean } | null = null;
   if (rsvpToken) {

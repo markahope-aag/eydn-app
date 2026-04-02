@@ -215,8 +215,10 @@ export default function WeddingPartyPage() {
         const err = await uploadRes.json().catch(() => ({}));
         throw new Error(err.error || "Upload failed");
       }
-      const { file_url } = await uploadRes.json();
-      await updateField(memberId, "photo_url", file_url);
+      const { file_url, signed_url } = await uploadRes.json();
+      await updateField(memberId, "photo_url", file_url); // save storage path
+      // Display the signed URL immediately
+      setMembers((prev) => prev.map((m) => m.id === memberId ? { ...m, photo_url: signed_url || file_url } : m));
       toast.success("Photo saved");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Photo didn't upload. Try again.");

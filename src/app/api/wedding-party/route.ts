@@ -18,7 +18,16 @@ export async function GET() {
   const err = supabaseError(error, "wedding-party");
   if (err) return err;
 
-  return NextResponse.json(data);
+  // Generate fresh signed URLs for photo storage paths
+  const members = (data || []) as Array<{ photo_url: string | null; [key: string]: unknown }>;
+  for (const member of members) {
+    if (member.photo_url && !member.photo_url.startsWith("http")) {
+      const { data: signed } = await supabase.storage.from("attachments").createSignedUrl(member.photo_url, 3600);
+      if (signed?.signedUrl) member.photo_url = signed.signedUrl;
+    }
+  }
+
+  return NextResponse.json(members);
 }
 
 export async function POST(request: Request) {
