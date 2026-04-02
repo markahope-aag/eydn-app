@@ -32,8 +32,13 @@ export default function ChatPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const prevCount = useRef(0);
   useEffect(() => {
-    messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
+    // Only auto-scroll when new messages are added (not on initial load)
+    if (messages.length > prevCount.current && prevCount.current > 0) {
+      messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    prevCount.current = messages.length;
   }, [messages]);
 
   async function sendMessage(e: React.FormEvent) {
