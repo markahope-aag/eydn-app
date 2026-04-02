@@ -94,7 +94,7 @@ export async function POST(request: Request) {
       html: `
         <div style="max-width: 560px; margin: 0 auto; background: #FAF6F1; border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
           <div style="background: linear-gradient(135deg, #2C3E2D, #D4A5A5); padding: 32px; text-align: center; border-radius: 16px 16px 0 0;">
-            <h1 style="color: white; font-size: 24px; margin: 0;">Eydn</h1>
+            <img src="https://eydn.app/logo-white.png" alt="Eydn" height="34" style="height: 34px; width: auto;" />
           </div>
           <div style="padding: 32px; color: #1A1A2E; font-size: 15px; line-height: 1.7;">
             <h2 style="color: #1A1A2E; font-size: 20px;">You're on the list, ${name.split(" ")[0]}!</h2>
