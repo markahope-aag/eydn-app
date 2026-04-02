@@ -123,6 +123,7 @@ export default function VendorsPage() {
 
   async function updateStatus(id: string, status: string) {
     const prev = vendors;
+    const vendor = vendors.find((v) => v.id === id);
     setVendors((v) =>
       v.map((x) => (x.id === id ? { ...x, status } : x))
     );
@@ -135,8 +136,15 @@ export default function VendorsPage() {
       });
       if (!res.ok) throw new Error();
 
-      if (status === "booked") {
+      if (status === "booked" && vendor) {
         triggerConfetti();
+        const name = vendor.name || vendor.category;
+        const category = vendor.category;
+        const bigOnes = ["Venue", "Photographer", "Caterer", "DJ or Band", "Florist", "Officiant"];
+        const message = bigOnes.includes(category)
+          ? `${name} locked in! 🎉 That's one of the biggest ones done.`
+          : `${name} is booked! 🎉 Another piece of the puzzle in place.`;
+        toast(message, { icon: "✨", duration: 4000 });
       }
     } catch {
       setVendors(prev);
