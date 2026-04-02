@@ -1,20 +1,6 @@
 "use client";
 
-import { useState, useCallback, useSyncExternalStore } from "react";
-
-const STORAGE_KEY = "eydn_tour_complete";
-
-function getIsTourDone() {
-  if (typeof window === "undefined") return true;
-  return localStorage.getItem(STORAGE_KEY) === "true";
-}
-
-// Simple external store for localStorage check
-let tourListeners: Array<() => void> = [];
-function subscribeTour(cb: () => void) {
-  tourListeners.push(cb);
-  return () => { tourListeners = tourListeners.filter((l) => l !== cb); };
-}
+import { useState, useEffect, useCallback } from "react";
 
 type TourStep = { title: string; description: string; section?: string };
 
@@ -65,17 +51,35 @@ const STEPS: TourStep[] = [
 ];
 
 export function OnboardingTour() {
-  const isDone = useSyncExternalStore(subscribeTour, getIsTourDone, () => true);
-  const [dismissed, setDismissed] = useState(false);
+  // Check localStorage synchronously to avoid flicker for users who already completed the tour
+  const alreadyDone = typeof window !== "undefined" && localStorage.getItem("eydn_tour_complete") === "true";
+  const [show, setShow] = useState(false);
   const [step, setStep] = useState(0);
 
+  useEffect(() => {
+    if (alreadyDone) return;
+
+    fetch("/api/tour-status")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.tour_complete) {
+          localStorage.setItem("eydn_tour_complete", "true");
+        } else {
+          setShow(true);
+        }
+      })
+      .catch(() => {
+        // If the API fails, don't block — skip the tour
+      });
+  }, [alreadyDone]);
+
   const complete = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, "true");
-    setDismissed(true);
-    tourListeners.forEach((l) => l());
+    setShow(false);
+    localStorage.setItem("eydn_tour_complete", "true");
+    fetch("/api/tour-status", { method: "PUT" }).catch(() => {});
   }, []);
 
-  if (isDone || dismissed) return null;
+  if (alreadyDone || !show) return null;
 
   const current = STEPS[step];
   const isFirst = step === 0;

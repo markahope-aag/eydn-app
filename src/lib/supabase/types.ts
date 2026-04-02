@@ -177,43 +177,31 @@ export type Database = {
         }
         Relationships: []
       }
-      date_change_alerts: {
+      calendar_feed_tokens: {
         Row: {
-          id: string
-          wedding_id: string
-          change_type: string
-          old_value: string | null
-          new_value: string | null
-          affected_tasks: Json
-          message: string
-          acknowledged: boolean
           created_at: string
+          id: string
+          revoked_at: string | null
+          token: string
+          wedding_id: string
         }
         Insert: {
-          id?: string
-          wedding_id: string
-          change_type: string
-          old_value?: string | null
-          new_value?: string | null
-          affected_tasks?: Json
-          message: string
-          acknowledged?: boolean
           created_at?: string
+          id?: string
+          revoked_at?: string | null
+          token?: string
+          wedding_id: string
         }
         Update: {
-          id?: string
-          wedding_id?: string
-          change_type?: string
-          old_value?: string | null
-          new_value?: string | null
-          affected_tasks?: Json
-          message?: string
-          acknowledged?: boolean
           created_at?: string
+          id?: string
+          revoked_at?: string | null
+          token?: string
+          wedding_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "date_change_alerts_wedding_id_fkey"
+            foreignKeyName: "calendar_feed_tokens_wedding_id_fkey"
             columns: ["wedding_id"]
             isOneToOne: false
             referencedRelation: "weddings"
@@ -258,38 +246,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ceremony_positions_wedding_id_fkey"
-            columns: ["wedding_id"]
-            isOneToOne: false
-            referencedRelation: "weddings"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      calendar_feed_tokens: {
-        Row: {
-          id: string
-          wedding_id: string
-          token: string
-          created_at: string
-          revoked_at: string | null
-        }
-        Insert: {
-          id?: string
-          wedding_id: string
-          token?: string
-          created_at?: string
-          revoked_at?: string | null
-        }
-        Update: {
-          id?: string
-          wedding_id?: string
-          token?: string
-          created_at?: string
-          revoked_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "calendar_feed_tokens_wedding_id_fkey"
             columns: ["wedding_id"]
             isOneToOne: false
             referencedRelation: "weddings"
@@ -400,6 +356,50 @@ export type Database = {
         }
         Relationships: []
       }
+      date_change_alerts: {
+        Row: {
+          acknowledged: boolean
+          affected_tasks: Json | null
+          change_type: string
+          created_at: string
+          id: string
+          message: string
+          new_value: string | null
+          old_value: string | null
+          wedding_id: string
+        }
+        Insert: {
+          acknowledged?: boolean
+          affected_tasks?: Json | null
+          change_type: string
+          created_at?: string
+          id?: string
+          message: string
+          new_value?: string | null
+          old_value?: string | null
+          wedding_id: string
+        }
+        Update: {
+          acknowledged?: boolean
+          affected_tasks?: Json | null
+          change_type?: string
+          created_at?: string
+          id?: string
+          message?: string
+          new_value?: string | null
+          old_value?: string | null
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "date_change_alerts_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       day_of_plans: {
         Row: {
           content: Json
@@ -432,103 +432,42 @@ export type Database = {
           },
         ]
       }
-      waitlist: {
+      email_events: {
         Row: {
-          id: string;
-          name: string;
-          email: string;
-          source: string;
-          discount_code_sent: boolean;
-          notes: string | null;
-          created_at: string;
-        };
+          created_at: string
+          email_id: string
+          email_to: string
+          event_type: string
+          id: string
+          metadata: Json | null
+        }
         Insert: {
-          id?: string;
-          name: string;
-          email: string;
-          source?: string;
-          discount_code_sent?: boolean;
-          notes?: string | null;
-        };
+          created_at?: string
+          email_id: string
+          email_to: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+        }
         Update: {
-          discount_code_sent?: boolean;
-          notes?: string | null;
-        };
-        Relationships: [];
-      };
-      promo_codes: {
-        Row: {
-          id: string;
-          code: string;
-          description: string | null;
-          discount_type: "percentage" | "fixed";
-          discount_value: number;
-          max_uses: number | null;
-          current_uses: number;
-          is_active: boolean;
-          expires_at: string | null;
-          created_at: string;
-          created_by: string;
-        };
-        Insert: {
-          id?: string;
-          code: string;
-          description?: string | null;
-          discount_type: "percentage" | "fixed";
-          discount_value: number;
-          max_uses?: number | null;
-          is_active?: boolean;
-          expires_at?: string | null;
-          created_by: string;
-        };
-        Update: {
-          is_active?: boolean;
-          description?: string | null;
-          max_uses?: number | null;
-          expires_at?: string | null;
-          current_uses?: number;
-        };
-        Relationships: [];
-      };
-      promo_code_redemptions: {
-        Row: {
-          id: string;
-          promo_code_id: string;
-          user_id: string;
-          purchase_id: string | null;
-          original_amount: number;
-          discount_amount: number;
-          final_amount: number;
-          redeemed_at: string;
-        };
-        Insert: {
-          id?: string;
-          promo_code_id: string;
-          user_id: string;
-          purchase_id?: string | null;
-          original_amount: number;
-          discount_amount: number;
-          final_amount: number;
-        };
-        Update: {
-          purchase_id?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "promo_code_redemptions_promo_code_id_fkey";
-            columns: ["promo_code_id"];
-            isOneToOne: false;
-            referencedRelation: "promo_codes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
+          created_at?: string
+          email_id?: string
+          email_to?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       email_preferences: {
         Row: {
           deadline_reminders: boolean
           id: string
           lifecycle_emails: boolean
           marketing_emails: boolean
+          phone_number: string | null
+          push_notifications: boolean
+          sms_reminders: boolean
           unsubscribe_token: string
           unsubscribed_all: boolean
           updated_at: string | null
@@ -539,6 +478,9 @@ export type Database = {
           id?: string
           lifecycle_emails?: boolean
           marketing_emails?: boolean
+          phone_number?: string | null
+          push_notifications?: boolean
+          sms_reminders?: boolean
           unsubscribe_token?: string
           unsubscribed_all?: boolean
           updated_at?: string | null
@@ -549,6 +491,9 @@ export type Database = {
           id?: string
           lifecycle_emails?: boolean
           marketing_emails?: boolean
+          phone_number?: string | null
+          push_notifications?: boolean
+          sms_reminders?: boolean
           unsubscribe_token?: string
           unsubscribed_all?: boolean
           updated_at?: string | null
@@ -810,17 +755,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "mood_board_items_wedding_id_fkey"
-            columns: ["wedding_id"]
-            isOneToOne: false
-            referencedRelation: "weddings"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "mood_board_items_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mood_board_items_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
             referencedColumns: ["id"]
           },
         ]
@@ -909,6 +854,38 @@ export type Database = {
           },
         ]
       }
+      onboarding_survey: {
+        Row: {
+          created_at: string
+          id: string
+          prior_tools: string[]
+          venue_status: string | null
+          wedding_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prior_tools?: string[]
+          venue_status?: string | null
+          wedding_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prior_tools?: string[]
+          venue_status?: string | null
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_survey_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: true
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       placement_tiers: {
         Row: {
           active: boolean
@@ -947,6 +924,128 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
+      }
+      promo_code_redemptions: {
+        Row: {
+          discount_amount: number
+          final_amount: number
+          id: string
+          original_amount: number
+          promo_code_id: string
+          purchase_id: string | null
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          discount_amount: number
+          final_amount: number
+          id?: string
+          original_amount: number
+          promo_code_id: string
+          purchase_id?: string | null
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          discount_amount?: number
+          final_amount?: number
+          id?: string
+          original_amount?: number
+          promo_code_id?: string
+          purchase_id?: string | null
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_code_redemptions_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_code_redemptions_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "subscriber_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string
+          current_uses: number
+          description: string | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by: string
+          current_uses?: number
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string
+          current_uses?: number
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          subscription: Json
+          user_id: string
+          wedding_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          subscription: Json
+          user_id: string
+          wedding_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          subscription?: Json
+          user_id?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       questionnaire_responses: {
         Row: {
@@ -1115,6 +1214,7 @@ export type Database = {
           created_at: string
           guest_id: string
           id: string
+          qr_code_url: string | null
           responded: boolean
           responded_at: string | null
           token: string
@@ -1124,6 +1224,7 @@ export type Database = {
           created_at?: string
           guest_id: string
           id?: string
+          qr_code_url?: string | null
           responded?: boolean
           responded_at?: string | null
           token?: string
@@ -1133,6 +1234,7 @@ export type Database = {
           created_at?: string
           guest_id?: string
           id?: string
+          qr_code_url?: string | null
           responded?: boolean
           responded_at?: string | null
           token?: string
@@ -1157,18 +1259,21 @@ export type Database = {
       }
       seat_assignments: {
         Row: {
+          deleted_at: string | null
           guest_id: string
           id: string
           seat_number: number | null
           seating_table_id: string
         }
         Insert: {
+          deleted_at?: string | null
           guest_id: string
           id?: string
           seat_number?: number | null
           seating_table_id: string
         }
         Update: {
+          deleted_at?: string | null
           guest_id?: string
           id?: string
           seat_number?: number | null
@@ -1288,11 +1393,14 @@ export type Database = {
           email: string | null
           featured: boolean
           id: string
+          import_source: string | null
+          imported_at: string | null
           name: string
           phone: string | null
           placement_expires_at: string | null
           placement_tier: string | null
           price_range: string | null
+          search_vector: unknown
           state: string
           updated_at: string
           vendor_account_id: string | null
@@ -1310,11 +1418,14 @@ export type Database = {
           email?: string | null
           featured?: boolean
           id?: string
+          import_source?: string | null
+          imported_at?: string | null
           name: string
           phone?: string | null
           placement_expires_at?: string | null
           placement_tier?: string | null
           price_range?: string | null
+          search_vector?: unknown
           state: string
           updated_at?: string
           vendor_account_id?: string | null
@@ -1332,11 +1443,14 @@ export type Database = {
           email?: string | null
           featured?: boolean
           id?: string
+          import_source?: string | null
+          imported_at?: string | null
           name?: string
           phone?: string | null
           placement_expires_at?: string | null
           placement_tier?: string | null
           price_range?: string | null
+          search_vector?: unknown
           state?: string
           updated_at?: string
           vendor_account_id?: string | null
@@ -1771,6 +1885,36 @@ export type Database = {
           },
         ]
       }
+      waitlist: {
+        Row: {
+          created_at: string
+          discount_code_sent: boolean
+          email: string
+          id: string
+          name: string
+          notes: string | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          discount_code_sent?: boolean
+          email: string
+          id?: string
+          name: string
+          notes?: string | null
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          discount_code_sent?: boolean
+          email?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
       wedding_collaborators: {
         Row: {
           created_at: string | null
@@ -1930,33 +2074,36 @@ export type Database = {
           guest_count_estimate: number | null
           has_honeymoon: boolean | null
           has_pre_wedding_events: boolean | null
-          meal_options: Json
-          photo_approval_required: boolean
-          rsvp_deadline: string | null
-          website_theme: Json
           has_wedding_party: boolean | null
           id: string
           key_decisions: string | null
+          meal_options: Json | null
           memory_plan_active: boolean
           memory_plan_expires_at: string | null
           partner1_name: string
           partner2_name: string
           phase: string
+          photo_approval_required: boolean
+          rsvp_deadline: string | null
           shared_attire_note: string | null
           style_description: string | null
+          tour_complete: boolean
           trial_started_at: string | null
           updated_at: string
           user_id: string
           venue: string | null
+          venue_city: string | null
           website_accommodations: string | null
           website_couple_photo_url: string | null
           website_cover_url: string | null
           website_enabled: boolean
           website_faq: Json | null
           website_headline: string | null
+          website_hotels: Json | null
           website_schedule: Json | null
           website_slug: string | null
           website_story: string | null
+          website_theme: Json | null
           website_travel_info: string | null
           wedding_party_count: number | null
         }
@@ -1968,33 +2115,36 @@ export type Database = {
           guest_count_estimate?: number | null
           has_honeymoon?: boolean | null
           has_pre_wedding_events?: boolean | null
-          meal_options?: Json
-          photo_approval_required?: boolean
-          rsvp_deadline?: string | null
-          website_theme?: Json
           has_wedding_party?: boolean | null
           id?: string
           key_decisions?: string | null
+          meal_options?: Json | null
           memory_plan_active?: boolean
           memory_plan_expires_at?: string | null
           partner1_name: string
           partner2_name: string
           phase?: string
+          photo_approval_required?: boolean
+          rsvp_deadline?: string | null
           shared_attire_note?: string | null
           style_description?: string | null
+          tour_complete?: boolean
           trial_started_at?: string | null
           updated_at?: string
           user_id: string
           venue?: string | null
+          venue_city?: string | null
           website_accommodations?: string | null
           website_couple_photo_url?: string | null
           website_cover_url?: string | null
           website_enabled?: boolean
           website_faq?: Json | null
           website_headline?: string | null
+          website_hotels?: Json | null
           website_schedule?: Json | null
           website_slug?: string | null
           website_story?: string | null
+          website_theme?: Json | null
           website_travel_info?: string | null
           wedding_party_count?: number | null
         }
@@ -2006,33 +2156,36 @@ export type Database = {
           guest_count_estimate?: number | null
           has_honeymoon?: boolean | null
           has_pre_wedding_events?: boolean | null
-          meal_options?: Json
-          photo_approval_required?: boolean
-          rsvp_deadline?: string | null
-          website_theme?: Json
           has_wedding_party?: boolean | null
           id?: string
           key_decisions?: string | null
+          meal_options?: Json | null
           memory_plan_active?: boolean
           memory_plan_expires_at?: string | null
           partner1_name?: string
           partner2_name?: string
           phase?: string
+          photo_approval_required?: boolean
+          rsvp_deadline?: string | null
           shared_attire_note?: string | null
           style_description?: string | null
+          tour_complete?: boolean
           trial_started_at?: string | null
           updated_at?: string
           user_id?: string
           venue?: string | null
+          venue_city?: string | null
           website_accommodations?: string | null
           website_couple_photo_url?: string | null
           website_cover_url?: string | null
           website_enabled?: boolean
           website_faq?: Json | null
           website_headline?: string | null
+          website_hotels?: Json | null
           website_schedule?: Json | null
           website_slug?: string | null
           website_story?: string | null
+          website_theme?: Json | null
           website_travel_info?: string | null
           wedding_party_count?: number | null
         }
@@ -2043,7 +2196,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_promo_uses: { Args: { code_id: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never
