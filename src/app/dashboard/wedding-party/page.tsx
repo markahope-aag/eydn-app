@@ -370,7 +370,7 @@ export default function WeddingPartyPage() {
               >
                 {member.photo_url ? (
                   <>
-                    <Image src={member.photo_url} alt={member.name} fill className="object-cover" />
+                    <Image src={member.photo_url} alt={member.name} width={40} height={40} className="w-full h-full object-cover" unoptimized />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition flex items-center justify-center">
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                         <path d="M6 1H3C1.89543 1 1 1.89543 1 3V13C1 14.1046 1.89543 15 3 15H13C14.1046 15 15 14.1046 15 13V10M11.5 1.5L14.5 4.5M7.5 8.5L13.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
