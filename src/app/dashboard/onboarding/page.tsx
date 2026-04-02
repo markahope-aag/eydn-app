@@ -17,6 +17,7 @@ type FormData = {
   venue_name: string;
   venue_city: string;
   booked_vendors: string[];
+  partner_invite_email: string;
 };
 
 const INITIAL_FORM: FormData = {
@@ -29,6 +30,7 @@ const INITIAL_FORM: FormData = {
   venue_name: "",
   venue_city: "",
   booked_vendors: [],
+  partner_invite_email: "",
 };
 
 const VENDOR_CATEGORIES = [
@@ -547,32 +549,8 @@ function AIScreen({
   );
 }
 
-// Screen 7 — Invite Partner (optional)
-function InvitePartnerStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
-  const [email, setEmail] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-
-  async function sendInvite() {
-    if (!email.trim()) return;
-    setSending(true);
-    try {
-      const res = await fetch("/api/collaborators", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), role: "partner" }),
-      });
-      if (!res.ok) throw new Error();
-      setSent(true);
-      toast.success("Invitation sent!");
-      setTimeout(onNext, 1500);
-    } catch {
-      toast.error("Couldn't send the invitation. You can do this later in Settings.");
-    } finally {
-      setSending(false);
-    }
-  }
-
+// Screen 7 — Invite Partner (optional, just collects email — invite sent after onboarding completes)
+function InvitePartnerStep({ email, onEmailChange, onNext, onSkip }: { email: string; onEmailChange: (_v: string) => void; onNext: () => void; onSkip: () => void }) {
   return (
     <div className="max-w-md mx-auto text-center">
       <h1 className="text-[24px] sm:text-[28px] font-semibold text-plum">
@@ -581,31 +559,26 @@ function InvitePartnerStep({ onNext, onSkip }: { onNext: () => void; onSkip: () 
       <p className="mt-2 text-[15px] text-muted leading-relaxed">
         Planning is better together. Your partner will get full access to view, edit, and manage your wedding.
       </p>
-      {sent ? (
-        <div className="mt-6 bg-confirmed-bg rounded-[12px] p-4">
-          <p className="text-[15px] text-confirmed-text font-semibold">Invitation sent to {email}!</p>
-        </div>
-      ) : (
-        <div className="mt-6 space-y-3">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Partner's email address"
-            className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px] text-center"
-          />
-          <button
-            onClick={sendInvite}
-            disabled={!email.trim() || sending}
-            className="btn-primary w-full disabled:opacity-50"
-          >
-            {sending ? "Sending..." : "Send Invitation"}
-          </button>
-          <p className="text-[13px] text-muted">
-            They&apos;ll get an email with a link to sign in and access your wedding.
-          </p>
-        </div>
-      )}
+      <div className="mt-6 space-y-3">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => onEmailChange(e.target.value)}
+          placeholder="Partner's email address"
+          className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px] text-center"
+          autoFocus
+        />
+        <button
+          onClick={onNext}
+          disabled={!email.trim()}
+          className="btn-primary w-full disabled:opacity-50"
+        >
+          Continue
+        </button>
+        <p className="text-[13px] text-muted">
+          We&apos;ll send the invitation once your wedding is set up.
+        </p>
+      </div>
       <button
         onClick={onSkip}
         className="mt-4 text-[13px] text-muted hover:text-plum transition"
@@ -802,6 +775,16 @@ export default function OnboardingPage() {
 
       if (res.ok) {
         trackOnboardingComplete();
+
+        // Send partner invite now that the wedding exists
+        if (form.partner_invite_email.trim()) {
+          fetch("/api/collaborators", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: form.partner_invite_email.trim(), role: "partner" }),
+          }).catch(() => {});
+        }
+
         if (aiInput.trim()) {
           await fetch("/api/chat", {
             method: "POST",
@@ -925,6 +908,8 @@ export default function OnboardingPage() {
       )}
       {step === 6 && (
         <InvitePartnerStep
+          email={form.partner_invite_email}
+          onEmailChange={(v) => update("partner_invite_email", v)}
           onNext={() => setStep(7)}
           onSkip={() => setStep(7)}
         />
