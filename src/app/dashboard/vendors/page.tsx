@@ -175,9 +175,25 @@ export default function VendorsPage() {
     }
   }
 
-  const bookedCount = vendors.filter(
-    (v) => v.status === "booked" || v.status === "deposit_paid" || v.status === "paid_in_full"
-  ).length;
+  // Count unique categories that have at least one vendor, and how many are booked
+  const activeCategories = new Set(vendors.map((v) => v.category));
+  const bookedCategories = new Set(
+    vendors
+      .filter((v) => v.status === "booked" || v.status === "deposit_paid" || v.status === "paid_in_full")
+      .map((v) => v.category)
+  );
+  const totalCategories = activeCategories.size;
+  const bookedCount = bookedCategories.size;
+  const bookedPct = totalCategories > 0 ? Math.round((bookedCount / totalCategories) * 100) : 0;
+
+  function getVendorProgressLabel(): string {
+    if (totalCategories === 0) return "Add your first vendor to get started";
+    if (bookedCount === 0) return "Your vendor search begins — exciting things ahead 🌿";
+    if (bookedPct === 100) return "Every vendor is locked in. You're fully booked! 💛";
+    if (bookedPct >= 75) return "Almost there — just a few more to lock in ✨";
+    if (bookedPct >= 50) return "Over halfway booked — great momentum! 💪";
+    return "You're making progress — keep going! 🌸";
+  }
 
   if (loading) {
     return <SkeletonList count={5} />;
@@ -192,7 +208,7 @@ export default function VendorsPage() {
         <div>
           <h1>Vendors <Tooltip text="Track every vendor through your booking pipeline — from initial search to final payment. Each vendor moves through stages so you always know where things stand." wide /></h1>
           <p className="mt-1 text-[15px] text-muted">
-            {bookedCount} booked / {vendors.length} total
+            {bookedCount} of {totalCategories} vendor {totalCategories === 1 ? "category" : "categories"} booked
           </p>
         </div>
         <div className="flex gap-2">
@@ -207,6 +223,30 @@ export default function VendorsPage() {
           </Link>
         </div>
       </div>
+
+      {/* Vendor booking progress bar */}
+      {totalCategories > 0 && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[13px] font-semibold text-plum">
+              {bookedCount}/{totalCategories} booked
+            </span>
+            <span className="text-[12px] text-muted">{bookedPct}%</span>
+          </div>
+          <div className="h-2.5 rounded-full overflow-hidden bg-lavender">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${bookedPct}%`,
+                background: bookedPct === 100
+                  ? "var(--success, #2E7D4F)"
+                  : "linear-gradient(90deg, var(--violet), var(--soft-violet))",
+              }}
+            />
+          </div>
+          <p className="mt-1.5 text-[12px] text-muted">{getVendorProgressLabel()}</p>
+        </div>
+      )}
 
       {showAdd && (
         <form onSubmit={addVendor} className="mt-4 card p-4 space-y-3">
