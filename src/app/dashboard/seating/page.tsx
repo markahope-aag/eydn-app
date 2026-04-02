@@ -392,9 +392,60 @@ export default function SeatingPage() {
   const assignedGuestIds = new Set(assignments.map((a) => a.guest_id));
   const unassignedGuests = guests.filter((g) => !assignedGuestIds.has(g.id) && g.rsvp_status !== "declined");
 
+  function getTableAssignments(tableId: string) {
+    return assignments.filter((a) => a.seating_table_id === tableId);
+  }
+
   function getTableGuests(tableId: string) {
-    const guestIds = assignments.filter((a) => a.seating_table_id === tableId).map((a) => a.guest_id);
-    return guests.filter((g) => guestIds.includes(g.id));
+    const tableAssigns = getTableAssignments(tableId);
+    return guests.filter((g) => tableAssigns.some((a) => a.guest_id === g.id));
+  }
+
+  /** Return an array of length `capacity` where each index is either a guest or null, respecting seat_number assignments. */
+  function getSeatMap(tableId: string, capacity: number): (Guest | null)[] {
+    const tableAssigns = getTableAssignments(tableId);
+    const seats: (Guest | null)[] = Array.from({ length: capacity }, () => null);
+    const unpositioned: Guest[] = [];
+
+    for (const a of tableAssigns) {
+      const guest = guests.find((g) => g.id === a.guest_id);
+      if (!guest) continue;
+      if (a.seat_number != null && a.seat_number >= 1 && a.seat_number <= capacity) {
+        seats[a.seat_number - 1] = guest; // seat_number is 1-indexed
+      } else {
+        unpositioned.push(guest);
+      }
+    }
+
+    // Fill unpositioned guests into empty seats
+    let nextEmpty = 0;
+    for (const guest of unpositioned) {
+      while (nextEmpty < capacity && seats[nextEmpty] !== null) nextEmpty++;
+      if (nextEmpty < capacity) {
+        seats[nextEmpty] = guest;
+        nextEmpty++;
+      }
+    }
+
+    return seats;
+  }
+
+  async function updateSeatNumber(guestId: string, tableId: string, seatNumber: number | null) {
+    setAssignments((prev) =>
+      prev.map((a) => a.guest_id === guestId ? { ...a, seat_number: seatNumber } : a)
+    );
+    try {
+      const res = await fetch("/api/seating/assignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seating_table_id: tableId, guest_id: guestId, seat_number: seatNumber }),
+      });
+      if (!res.ok) throw new Error();
+      const saved = await res.json();
+      setAssignments((prev) => prev.map((a) => a.guest_id === guestId ? saved : a));
+    } catch {
+      toast.error("Failed to update seat");
+    }
   }
 
   const leftSide = ceremonyPositions.filter((p) => p.side === "left");
@@ -487,6 +538,7 @@ export default function SeatingPage() {
               <div style={{ transform: `scale(${zoom})`, transformOrigin: "top left", minWidth: 900, minHeight: 600 }}>
               {tables.map((table) => {
                 const tableGuests = getTableGuests(table.id);
+                const seatMap = getSeatMap(table.id, table.capacity);
                 const isFull = tableGuests.length >= table.capacity;
                 const isRound = table.shape === "round";
                 const tableSize = isRound ? 140 : undefined;
@@ -512,12 +564,11 @@ export default function SeatingPage() {
                         style={{ width: tableSize, height: tableSize, borderRadius: "50%" }}
                       >
                         {/* Seat position dots around the circle */}
-                        {Array.from({ length: table.capacity }).map((_, i) => {
+                        {seatMap.map((guest, i) => {
                           const angle = (i / table.capacity) * 2 * Math.PI - Math.PI / 2;
                           const r = (tableSize! / 2) + 10;
                           const cx = tableSize! / 2 + r * Math.cos(angle);
                           const cy = tableSize! / 2 + r * Math.sin(angle);
-                          const guest = tableGuests[i];
                           return (
                             <div
                               key={i}
@@ -557,12 +608,11 @@ export default function SeatingPage() {
                         style={{ width: 200, minHeight: 90 }}
                       >
                         {/* Seat dots along top and bottom edges */}
-                        {Array.from({ length: table.capacity }).map((_, i) => {
+                        {seatMap.map((guest, i) => {
                           const isTop = i < Math.ceil(table.capacity / 2);
                           const sideIndex = isTop ? i : i - Math.ceil(table.capacity / 2);
                           const sideCount = isTop ? Math.ceil(table.capacity / 2) : Math.floor(table.capacity / 2);
                           const xPct = sideCount > 1 ? 12 + (sideIndex / (sideCount - 1)) * 76 : 50;
-                          const guest = tableGuests[i];
                           return (
                             <div
                               key={i}
@@ -663,17 +713,41 @@ export default function SeatingPage() {
                             </button>
                           </div>
                         </div>
-                        {/* Seated guests list with remove */}
+                        {/* Seated guests list with seat assignment and remove */}
                         {tableGuests.length > 0 && (
                           <div>
                             <label className="text-[11px] font-semibold text-muted">Seated</label>
-                            <div className="mt-0.5 space-y-0.5">
-                              {tableGuests.map((g) => (
-                                <div key={g.id} className="flex items-center justify-between text-[11px]">
-                                  <span className="text-plum truncate">{g.name}</span>
-                                  <button onClick={() => unassignGuest(g.id)} className="text-muted hover:text-error text-[10px]">unseat</button>
-                                </div>
-                              ))}
+                            <div className="mt-0.5 space-y-1">
+                              {tableGuests.map((g) => {
+                                const assignment = assignments.find((a) => a.guest_id === g.id);
+                                const takenSeats = new Set(
+                                  getTableAssignments(table.id)
+                                    .filter((a) => a.seat_number != null && a.guest_id !== g.id)
+                                    .map((a) => a.seat_number)
+                                );
+                                return (
+                                  <div key={g.id} className="flex items-center gap-1 text-[11px]">
+                                    <span className="text-plum truncate flex-1">{g.name}</span>
+                                    <select
+                                      value={assignment?.seat_number ?? ""}
+                                      onChange={(e) => {
+                                        const val = e.target.value ? Number(e.target.value) : null;
+                                        updateSeatNumber(g.id, table.id, val);
+                                      }}
+                                      className="rounded border-border px-1 py-0.5 text-[10px] w-14"
+                                      title="Assign to specific seat"
+                                    >
+                                      <option value="">Auto</option>
+                                      {Array.from({ length: table.capacity }, (_, i) => i + 1).map((n) => (
+                                        <option key={n} value={n} disabled={takenSeats.has(n)}>
+                                          Seat {n}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <button onClick={() => unassignGuest(g.id)} className="text-muted hover:text-error text-[10px]">unseat</button>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
