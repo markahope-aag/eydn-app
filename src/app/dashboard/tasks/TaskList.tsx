@@ -100,12 +100,33 @@ function SortableTaskItem({
   const dueDateInfo = task.due_date ? formatDueDate(task.due_date) : null;
   const isOverdue = dueDateInfo?.isOverdue && task.status !== "done";
 
+  // "Just completed" micro-animation
+  const [justCompleted, setJustCompleted] = useState(false);
+
+  function handleToggle() {
+    // Show animation when task is about to become done (in_progress → done)
+    if (task.status === "in_progress") {
+      setJustCompleted(true);
+    }
+    onToggle(task.id);
+  }
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="px-4 py-2.5 hover:bg-lavender transition bg-white"
+      className="relative px-4 py-2.5 hover:bg-lavender transition bg-white"
     >
+      {justCompleted && (
+        <div
+          className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none animate-[fadeInOut_1.8s_ease-in-out_forwards]"
+          onAnimationEnd={() => setJustCompleted(false)}
+        >
+          <span className="bg-confirmed-bg text-confirmed-text text-[14px] font-semibold px-4 py-2 rounded-full shadow-sm">
+            ✓ Done! One step closer
+          </span>
+        </div>
+      )}
       {/* Top row: drag handle, priority, status, title */}
       <div className="flex items-center gap-2">
         {/* Drag handle — hidden on mobile */}
@@ -136,7 +157,7 @@ function SortableTaskItem({
 
         {/* Status badge - click to cycle */}
         <button
-          onClick={() => onToggle(task.id)}
+          onClick={handleToggle}
           className={`rounded-full px-2 py-0.5 text-[12px] flex-shrink-0 ${STATUS_CLASSES[task.status]}`}
           title="Click to change status"
         >
