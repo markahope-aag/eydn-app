@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Show, useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
@@ -45,8 +46,7 @@ export function LandingNav() {
         {/* Logo + Nav links (left) */}
         <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
           <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="eydn" decoding="async" style={{ height: 30 }} />
+            <Image src="/logo.png" alt="eydn" width={120} height={30} priority />
           </Link>
           <nav
             style={{ display: "flex", alignItems: "center", gap: 24 }}

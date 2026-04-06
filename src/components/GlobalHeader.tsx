@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Show, UserButton } from "@clerk/nextjs";
@@ -22,8 +23,7 @@ export function GlobalHeader() {
     <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-white/95 backdrop-blur pl-16 lg:pl-6 pr-6 py-3">
       <div className="flex items-center gap-8">
         <Link href="/" className="flex items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="eydn" className="h-[34px]" />
+          <Image src="/logo.png" alt="eydn" width={136} height={34} className="h-[34px] w-auto" />
         </Link>
         <Show when="signed-out">
           <nav className="hidden sm:flex items-center gap-6">

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Cormorant_Garamond, DM_Sans, Great_Vibes } from "next/font/google";
 
@@ -604,18 +605,13 @@ export default function HomePage() {
             {/* Overlapping avatars */}
             <div style={{ display: "flex", alignItems: "center" }}>
               {[1, 2, 3, 4, 5].map((n) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   key={n}
                   src={`https://i.pravatar.cc/72?img=${n + 10}`}
                   alt="Eydn user"
                   width={36}
                   height={36}
-                  loading="lazy"
-                  decoding="async"
                   style={{
-                    width: 36,
-                    height: 36,
                     borderRadius: "50%",
                     border: "2px solid #F7EDED",
                     marginLeft: n > 1 ? -8 : 0,
@@ -1116,8 +1112,7 @@ export default function HomePage() {
             className="max-md:!grid-cols-2 max-sm:!grid-cols-1"
           >
             <div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-white.png" alt="eydn" loading="lazy" decoding="async" style={{ height: 28 }} />
+              <Image src="/logo-white.png" alt="eydn" width={112} height={28} />
               <p style={{ fontFamily: "var(--font-script)", fontSize: 16, color: "rgba(212,165,165,0.7)", marginTop: 8 }}>
                 From engagement to &ldquo;I do.&rdquo;
               </p>

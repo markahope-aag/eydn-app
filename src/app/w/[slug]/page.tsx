@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -32,6 +33,62 @@ function SectionDivider() {
 
 // Revalidate public wedding websites every 60 seconds for fresh data
 export const revalidate = 60;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = createSupabaseAdmin();
+  const { data: w } = await supabase
+    .from("weddings")
+    .select("partner1_name, partner2_name, date, venue, website_cover_url, website_headline")
+    .eq("website_slug", slug)
+    .eq("website_enabled", true)
+    .maybeSingle();
+
+  if (!w) return { title: "Wedding Not Found" };
+
+  const coupleNames = `${w.partner1_name} & ${w.partner2_name}`;
+  const dateStr = w.date
+    ? new Date(w.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+    : null;
+  const description = [
+    w.website_headline || `Join us for our wedding`,
+    dateStr && `on ${dateStr}`,
+    w.venue && `at ${w.venue}`,
+  ].filter(Boolean).join(" ");
+
+  // Sign cover image for OG if it's a storage path
+  let ogImageUrl: string | undefined;
+  if (w.website_cover_url) {
+    if (w.website_cover_url.startsWith("http")) {
+      ogImageUrl = w.website_cover_url;
+    } else {
+      const { data: signed } = await supabase.storage.from("attachments").createSignedUrl(w.website_cover_url, 3600);
+      if (signed?.signedUrl) ogImageUrl = signed.signedUrl;
+    }
+  }
+
+  return {
+    title: `${coupleNames} Wedding`,
+    description,
+    robots: { index: false, follow: false },
+    openGraph: {
+      type: "website",
+      title: `${coupleNames} Wedding`,
+      description,
+      ...(ogImageUrl && { images: [{ url: ogImageUrl, width: 1200, height: 630, alt: `${coupleNames} wedding` }] }),
+    },
+    twitter: {
+      card: ogImageUrl ? "summary_large_image" : "summary",
+      title: `${coupleNames} Wedding`,
+      description,
+      ...(ogImageUrl && { images: [ogImageUrl] }),
+    },
+  };
+}
 
 export default async function WeddingWebsitePage({
   params,

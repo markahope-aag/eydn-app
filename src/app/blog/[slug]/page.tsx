@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import DOMPurify from "isomorphic-dompurify";
@@ -138,8 +139,7 @@ export default async function BlogPostPage({
         }}
       >
         <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="eydn" style={{ height: 22 }} />
+          <Image src="/logo.png" alt="eydn" width={88} height={22} />
         </Link>
         <Link
           href="/blog"
@@ -166,7 +166,7 @@ export default async function BlogPostPage({
         {/* Category & meta */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
           <Link
-            href={`/blog?category=${p.category}`}
+            href={`/blog/category/${p.category}`}
             style={{
               fontFamily: "'DM Sans', sans-serif",
               fontSize: 11,
@@ -293,8 +293,9 @@ export default async function BlogPostPage({
                   }}
                 >
                   {r.cover_image && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={r.cover_image} alt={r.title} style={{ width: "100%", height: 180, objectFit: "cover" }} />
+                    <div style={{ position: "relative", width: "100%", height: 180 }}>
+                      <Image src={r.cover_image} alt={r.title} fill sizes="(max-width: 768px) 100vw, 33vw" style={{ objectFit: "cover" }} />
+                    </div>
                   )}
                   <div style={{ padding: "20px 16px" }}>
                     <h3

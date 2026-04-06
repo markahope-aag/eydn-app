@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, lazy, Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
@@ -144,8 +145,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
           className="flex items-center"
           onClick={() => setOpen(false)}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="eydn" className="h-7" />
+          <Image src="/logo.png" alt="eydn" width={112} height={28} className="h-7 w-auto" />
         </Link>
       )}
 
