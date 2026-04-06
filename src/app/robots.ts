@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: ["/", "/blog", "/beta", "/privacy", "/terms", "/cookies", "/disclaimer", "/acceptable-use", "/accessibility"],
-        disallow: ["/dashboard/", "/api/", "/sign-in", "/sign-up", "/w/"],
+        disallow: ["/dashboard/", "/api/", "/sign-in", "/sign-up", "/w/", "/sentry-example-page", "/monitoring"],
       },
     ],
     sitemap: "https://eydn.app/sitemap.xml",

@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 
+const description =
+  "How Eydn uses cookies and tracking technologies. Manage your cookie preferences and learn about the data we collect.";
+
 export const metadata: Metadata = {
   title: "Cookie Policy",
-  description:
-    "Understand how Eydn uses cookies and similar tracking technologies on our wedding planning platform. Manage your cookie preferences and learn about the data we collect.",
+  description,
+  alternates: { canonical: "/cookies" },
   openGraph: {
-    title: "Cookie Policy",
-    description:
-      "Understand how Eydn uses cookies and similar tracking technologies on our wedding planning platform. Manage your cookie preferences and learn about the data we collect.",
+    title: "Cookie Policy | Eydn",
+    description,
+    url: "/cookies",
+    type: "website",
   },
 };
 

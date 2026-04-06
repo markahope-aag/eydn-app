@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 
+const description =
+  "How Eydn collects, uses, and protects your personal data. Covers data storage, third-party services, cookies, and your rights.";
+
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description:
-    "Learn how Eydn collects, uses, and protects your personal data. Our privacy policy covers data storage, third-party services, cookies, and your rights as a wedding planning platform user.",
+  description,
+  alternates: { canonical: "/privacy" },
   openGraph: {
-    title: "Privacy Policy",
-    description:
-      "Learn how Eydn collects, uses, and protects your personal data. Our privacy policy covers data storage, third-party services, cookies, and your rights as a wedding planning platform user.",
+    title: "Privacy Policy | Eydn",
+    description,
+    url: "/privacy",
+    type: "website",
   },
 };
 

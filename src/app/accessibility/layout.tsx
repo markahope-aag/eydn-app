@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 
+const description =
+  "Eydn is committed to WCAG 2.2 Level AA compliance. Learn about our accessibility features and supported assistive technologies.";
+
 export const metadata: Metadata = {
   title: "Accessibility Statement",
-  description:
-    "Eydn is committed to WCAG 2.2 Level AA accessibility compliance. Learn about our accessibility features, supported assistive technologies, and how to report issues.",
+  description,
+  alternates: { canonical: "/accessibility" },
   openGraph: {
-    title: "Accessibility Statement",
-    description:
-      "Eydn is committed to WCAG 2.2 Level AA accessibility compliance. Learn about our accessibility features, supported assistive technologies, and how to report issues.",
+    title: "Accessibility Statement | Eydn",
+    description,
+    url: "/accessibility",
+    type: "website",
   },
 };
 

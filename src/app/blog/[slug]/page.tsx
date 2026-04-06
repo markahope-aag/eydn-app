@@ -40,13 +40,26 @@ export async function generateMetadata({
 
   if (!post) return { title: "Post Not Found" };
 
+  const description = post.seo_description || post.excerpt;
+  const ogImage = post.cover_image
+    ? { url: post.cover_image, width: 1200, height: 630, alt: post.seo_title || post.title }
+    : undefined;
+
   return {
     title: post.title,
-    description: post.seo_description || post.excerpt,
+    description,
+    alternates: { canonical: `/blog/${slug}` },
     openGraph: {
       type: "article",
-      title: post.title,
-      description: post.seo_description || post.excerpt,
+      url: `/blog/${slug}`,
+      title: post.seo_title || post.title,
+      description,
+      ...(ogImage && { images: [ogImage] }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.seo_title || post.title,
+      description,
       ...(post.cover_image && { images: [post.cover_image] }),
     },
   };
@@ -90,8 +103,24 @@ export default async function BlogPostPage({
     .order("published_at", { ascending: false })
     .limit(3);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: p.title,
+    author: { "@type": "Person", name: p.author_name },
+    datePublished: p.published_at,
+    ...(p.cover_image && { image: p.cover_image }),
+    publisher: { "@type": "Organization", name: "Eydn", url: "https://eydn.app" },
+    url: `https://eydn.app/blog/${slug}`,
+    description: p.seo_description || p.excerpt,
+  };
+
   return (
     <main className="flex-1 bg-whisper">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Nav bar */}
       <nav
         style={{

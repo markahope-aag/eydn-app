@@ -978,7 +978,7 @@ export default function HomePage() {
                 <img
                   key={n}
                   src={`https://i.pravatar.cc/72?img=${n + 10}`}
-                  alt=""
+                  alt="Eydn user"
                   width={36}
                   height={36}
                   loading="lazy"

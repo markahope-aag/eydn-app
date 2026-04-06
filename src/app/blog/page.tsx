@@ -12,6 +12,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/blog",
   },
+  openGraph: {
+    url: "/blog",
+    title: "The Playbook — Wedding Planning Tips & Guides",
+    description:
+      "Expert wedding planning advice, tips, and guides from the Eydn team. Budgeting, timelines, vendor management, and everything in between.",
+  },
 };
 
 const CATEGORIES = [

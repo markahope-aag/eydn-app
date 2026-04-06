@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Eydn — Your AI Wedding Planning Guide",
     description: DEFAULT_DESCRIPTION,
-    images: ["/og-image.png"],
+    images: [{ url: "/og-image.png", alt: "Eydn — AI-powered wedding planning" }],
   },
   robots: {
     index: true,
@@ -76,6 +76,41 @@ export default function RootLayout({
     <html lang="en" className={`${dmSans.className} h-full antialiased`} suppressHydrationWarning>
       <head />
       <body className="min-h-full flex flex-col bg-whisper text-plum overflow-x-hidden" suppressHydrationWarning>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  name: "Eydn",
+                  url: "https://eydn.app",
+                  logo: "https://eydn.app/logo.png",
+                  description: "AI-powered wedding planning platform.",
+                },
+                {
+                  "@type": "SoftwareApplication",
+                  name: "Eydn",
+                  applicationCategory: "LifestyleApplication",
+                  operatingSystem: "Web",
+                  url: "https://eydn.app",
+                  description: DEFAULT_DESCRIPTION,
+                  offers: {
+                    "@type": "Offer",
+                    price: "79",
+                    priceCurrency: "USD",
+                  },
+                },
+                {
+                  "@type": "WebSite",
+                  name: "Eydn",
+                  url: "https://eydn.app",
+                },
+              ],
+            }),
+          }}
+        />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg focus:text-plum"

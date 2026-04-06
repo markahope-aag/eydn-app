@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 
+const description =
+  "Rules and guidelines for using the Eydn wedding planning platform, including prohibited activities and content standards.";
+
 export const metadata: Metadata = {
   title: "Acceptable Use Policy",
-  description:
-    "Our acceptable use policy outlines the rules and guidelines for using the Eydn wedding planning platform, including prohibited activities and content standards.",
+  description,
+  alternates: { canonical: "/acceptable-use" },
   openGraph: {
-    title: "Acceptable Use Policy",
-    description:
-      "Our acceptable use policy outlines the rules and guidelines for using the Eydn wedding planning platform, including prohibited activities and content standards.",
+    title: "Acceptable Use Policy | Eydn",
+    description,
+    url: "/acceptable-use",
+    type: "website",
   },
 };
 

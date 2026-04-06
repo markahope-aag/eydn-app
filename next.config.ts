@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["ssh2-sftp-client", "ssh2"],
+  serverExternalPackages: ["ssh2-sftp-client", "ssh2", "jsdom", "isomorphic-dompurify"],
   images: {
     remotePatterns: [
       {

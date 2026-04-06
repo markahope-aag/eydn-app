@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 
+const description =
+  "Terms and conditions for using Eydn. Covers account usage, payments, intellectual property, and user responsibilities.";
+
 export const metadata: Metadata = {
   title: "Terms and Conditions",
-  description:
-    "Read the terms and conditions for using Eydn, the AI-powered wedding planning platform. Covers account usage, payments, intellectual property, and user responsibilities.",
+  description,
+  alternates: { canonical: "/terms" },
   openGraph: {
-    title: "Terms and Conditions",
-    description:
-      "Read the terms and conditions for using Eydn, the AI-powered wedding planning platform. Covers account usage, payments, intellectual property, and user responsibilities.",
+    title: "Terms and Conditions | Eydn",
+    description,
+    url: "/terms",
+    type: "website",
   },
 };
 
