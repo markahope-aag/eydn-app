@@ -874,17 +874,24 @@ export default function WebsitePage() {
             <div className="card p-4 space-y-3">
               <h3 className="text-[15px] font-semibold text-plum">Add Registry Link</h3>
               <div className="flex flex-wrap gap-2">
-                {["Amazon Wedding Registry", "Zola", "Target", "Crate & Barrel", "Honeyfund"].map((name) => (
+                {[
+                  { name: "Amazon Wedding Registry", icon: "🅰️" },
+                  { name: "Zola", icon: "💍" },
+                  { name: "Target", icon: "🎯" },
+                  { name: "Crate & Barrel", icon: "🏠" },
+                  { name: "Honeyfund", icon: "✈️" },
+                ].map((r) => (
                   <button
-                    key={name}
-                    onClick={() => setNewRegistryName(name)}
-                    className={`rounded-[10px] border px-3 py-1.5 text-[13px] font-medium transition ${
-                      newRegistryName === name
+                    key={r.name}
+                    onClick={() => setNewRegistryName(r.name)}
+                    className={`rounded-[10px] border px-3 py-1.5 text-[13px] font-medium transition inline-flex items-center gap-1.5 ${
+                      newRegistryName === r.name
                         ? "border-violet bg-lavender text-violet"
                         : "border-border bg-white text-plum hover:border-violet/40 hover:bg-lavender/30"
                     }`}
                   >
-                    {name}
+                    <span className="text-[14px]">{r.icon}</span>
+                    {r.name}
                   </button>
                 ))}
               </div>

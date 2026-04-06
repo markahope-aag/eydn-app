@@ -175,20 +175,22 @@ export default function VendorDirectoryPage() {
 
   // Auto-fetch GMB for a vendor
   const fetchGmb = useCallback((vendorId: string) => {
-    if (gmbCache[vendorId]) return;
-    setGmbCache((prev) => ({ ...prev, [vendorId]: "loading" }));
-    fetch(`/api/suggested-vendors/${vendorId}/gmb`)
-      .then((r) => {
-        if (!r.ok) throw new Error();
-        return r.json();
-      })
-      .then((data: PlaceData) => {
-        setGmbCache((prev) => ({ ...prev, [vendorId]: data }));
-      })
-      .catch(() => {
-        setGmbCache((prev) => ({ ...prev, [vendorId]: "error" }));
-      });
-  }, [gmbCache]);
+    setGmbCache((prev) => {
+      if (prev[vendorId]) return prev;
+      fetch(`/api/suggested-vendors/${vendorId}/gmb`)
+        .then((r) => {
+          if (!r.ok) throw new Error();
+          return r.json();
+        })
+        .then((data: PlaceData) => {
+          setGmbCache((p) => ({ ...p, [vendorId]: data }));
+        })
+        .catch(() => {
+          setGmbCache((p) => ({ ...p, [vendorId]: "error" }));
+        });
+      return { ...prev, [vendorId]: "loading" };
+    });
+  }, []);
 
   // Auto-fetch GMB for featured vendors on load
   useEffect(() => {

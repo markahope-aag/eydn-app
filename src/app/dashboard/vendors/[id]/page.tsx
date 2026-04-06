@@ -407,9 +407,13 @@ export default function VendorDetailPage({
       {/* Email template */}
       <button
         onClick={() => setShowEmail(true)}
-        className="btn-ghost mt-6"
+        className="btn-secondary mt-6 inline-flex items-center gap-2"
       >
-        View Email Template
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="M22 7L12 13L2 7" />
+        </svg>
+        Email Template
       </button>
 
       {showEmail && (

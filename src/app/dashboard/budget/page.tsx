@@ -553,7 +553,17 @@ export default function BudgetPage() {
               {/* Category header */}
               <div className="px-4 py-3 bg-lavender">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-[15px] font-semibold text-plum">{cat}</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-[15px] font-semibold text-plum">{cat}</h2>
+                    <button
+                      onClick={() => { setCategory(cat); setDescription(""); document.querySelector<HTMLInputElement>('input[aria-label="Add line item"]')?.focus(); }}
+                      className="text-[11px] text-violet hover:text-plum transition"
+                      aria-label={`Add item to ${cat}`}
+                      title={`Add item to ${cat}`}
+                    >
+                      + add
+                    </button>
+                  </div>
                   <div className="flex gap-4 text-[13px]">
                     <span className="text-muted">
                       Est: <span className="font-semibold text-plum">${catEstimated.toLocaleString()}</span>

@@ -379,6 +379,15 @@ export default async function DashboardPage() {
   // Milestone celebrations are handled by the MilestoneCelebration client component
   // with confetti animation — no duplicate nudges needed here
 
+  // Day-of binder nudge (30-60 days out, plan not yet created)
+  if (daysUntilWedding !== null && daysUntilWedding <= 60 && daysUntilWedding > 14 && !dayOfPlan) {
+    nudges.push({
+      message: `${daysUntilWedding} days out — now is a great time to start your day-of binder. Timeline, vendor contacts, packing list — all in one place.`,
+      type: "tip",
+      link: "/dashboard/day-of",
+    });
+  }
+
   // Budget check
   if (budgetTotal > 0) {
     const budgetUsed = Math.round((budgetSpent / budgetTotal) * 100);
