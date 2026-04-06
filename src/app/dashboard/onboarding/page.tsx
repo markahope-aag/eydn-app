@@ -623,6 +623,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [showSnapshot, setShowSnapshot] = useState(false);
   const [dateError, setDateError] = useState("");
   const [dateChangeWarning, setDateChangeWarning] = useState("");
   const [originalDate, setOriginalDate] = useState<string | null>(null);
@@ -790,15 +791,63 @@ export default function OnboardingPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ message: aiInput.trim() }),
-          }).catch((err) => console.error("Failed to seed AI chat", err));
+          }).catch(() => {});
         }
-        router.push("/dashboard");
+        setShowSnapshot(true);
       } else {
         toast.error("Setup didn't save. Try once more — if it keeps happening, reach out to support@eydn.app.");
       }
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // ─── Wedding Snapshot — the first emotional moment ─────────────────────────
+  if (showSnapshot) {
+    const p1 = form.partner1_name || "You";
+    const p2 = form.partner2_name;
+    const coupleNames = p2 ? `${p1} & ${p2}` : p1;
+
+    const dateStr = form.date
+      ? new Date(form.date + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+      : null;
+
+    const details: string[] = [];
+    if (form.venue_name) details.push(form.venue_name);
+    if (form.venue_city) details.push(form.venue_city);
+    if (form.guest_count_estimate) details.push(`~${Number(form.guest_count_estimate).toLocaleString()} guests`);
+    if (form.budget) details.push(`$${Number(form.budget).toLocaleString()} budget`);
+
+    return (
+      <div className="fixed inset-0 z-[999] flex items-center justify-center bg-[#2C3E2D] px-6">
+        <div className="max-w-lg text-center">
+          <p className="text-[14px] tracking-widest uppercase text-[#C9A84C]/60">
+            Your wedding
+          </p>
+          <h1 className="mt-4 text-[44px] md:text-[56px] font-semibold text-[#FAF6F1] leading-tight">
+            {coupleNames}
+          </h1>
+          {dateStr && (
+            <p className="mt-4 text-[20px] text-[#FAF6F1]/80">{dateStr}</p>
+          )}
+          {details.length > 0 && (
+            <p className="mt-2 text-[15px] text-[#FAF6F1]/50">
+              {details.join(" \u00B7 ")}
+            </p>
+          )}
+          <div className="mt-10 mx-auto w-16 h-px bg-[#C9A84C]/30" />
+          <p className="mt-10 text-[18px] text-[#FAF6F1]/70 leading-relaxed max-w-md mx-auto italic">
+            Let&rsquo;s build something beautiful.
+          </p>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="mt-10 inline-block rounded-full px-10 py-4 text-[15px] font-semibold text-[#2C3E2D] bg-[#FAF6F1] hover:bg-white transition"
+          >
+            Start Planning
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!ready) {

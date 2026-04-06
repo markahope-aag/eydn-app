@@ -31,6 +31,8 @@ export default function WebsitePage() {
   // Setup state
   const [slug, setSlug] = useState("");
   const [enabled, setEnabled] = useState(false);
+  const [showLaunchMoment, setShowLaunchMoment] = useState(false);
+  const wasEnabledOnLoad = useRef(false);
   const [headline, setHeadline] = useState("");
   const [story, setStory] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
@@ -155,6 +157,7 @@ export default function WebsitePage() {
       setSlug(data.slug || "");
       originalSlug.current = data.slug || "";
       setEnabled(data.enabled || false);
+      wasEnabledOnLoad.current = data.enabled || false;
       setHeadline(data.headline || "");
       setStory(data.story || "");
       setCoverUrl(data.cover_url || "");
@@ -539,7 +542,10 @@ export default function WebsitePage() {
                   onChange={(e) => {
                     const newVal = e.target.checked;
                     setEnabled(newVal);
-                    if (newVal) trackWebsitePublished();
+                    if (newVal) {
+                      trackWebsitePublished();
+                      if (!wasEnabledOnLoad.current) setShowLaunchMoment(true);
+                    }
                     autoSaveImmediate({ enabled: newVal });
                   }}
                   className="sr-only peer"
@@ -1296,6 +1302,64 @@ export default function WebsitePage() {
         </div>
       </div>
     )}
+      {/* Launch moment */}
+      {showLaunchMoment && slug && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
+          <div className="bg-white rounded-[24px] max-w-lg w-full overflow-hidden shadow-2xl">
+            {/* Mini preview */}
+            <div className="h-48 bg-[#2C3E2D] relative overflow-hidden">
+              <iframe
+                src={`/w/${slug}`}
+                className="w-full h-full pointer-events-none"
+                title="Website preview"
+                style={{ transform: "scale(0.35)", transformOrigin: "top left", width: "286%", height: "286%" }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-white/80 to-transparent" />
+              <div className="absolute bottom-4 left-0 right-0 text-center">
+                <span className="text-[32px]">&#127882;</span>
+              </div>
+            </div>
+            <div className="px-8 pb-8 pt-4 text-center">
+              <h2 className="text-[24px] font-semibold text-plum">Your website is live</h2>
+              <p className="mt-2 text-[15px] text-muted leading-relaxed">
+                Guests can now view your wedding details, RSVP, and share photos — all at one link.
+              </p>
+              <div className="mt-5 flex items-center justify-center gap-2 bg-lavender rounded-full px-5 py-3">
+                <span className="text-[14px] font-semibold text-plum truncate">eydn.app/w/{slug}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`https://eydn.app/w/${slug}`);
+                    toast.success("Link copied");
+                  }}
+                  className="flex-shrink-0 text-violet hover:text-plum transition"
+                  aria-label="Copy link"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                </button>
+              </div>
+              <div className="mt-6 flex gap-3 justify-center">
+                <a
+                  href={`https://eydn.app/w/${slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary"
+                >
+                  View Live Site
+                </a>
+                <button
+                  onClick={() => { setShowLaunchMoment(false); wasEnabledOnLoad.current = true; }}
+                  className="btn-secondary"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

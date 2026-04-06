@@ -5,6 +5,7 @@ import { formatDueDate } from "@/lib/date-utils";
 import Link from "next/link";
 import Image from "next/image";
 import { MilestoneCelebration } from "@/components/MilestoneCelebration";
+import { DayOfReveal } from "@/components/DayOfReveal";
 
 function buildGreeting(ctx: { name: string; both: string; days: number | null; totalTasks: number; doneTasks: number; taskPct: number }): string {
   const { name, both, days, totalTasks, doneTasks, taskPct } = ctx;
@@ -126,7 +127,7 @@ export default async function DashboardPage() {
     );
   }
 
-  const [{ count: guestCount }, { count: taskCount }, { count: completedTasks }, { data: upcomingTasks }, { data: allVendors }, { data: allGuests }, { data: overdueTasks }, { data: guidesCompleted }, { data: expensesData }] =
+  const [{ count: guestCount }, { count: taskCount }, { count: completedTasks }, { data: upcomingTasks }, { data: allVendors }, { data: allGuests }, { data: overdueTasks }, { data: guidesCompleted }, { data: expensesData }, { data: dayOfPlan }] =
     await Promise.all([
       supabase
         .from("guests")
@@ -181,6 +182,11 @@ export default async function DashboardPage() {
         .select("amount_paid")
         .eq("wedding_id", wedding.id)
         .is("deleted_at", null),
+      supabase
+        .from("day_of_plans")
+        .select("id, generated_at")
+        .eq("wedding_id", wedding.id)
+        .maybeSingle(),
     ]);
 
   const now = new Date();
@@ -189,6 +195,70 @@ export default async function DashboardPage() {
         (new Date(wedding.date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
       )
     : null;
+
+  // Auto-generate day-of plan when ≤14 days out
+  let dayOfJustGenerated = false;
+  if (daysUntilWedding !== null && daysUntilWedding <= 14 && daysUntilWedding > 0 && !dayOfPlan) {
+    try {
+      const vendors = await supabase
+        .from("vendors")
+        .select("name, category, poc_name, poc_phone")
+        .eq("wedding_id", wedding.id)
+        .is("deleted_at", null);
+      const party = await supabase
+        .from("wedding_party")
+        .select("name, role, job_assignment, phone")
+        .eq("wedding_id", wedding.id)
+        .is("deleted_at", null);
+
+      const content = {
+        timeline: [
+          { time: "8:00 AM", event: "Hair & makeup begins", notes: "" },
+          { time: "10:00 AM", event: "Photographer arrives", notes: "" },
+          { time: "11:00 AM", event: "Getting ready photos", notes: "" },
+          { time: "12:00 PM", event: "Lunch for wedding party", notes: "" },
+          { time: "2:00 PM", event: "First look (if applicable)", notes: "" },
+          { time: "3:00 PM", event: "Wedding party photos", notes: "" },
+          { time: "4:00 PM", event: "Guests arrive", notes: "" },
+          { time: "4:30 PM", event: "Ceremony begins", notes: "" },
+          { time: "5:00 PM", event: "Cocktail hour", notes: "" },
+          { time: "6:00 PM", event: "Reception entrance", notes: "" },
+          { time: "6:15 PM", event: "First dance", notes: "" },
+          { time: "6:30 PM", event: "Dinner service", notes: "" },
+          { time: "7:30 PM", event: "Speeches & toasts", notes: "" },
+          { time: "8:00 PM", event: "Cake cutting", notes: "" },
+          { time: "8:15 PM", event: "Parent dances", notes: "" },
+          { time: "8:30 PM", event: "Open dancing", notes: "" },
+          { time: "10:30 PM", event: "Last dance", notes: "" },
+          { time: "10:45 PM", event: "Send-off", notes: "" },
+        ],
+        vendorContacts: (vendors.data || []).map((v: { name: string; category: string; poc_name: string | null; poc_phone: string | null }) => ({
+          vendor: v.name, category: v.category, contact: v.poc_name || "", phone: v.poc_phone || "",
+        })),
+        partyAssignments: (party.data || []).map((p: { name: string; role: string; job_assignment: string | null; phone: string | null }) => ({
+          name: p.name, role: p.role, job: p.job_assignment || "", phone: p.phone || "",
+        })),
+        packingChecklist: [
+          "Wedding dress/suit", "Rings", "Vows (if written)", "Marriage license",
+          "Emergency kit (sewing kit, stain remover, pain reliever)", "Phone charger",
+          "Vendor tips (if applicable)", "Change of clothes for after", "Decor items",
+          "Card box / gift table items", "Place cards", "Guestbook & pen",
+          "Cake knife & server", "Toasting glasses",
+        ],
+        ceremonyScript: "", processionalOrder: [], officiantNotes: "",
+        music: [], speeches: [], setupTasks: [], attire: [],
+      };
+
+      await supabase.from("day_of_plans").upsert({
+        wedding_id: wedding.id,
+        content: content as unknown as import("@/lib/supabase/types").Json,
+        generated_at: new Date().toISOString(),
+      });
+      dayOfJustGenerated = true;
+    } catch {
+      // Generation failed — user can still generate manually from the day-of page
+    }
+  }
 
   const totalTasks = taskCount ?? 0;
   const doneTasks = completedTasks ?? 0;
@@ -336,6 +406,13 @@ export default async function DashboardPage() {
 
   return (
     <div>
+      {dayOfJustGenerated && daysUntilWedding !== null && (
+        <DayOfReveal
+          partnerNames={`${wedding.partner1_name} & ${wedding.partner2_name}`}
+          daysLeft={daysUntilWedding}
+        />
+      )}
+
       {/* Proactive nudges from Eydn */}
       {sortedNudges.length > 0 && (
         <div className="mb-8 space-y-2">
