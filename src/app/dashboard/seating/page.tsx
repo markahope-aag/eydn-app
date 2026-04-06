@@ -826,7 +826,15 @@ export default function SeatingPage() {
                   </select>
                 </div>
               ))}
-              {unassignedGuests.length === 0 && <p className="text-[12px] text-muted">All guests assigned.</p>}
+              {unassignedGuests.length === 0 && guests.length > 0 && assignments.length > 0 && (
+                <div className="rounded-xl bg-lavender/40 border border-violet/15 px-4 py-4 text-center space-y-1.5">
+                  <p className="text-[15px] font-semibold text-plum">Everyone has a seat — your room is set.</p>
+                  <p className="text-[13px] text-muted leading-relaxed">
+                    This is one of the hardest parts of planning, and you just finished it.
+                    {guests.length >= 50 ? ` ${guests.length} people, all accounted for.` : ""} Take a breath — you earned it.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

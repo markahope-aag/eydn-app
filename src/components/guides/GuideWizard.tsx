@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import type { GuideDefinition } from "@/lib/guides/types";
 import { FieldRenderer } from "./FieldRenderer";
@@ -211,15 +212,111 @@ export function GuideWizard({ guide }: Props) {
   const isLastSection = sectionIndex === totalSections - 1;
   const hasVendorBrief = guide.integrations.includes("vendor-brief");
 
+  // Build personalized brief message from guide responses + colors-theme cross-data
+  function buildBriefMessage(): string | null {
+    if (!vendorBrief) return null;
+
+    const vendorNames: Record<string, string> = {
+      florist: "florist",
+      rentals: "rental company",
+      "hair-makeup": "hair and makeup artist",
+      music: "DJ",
+      decor: "decorator",
+    };
+    const vendorName = vendorNames[guide.slug];
+    if (!vendorName) return null;
+
+    // Try to pull style context from the responses
+    const vibeKeys = ["q1", "q7", "q12"]; // vibe, reception vibe, style words
+    const vibeValues: string[] = [];
+    for (const key of vibeKeys) {
+      const v = responses[key];
+      if (Array.isArray(v) && v.length > 0) {
+        vibeValues.push(...v.map((s: string) => s.replace(/-/g, " ")));
+      } else if (typeof v === "string" && v.trim()) {
+        vibeValues.push(v.replace(/-/g, " "));
+      }
+    }
+
+    const vibeStr = vibeValues.length > 0
+      ? ` Eydn wrote it based on your ${vibeValues.slice(0, 3).join(", ")} vibe.`
+      : " Eydn wrote it from your answers — ready to personalize and send.";
+
+    return `Your ${vendorName} brief is ready to send.${vibeStr}`;
+  }
+
+  // Per-guide celebration copy
+  function getCelebrationCopy(): { headline: string; subtext: string } {
+    const guideMessages: Record<string, { headline: string; subtext: string }> = {
+      "guest-list": {
+        headline: "Your guest list is taking shape",
+        subtext: "The people who matter most, all in one place. Eydn will keep track of every RSVP, meal choice, and plus-one from here.",
+      },
+      "colors-theme": {
+        headline: "Your vision is locked in",
+        subtext: "Every guide from here — florist, decor, dress, hair — pulls from the aesthetic you just defined. No repeating yourself.",
+      },
+      florist: {
+        headline: "Your floral vision is on paper",
+        subtext: "From ceremony arch to centerpieces, your florist will know exactly what you're after. One less conversation to stress about.",
+      },
+      rentals: {
+        headline: "Tables, chairs, linens — sorted",
+        subtext: "The logistics nobody thinks about until it's too late. You just handled them. Your rental company will thank you.",
+      },
+      "wedding-dress": {
+        headline: "You know what you want",
+        subtext: "Walking into a bridal boutique with this kind of clarity is rare. You're going to make the most of every appointment.",
+      },
+      "hair-makeup": {
+        headline: "Your beauty plan is set",
+        subtext: "Trial dates, inspiration, skin concerns — all captured. Your artist can skip the guesswork and focus on making you feel incredible.",
+      },
+      decor: {
+        headline: "Your spaces are going to be beautiful",
+        subtext: "Ceremony, reception, every corner — you've thought it through. Your decorator is going to love working with this brief.",
+      },
+      music: {
+        headline: "The soundtrack is planned",
+        subtext: "First dance, do-not-play list, ceremony moments — all decided. The only thing left is to dance to it.",
+      },
+      speeches: {
+        headline: "The words will be perfect",
+        subtext: "Speakers chosen, timing planned, tone set. The toasts are going to be one of the best parts of the night.",
+      },
+      registry: {
+        headline: "Your registry is ready to share",
+        subtext: "Guests will know exactly how to celebrate you. Links saved and ready for your wedding website.",
+      },
+    };
+    return guideMessages[guide.slug] || {
+      headline: `${guide.title} — done`,
+      subtext: "Your answers are saved and ready to use across your planning.",
+    };
+  }
+
   // Completion screen
   if (completed || sectionIndex >= totalSections) {
+    const briefMessage = buildBriefMessage();
+    const celebration = getCelebrationCopy();
+
     return (
       <div>
-        <div className="text-center py-12">
-          <p className="text-[24px] font-semibold text-plum">{guide.title}</p>
-          <p className="mt-2 text-[15px] text-violet font-semibold">Complete</p>
-          <p className="mt-4 text-[15px] text-muted max-w-md mx-auto">{guide.outcome}</p>
-          <div className="mt-6 flex justify-center gap-3">
+        <div className="text-center py-12 max-w-lg mx-auto">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-violet/10 mb-5">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <h2 className="text-[28px] font-semibold text-plum leading-tight">{celebration.headline}</h2>
+          <p className="mt-3 text-[15px] text-muted leading-relaxed">{celebration.subtext}</p>
+          {briefMessage && (
+            <div className="mt-6 rounded-2xl bg-lavender/40 border border-violet/15 px-6 py-4">
+              <p className="text-[15px] text-plum leading-relaxed">{briefMessage}</p>
+            </div>
+          )}
+          <p className="mt-6 text-[14px] text-muted/70">{guide.outcome}</p>
+          <div className="mt-8 flex justify-center gap-3">
             <button onClick={restart} className="btn-secondary">
               Review Answers
             </button>
@@ -232,6 +329,9 @@ export function GuideWizard({ guide }: Props) {
                 {briefLoading ? "Generating..." : vendorBrief ? "Regenerate Vendor Brief" : "Generate Vendor Brief"}
               </button>
             )}
+            <Link href="/dashboard/guides" className="btn-ghost">
+              Back to Guides
+            </Link>
           </div>
         </div>
 

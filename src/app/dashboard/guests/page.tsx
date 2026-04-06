@@ -669,9 +669,26 @@ export default function GuestsPage() {
         )}
         <span className="text-[15px] text-muted">Invited: <strong className="font-semibold">{invited}</strong></span>
         <span className="badge badge-pending">Awaiting: {awaiting}</span>
-        <span className="badge badge-confirmed">Accepted: {accepted}</span>
+        <span className="badge badge-confirmed">{accepted === 0 ? "Accepted: 0" : `${accepted} can't wait to celebrate`}</span>
         <span className="badge badge-declined">Declined: {declined}</span>
       </div>
+
+      {/* Guest milestone */}
+      {accepted > 0 && (() => {
+        const milestones = [
+          { min: 200, msg: "200 confirmed — this is going to be legendary" },
+          { min: 150, msg: "150 people confirmed — you might need a bigger venue" },
+          { min: 100, msg: "100 guests confirmed — triple digits, this is real" },
+          { min: 75, msg: "75 confirmed — the guest list is looking beautiful" },
+          { min: 50, msg: "50 people confirmed — your dance floor is filling up \uD83D\uDC83" },
+          { min: 25, msg: "25 confirmed and counting — the excitement is building" },
+          { min: 10, msg: "First 10 confirmed — the yeses are rolling in" },
+        ];
+        const hit = milestones.find((m) => accepted >= m.min);
+        return hit ? (
+          <p className="mt-3 text-[14px] text-violet/80 italic">{hit.msg}</p>
+        ) : null;
+      })()}
 
       {/* Filters */}
       <div className="mt-4 flex gap-3 items-center flex-wrap">

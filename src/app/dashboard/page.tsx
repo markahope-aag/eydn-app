@@ -264,17 +264,25 @@ export default async function DashboardPage() {
     const total = guests.length;
     const pendingPct = Math.round((pending / total) * 100);
 
-    if (daysUntilWedding < 45 && pending > 5 && pendingPct > 30) {
+    const accepted = guests.filter((g) => g.rsvp_status === "accepted").length;
+
+    if (pending === 0 && total > 10) {
       nudges.push({
-        message: `${pending} of your ${total} guests haven't RSVP'd yet and the wedding is ${daysUntilWedding} days away. Time to follow up!`,
+        message: `All ${total} guests have RSVP'd — amazing. Time to finalize your seating chart.`,
+        type: "celebrate",
+        link: "/dashboard/seating",
+      });
+    } else if (daysUntilWedding < 45 && pending > 5 && pendingPct > 30) {
+      nudges.push({
+        message: `${pending} of your ${total} guests haven't RSVP'd yet and the wedding is ${daysUntilWedding} days away. Time to follow up.`,
         type: "urgent",
         link: "/dashboard/guests",
       });
-    } else if (pending === 0 && total > 10) {
+    } else if (accepted > 0 && pending > 0) {
       nudges.push({
-        message: `All ${total} guests have RSVP'd — amazing! Time to finalize your seating chart.`,
-        type: "celebrate",
-        link: "/dashboard/seating",
+        message: `${accepted} ${accepted === 1 ? "person" : "people"} can't wait to celebrate with you — and more RSVPs are still coming in.`,
+        type: "tip",
+        link: "/dashboard/guests",
       });
     }
   }
