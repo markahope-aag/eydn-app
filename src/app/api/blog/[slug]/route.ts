@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin";
+import { submitToIndexNow } from "@/lib/indexnow";
 
 /** GET /api/blog/[slug] — get a single post */
 export async function GET(
@@ -65,6 +66,14 @@ export async function PATCH(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Submit to IndexNow when a published post is updated
+  const finalSlug = (data as { slug: string }).slug;
+  const finalStatus = (data as { status: string }).status;
+  if (finalStatus === "published") {
+    submitToIndexNow([`/blog/${finalSlug}`, "/blog"]);
+  }
+
   return NextResponse.json(data);
 }
 

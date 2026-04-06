@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin";
+import { submitToIndexNow } from "@/lib/indexnow";
 
 /** GET /api/blog — list published posts (public) or all posts (admin) */
 export async function GET(request: NextRequest) {
@@ -73,5 +74,11 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Submit to IndexNow when a post is published immediately
+  if (status === "published") {
+    submitToIndexNow([`/blog/${finalSlug}`, "/blog"]);
+  }
+
   return NextResponse.json(data, { status: 201 });
 }
