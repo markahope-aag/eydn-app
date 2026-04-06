@@ -213,7 +213,7 @@ export default async function WeddingWebsitePage({
   sections.push({ id: "rsvp", label: "RSVP" });
 
   return (
-    <div className={`min-h-screen bg-whisper ${playfair.variable}`} style={{ '--theme-primary': theme.primaryColor || '#2C3E2D', '--theme-accent': theme.accentColor || '#D4A5A5' } as React.CSSProperties}>
+    <div id="main-content" className={`min-h-screen bg-whisper ${playfair.variable}`} style={{ '--theme-primary': theme.primaryColor || '#2C3E2D', '--theme-accent': theme.accentColor || '#D4A5A5' } as React.CSSProperties}>
       {/* Hero */}
       <section className="relative overflow-hidden">
         {wedding.website_cover_url && theme.heroLayout === "side-by-side" ? (

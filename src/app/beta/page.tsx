@@ -53,7 +53,7 @@ export default function BetaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-whisper flex flex-col">
+    <div id="main-content" className="min-h-screen bg-whisper flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4">
         <Link href="/">

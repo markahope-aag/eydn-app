@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "pnclblivqpakijkerykn.supabase.co",
+        pathname: "/storage/v1/object/sign/**",
+      },
+      {
+        protocol: "https",
         hostname: "places.googleapis.com",
         pathname: "/v1/**",
       },

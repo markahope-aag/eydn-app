@@ -38,7 +38,7 @@ export function BlogListing({
   const rest = posts.slice(1);
 
   return (
-    <main className="flex-1 bg-whisper">
+    <main id="main-content" className="flex-1 bg-whisper">
       {/* Hero */}
       <section
         style={{
@@ -69,7 +69,9 @@ export function BlogListing({
           }}
           className="max-md:!text-[48px]"
         >
-          The Playbook
+          {activeCategory
+            ? CATEGORIES.find((c) => c.value === activeCategory)?.label ?? "The Playbook"
+            : "The Playbook"}
         </h1>
         <p
           style={{

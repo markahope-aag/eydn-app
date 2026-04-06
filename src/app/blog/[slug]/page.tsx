@@ -23,6 +23,7 @@ type Post = {
   seo_title: string | null;
   seo_description: string | null;
   read_time_minutes: number;
+  updated_at: string | null;
 };
 
 export async function generateMetadata({
@@ -61,7 +62,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: post.seo_title || post.title,
       description,
-      ...(post.cover_image && { images: [post.cover_image] }),
+      ...(post.cover_image && { images: [{ url: post.cover_image, alt: post.seo_title || post.title }] }),
     },
   };
 }
@@ -110,6 +111,7 @@ export default async function BlogPostPage({
     headline: p.title,
     author: { "@type": "Person", name: p.author_name },
     datePublished: p.published_at,
+    dateModified: p.updated_at || p.published_at,
     ...(p.cover_image && { image: p.cover_image }),
     publisher: { "@type": "Organization", name: "Eydn", url: "https://eydn.app" },
     url: `https://eydn.app/blog/${slug}`,
@@ -117,7 +119,7 @@ export default async function BlogPostPage({
   };
 
   return (
-    <main className="flex-1 bg-whisper">
+    <main id="main-content" className="flex-1 bg-whisper">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

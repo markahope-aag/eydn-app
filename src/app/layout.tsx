@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { DM_Sans } from "next/font/google";
+import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/next";
 import Script from "next/script";
@@ -11,6 +11,14 @@ const dmSans = DM_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   display: "swap",
+  variable: "--font-body",
+});
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "600"],
+  display: "swap",
+  variable: "--font-serif",
 });
 
 const SITE_URL = "https://eydn.app";
@@ -24,6 +32,7 @@ export const metadata: Metadata = {
     template: "%s | Eydn",
   },
   description: DEFAULT_DESCRIPTION,
+  alternates: { canonical: "https://eydn.app" },
   keywords: ["wedding planning", "wedding planner app", "AI wedding planner", "guest list app", "wedding budget tracker", "wedding timeline", "RSVP", "seating chart", "wedding website builder"],
   authors: [{ name: SITE_NAME, url: SITE_URL }],
   creator: SITE_NAME,
@@ -73,7 +82,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.className} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${dmSans.className} ${dmSans.variable} ${cormorant.variable} h-full antialiased`} suppressHydrationWarning>
       <head />
       <body className="min-h-full flex flex-col bg-whisper text-plum overflow-x-hidden" suppressHydrationWarning>
         <script

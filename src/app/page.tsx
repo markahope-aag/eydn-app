@@ -1,26 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Cormorant_Garamond, DM_Sans, Great_Vibes } from "next/font/google";
+import { Cormorant_Garamond, Great_Vibes } from "next/font/google";
 
 import { ScrollReveal } from "@/app/_components/ScrollReveal";
 import { LandingNav } from "@/app/_components/LandingNav";
 import { NewsletterSignup } from "@/app/_components/NewsletterSignup";
 import { AuthCTA } from "@/app/_components/AuthCTA";
 
-/* ── Fonts ───────────────────────────────────────────────── */
+/* ── Fonts (DM Sans + Cormorant --font-serif provided by root layout) ── */
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["400", "600"],
   display: "swap",
   variable: "--font-display",
-});
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  display: "swap",
-  variable: "--font-body",
 });
 
 const greatVibes = Great_Vibes({
@@ -454,10 +447,11 @@ const darkRowIndices = new Set([1, 5]);
 /* ── Page ─────────────────────────────────────────────────── */
 
 export default function HomePage() {
-  const fontVars = `${cormorant.variable} ${dmSans.variable} ${greatVibes.variable}`;
+  const fontVars = `${cormorant.variable} ${greatVibes.variable}`;
 
   return (
     <main
+      id="main-content"
       className={`flex-1 flex flex-col ${fontVars}`}
       style={{ animation: "fadeIn 0.6s ease-out", overflowX: "hidden" }}
     >

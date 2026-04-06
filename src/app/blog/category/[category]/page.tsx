@@ -25,6 +25,7 @@ export async function generateMetadata({
       url: `/blog/category/${category}`,
       title,
       description,
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `${cat.label} wedding planning guides — Eydn` }],
     },
   };
 }
