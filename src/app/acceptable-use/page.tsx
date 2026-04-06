@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function AcceptableUsePage() {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-16">
+    <div id="main-content" className="max-w-3xl mx-auto px-6 py-16">
       <Link href="/" className="text-[15px] text-muted hover:text-plum mb-6 block">
         &larr; Back to home
       </Link>

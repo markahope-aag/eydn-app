@@ -108,6 +108,7 @@ export default async function BlogPostPage({
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
+    mainEntityOfPage: { "@type": "WebPage", "@id": `https://eydn.app/blog/${slug}` },
     headline: p.title,
     author: { "@type": "Person", name: p.author_name },
     datePublished: p.published_at,

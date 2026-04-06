@@ -27,7 +27,7 @@ export default function BetaPage() {
     fetch("/api/public/beta")
       .then((r) => r.json())
       .then(setStatus)
-      .catch((e) => console.error("[fetch] beta status", e))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

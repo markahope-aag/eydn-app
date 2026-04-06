@@ -18,6 +18,7 @@ type WeddingPartyMember = Database["public"]["Tables"]["wedding_party"]["Row"];
 const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "600", "700"],
+  display: "swap",
   variable: "--font-serif",
 });
 
@@ -66,7 +67,7 @@ export async function generateMetadata({
     if (w.website_cover_url.startsWith("http")) {
       ogImageUrl = w.website_cover_url;
     } else {
-      const { data: signed } = await supabase.storage.from("attachments").createSignedUrl(w.website_cover_url, 3600);
+      const { data: signed } = await supabase.storage.from("attachments").createSignedUrl(w.website_cover_url, 604800);
       if (signed?.signedUrl) ogImageUrl = signed.signedUrl;
     }
   }

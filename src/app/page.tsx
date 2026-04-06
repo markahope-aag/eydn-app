@@ -629,7 +629,8 @@ export default function HomePage() {
       </ScrollReveal>
 
       {/* ─── FEATURES — 7 alternating rows ─── */}
-      <section id="features">
+      <section id="features" aria-labelledby="features-heading">
+        <h2 id="features-heading" className="sr-only">Features</h2>
         {features.slice(0, 7).map((f, i) => {
           const isDark = darkRowIndices.has(i);
           const textPanelBg = isDark ? "#2C3E2D" : "#F7EDED";
@@ -1121,6 +1122,7 @@ export default function HomePage() {
                 <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Pricing</Link>
                 <Link href="/#how-it-works" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>How It Works</Link>
                 <Link href="/blog" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#E8C97A", textDecoration: "none" }}>The Playbook</Link>
+                <Link href="/beta" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Beta Program</Link>
               </div>
             </div>
             <div>

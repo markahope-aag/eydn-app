@@ -27,6 +27,12 @@ export async function generateMetadata({
       description,
       images: [{ url: "/og-image.png", width: 1200, height: 630, alt: `${cat.label} wedding planning guides — Eydn` }],
     },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [{ url: "/og-image.png", alt: `${cat.label} wedding planning guides — Eydn` }],
+    },
   };
 }
 
