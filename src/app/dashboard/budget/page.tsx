@@ -277,6 +277,17 @@ export default function BudgetPage() {
     <div>
       <h1>Budget</h1>
 
+      {/* First-time motivational banner */}
+      {budget > 0 && totalPaid === 0 && expenses.length > 0 && (
+        <div className="mt-4 rounded-2xl bg-lavender/40 border border-violet/15 px-6 py-5">
+          <p className="text-[15px] text-plum leading-relaxed">
+            ${budget.toLocaleString()} to create memories that last forever — let&rsquo;s make every dollar count.
+            Your budget is ready with {expenses.length} line items across {new Set(expenses.map((e) => e.category)).size} categories.
+            Start by reviewing your estimates below.
+          </p>
+        </div>
+      )}
+
       {/* Budget overview */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="card-summary p-5">
