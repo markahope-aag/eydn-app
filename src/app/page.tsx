@@ -1,9 +1,10 @@
-"use client";
-
 import Link from "next/link";
-import { Show, SignUpButton, useAuth } from "@clerk/nextjs";
 import { Cormorant_Garamond, DM_Sans, Great_Vibes } from "next/font/google";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+
+import { ScrollReveal } from "@/app/_components/ScrollReveal";
+import { LandingNav } from "@/app/_components/LandingNav";
+import { NewsletterSignup } from "@/app/_components/NewsletterSignup";
+import { AuthCTA } from "@/app/_components/AuthCTA";
 
 /* ── Fonts ───────────────────────────────────────────────── */
 
@@ -27,73 +28,6 @@ const greatVibes = Great_Vibes({
   display: "swap",
   variable: "--font-script",
 });
-
-/* ── ScrollReveal ────────────────────────────────────────── */
-
-function ScrollReveal({
-  children,
-  className = "",
-  direction = "up",
-}: {
-  children: ReactNode;
-  className?: string;
-  direction?: "up" | "left" | "right";
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    // Skip animation for above-fold content — render immediately
-    const rect = el.getBoundingClientRect();
-    if (rect.top < window.innerHeight) {
-      el.style.opacity = "1";
-      el.style.transform = "none";
-      return;
-    }
-
-    // Respect reduced motion
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      el.style.opacity = "1";
-      el.style.transform = "none";
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          el.classList.add("sr-visible");
-          observer.unobserve(el);
-        }
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  const initialTransform =
-    direction === "left"
-      ? "translateX(-40px)"
-      : direction === "right"
-        ? "translateX(40px)"
-        : "translateY(28px)";
-
-  return (
-    <div
-      ref={ref}
-      className={`sr-reveal ${className}`}
-      style={{
-        opacity: 0,
-        transform: initialTransform,
-        transition: "opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1)",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
 
 /* ── Keyframe styles (injected once) ─────────────────────── */
 
@@ -128,281 +62,11 @@ const keyframeCSS = `
   from { opacity: 0; }
   to { opacity: 1; }
 }
-`;
-
-/* ── Landing Nav ────────────────────────────────────────── */
-
-function LandingNav() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { isSignedIn } = useAuth();
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const navLinks = [
-    { label: "Features", href: "/#features" },
-    { label: "How It Works", href: "/#how-it-works" },
-    { label: "Pricing", href: "/#pricing" },
-  ];
-
-  return (
-    <>
-      <nav
-        style={{
-          position: "fixed",
-          top: 0,
-          width: "100%",
-          zIndex: 100,
-          background: scrolled ? "rgba(250,246,241,0.96)" : "transparent",
-          backdropFilter: scrolled ? "blur(14px)" : "none",
-          WebkitBackdropFilter: scrolled ? "blur(14px)" : "none",
-          borderBottom: scrolled ? "1px solid var(--champagne, #E8D5B7)" : "1px solid transparent",
-          transition: "background 0.35s, border-bottom 0.35s, backdrop-filter 0.35s",
-          padding: "0 32px",
-          height: 60,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        {/* Logo + Nav links (left) */}
-        <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
-          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="eydn" decoding="async" style={{ height: 30 }} />
-          </Link>
-          <nav
-            style={{ display: "flex", alignItems: "center", gap: 24 }}
-            className="max-md:!hidden"
-          >
-            {navLinks.map((l) => (
-              <Link
-                key={l.label}
-                href={l.href}
-                style={{
-                  fontFamily: "var(--font-body)",
-                  fontSize: 13,
-                  letterSpacing: "0.08em",
-                  color: "#2A2018",
-                  opacity: 0.75,
-                  textDecoration: "none",
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.75"; }}
-              >
-                {l.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-
-        {/* Right side: auth-aware buttons */}
-        <div
-          style={{ display: "flex", alignItems: "center", gap: 16 }}
-          className="max-md:!hidden"
-        >
-          {isSignedIn ? (
-            <Link
-              href="/dashboard"
-              style={{
-                fontFamily: "var(--font-body)",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#FAF6F1",
-                background: "#2C3E2D",
-                borderRadius: 100,
-                padding: "8px 20px",
-                textDecoration: "none",
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#3A5240"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#2C3E2D"; }}
-            >
-              Go to Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link
-                href="/sign-in"
-                style={{
-                  fontFamily: "var(--font-body)",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "#2A2018",
-                  textDecoration: "none",
-                  transition: "opacity 0.2s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/sign-up"
-                style={{
-                  fontFamily: "var(--font-body)",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "#FAF6F1",
-                  background: "#2C3E2D",
-                  borderRadius: 100,
-                  padding: "8px 20px",
-                  textDecoration: "none",
-                  transition: "background 0.2s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#3A5240"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#2C3E2D"; }}
-              >
-                Start Free
-              </Link>
-            </>
-          )}
-        </div>
-
-        {/* Mobile right side */}
-        <div className="md:!hidden flex items-center gap-3">
-          <Link
-            href={isSignedIn ? "/dashboard" : "/sign-in"}
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: 13,
-              fontWeight: 600,
-              color: isSignedIn ? "#FAF6F1" : "#2A2018",
-              background: isSignedIn ? "#2C3E2D" : "transparent",
-              borderRadius: 100,
-              padding: isSignedIn ? "6px 16px" : "0",
-              textDecoration: "none",
-            }}
-          >
-            {isSignedIn ? "Dashboard" : "Sign In"}
-          </Link>
-        </div>
-
-        {/* Mobile hamburger button */}
-        <button
-          className="md:!hidden"
-          onClick={() => setMobileMenuOpen(true)}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: 8,
-            display: "flex",
-            flexDirection: "column",
-            gap: 5,
-          }}
-          aria-label="Open menu"
-        >
-          <span style={{ display: "block", width: 22, height: 2, background: "#2A2018", borderRadius: 2 }} />
-          <span style={{ display: "block", width: 22, height: 2, background: "#2A2018", borderRadius: 2 }} />
-          <span style={{ display: "block", width: 22, height: 2, background: "#2A2018", borderRadius: 2 }} />
-        </button>
-      </nav>
-
-      {/* Mobile overlay */}
-      {mobileMenuOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 200,
-            background: "#2C3E2D",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 32,
-          }}
-        >
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            style={{
-              position: "absolute",
-              top: 20,
-              right: 24,
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 8,
-            }}
-            aria-label="Close menu"
-          >
-            <svg width="28" height="28" viewBox="0 0 24 24" stroke="#FAF6F1" strokeWidth="2" strokeLinecap="round" fill="none">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-          {navLinks.map((l) => (
-            <Link
-              key={l.label}
-              href={l.href}
-              onClick={() => setMobileMenuOpen(false)}
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 28,
-                color: "#FAF6F1",
-                textDecoration: "none",
-              }}
-            >
-              {l.label}
-            </Link>
-          ))}
-          <Show when="signed-out">
-            <Link
-              href="/sign-in"
-              onClick={() => setMobileMenuOpen(false)}
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 28,
-                color: "#FAF6F1",
-                textDecoration: "none",
-              }}
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              onClick={() => setMobileMenuOpen(false)}
-              style={{
-                fontFamily: "var(--font-body)",
-                fontSize: 16,
-                fontWeight: 600,
-                color: "#2C3E2D",
-                background: "#FAF6F1",
-                borderRadius: 100,
-                padding: "14px 36px",
-                textDecoration: "none",
-                marginTop: 8,
-              }}
-            >
-              Start Free
-            </Link>
-          </Show>
-          <Show when="signed-in">
-            <Link
-              href="/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 28,
-                color: "#FAF6F1",
-                textDecoration: "none",
-              }}
-            >
-              Dashboard
-            </Link>
-          </Show>
-        </div>
-      )}
-    </>
-  );
+.testimonial-card:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 16px 48px rgba(180,140,130,.25);
 }
+`;
 
 /* ── Botanical SVG Watermarks ────────────────────────────── */
 
@@ -846,60 +510,26 @@ export default function HomePage() {
             </ScrollReveal>
             <ScrollReveal>
               <div style={{ marginTop: 36, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16 }}>
-                <Show when="signed-out">
-                  <SignUpButton>
-                    <button
+                <AuthCTA
+                  variant="hero"
+                  signedOutSecondary={
+                    <Link
+                      href="/#how-it-works"
                       style={{
-                        background: "#2C3E2D",
-                        color: "#FAF6F1",
-                        borderRadius: 100,
-                        padding: "16px 36px",
                         fontFamily: "var(--font-body)",
                         fontSize: 15,
-                        fontWeight: 600,
-                        border: "none",
-                        cursor: "pointer",
-                        transition: "background 200ms",
+                        fontWeight: 500,
+                        color: "#2C3E2D",
+                        textDecoration: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "#C08080"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "#2C3E2D"; }}
                     >
-                      Start Planning Today
-                    </button>
-                  </SignUpButton>
-                  <Link
-                    href="/#how-it-works"
-                    style={{
-                      fontFamily: "var(--font-body)",
-                      fontSize: 15,
-                      fontWeight: 500,
-                      color: "#2C3E2D",
-                      textDecoration: "none",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <span style={{ fontSize: 18 }}>&rarr;</span> See how it works
-                  </Link>
-                </Show>
-                <Show when="signed-in">
-                  <Link
-                    href="/dashboard"
-                    style={{
-                      background: "#2C3E2D",
-                      color: "#FAF6F1",
-                      borderRadius: 100,
-                      padding: "16px 36px",
-                      fontFamily: "var(--font-body)",
-                      fontSize: 15,
-                      fontWeight: 600,
-                      textDecoration: "none",
-                    }}
-                  >
-                    Go to Dashboard
-                  </Link>
-                </Show>
+                      <span style={{ fontSize: 18 }}>&rarr;</span> See how it works
+                    </Link>
+                  }
+                />
               </div>
             </ScrollReveal>
             <ScrollReveal>
@@ -1266,6 +896,7 @@ export default function HomePage() {
                 return (
                   <div
                     key={i}
+                    className="testimonial-card"
                     style={{
                       background: "#F7EDED",
                       borderRadius: 16,
@@ -1273,14 +904,6 @@ export default function HomePage() {
                       textAlign: "left",
                       transition: "transform 300ms, box-shadow 300ms",
                       cursor: "default",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-7px)";
-                      e.currentTarget.style.boxShadow = "0 16px 48px rgba(180,140,130,.25)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "none";
                     }}
                   >
                     {/* Stars */}
@@ -1384,53 +1007,7 @@ export default function HomePage() {
 
                 {/* CTA — blush to rose gradient */}
                 <div style={{ marginTop: 44 }}>
-                  <Show when="signed-out">
-                    <SignUpButton>
-                      <button
-                        style={{
-                          background: "linear-gradient(135deg, #D4A5A5, #C08080)",
-                          color: "#fff",
-                          borderRadius: 100,
-                          padding: "18px 48px",
-                          fontFamily: "var(--font-body)",
-                          fontSize: 16,
-                          fontWeight: 600,
-                          border: "none",
-                          cursor: "pointer",
-                          transition: "all 200ms",
-                          boxShadow: "0 4px 20px rgba(192,128,128,0.4)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.boxShadow = "0 8px 32px rgba(192,128,128,0.6)";
-                          e.currentTarget.style.transform = "translateY(-2px)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.boxShadow = "0 4px 20px rgba(192,128,128,0.4)";
-                          e.currentTarget.style.transform = "translateY(0)";
-                        }}
-                      >
-                        Start Planning Today
-                      </button>
-                    </SignUpButton>
-                  </Show>
-                  <Show when="signed-in">
-                    <Link
-                      href="/dashboard"
-                      style={{
-                        display: "inline-block",
-                        background: "linear-gradient(135deg, #D4A5A5, #C08080)",
-                        color: "#fff",
-                        borderRadius: 100,
-                        padding: "18px 48px",
-                        fontFamily: "var(--font-body)",
-                        fontSize: 16,
-                        fontWeight: 600,
-                        textDecoration: "none",
-                      }}
-                    >
-                      Go to Dashboard
-                    </Link>
-                  </Show>
+                  <AuthCTA variant="pricing" />
                 </div>
               </div>
             </div>
@@ -1518,53 +1095,7 @@ export default function HomePage() {
               Your story deserves to be told beautifully.
             </h2>
             <div style={{ marginTop: 44 }}>
-              <Show when="signed-out">
-                <SignUpButton>
-                  <button
-                    style={{
-                      background: "linear-gradient(135deg, #D4A5A5, #C08080)",
-                      color: "#fff",
-                      borderRadius: 100,
-                      padding: "18px 48px",
-                      fontFamily: "var(--font-body)",
-                      fontSize: 16,
-                      fontWeight: 600,
-                      border: "none",
-                      cursor: "pointer",
-                      transition: "all 200ms",
-                      boxShadow: "0 4px 20px rgba(192,128,128,0.3)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.boxShadow = "0 12px 40px rgba(180,140,130,.35)";
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.boxShadow = "0 4px 20px rgba(192,128,128,0.3)";
-                      e.currentTarget.style.transform = "translateY(0)";
-                    }}
-                  >
-                    Start Planning Today
-                  </button>
-                </SignUpButton>
-              </Show>
-              <Show when="signed-in">
-                <Link
-                  href="/dashboard"
-                  style={{
-                    display: "inline-block",
-                    background: "linear-gradient(135deg, #D4A5A5, #C08080)",
-                    color: "#fff",
-                    borderRadius: 100,
-                    padding: "18px 48px",
-                    fontFamily: "var(--font-body)",
-                    fontSize: 16,
-                    fontWeight: 600,
-                    textDecoration: "none",
-                  }}
-                >
-                  Go to Dashboard
-                </Link>
-              </Show>
+              <AuthCTA variant="final" />
             </div>
           </div>
         </section>
@@ -1632,163 +1163,6 @@ export default function HomePage() {
         </div>
       </footer>
     </main>
-  );
-}
-
-/* ── Newsletter ──────────────────────────────────────────── */
-
-function NewsletterSignup() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState("");
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email.trim()) return;
-    setStatus("loading");
-    setErrorMsg("");
-
-    try {
-      const res = await fetch("/api/public/newsletter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setErrorMsg(data.error || "Something went wrong.");
-        setStatus("error");
-        return;
-      }
-      setStatus("success");
-      setEmail("");
-    } catch {
-      setErrorMsg("Something went wrong. Try again.");
-      setStatus("error");
-    }
-  }
-
-  return (
-    <section
-      style={{
-        backgroundColor: "#2C3E2D",
-        padding: "72px 24px",
-        textAlign: "center",
-      }}
-    >
-      <div style={{ maxWidth: 520, margin: "0 auto" }}>
-        <p
-          style={{
-            fontFamily: "var(--font-script)",
-            fontSize: 28,
-            color: "#D4A5A5",
-            marginBottom: 8,
-          }}
-        >
-          Stay in the loop
-        </p>
-        <h3
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 32,
-            fontWeight: 600,
-            color: "#FAF6F1",
-            lineHeight: 1.2,
-          }}
-        >
-          Planning tips, new features, and wedding inspiration
-        </h3>
-        <p
-          style={{
-            fontFamily: "var(--font-body)",
-            fontSize: 15,
-            color: "rgba(250,246,241,0.6)",
-            marginTop: 12,
-            lineHeight: 1.6,
-          }}
-        >
-          One email, once a week. No spam, unsubscribe anytime.
-        </p>
-
-        {status === "success" ? (
-          <p
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: 15,
-              color: "#D4A5A5",
-              marginTop: 32,
-              fontWeight: 500,
-            }}
-          >
-            You&rsquo;re in. We&rsquo;ll be in touch.
-          </p>
-        ) : (
-          <form
-            onSubmit={handleSubmit}
-            style={{
-              marginTop: 32,
-              display: "flex",
-              gap: 10,
-              justifyContent: "center",
-            }}
-            className="max-sm:!flex-col"
-          >
-            <input
-              type="email"
-              placeholder="Your email"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); if (status === "error") setStatus("idle"); }}
-              required
-              style={{
-                flex: 1,
-                minWidth: 0,
-                padding: "14px 20px",
-                borderRadius: 100,
-                border: "1px solid rgba(250,246,241,0.15)",
-                backgroundColor: "rgba(250,246,241,0.08)",
-                color: "#FAF6F1",
-                fontFamily: "var(--font-body)",
-                fontSize: 15,
-                outline: "none",
-              }}
-            />
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              style={{
-                background: "linear-gradient(135deg, #D4A5A5, #C08080)",
-                color: "#fff",
-                borderRadius: 100,
-                padding: "14px 32px",
-                fontFamily: "var(--font-body)",
-                fontSize: 15,
-                fontWeight: 600,
-                border: "none",
-                cursor: status === "loading" ? "wait" : "pointer",
-                opacity: status === "loading" ? 0.7 : 1,
-                transition: "opacity 200ms",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {status === "loading" ? "Subscribing..." : "Subscribe"}
-            </button>
-          </form>
-        )}
-
-        {status === "error" && errorMsg && (
-          <p
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: 13,
-              color: "#E8A0A0",
-              marginTop: 12,
-            }}
-          >
-            {errorMsg}
-          </p>
-        )}
-      </div>
-    </section>
   );
 }
 
