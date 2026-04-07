@@ -182,6 +182,11 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
         ))}
         {admin && (
           <div>
+            {pathname.startsWith("/dashboard/admin") && (
+              <div className="mb-4 rounded-[12px] bg-violet/10 border border-violet/20 px-3 py-2">
+                <p className="text-[11px] font-bold text-violet uppercase tracking-widest">Platform Admin</p>
+              </div>
+            )}
             <p className="px-3 py-1.5 text-[15px] font-bold text-violet tracking-wide">
               Business
             </p>

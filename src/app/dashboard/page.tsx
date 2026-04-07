@@ -1,5 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin";
 import type { Wedding } from "@/lib/types";
 import { formatDueDate } from "@/lib/date-utils";
 import Link from "next/link";
@@ -102,6 +104,9 @@ function buildGreeting(ctx: { name: string; both: string; days: number | null; t
 }
 
 export default async function DashboardPage() {
+  // Admins go straight to the admin panel
+  if (await isAdmin()) redirect("/dashboard/admin");
+
   const { userId } = await auth();
 
   const supabase = createSupabaseAdmin();
