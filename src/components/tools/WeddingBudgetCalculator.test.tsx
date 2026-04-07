@@ -223,6 +223,79 @@ describe("WeddingBudgetCalculator", () => {
     expect(screen.getByText(/Sarah.*Wedding Budget/)).toBeInTheDocument();
   });
 
+  it("opens save modal when 'Share your breakdown' is clicked", () => {
+    render(<WeddingBudgetCalculator />);
+    fireEvent.click(screen.getByText("Share your breakdown"));
+    expect(screen.getByText("Save your breakdown")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("First name")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Your email")).toBeInTheDocument();
+  });
+
+  it("opens save modal when 'Save my breakdown' is clicked", () => {
+    render(<WeddingBudgetCalculator />);
+    fireEvent.click(screen.getByText("Save my breakdown"));
+    expect(screen.getByText("Save your breakdown")).toBeInTheDocument();
+  });
+
+  it("closes save modal when Cancel is clicked", () => {
+    render(<WeddingBudgetCalculator />);
+    fireEvent.click(screen.getByText("Save my breakdown"));
+    expect(screen.getByText("Save your breakdown")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Cancel"));
+    expect(screen.queryByText("Save your breakdown")).not.toBeInTheDocument();
+  });
+
+  it("shows validation error for invalid email", async () => {
+    const { toast } = await import("sonner");
+    render(<WeddingBudgetCalculator />);
+    fireEvent.click(screen.getByText("Save my breakdown"));
+    const emailInput = screen.getByPlaceholderText("Your email");
+    fireEvent.change(emailInput, { target: { value: "not-an-email" } });
+    fireEvent.click(screen.getByText("Save & email my link"));
+    expect(toast.error).toHaveBeenCalledWith("Enter a valid email address");
+  });
+
+  it("shows validation error for empty email", async () => {
+    const { toast } = await import("sonner");
+    render(<WeddingBudgetCalculator />);
+    fireEvent.click(screen.getByText("Save my breakdown"));
+    fireEvent.click(screen.getByText("Save & email my link"));
+    expect(toast.error).toHaveBeenCalledWith("Enter a valid email address");
+  });
+
+  it("updates state selector when changed", () => {
+    render(<WeddingBudgetCalculator />);
+    const select = screen.getByLabelText("Wedding state") as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: "California" } });
+    expect(select.value).toBe("California");
+  });
+
+  it("shows shoulder season with no note for April", () => {
+    render(<WeddingBudgetCalculator />);
+    const monthSelect = screen.getByLabelText("Wedding month") as HTMLSelectElement;
+    fireEvent.change(monthSelect, { target: { value: "3" } }); // April
+    expect(screen.queryByText(/Peak season months/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Off-season dates/)).not.toBeInTheDocument();
+  });
+
+  it("shows state average in summary cards", () => {
+    render(<WeddingBudgetCalculator />);
+    // Wisconsin avg is $24,500 → shows as $25K (formatShort rounds to nearest K)
+    expect(screen.getByText("Wisconsin avg")).toBeInTheDocument();
+  });
+
+  it("shows vs avg comparison", () => {
+    render(<WeddingBudgetCalculator />);
+    expect(screen.getByText("vs. avg")).toBeInTheDocument();
+  });
+
+  it("calls window.print when Save as PDF is clicked", () => {
+    const printSpy = vi.spyOn(window, "print").mockImplementation(() => {});
+    render(<WeddingBudgetCalculator />);
+    fireEvent.click(screen.getByText("Save as PDF"));
+    expect(printSpy).toHaveBeenCalled();
+  });
+
   it("does not display owner name when no name param", () => {
     render(<WeddingBudgetCalculator />);
     expect(screen.queryByText(/Wedding Budget/)).not.toBeInTheDocument();

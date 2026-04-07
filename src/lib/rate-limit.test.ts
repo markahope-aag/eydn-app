@@ -1,4 +1,4 @@
-import { vi, describe, it, expect, beforeEach } from "vitest";
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 
 // Mock Upstash modules to avoid real Redis calls
 vi.mock("@upstash/ratelimit", () => ({
@@ -96,6 +96,27 @@ describe("checkRateLimit (in-memory fallback)", () => {
 
     // In-memory fallback uses the same key string, so the counter is shared
     // across configs. This tests the actual behavior.
+  });
+});
+
+describe("checkRateLimit (Redis env detection)", () => {
+  it("returns not limited via in-memory when no Redis env vars", async () => {
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+
+    const result = await checkRateLimit("no-redis-key", { limit: 10, windowSeconds: 60 });
+    expect(result.limited).toBe(false);
+  });
+
+  it("handles the case when only one Redis env var is set", async () => {
+    process.env.UPSTASH_REDIS_REST_URL = "https://fake.upstash.io";
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+
+    const result = await checkRateLimit("partial-redis", { limit: 10, windowSeconds: 60 });
+    // Should fall back to in-memory since both vars are needed
+    expect(result.limited).toBe(false);
+
+    delete process.env.UPSTASH_REDIS_REST_URL;
   });
 });
 

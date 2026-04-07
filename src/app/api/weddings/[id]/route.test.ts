@@ -725,4 +725,189 @@ describe("PATCH /api/weddings/[id]", () => {
     expect(json.partner1_name).toBe("Alex");
     expect(json.partner2_name).toBe("Jordan");
   });
+
+  it("recalculates system tasks from scratch when no old date exists", async () => {
+    const systemTask = {
+      id: "task-sys-1",
+      title: "Book Venue",
+      due_date: null,
+      is_system_generated: true,
+      completed: false,
+    };
+
+    const taskUpdateEq = vi.fn().mockResolvedValue({ error: null });
+    const taskUpdate = vi.fn().mockReturnValue({ eq: taskUpdateEq });
+
+    const from = vi.fn((table: string) => {
+      if (table === "weddings") {
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { id: "wedding-1", date: "2026-09-15" },
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "rehearsal_dinner") {
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: null }),
+          }),
+        };
+      }
+      if (table === "tasks") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              is: vi.fn().mockResolvedValue({ data: [systemTask], error: null }),
+            }),
+          }),
+          update: taskUpdate,
+        };
+      }
+      if (table === "date_change_alerts") {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) };
+      }
+      return {};
+    });
+
+    // Wedding has NO existing date — this triggers the "no old date" recalculation path
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: { ...mockWedding, date: null },
+      supabase: { from },
+      userId: "user-1",
+      role: "owner",
+    });
+
+    const res = await PATCH(mockRequest({ date: "2026-09-15" }), makeCtx());
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    // Should have recalculated tasks
+    const recalculated = json._cascaded?.find((r: string) => r.startsWith("tasks_recalculated_"));
+    expect(recalculated).toBeDefined();
+    expect(taskUpdate).toHaveBeenCalled();
+  });
+
+  it("flags user-created tasks for review when setting date for the first time", async () => {
+    const userTask = {
+      id: "task-user-1",
+      title: "Engagement party",
+      due_date: "2026-05-01",
+      is_system_generated: false,
+      completed: false,
+    };
+
+    const from = vi.fn((table: string) => {
+      if (table === "weddings") {
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { id: "wedding-1", date: "2026-09-15" },
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "rehearsal_dinner") {
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: null }),
+          }),
+        };
+      }
+      if (table === "tasks") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              is: vi.fn().mockResolvedValue({ data: [userTask], error: null }),
+            }),
+          }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: null }),
+          }),
+        };
+      }
+      if (table === "date_change_alerts") {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) };
+      }
+      return {};
+    });
+
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: { ...mockWedding, date: null },
+      supabase: { from },
+      userId: "user-1",
+      role: "owner",
+    });
+
+    const res = await PATCH(mockRequest({ date: "2026-09-15" }), makeCtx());
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    const needsReview = json._cascaded?.find((r: string) => r.startsWith("tasks_need_review_"));
+    expect(needsReview).toBeDefined();
+    expect(json._tasks_needing_review).toBeDefined();
+    expect(json._tasks_needing_review[0].title).toBe("Engagement party");
+  });
+
+  it("handles date change when no tasks exist", async () => {
+    const from = vi.fn((table: string) => {
+      if (table === "weddings") {
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { id: "wedding-1", date: "2026-08-01" },
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "rehearsal_dinner") {
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: null }),
+          }),
+        };
+      }
+      if (table === "tasks") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              is: vi.fn().mockReturnValue({
+                not: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "date_change_alerts") {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) };
+      }
+      return {};
+    });
+
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: { ...mockWedding, date: "2026-06-01" },
+      supabase: { from },
+      userId: "user-1",
+      role: "owner",
+    });
+
+    const res = await PATCH(mockRequest({ date: "2026-08-01" }), makeCtx());
+    expect(res.status).toBe(200);
+  });
 });
