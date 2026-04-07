@@ -388,6 +388,20 @@ function VenueStatus({
           </button>
         ))}
       </div>
+      {(status === "looking" || status === "nontraditional") && (
+        <div className="mt-5">
+          <label className="block text-[14px] font-medium text-muted mb-1">Where are you planning?</label>
+          <input
+            type="text"
+            value={venueCity}
+            onChange={(e) => onVenueCityChange(e.target.value)}
+            className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
+            placeholder="e.g. Austin, TX"
+            aria-label="Wedding city"
+          />
+          <p className="mt-1.5 text-[12px] text-muted">Helps Eydn find local vendors and venues for you.</p>
+        </div>
+      )}
       {status === "booked" && (
         <div className="mt-5 space-y-3">
           <div ref={wrapperRef} className="relative">
