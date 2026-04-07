@@ -211,6 +211,7 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
             <div className="flex flex-col gap-0.5 mt-0.5">
               <NavLink item={{ href: "/dashboard/admin/blog", label: "Blog CMS" }} active={isActive(pathname, "/dashboard/admin/blog")} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin/promo-codes", label: "Promo Codes" }} active={isActive(pathname, "/dashboard/admin/promo-codes")} onClick={() => setOpen(false)} />
+              <NavLink item={{ href: "/dashboard/admin/leads", label: "Leads" }} active={isActive(pathname, "/dashboard/admin/leads")} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin/waitlist", label: "Waitlist" }} active={isActive(pathname, "/dashboard/admin/waitlist")} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin/lifecycle", label: "Account Lifecycle" }} active={isActive(pathname, "/dashboard/admin/lifecycle")} onClick={() => setOpen(false)} />
             </div>
