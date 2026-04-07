@@ -32,22 +32,60 @@ export const metadata: Metadata = {
 export default function WeddingBudgetCalculatorPage() {
   return (
     <main id="main-content" className="flex-1 bg-whisper">
-      {/* Header */}
-      <div className="bg-[#2C3E2D] py-16 px-6 text-center">
-        <Link href="/" className="text-[14px] text-[#FAF6F1]/50 hover:text-[#FAF6F1]/70 transition">
+      {/* Header — matches landing page hero pattern */}
+      <section
+        style={{
+          background: "linear-gradient(165deg, #2C3E2D 0%, #1E2E1F 100%)",
+          padding: "100px 24px 72px",
+          textAlign: "center",
+        }}
+      >
+        <Link
+          href="/"
+          style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}
+        >
           &larr; eydn.app
         </Link>
-        <p className="mt-6 text-[13px] font-semibold tracking-widest uppercase text-[#FAF6F1]/50">
-          Free planning tool
+        <p
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontSize: 18,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            color: "rgba(250,246,241,0.5)",
+            marginTop: 32,
+          }}
+        >
+          free planning tool
         </p>
-        <h1 className="mt-3 text-[40px] md:text-[56px] font-semibold text-[#FAF6F1] leading-tight">
+        <h1
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontSize: 72,
+            fontWeight: 600,
+            color: "#FAF6F1",
+            lineHeight: 1.05,
+            marginTop: 8,
+          }}
+          className="max-md:!text-[48px]"
+        >
           Wedding Budget Calculator
         </h1>
-        <p className="mt-4 text-[17px] text-[#FAF6F1]/80 max-w-xl mx-auto leading-relaxed">
+        <p
+          style={{
+            fontFamily: "var(--font-body)",
+            fontSize: 17,
+            color: "rgba(250,246,241,0.6)",
+            marginTop: 16,
+            maxWidth: 520,
+            marginInline: "auto",
+            lineHeight: 1.65,
+          }}
+        >
           Adjust your total budget, guest count, state, and wedding month.
           Get a recommended allocation across every category — instantly.
         </p>
-      </div>
+      </section>
 
       {/* Calculator */}
       <div className="max-w-4xl mx-auto px-4 py-12">
