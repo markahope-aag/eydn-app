@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
 import { sendEmail, getLifecycleEmail } from "@/lib/email";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
-import { safeParseJSON, isParseError } from "@/lib/validation";
+import { safeParseJSON, isParseError, isSafeExternalUrl } from "@/lib/validation";
 
 export async function GET() {
   const result = await requireAdmin();
@@ -42,8 +42,7 @@ export async function GET() {
     { type: "deadline_reminder", label: "Task Deadline Reminder", trigger: "7 days before task due date" },
   ];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = supabase as any;
+  const sb = supabase;
 
   // Push notification config
   const pushConfigured = !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -176,8 +175,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No wedding found for admin user" }, { status: 400 });
     }
     // Get all push subscriptions for this wedding
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: subscriptions } = await (adminSupabase as any)
+    const { data: subscriptions } = await adminSupabase
       .from("push_subscriptions")
       .select("*")
       .eq("wedding_id", wedding.id);
@@ -194,7 +192,11 @@ export async function POST(request: Request) {
     let failed = 0;
     for (const sub of subscriptions) {
       try {
-        const endpoint = sub.endpoint as string;
+        const endpoint = (sub.subscription as Record<string, unknown>)?.endpoint as string;
+        if (!isSafeExternalUrl(endpoint)) {
+          failed++;
+          continue;
+        }
         const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

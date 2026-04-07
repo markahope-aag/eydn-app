@@ -10,7 +10,8 @@ export async function GET() {
   const { data, error } = await supabase
     .from("waitlist")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(500);
 
   const err = supabaseError(error, "admin/waitlist");
   if (err) return err;

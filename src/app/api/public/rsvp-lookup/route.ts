@@ -48,7 +48,8 @@ export async function POST(request: Request) {
   const { data: tokens } = await supabase
     .from("rsvp_tokens")
     .select("token, responded, guests(id, name)")
-    .eq("wedding_id", wedding.id);
+    .eq("wedding_id", wedding.id)
+    .limit(500);
 
   const trimmed = name.trim().toLowerCase();
   const match = (tokens ?? []).find((t) => {

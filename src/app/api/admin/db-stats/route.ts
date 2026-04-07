@@ -11,8 +11,7 @@ export async function GET() {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   // --- Table row counts (exclude soft-deleted where applicable) ---
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = supabase as any;
+  const sb = supabase;
 
   // Fire all queries in parallel
   const [

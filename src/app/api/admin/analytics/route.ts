@@ -121,8 +121,8 @@ export async function GET() {
     { table: "ceremony_positions", feature: "Ceremony Positions" },
   ];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = supabase as any;
+  // Dynamic table iteration requires untyped client — table names come from runtime array
+  const sb = supabase as unknown as import("@supabase/supabase-js").SupabaseClient;
   const featureAdoption = await Promise.all(
     featureTables.map(async ({ table, feature }) => {
       let query = sb.from(table).select("wedding_id");

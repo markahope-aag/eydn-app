@@ -31,6 +31,7 @@ export async function GET(request: Request) {
       {
         headers: { "X-Goog-Api-Key": API_KEY },
         redirect: "follow",
+        signal: AbortSignal.timeout(10000),
       }
     );
 

@@ -114,8 +114,7 @@ export async function GET() {
     ? Math.round(((totalBookings ?? 0) / weddingCount) * 10) / 10
     : 0;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = supabase as any;
+  const sb = supabase;
 
   // --- Vendor accounts ---
   const [

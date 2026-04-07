@@ -4,7 +4,11 @@ let stripe: Stripe | null = null;
 
 export function getStripe(): Stripe {
   if (!stripe) {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) {
+      throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+    }
+    stripe = new Stripe(key, {
       apiVersion: "2026-02-25.clover",
     });
   }

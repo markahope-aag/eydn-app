@@ -5,8 +5,7 @@ export async function GET() {
   const result = await requireAdmin();
   if ("error" in result) return result.error;
   const { supabase } = result;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = supabase as any;
+  const sb = supabase;
 
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();

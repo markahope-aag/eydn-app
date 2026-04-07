@@ -56,15 +56,13 @@ export async function sendPushNotification(
  * Cleans up expired subscriptions automatically.
  */
 export async function pushToWedding(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
+  supabase: import("@supabase/supabase-js").SupabaseClient<import("@/lib/supabase/types").Database>,
   weddingId: string,
   payload: PushPayload
 ): Promise<number> {
   if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return 0;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = supabase as any;
+  const sb = supabase;
   const { data: subs } = await sb
     .from("push_subscriptions")
     .select()
@@ -74,7 +72,7 @@ export async function pushToWedding(
 
   let sent = 0;
   for (const sub of subs) {
-    const result = await sendPushNotification(sub.subscription, payload);
+    const result = await sendPushNotification(sub.subscription as unknown as PushSubscription, payload);
     if (result.success) {
       sent++;
     } else if (result.error === "subscription_expired") {

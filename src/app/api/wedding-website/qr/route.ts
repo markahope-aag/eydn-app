@@ -24,8 +24,7 @@ export async function POST(request: Request) {
   if (isParseError(parsed)) return parsed;
   const body = parsed;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = supabase as any;
+  const sb = supabase;
 
   // Get the wedding slug for building URLs
   const slug = wedding.website_slug;
@@ -168,7 +167,7 @@ async function generateQR(url: string, label: string, weddingId: string): Promis
     }
 
     // Step 3: Download the PNG and re-upload to our Supabase storage
-    const pngRes = await fetch(externalPngUrl);
+    const pngRes = await fetch(externalPngUrl, { signal: AbortSignal.timeout(10000) });
     if (!pngRes.ok) {
       console.error("[QR] Failed to download PNG from Uniqode S3");
       return externalPngUrl; // Fall back to external URL

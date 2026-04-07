@@ -66,9 +66,18 @@ export async function POST(request: Request) {
   if (isParseError(parsed)) return parsed;
   const body = parsed;
 
+  const ALLOWED_TABLES = new Set(["vendors", "suggested_vendors", "businesses"]);
+
   const remoteUrl = body.supabase_url as string;
   const remoteKey = body.supabase_key as string;
   const tableName = (body.table_name as string) || "vendors";
+
+  if (!ALLOWED_TABLES.has(tableName)) {
+    return NextResponse.json(
+      { error: `Invalid table_name. Allowed: ${[...ALLOWED_TABLES].join(", ")}` },
+      { status: 400 }
+    );
+  }
   const columnMap = { ...DEFAULT_COLUMN_MAP, ...(body.column_map as ColumnMap || {}) };
   const filters = (body.filters as Record<string, string>) || {};
   const dryRun = (body.dry_run as boolean) || false;
@@ -76,6 +85,22 @@ export async function POST(request: Request) {
   if (!remoteUrl || !remoteKey) {
     return NextResponse.json(
       { error: "supabase_url and supabase_key are required" },
+      { status: 400 }
+    );
+  }
+
+  // Validate that the remote URL is a Supabase project
+  try {
+    const parsed = new URL(remoteUrl);
+    if (!parsed.hostname.endsWith(".supabase.co")) {
+      return NextResponse.json(
+        { error: "Remote URL must be a *.supabase.co project" },
+        { status: 400 }
+      );
+    }
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid supabase_url" },
       { status: 400 }
     );
   }

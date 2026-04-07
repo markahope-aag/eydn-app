@@ -11,7 +11,8 @@ export async function GET() {
   const { data, error } = await supabase
     .from("promo_codes")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(500);
 
   const err = supabaseError(error, "admin/promo-codes");
   if (err) return err;

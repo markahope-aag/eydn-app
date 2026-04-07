@@ -124,7 +124,8 @@ export async function POST(request: Request) {
       .eq("email", email);
   } catch {
     // Email failed but signup succeeded
-    console.error("[WAITLIST] Failed to send welcome email to", email);
+    const redacted = `${email[0]}***@${email.split("@")[1]}`;
+    console.error("[WAITLIST] Failed to send welcome email to", redacted);
   }
 
   return NextResponse.json({

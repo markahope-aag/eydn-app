@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { SUBSCRIPTION_PRICE } from "@/lib/subscription";
 import Stripe from "stripe";
 
 export async function POST(request: Request) {
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
         const { data: purchase } = await supabase.from("subscriber_purchases").insert({
           user_id: meta.user_id,
           wedding_id: meta.wedding_id || null,
-          amount: session.amount_total ? session.amount_total / 100 : 79,
+          amount: session.amount_total ? session.amount_total / 100 : SUBSCRIPTION_PRICE,
           stripe_payment_intent_id: session.payment_intent as string,
           stripe_session_id: session.id,
           status: "active",
@@ -49,14 +50,13 @@ export async function POST(request: Request) {
             promo_code_id: meta.promo_code_id,
             user_id: meta.user_id,
             purchase_id: (purchase as { id: string }).id,
-            original_amount: 79,
+            original_amount: SUBSCRIPTION_PRICE,
             discount_amount: Number(meta.discount_amount) || 0,
-            final_amount: session.amount_total ? session.amount_total / 100 : 79,
+            final_amount: session.amount_total ? session.amount_total / 100 : SUBSCRIPTION_PRICE,
           });
 
           // Atomic increment promo code usage
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type -- RPC not in generated types yet
-          await (supabase.rpc as Function)("increment_promo_uses", { code_id: meta.promo_code_id });
+          await supabase.rpc("increment_promo_uses", { code_id: meta.promo_code_id });
         }
         break;
       }

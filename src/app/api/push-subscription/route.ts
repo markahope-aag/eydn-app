@@ -18,14 +18,13 @@ export async function POST(request: Request) {
   }
 
   // Upsert subscription (one per user per wedding)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("push_subscriptions")
     .upsert(
       {
         wedding_id: wedding.id,
         user_id: userId,
-        subscription: subscription as Record<string, unknown>,
+        subscription: subscription as import("@/lib/supabase/types").Json,
       },
       { onConflict: "wedding_id,user_id" }
     );
@@ -42,8 +41,7 @@ export async function DELETE(_request: Request) {
   if ("error" in result) return result.error;
   const { wedding, supabase, userId } = result;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any)
+  await supabase
     .from("push_subscriptions")
     .delete()
     .eq("wedding_id", wedding.id)

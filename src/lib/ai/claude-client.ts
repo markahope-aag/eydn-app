@@ -4,9 +4,11 @@ let client: Anthropic | null = null;
 
 export function getClaudeClient(): Anthropic {
   if (!client) {
-    client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY!,
-    });
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error("Missing ANTHROPIC_API_KEY environment variable");
+    }
+    client = new Anthropic({ apiKey });
   }
   return client;
 }

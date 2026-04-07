@@ -8,7 +8,13 @@ import { logCronExecution } from "@/lib/cron-logger";
  * Submits static pages + all published blog posts in a single batch.
  * Runs weekly to keep search engines aware of content freshness.
  */
-export async function GET() {
+export async function GET(request: Request) {
+  const authHeader = request.headers.get("authorization");
+  const secret = process.env.CRON_SECRET;
+  if (!secret || authHeader !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const start = Date.now();
 
   try {
