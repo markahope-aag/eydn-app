@@ -559,4 +559,170 @@ describe("PATCH /api/weddings/[id]", () => {
 
     expect(capturedRehearsalDate).toBe("2026-08-21");
   });
+
+  it("returns 400 when budget is negative", async () => {
+    const supabase = createMockSupabase();
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: mockWedding,
+      supabase,
+      userId: "user-1",
+      role: "owner",
+    });
+
+    const res = await PATCH(mockRequest({ budget: -100 }), makeCtx());
+    const json = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(json.error).toMatch(/budget.*negative/i);
+  });
+
+  it("returns 400 when budget exceeds maximum", async () => {
+    const supabase = createMockSupabase();
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: mockWedding,
+      supabase,
+      userId: "user-1",
+      role: "owner",
+    });
+
+    const res = await PATCH(mockRequest({ budget: 999_999_999 }), makeCtx());
+    const json = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(json.error).toMatch(/budget.*exceed/i);
+  });
+
+  it("returns 400 when guest_count_estimate is negative", async () => {
+    const supabase = createMockSupabase();
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: mockWedding,
+      supabase,
+      userId: "user-1",
+      role: "owner",
+    });
+
+    const res = await PATCH(mockRequest({ guest_count_estimate: -5 }), makeCtx());
+    const json = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(json.error).toMatch(/guest count.*negative/i);
+  });
+
+  it("returns 400 when guest_count_estimate exceeds maximum", async () => {
+    const supabase = createMockSupabase();
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: mockWedding,
+      supabase,
+      userId: "user-1",
+      role: "owner",
+    });
+
+    const res = await PATCH(mockRequest({ guest_count_estimate: 999_999 }), makeCtx());
+    const json = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(json.error).toMatch(/guest count.*exceed/i);
+  });
+
+  it("allows null budget without validation error", async () => {
+    const supabase = createMockSupabase({
+      weddingData: { id: "wedding-1", budget: null },
+    });
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: mockWedding,
+      supabase,
+      userId: "user-1",
+      role: "owner",
+    });
+
+    const res = await PATCH(mockRequest({ budget: null }), makeCtx());
+    expect(res.status).toBe(200);
+  });
+
+  it("creates ceremony_time change alert when ceremony_time differs", async () => {
+    let alertInserted = false;
+
+    const from = vi.fn((table: string) => {
+      if (table === "weddings") {
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { id: "wedding-1", ceremony_time: "14:00" },
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "day_of_plans") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { id: "dop-1", content: { ceremonyTime: "16:00" } },
+                error: null,
+              }),
+            }),
+          }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: null }),
+          }),
+        };
+      }
+      if (table === "date_change_alerts") {
+        return {
+          insert: vi.fn().mockImplementation(() => {
+            alertInserted = true;
+            return Promise.resolve({ error: null });
+          }),
+        };
+      }
+      return {};
+    });
+
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: { ...mockWedding, ceremony_time: "16:00" },
+      supabase: { from },
+      userId: "user-1",
+      role: "owner",
+    });
+
+    const res = await PATCH(mockRequest({ ceremony_time: "14:00" }), makeCtx());
+    expect(res.status).toBe(200);
+    expect(alertInserted).toBe(true);
+  });
+
+  it("updates multiple allowed fields at once", async () => {
+    const supabase = createMockSupabase({
+      weddingData: {
+        id: "wedding-1",
+        partner1_name: "Alex",
+        partner2_name: "Jordan",
+        venue: "Sunset Gardens",
+      },
+    });
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: mockWedding,
+      supabase,
+      userId: "user-1",
+      role: "owner",
+    });
+
+    const res = await PATCH(
+      mockRequest({
+        partner1_name: "Alex",
+        partner2_name: "Jordan",
+        venue: "Sunset Gardens",
+      }),
+      makeCtx(),
+    );
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.partner1_name).toBe("Alex");
+    expect(json.partner2_name).toBe("Jordan");
+  });
 });

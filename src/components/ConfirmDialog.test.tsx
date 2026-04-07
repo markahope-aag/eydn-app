@@ -88,4 +88,31 @@ describe("ConfirmDialog", () => {
     fireEvent.click(getByRole("dialog", roleOpts));
     expect(onCancel).not.toHaveBeenCalled();
   });
+
+  it("applies destructive styling by default", () => {
+    const { getByText } = render(<ConfirmDialog {...defaultProps} />);
+    const confirmBtn = getByText("Delete");
+    expect(confirmBtn.className).toContain("bg-error");
+  });
+
+  it("applies non-destructive styling when destructive=false", () => {
+    const { getByText } = render(
+      <ConfirmDialog {...defaultProps} destructive={false} confirmLabel="Save" />
+    );
+    const confirmBtn = getByText("Save");
+    expect(confirmBtn.className).toContain("btn-primary");
+    expect(confirmBtn.className).not.toContain("bg-error");
+  });
+
+  it("prevents body scroll when open", () => {
+    render(<ConfirmDialog {...defaultProps} />);
+    expect(document.body.style.overflow).toBe("hidden");
+  });
+
+  it("restores body scroll on unmount", () => {
+    const { unmount } = render(<ConfirmDialog {...defaultProps} />);
+    expect(document.body.style.overflow).toBe("hidden");
+    unmount();
+    expect(document.body.style.overflow).toBe("");
+  });
 });

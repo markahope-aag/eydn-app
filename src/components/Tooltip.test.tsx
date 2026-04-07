@@ -66,6 +66,54 @@ describe("Tooltip", () => {
     expect(getByText("Label Text")).toBeInTheDocument();
     expect(getByRole("button", { name: /help/i })).toBeInTheDocument();
   });
+
+  it("toggles tooltip on click", () => {
+    const { getByRole, queryByRole } = render(<Tooltip text="Click toggle" />);
+    const button = getByRole("button", { name: /help/i });
+    fireEvent.click(button);
+    expect(getByRole("tooltip")).toBeInTheDocument();
+    fireEvent.click(button);
+    expect(queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("closes tooltip on Escape key", () => {
+    const { getByRole, queryByRole } = render(<Tooltip text="Escape test" />);
+    const button = getByRole("button", { name: /help/i });
+    fireEvent.click(button);
+    expect(getByRole("tooltip")).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("closes tooltip on outside click", () => {
+    const { getByRole, queryByRole } = render(
+      <div>
+        <Tooltip text="Outside click" />
+        <button data-testid="outside">Other</button>
+      </div>
+    );
+    const helpButton = getByRole("button", { name: /help/i });
+    fireEvent.click(helpButton);
+    expect(getByRole("tooltip")).toBeInTheDocument();
+    fireEvent.mouseDown(document.body);
+    expect(queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("applies wide class when wide prop is true", () => {
+    const { getByRole } = render(<Tooltip text="Wide tooltip" wide />);
+    const button = getByRole("button", { name: /help/i });
+    fireEvent.focus(button);
+    const tooltip = getByRole("tooltip");
+    expect(tooltip.className).toContain("w-72");
+  });
+
+  it("applies narrow class when wide prop is false", () => {
+    const { getByRole } = render(<Tooltip text="Narrow tooltip" />);
+    const button = getByRole("button", { name: /help/i });
+    fireEvent.focus(button);
+    const tooltip = getByRole("tooltip");
+    expect(tooltip.className).toContain("w-56");
+  });
 });
 
 describe("HelpLabel", () => {
@@ -81,5 +129,29 @@ describe("HelpLabel", () => {
     const { container } = render(<HelpLabel label="Budget" tooltip="Help" />);
     const label = container.querySelector("label");
     expect(label).toBeInTheDocument();
+  });
+
+  it("applies default className when none provided", () => {
+    const { container } = render(<HelpLabel label="Budget" tooltip="Help" />);
+    const label = container.querySelector("label");
+    expect(label?.className).toContain("text-muted");
+  });
+
+  it("applies custom className when provided", () => {
+    const { container } = render(
+      <HelpLabel label="Budget" tooltip="Help" className="custom-class" />
+    );
+    const label = container.querySelector("label");
+    expect(label?.className).toContain("custom-class");
+  });
+
+  it("passes wide prop to Tooltip", () => {
+    const { getByRole } = render(
+      <HelpLabel label="Budget" tooltip="Wide help" wide />
+    );
+    const button = getByRole("button", { name: /help/i });
+    fireEvent.focus(button);
+    const tooltip = getByRole("tooltip");
+    expect(tooltip.className).toContain("w-72");
   });
 });
