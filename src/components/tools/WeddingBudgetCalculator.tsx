@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -132,26 +132,25 @@ function formatShort(n: number): string {
 export default function WeddingBudgetCalculator() {
   const searchParams = useSearchParams();
 
-  // Parse URL params for initial state
-  const initial = (() => {
-    if (typeof window === "undefined") return { budget: 25000, guests: 120, state: "Wisconsin", month: 8 };
-    const b = searchParams.get("budget");
-    const g = searchParams.get("guests");
-    const s = searchParams.get("state");
-    const m = searchParams.get("month");
-    const allFlat = Object.values(STATES).flat();
-    return {
-      budget: b ? Math.min(75000, Math.max(5000, Number(b))) : 25000,
-      guests: g ? Math.min(300, Math.max(10, Number(g))) : 120,
-      state: s && allFlat.find((st) => st.label === s) ? s : "Wisconsin",
-      month: m ? Math.min(11, Math.max(0, Number(m))) : 8,
-    };
-  })();
+  // Parse URL params for initial values
+  const allFlat = Object.values(STATES).flat();
+  const bParam = searchParams.get("budget");
+  const gParam = searchParams.get("guests");
+  const sParam = searchParams.get("state");
+  const mParam = searchParams.get("month");
 
-  const [budget, setBudget] = useState(initial.budget);
-  const [guests, setGuests] = useState(initial.guests);
-  const [stateKey, setStateKey] = useState(initial.state);
-  const [monthIdx, setMonthIdx] = useState(initial.month);
+  const [budget, setBudget] = useState(() => bParam ? Math.min(75000, Math.max(5000, Number(bParam))) : 25000);
+  const [guests, setGuests] = useState(() => gParam ? Math.min(300, Math.max(10, Number(gParam))) : 120);
+  const [stateKey, setStateKey] = useState(() => sParam && allFlat.find((st) => st.label === sParam) ? sParam : "Wisconsin");
+  const [monthIdx, setMonthIdx] = useState(() => mParam ? Math.min(11, Math.max(0, Number(mParam))) : 8);
+
+  // Keep URL in sync so bookmarking/sharing always works
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams({ budget: String(budget), guests: String(guests), state: stateKey, month: String(monthIdx) });
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState(null, "", newUrl);
+  }, [budget, guests, stateKey, monthIdx]);
 
   const allStates = Object.values(STATES).flat();
   const selectedState = allStates.find((s) => s.label === stateKey) ?? allStates[0];
@@ -172,12 +171,8 @@ export default function WeddingBudgetCalculator() {
   })();
 
   const getShareUrl = useCallback(() => {
-    const params = new URLSearchParams({
-      budget: String(budget),
-      guests: String(guests),
-      state: stateKey,
-      month: String(monthIdx),
-    });
+    if (typeof window !== "undefined") return window.location.href;
+    const params = new URLSearchParams({ budget: String(budget), guests: String(guests), state: stateKey, month: String(monthIdx) });
     return `https://eydn.app/tools/wedding-budget-calculator?${params.toString()}`;
   }, [budget, guests, stateKey, monthIdx]);
 
@@ -323,17 +318,14 @@ export default function WeddingBudgetCalculator() {
         </div>
       </div>
 
-      {/* Share */}
-      <div className="mt-6 pt-5 border-t border-border">
+      {/* Save & share */}
+      <div className="mt-6 pt-5 border-t border-border flex flex-wrap items-center gap-4">
         <button
           onClick={() => {
             const url = getShareUrl();
             navigator.clipboard.writeText(url).then(
-              () => toast.success("Link copied"),
-              () => {
-                // Fallback for browsers that block clipboard
-                window.prompt("Copy this link:", url);
-              }
+              () => toast.success("Link copied — anyone with this URL sees your exact breakdown"),
+              () => window.prompt("Copy this link:", url),
             );
           }}
           className="inline-flex items-center gap-2 text-[14px] font-semibold text-violet hover:text-plum transition cursor-pointer"
@@ -344,6 +336,20 @@ export default function WeddingBudgetCalculator() {
           </svg>
           Copy shareable link
         </button>
+        <button
+          onClick={() => window.print()}
+          className="inline-flex items-center gap-2 text-[14px] font-semibold text-violet hover:text-plum transition cursor-pointer"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Save as PDF
+        </button>
+        <p className="text-[12px] text-muted/50 ml-auto">
+          Bookmark this page — the URL updates as you adjust
+        </p>
       </div>
 
       {/* CTA */}
