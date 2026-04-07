@@ -64,8 +64,7 @@ export default function WeddingBudgetCalculatorPage() {
           </h2>
           <div className="space-y-4 text-[15px] text-muted leading-relaxed">
             <p>
-              Our allocations are synthesized from The Knot&apos;s 2026 Real Weddings Study (10,474 couples),
-              Zola&apos;s 2026 Wedding Spend Survey, and Wedding.report&apos;s state-level data.
+              Our allocations are based on industry survey data from over 10,000 couples married in 2025-2026.
               The national average wedding cost is $34,200-$36,000 in 2026, though the median
               is closer to $18,231 — meaning most couples spend significantly less than the headlines suggest.
             </p>
@@ -77,7 +76,7 @@ export default function WeddingBudgetCalculatorPage() {
             </p>
             <p>
               We recommend reserving 9% of your total budget as a hidden cost buffer.
-              Zola&apos;s 2026 survey found couples encounter an average of $3,314 in unplanned expenses —
+              Industry data shows couples encounter an average of $3,314 in unplanned expenses —
               service charges, gratuities, overtime fees, and day-of extras.
             </p>
           </div>
