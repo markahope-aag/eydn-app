@@ -251,7 +251,10 @@ export default function MoodBoardPage() {
         <div>
           <h1>Vision Board</h1>
           <p className="mt-1 text-[15px] text-muted">
-            Collect inspiration for your wedding look and feel
+            Collect inspiration for your wedding look and feel.{" "}
+            <a href="https://pin.it/4f47esCnG" target="_blank" rel="noopener noreferrer" className="text-violet hover:underline">
+              Need inspo? Check out our Pinterest
+            </a>
           </p>
         </div>
         <div className="flex gap-2">

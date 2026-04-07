@@ -123,7 +123,7 @@ export default function HelpPage() {
           placeholder="Search help topics..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-[10px] border-border pl-9 pr-3 py-2 text-[15px]"
+          className="w-full rounded-[10px] border border-border bg-white pl-9 pr-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
         />
       </div>
 
