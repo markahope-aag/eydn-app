@@ -133,14 +133,14 @@ export default function WeddingBudgetCalculator() {
 
   // Parse URL params for initial state
   const initial = (() => {
-    if (typeof window === "undefined") return { budget: 36000, guests: 120, state: "Wisconsin", month: 8 };
+    if (typeof window === "undefined") return { budget: 25000, guests: 120, state: "Wisconsin", month: 8 };
     const b = searchParams.get("budget");
     const g = searchParams.get("guests");
     const s = searchParams.get("state");
     const m = searchParams.get("month");
     const allFlat = Object.values(STATES).flat();
     return {
-      budget: b ? Math.min(150000, Math.max(5000, Number(b))) : 36000,
+      budget: b ? Math.min(75000, Math.max(5000, Number(b))) : 25000,
       guests: g ? Math.min(300, Math.max(10, Number(g))) : 120,
       state: s && allFlat.find((st) => st.label === s) ? s : "Wisconsin",
       month: m ? Math.min(11, Math.max(0, Number(m))) : 8,
@@ -198,8 +198,8 @@ export default function WeddingBudgetCalculator() {
             <input
               type="range"
               min={5000}
-              max={150000}
-              step={1000}
+              max={75000}
+              step={500}
               value={budget}
               onChange={(e) => setBudget(Number(e.target.value))}
               className="w-full accent-[#C08080]"
@@ -207,7 +207,7 @@ export default function WeddingBudgetCalculator() {
             />
             <div className="flex justify-between text-[11px] text-muted/50 mt-1">
               <span>$5K</span>
-              <span>$150K</span>
+              <span>$75K</span>
             </div>
           </div>
 

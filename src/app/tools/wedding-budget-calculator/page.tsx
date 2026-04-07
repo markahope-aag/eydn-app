@@ -37,13 +37,13 @@ export default function WeddingBudgetCalculatorPage() {
         <Link href="/" className="text-[14px] text-[#FAF6F1]/50 hover:text-[#FAF6F1]/70 transition">
           &larr; eydn.app
         </Link>
-        <p className="mt-6 text-[12px] font-semibold tracking-widest uppercase text-[#C9A84C]/70">
+        <p className="mt-6 text-[13px] font-semibold tracking-widest uppercase text-[#FAF6F1]/50">
           Free planning tool
         </p>
-        <h1 className="mt-3 text-[36px] md:text-[44px] font-semibold text-[#FAF6F1] leading-tight">
-          Wedding Budget Calculator 2026
+        <h1 className="mt-3 text-[40px] md:text-[56px] font-semibold text-[#FAF6F1] leading-tight">
+          Wedding Budget Calculator
         </h1>
-        <p className="mt-4 text-[16px] text-[#FAF6F1]/60 max-w-xl mx-auto leading-relaxed">
+        <p className="mt-4 text-[17px] text-[#FAF6F1]/80 max-w-xl mx-auto leading-relaxed">
           Adjust your total budget, guest count, state, and wedding month.
           Get a recommended allocation across every category — instantly.
         </p>
