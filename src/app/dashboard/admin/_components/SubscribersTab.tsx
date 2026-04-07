@@ -11,7 +11,7 @@ export default function SubscribersTab({
   onUpdateRole: (userId: string, role: string) => void;
 }) {
   const [subSearch, setSubSearch] = useState("");
-  const [subFilter, setSubFilter] = useState<"all" | "active" | "no-event" | "admin">("all");
+  const [subFilter, setSubFilter] = useState<"all" | "active" | "no-event" | "admin" | "beta">("all");
   const [subSort, setSubSort] = useState<{ key: "joined" | "last_sign_in"; dir: "asc" | "desc" }>({ key: "joined", dir: "desc" });
 
   const filtered = users
@@ -23,6 +23,7 @@ export default function SubscribersTab({
       if (subFilter === "active") return u.has_event;
       if (subFilter === "no-event") return !u.has_event;
       if (subFilter === "admin") return u.role === "admin";
+      if (subFilter === "beta") return u.role === "beta";
       return true;
     })
     .sort((a, b) => {
@@ -66,6 +67,7 @@ export default function SubscribersTab({
           <option value="active">Active ({users.filter((u) => u.has_event).length})</option>
           <option value="no-event">No event ({users.filter((u) => !u.has_event).length})</option>
           <option value="admin">Admins ({users.filter((u) => u.role === "admin").length})</option>
+          <option value="beta">Beta ({users.filter((u) => u.role === "beta").length})</option>
         </select>
         <span className="text-[13px] text-muted">{filtered.length} shown</span>
       </div>
@@ -126,10 +128,13 @@ export default function SubscribersTab({
                       className={`rounded-full px-2 py-0.5 text-[12px] font-semibold border-0 ${
                         user.role === "admin"
                           ? "bg-lavender text-violet"
-                          : "bg-lavender text-muted"
+                          : user.role === "beta"
+                            ? "bg-green-50 text-green-700"
+                            : "bg-lavender text-muted"
                       }`}
                     >
                       <option value="user">Subscriber</option>
+                      <option value="beta">Beta</option>
                       <option value="admin">Admin</option>
                     </select>
                   </td>

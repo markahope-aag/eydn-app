@@ -4,10 +4,10 @@ import { safeParseJSON, isParseError, isValidEmail } from "@/lib/validation";
 import { sendEmail } from "@/lib/email";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 
-const BETA_CODE = "BETA50";
+const BETA_SLOTS = 50;
 const WAITLIST_CODE = "WAITLIST20";
 
-/** GET: Check beta availability */
+/** GET: Check beta availability (counts beta role assignments) */
 export async function GET(request: Request) {
   const ip = getClientIP(request);
   const rl = await checkRateLimit(`beta-get:${ip}`, RATE_LIMITS.public);
@@ -17,24 +17,19 @@ export async function GET(request: Request) {
 
   const supabase = createSupabaseAdmin();
 
-  const { data: betaCode } = await supabase
-    .from("promo_codes")
-    .select("max_uses, current_uses, is_active")
-    .eq("code", BETA_CODE)
-    .single();
+  const { count } = await supabase
+    .from("user_roles")
+    .select("*", { count: "exact", head: true })
+    .eq("role", "beta");
 
-  if (!betaCode || !betaCode.is_active) {
-    return NextResponse.json({ beta_available: false, slots_remaining: 0 });
-  }
-
-  const maxUses = betaCode.max_uses ?? 999;
-  const remaining = Math.max(0, maxUses - betaCode.current_uses);
+  const taken = count ?? 0;
+  const remaining = Math.max(0, BETA_SLOTS - taken);
 
   return NextResponse.json({
     beta_available: remaining > 0,
     slots_remaining: remaining,
-    total_slots: maxUses,
-    slots_taken: betaCode.current_uses,
+    total_slots: BETA_SLOTS,
+    slots_taken: taken,
   });
 }
 

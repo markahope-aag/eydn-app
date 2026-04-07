@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 type SubscriptionStatus = {
   hasAccess: boolean;
   isPaid: boolean;
+  isBeta: boolean;
   isTrialing: boolean;
   trialDaysLeft: number;
   trialExpired: boolean;

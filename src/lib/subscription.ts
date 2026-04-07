@@ -10,6 +10,7 @@ export { PRICE as SUBSCRIPTION_PRICE };
 export type SubscriptionStatus = {
   hasAccess: boolean;
   isPaid: boolean;
+  isBeta: boolean;
   isTrialing: boolean;
   trialDaysLeft: number;
   trialExpired: boolean;
@@ -31,22 +32,23 @@ export async function requirePremium(): Promise<NextResponse | null> {
 export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   const { userId } = await auth();
   if (!userId) {
-    return { hasAccess: false, isPaid: false, isTrialing: false, trialDaysLeft: 0, trialExpired: true };
+    return { hasAccess: false, isPaid: false, isBeta: false, isTrialing: false, trialDaysLeft: 0, trialExpired: true };
   }
 
   const supabase = createSupabaseAdmin();
 
-  // Admin users always have access
-  const { data: adminRole } = await supabase
+  // Admin and beta users always have full access
+  const { data: privilegedRole } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
-    .eq("role", "admin")
+    .in("role", ["admin", "beta"])
     .limit(1)
     .single();
 
-  if (adminRole) {
-    return { hasAccess: true, isPaid: true, isTrialing: false, trialDaysLeft: 0, trialExpired: false };
+  if (privilegedRole) {
+    const isBeta = (privilegedRole as { role: string }).role === "beta";
+    return { hasAccess: true, isPaid: true, isBeta, isTrialing: false, trialDaysLeft: 0, trialExpired: false };
   }
 
   // Check for active purchase by this user
@@ -59,7 +61,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
     .single();
 
   if (purchase) {
-    return { hasAccess: true, isPaid: true, isTrialing: false, trialDaysLeft: 0, trialExpired: false };
+    return { hasAccess: true, isPaid: true, isBeta: false, isTrialing: false, trialDaysLeft: 0, trialExpired: false };
   }
 
   // Check trial status from owned wedding
@@ -101,7 +103,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
         .single();
 
       if (ownerPurchase) {
-        return { hasAccess: true, isPaid: true, isTrialing: false, trialDaysLeft: 0, trialExpired: false };
+        return { hasAccess: true, isPaid: true, isBeta: false, isTrialing: false, trialDaysLeft: 0, trialExpired: false };
       }
 
       // Inherit the owner's trial status
@@ -110,7 +112,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   }
 
   // No owned wedding and no collaboration — no access
-  return { hasAccess: false, isPaid: false, isTrialing: false, trialDaysLeft: 0, trialExpired: true };
+  return { hasAccess: false, isPaid: false, isBeta: false, isTrialing: false, trialDaysLeft: 0, trialExpired: true };
 }
 
 function computeTrialStatus(wedding: { trial_started_at: string | null; created_at: string }): SubscriptionStatus {
@@ -120,8 +122,8 @@ function computeTrialStatus(wedding: { trial_started_at: string | null; created_
   const daysLeft = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 
   if (daysLeft > 0) {
-    return { hasAccess: true, isPaid: false, isTrialing: true, trialDaysLeft: daysLeft, trialExpired: false };
+    return { hasAccess: true, isPaid: false, isBeta: false, isTrialing: true, trialDaysLeft: daysLeft, trialExpired: false };
   }
 
-  return { hasAccess: false, isPaid: false, isTrialing: false, trialDaysLeft: 0, trialExpired: true };
+  return { hasAccess: false, isPaid: false, isBeta: false, isTrialing: false, trialDaysLeft: 0, trialExpired: true };
 }

@@ -62,9 +62,9 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "user_id and role required" }, { status: 400 });
   }
 
-  const ALLOWED_ROLES = ["admin", "user"];
+  const ALLOWED_ROLES = ["admin", "user", "beta"];
   if (!ALLOWED_ROLES.includes(role)) {
-    return NextResponse.json({ error: "role must be one of: admin, user" }, { status: 400 });
+    return NextResponse.json({ error: "role must be one of: admin, user, beta" }, { status: 400 });
   }
 
   const { error } = await supabase

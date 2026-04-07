@@ -6,6 +6,7 @@ import { toast } from "sonner";
 type SubscriptionStatus = {
   hasAccess: boolean;
   isPaid: boolean;
+  isBeta: boolean;
   isTrialing: boolean;
   trialDaysLeft: number;
   trialExpired: boolean;
@@ -66,6 +67,7 @@ export function usePremium() {
     isTrialing: status?.isTrialing ?? false,
     trialDaysLeft: status?.trialDaysLeft ?? 0,
     isPaid: status?.isPaid ?? false,
+    isBeta: status?.isBeta ?? false,
     loaded: status !== null,
     guardAction,
   };

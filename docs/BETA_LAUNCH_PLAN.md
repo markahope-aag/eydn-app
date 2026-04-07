@@ -4,8 +4,8 @@
 
 Eydn's pre-launch strategy uses a two-tier approach to build early traction:
 
-1. **Beta Program** — 50 free licenses for early adopters who get full access at no cost
-2. **Waitlist** — unlimited signups with an automatic 20% discount for anyone who arrives after the beta is full
+- **Beta Program** — 50 free licenses for early adopters who get permanent full access at no cost
+- **Waitlist** — unlimited signups with an automatic 20% discount for anyone who arrives after the beta is full
 
 This creates urgency (limited spots), rewards early adopters (free access), and converts overflow interest into future paying customers (discounted price).
 
@@ -15,79 +15,90 @@ This creates urgency (limited spots), rewards early adopters (free access), and 
 
 ### The User Journey
 
-**Visitor lands on `eydn.app/beta`:**
+**Visitor lands on eydn.app/beta:**
 
-- The page checks how many beta spots remain in real time
-- If spots are available, the visitor sees the beta code (`BETA50`) and a "Start Planning — Free" button that links to sign-up
+- The page checks how many beta spots remain in real time (counted from assigned beta roles)
+- If spots are available, the visitor sees a "Start Planning — Free" button
 - If the beta is full, the page automatically switches to a waitlist form
 
 **Beta user (spots available):**
 
-1. Visitor sees the `BETA50` code displayed on the page with a slots counter (e.g., "12 of 50 spots remaining")
-2. They click "Start Planning — Free" → taken to the sign-up page
-3. After creating an account, they enter `BETA50` on the pricing page
-4. The code gives them 100% off — full access, no payment required
-5. They start planning their wedding immediately
+1. Visitor sees the slots counter (e.g., "12 of 50 spots left") and a "Start Planning — Free" button
+2. They click the button and are taken to the sign-up page
+3. After creating an account, they are automatically redirected to `/beta/claim`
+4. The claim page assigns the `beta` role to their account — no promo code, no checkout, no payment page
+5. They see a confirmation ("You're in.") and go straight to the dashboard with full access
 
 **Waitlist user (beta full):**
 
 1. Visitor sees "Beta is full — join the waitlist" with a name + email form
 2. They submit the form
-3. They immediately receive a branded email with an exclusive 20% discount code (`WAITLIST20`)
+3. They immediately receive a branded email with an exclusive 20% discount code (WAITLIST20)
 4. The email explains they'll be notified at launch and can use the code then
-5. When Eydn launches publicly, they sign up and enter `WAITLIST20` at checkout ($79 → $63.20)
+5. When Eydn launches publicly, they sign up and enter WAITLIST20 at checkout ($79 -> $63.20)
 
 ### Automatic Transitions
 
 The beta-to-waitlist transition is fully automatic. No admin intervention required:
 
-- The `/beta` page queries the `BETA50` promo code's usage in real time
-- When `current_uses` reaches `max_uses` (50), the page switches from showing the beta code to showing the waitlist form
-- All waitlist emails are sent instantly on signup via Resend
+- The `/beta` page queries the count of users with the `beta` role in real time
+- When the count reaches 50, the page switches from showing the beta CTA to showing the waitlist form
+
+---
+
+## What Beta Users Get
+
+- **Permanent full access** — all features, no time limit, no payment ever required
+- **No trial countdown** — the trial banner and upgrade prompts are completely hidden
+- **Settings label** — their subscription section shows "Beta access — full features"
+- **Admin visibility** — they appear as "Beta" in the admin Subscribers tab with a green badge
+
+Beta access is equivalent to a paid subscription in every way except that no payment record is created.
 
 ---
 
 ## Setup Instructions
 
-### Step 1: Create the Promo Codes
+### Step 1: Create the Waitlist Promo Code
 
-Go to **`eydn.app/dashboard/admin/promo-codes`** and create two codes:
+Go to `eydn.app/dashboard/admin/promo-codes` and create one code:
 
-**Code 1 — Beta Access:**
-- Code: `BETA50`
-- Discount Type: Percentage
-- Discount Value: 100
-- Max Uses: 50
-- Expiration: (leave blank or set a date if you want the beta to end by a certain date)
-- Description: "Free beta access — 50 spots"
+| Field | Value |
+|-------|-------|
+| Code | WAITLIST20 |
+| Discount Type | Percentage |
+| Discount Value | 20 |
+| Max Uses | (leave blank for unlimited) |
+| Expiration | (leave blank or set to launch date + buffer) |
+| Description | Waitlist signup discount |
 
-**Code 2 — Waitlist Discount:**
-- Code: `WAITLIST20`
-- Discount Type: Percentage
-- Discount Value: 20
-- Max Uses: (leave blank for unlimited)
-- Expiration: (leave blank or set to your planned launch date + buffer)
-- Description: "Waitlist signup discount"
+The beta program itself does not use a promo code. Access is granted via role assignment.
 
 ### Step 2: Test the Flow
 
-1. Visit `eydn.app/beta` — you should see the beta code with "50 of 50 spots remaining"
-2. Create a test account and apply `BETA50` on the pricing page — should show $0
-3. Complete the $0 purchase — verify full access is granted
-4. In the admin panel, verify `BETA50` shows 1/50 uses
+**Beta flow:**
 
-To test the waitlist flow:
-1. Temporarily set `BETA50` max uses to 1 in the admin panel
+1. Visit `eydn.app/beta` — you should see "50 of 50 spots left"
+2. Click "Start Planning — Free" — you should be taken to sign-up
+3. Create an account — you should be redirected to `/beta/claim`
+4. You should see "You're in." with a link to the dashboard
+5. In the admin Subscribers tab, verify the user shows as "Beta"
+6. In the user's Settings page, verify it shows "Beta access — full features"
+7. Verify no trial banner appears on the dashboard
+
+**Waitlist flow:**
+
+1. Grant beta role to 50 test users (or temporarily change `BETA_SLOTS` for testing)
 2. Visit `eydn.app/beta` — should show the waitlist form
-3. Submit a test email — verify the discount code email arrives
+3. Submit a test email — verify the discount code email arrives with WAITLIST20
 4. Check `eydn.app/dashboard/admin/waitlist` — should show the signup
-5. Reset `BETA50` max uses back to 50
 
 ### Step 3: Promote
 
-Share the beta page URL: **`eydn.app/beta`**
+Share the beta page URL: **eydn.app/beta**
 
 Recommended channels:
+
 - Social media (Instagram, TikTok, Pinterest — where engaged couples are)
 - Wedding planning forums and communities
 - Email to your existing contact list
@@ -96,43 +107,76 @@ Recommended channels:
 
 ### Step 4: Monitor
 
-**Admin dashboard pages to watch:**
-
 | Page | What to monitor |
-|------|----------------|
-| `/dashboard/admin/promo-codes` | BETA50 usage count (how fast spots are filling) |
-| `/dashboard/admin/waitlist` | Waitlist signups + email delivery status |
-| `/dashboard/admin` (Overview tab) | Total subscribers, signups, conversion rate |
-| `/dashboard/admin/lifecycle` | Account phase distribution |
+|------|-----------------|
+| /dashboard/admin (Subscribers tab) | Filter by "Beta" to see beta users and count |
+| /dashboard/admin/waitlist | Waitlist signups and email delivery status |
+| /dashboard/admin (Overview tab) | Total subscribers, signups, conversion rate |
 
 ---
 
 ## Architecture
 
-### Database Tables
+### How Beta Access Works
 
-**`promo_codes`** — stores both BETA50 and WAITLIST20 with usage tracking
-**`promo_code_redemptions`** — records who used which code and when
-**`waitlist`** — stores name, email, source, and email delivery status
+Beta access is a **role in the `user_roles` table**, not a promo code redemption. When a user claims a beta spot:
+
+1. `POST /api/beta/claim` checks the user is authenticated
+2. It counts existing beta role assignments to verify spots remain
+3. It inserts a row into `user_roles` with `role = 'beta'`
+4. The subscription system (`getSubscriptionStatus()`) treats the beta role identically to a paid purchase — `hasAccess: true, isPaid: true, isBeta: true`
+5. All client-side gating (trial banner, paywall, premium buttons) respects this status
+
+### Database
+
+| Table | Role |
+|-------|------|
+| `user_roles` | Stores beta role assignments (role = 'beta') |
+| `waitlist` | Stores waitlist signups with email delivery status |
+| `promo_codes` | Stores WAITLIST20 code for waitlist discount |
 
 ### API Endpoints
 
 | Endpoint | Purpose |
 |----------|---------|
-| `GET /api/public/beta` | Check beta slot availability (no auth required) |
-| `POST /api/public/beta` | Join waitlist + auto-send discount email (no auth required) |
-| `POST /api/promo-codes/validate` | Validate a code at checkout (auth required) |
-| `POST /api/subscribe` | Process purchase with optional promo code |
+| `GET /api/public/beta` | Check beta slot availability (counts beta roles, no auth) |
+| `POST /api/public/beta` | Join waitlist + auto-send discount email (no auth) |
+| `POST /api/beta/claim` | Claim a beta slot (assigns beta role, auth required) |
+| `POST /api/promo-codes/validate` | Validate WAITLIST20 at checkout (auth required) |
 | `GET /api/admin/waitlist` | Admin view of all waitlist signups |
-| `GET/POST/PATCH /api/admin/promo-codes` | Admin CRUD for promo codes |
+
+### Pages
+
+| Page | Purpose |
+|------|---------|
+| `/beta` | Public beta landing page with slots counter or waitlist form |
+| `/beta/claim` | Post-signup page that auto-claims the beta slot |
+| `/sign-up?redirect_url=/beta/claim` | Sign-up with automatic redirect to claim |
 
 ### Security
 
+- Beta claim endpoint requires authentication and is rate-limited
+- Duplicate role assignments are prevented (upsert)
+- Users who already have a purchase or admin role are handled gracefully
 - Waitlist signup is rate-limited (15 requests/minute per IP)
-- Duplicate emails are rejected (unique index on lowercase email)
-- Promo codes are validated server-side at checkout (not just client-side)
-- One redemption per user per code
-- $0 purchases bypass Stripe entirely (no minimum charge issue)
+- Duplicate waitlist emails are rejected (unique index)
+- Promo codes are validated server-side at checkout
+
+---
+
+## Admin Management
+
+### Granting Beta Access Manually
+
+In the admin Subscribers tab, find a user and change their role dropdown to "Beta." This is useful for granting access to specific people outside the `/beta` page flow (e.g., friends, investors, partners).
+
+### Revoking Beta Access
+
+Change the role dropdown back to "Subscriber." The user will fall back to whatever trial or expired state their account would normally be in.
+
+### Viewing Beta Users
+
+Use the "Beta" filter in the Subscribers tab dropdown to see all beta users at a glance.
 
 ---
 
@@ -140,9 +184,9 @@ Recommended channels:
 
 When you're ready to transition from beta to general availability:
 
-1. **Disable `BETA50`** — toggle it off in the admin promo codes panel
-2. **Update the `/beta` page** — or redirect it to the main landing page
-3. **Keep `WAITLIST20` active** — let waitlist users redeem their discount
+1. **No action needed on beta users** — they keep permanent access
+2. **Update the /beta page** — redirect it to the main landing page, or leave it showing the waitlist/full state
+3. **Keep WAITLIST20 active** — let waitlist users redeem their discount
 4. **Email the waitlist** — announce the launch with their discount code reminder
 5. **Optionally create new codes** — for marketing campaigns, partnerships, etc.
 

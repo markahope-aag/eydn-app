@@ -1,6 +1,6 @@
 # eydn Database Schema
 
-**41 tables · 64 migrations · Supabase (PostgreSQL)**
+**51 tables · 80 migrations · Supabase (PostgreSQL)**
 
 ---
 
@@ -17,6 +17,7 @@ Main wedding record. One per user (or per collaborator group).
 | partner2_name | text | |
 | date | text | YYYY-MM-DD |
 | venue | text | |
+| venue_city | text | |
 | budget | numeric | |
 | guest_count_estimate | integer | |
 | style_description | text | |
@@ -24,12 +25,17 @@ Main wedding record. One per user (or per collaborator group).
 | wedding_party_count | integer | |
 | has_pre_wedding_events | boolean | |
 | has_honeymoon | boolean | |
-| trial_started_at | timestamptz | |
+| key_decisions | text | Persistent context for AI assistant |
+| trial_started_at | timestamptz | Start of 14-day free trial |
+| tour_complete | boolean | Whether the user completed the onboarding tour |
 | phase | text | active, post_wedding, archived, sunset |
 | memory_plan_active | boolean | $29/yr retention plan |
 | memory_plan_expires_at | timestamptz | |
-| ceremony_time | text | Canonical ceremony start time (HH:MM 24h). Single source of truth — day_of_plans mirrors this. |
-| shared_attire_note | text | Shared attire description shown on the wedding party page |
+| ceremony_time | text | HH:MM 24h. Single source of truth — day_of_plans mirrors this. |
+| shared_attire_note | text | Shared attire description shown on wedding party page |
+| rsvp_deadline | text | RSVP deadline for wedding website |
+| photo_approval_required | boolean | Whether uploaded photos need approval |
+| meal_options | jsonb | Array of meal choices for RSVP |
 | website_slug | text | Public URL: eydn.app/w/{slug} |
 | website_enabled | boolean | |
 | website_headline | text | |
@@ -39,7 +45,9 @@ Main wedding record. One per user (or per collaborator group).
 | website_schedule | jsonb[] | |
 | website_travel_info | text | |
 | website_accommodations | text | |
+| website_hotels | jsonb | Structured hotel recommendations |
 | website_faq | jsonb[] | |
+| website_theme | jsonb | Theme configuration for public website |
 | created_at | timestamptz | |
 | updated_at | timestamptz | |
 
@@ -135,7 +143,7 @@ Budget tracker with 36 pre-seeded line items.
 | created_at | timestamptz | |
 
 ### `wedding_party`
-Wedding party members with photos, attire, and address for delivery/shipping.
+Wedding party members with photos, attire, and addresses.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -145,8 +153,8 @@ Wedding party members with photos, attire, and address for delivery/shipping.
 | role | text | Honor Attendant, Attendant, Officiant, etc. |
 | email | text | |
 | phone | text | |
-| address_line1 | text | Street address (added migration 20260326000000) |
-| address_line2 | text | Apt, suite, etc. |
+| address_line1 | text | |
+| address_line2 | text | |
 | city | text | |
 | state | text | |
 | zip | text | |
@@ -175,6 +183,7 @@ Drag-and-drop table layout.
 | shape | text | round, rectangle |
 | capacity | integer | |
 | deleted_at | timestamptz | Soft delete |
+| created_at | timestamptz | |
 
 ### `seat_assignments`
 Guest-to-table assignments.
@@ -243,13 +252,13 @@ Rehearsal dinner planning.
 | notes | text | |
 | timeline | jsonb | [{ time, event }] |
 | guest_list | jsonb | [names] |
-| hosted_by | text | Host name(s) — added migration 20260326200000 |
+| hosted_by | text | Host name(s) |
 | dress_code | text | e.g. "Black tie optional" |
 | capacity | integer | Maximum attendees |
 | created_at | timestamptz | |
 
 ### `date_change_alerts`
-Tracks wedding date and ceremony time changes that require acknowledgment. The `DateSyncBanner` dashboard component reads unacknowledged rows and shows a persistent warning until the user acknowledges. See the architecture doc for the full cascade behavior.
+Tracks wedding date and ceremony time changes that require acknowledgment. The `DateSyncBanner` dashboard component reads unacknowledged rows and shows a persistent warning until the user acknowledges.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -274,6 +283,20 @@ Onboarding questionnaire data.
 | created_at | timestamptz | |
 | updated_at | timestamptz | |
 
+### `guide_responses`
+Guided planning questionnaire responses (e.g., hair & makeup, colors & theme).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| wedding_id | uuid | FK → weddings |
+| guide_slug | text | Which guide (e.g., hair-makeup, colors-theme) |
+| section_index | integer | Which section within the guide |
+| responses | jsonb | User answers |
+| completed | boolean | |
+| vendor_brief | text | Generated vendor brief from responses |
+| created_at | timestamptz | |
+
 ### `mood_board_items`
 Pinterest-style inspiration board. Items can be linked to a vendor for inspiration-to-booking tracking.
 
@@ -285,7 +308,7 @@ Pinterest-style inspiration board. Items can be linked to a vendor for inspirati
 | caption | text | |
 | category | text | Florals, Attire, Colors, etc. Custom categories also supported. |
 | location | text | Ceremony, Reception, Bar, etc. |
-| vendor_id | uuid | FK → vendors (optional — added migration 20260326100000) |
+| vendor_id | uuid | FK → vendors (optional) |
 | sort_order | integer | |
 | deleted_at | timestamptz | Soft delete |
 | created_at | timestamptz | |
@@ -327,11 +350,14 @@ Unique RSVP links per guest.
 
 | Column | Type | Notes |
 |--------|------|-------|
+| id | uuid | PK |
 | guest_id | uuid | FK → guests |
 | wedding_id | uuid | FK → weddings |
 | token | text | Unique token |
 | responded | boolean | |
 | responded_at | timestamptz | |
+| qr_code_url | text | Generated QR code image URL |
+| created_at | timestamptz | |
 
 ### `registry_links`
 Wedding registry links.
@@ -348,14 +374,14 @@ Wedding registry links.
 ## Collaboration
 
 ### `wedding_collaborators`
-Invite partner or coordinator to share access.
+Invite partner, coordinator, or parent to share access.
 
 | Column | Type | Notes |
 |--------|------|-------|
 | id | uuid | PK |
 | wedding_id | uuid | FK → weddings |
 | email | text | |
-| role | text | partner, coordinator |
+| role | text | partner, coordinator, parent |
 | invite_status | text | pending, accepted |
 | invited_by | text | Clerk user ID |
 | user_id | text | Filled on auto-accept |
@@ -404,6 +430,24 @@ User-submitted vendor suggestions for admin review.
 ### `suggested_vendors`
 Platform-curated vendor directory (34 seeded vendors).
 
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| name | text | |
+| category | text | |
+| location | text | |
+| website | text | |
+| price_range | text | |
+| rating | numeric | |
+| description | text | |
+| vendor_account_id | uuid | FK → vendor_accounts (optional) |
+| placement_tier | text | Advertising tier |
+| placement_expires_at | timestamptz | |
+| search_vector | tsvector | Generated full-text search index |
+| imported_at | timestamptz | |
+| import_source | text | |
+| created_at | timestamptz | |
+
 ### `placement_tiers`
 Tiered advertising packages for vendors.
 
@@ -415,24 +459,193 @@ Impression/click/lead tracking for vendor listings.
 
 ---
 
-## Payments
+## Payments & Promo Codes
 
 ### `subscriber_purchases`
-One-time $79 purchase records.
+One-time $79 purchase records (or $0 for promo code purchases).
 
 | Column | Type | Notes |
 |--------|------|-------|
-| user_id | text | |
-| wedding_id | uuid | |
-| amount | numeric | |
+| id | uuid | PK |
+| user_id | text | Clerk user ID |
+| wedding_id | uuid | FK → weddings |
+| amount | numeric(10,2) | |
 | stripe_payment_intent_id | text | |
 | stripe_session_id | text | |
 | status | text | active, refunded |
+| payment_method | text | stripe or promo_code |
 | purchased_at | timestamptz | |
+
+### `promo_codes`
+Promotional discount codes with usage tracking.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| code | text | Unique, case-insensitive |
+| description | text | |
+| discount_type | text | percentage or fixed |
+| discount_value | numeric(10,2) | |
+| max_uses | integer | Null for unlimited |
+| current_uses | integer | Atomically incremented via RPC |
+| is_active | boolean | |
+| expires_at | timestamptz | |
+| created_by | text | Admin user ID |
+| created_at | timestamptz | |
+
+### `promo_code_redemptions`
+Records which users redeemed which codes.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| promo_code_id | uuid | FK → promo_codes |
+| user_id | text | |
+| purchase_id | uuid | FK → subscriber_purchases |
+| original_amount | numeric(10,2) | |
+| discount_amount | numeric(10,2) | |
+| final_amount | numeric(10,2) | |
+| redeemed_at | timestamptz | |
+
+---
+
+## Growth & Leads
+
+### `waitlist`
+Beta overflow waitlist signups.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| name | text | |
+| email | text | Unique, case-insensitive |
+| source | text | e.g. "beta" |
+| discount_code_sent | boolean | Whether WAITLIST20 email was sent |
+| notes | text | |
+| created_at | timestamptz | |
+
+### `calculator_saves`
+Saved wedding budget calculator sessions (public lead capture tool).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| short_code | text | Unique shareable code |
+| name | text | |
+| email | text | |
+| budget | numeric | |
+| guests | integer | |
+| state | text | US state |
+| month | text | Wedding month |
+| created_at | timestamptz | |
+
+### `onboarding_survey`
+Post-signup survey for segmentation (what tools they used before, venue status).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| user_id | text | Clerk user ID |
+| prior_tools | text[] | e.g. ["zola", "spreadsheet", "nothing"] |
+| venue_status | text | |
+| created_at | timestamptz | |
+
+### `blog_posts`
+Blog CMS content.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| slug | text | Unique URL slug |
+| title | text | |
+| excerpt | text | |
+| content | text | HTML content |
+| cover_image | text | |
+| category | text | |
+| tags | text[] | |
+| author_name | text | |
+| status | text | draft, published |
+| published_at | timestamptz | |
+| seo_title | text | |
+| seo_description | text | |
+| read_time_minutes | integer | |
+| created_at | timestamptz | |
+| updated_at | timestamptz | |
+
+---
+
+## Notifications & Email
+
+### `notifications`
+In-app notification bell items.
+
+### `notification_preferences`
+Per-wedding notification settings.
+
+### `email_preferences`
+CAN-SPAM compliant email preferences with unsubscribe tokens.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| wedding_id | uuid | FK → weddings (unique) |
+| unsubscribe_token | text | Unique, auto-generated |
+| marketing_emails | boolean | |
+| deadline_reminders | boolean | |
+| lifecycle_emails | boolean | |
+| unsubscribed_all | boolean | |
+| sms_reminders | boolean | |
+| phone_number | text | |
+| push_notifications | boolean | |
+| updated_at | timestamptz | |
+
+### `email_events`
+Tracks email delivery events via Resend webhooks.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| email_id | text | Resend email ID |
+| event_type | text | delivered, opened, clicked, bounced, complained |
+| recipient | text | |
+| metadata | jsonb | |
+| created_at | timestamptz | |
+
+### `lifecycle_emails`
+Tracks which lifecycle emails have been sent per wedding.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| wedding_id | uuid | FK → weddings |
+| email_type | text | post_wedding_welcome, download_reminder_1mo, etc. |
+| sent_at | timestamptz | |
+
+### `push_subscriptions`
+Web push notification subscriptions.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| user_id | text | Clerk user ID |
+| subscription | jsonb | Web Push API subscription object |
+| created_at | timestamptz | |
 
 ---
 
 ## System
+
+### `user_roles`
+Role assignments for access control.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| user_id | text | Clerk user ID |
+| role | text | user, admin, vendor, beta |
+| created_at | timestamptz | |
+
+Roles: `user` (default), `admin` (platform admin), `vendor` (vendor portal), `beta` (free lifetime access).
 
 ### `activity_log`
 Audit trail for all create/update/delete/restore actions.
@@ -462,21 +675,16 @@ Cron job execution history.
 | error_message | text | |
 | started_at | timestamptz | |
 
-### `lifecycle_emails`
-Tracks which lifecycle emails have been sent per wedding.
+### `calendar_feed_tokens`
+Secret tokens for unauthenticated iCal feed access.
 
 | Column | Type | Notes |
 |--------|------|-------|
 | id | uuid | PK |
 | wedding_id | uuid | FK → weddings |
-| email_type | text | post_wedding_welcome, download_reminder_3mo, etc. |
-| sent_at | timestamptz | |
-
-### `notifications`
-In-app notification bell items.
-
-### `notification_preferences`
-Per-wedding notification settings.
+| token | text | Unique secret token |
+| revoked_at | timestamptz | Null if active |
+| created_at | timestamptz | |
 
 ### `attachments`
 File uploads for tasks, vendors, website, mood board.
@@ -487,8 +695,13 @@ Task-to-task relationships.
 ### `task_resources`
 External links attached to tasks.
 
-### `user_roles`
-Admin role assignments.
-
 ### `app_settings`
 Platform-wide configuration (key/value JSONB).
+
+---
+
+## RPC Functions
+
+| Function | Purpose |
+|----------|---------|
+| `increment_promo_uses(code_id uuid)` | Atomically increment `promo_codes.current_uses` to prevent race conditions on concurrent purchases |

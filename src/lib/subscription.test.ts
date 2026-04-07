@@ -28,6 +28,7 @@ const mockAuth = vi.mocked(auth);
 const mockCreateSupabaseAdmin = vi.mocked(createSupabaseAdmin);
 
 function buildMockSupabase(overrides?: {
+  roleData?: unknown;
   purchaseData?: unknown;
   purchaseError?: unknown;
   weddingData?: unknown;
@@ -41,14 +42,14 @@ function buildMockSupabase(overrides?: {
   // Flexible chain that returns itself for any method, ending with single()
   function buildChain(result: unknown) {
     const obj: Record<string, unknown> = {};
-    for (const m of ["select", "eq", "limit", "single"]) {
+    for (const m of ["select", "eq", "in", "limit", "single"]) {
       obj[m] = vi.fn().mockReturnValue(obj);
     }
     obj.single = vi.fn().mockReturnValue(result);
     return obj;
   }
 
-  const adminResult = { data: null, error: null };
+  const adminResult = { data: overrides?.roleData ?? null, error: null };
 
   const mockFrom = vi.fn((table: string) => {
     if (table === "user_roles") return buildChain(adminResult);
@@ -73,9 +74,44 @@ describe("getSubscriptionStatus", () => {
     expect(status).toEqual({
       hasAccess: false,
       isPaid: false,
+      isBeta: false,
       isTrialing: false,
       trialDaysLeft: 0,
       trialExpired: true,
+    });
+  });
+
+  it("returns hasAccess=true, isPaid=true for beta role users", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_beta" } as Awaited<ReturnType<typeof auth>>);
+    const mockSupabase = buildMockSupabase({ roleData: { role: "beta" } });
+    mockCreateSupabaseAdmin.mockReturnValue(mockSupabase);
+
+    const status = await getSubscriptionStatus();
+
+    expect(status).toEqual({
+      hasAccess: true,
+      isPaid: true,
+      isBeta: true,
+      isTrialing: false,
+      trialDaysLeft: 0,
+      trialExpired: false,
+    });
+  });
+
+  it("returns hasAccess=true, isPaid=true for admin role users", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_admin" } as Awaited<ReturnType<typeof auth>>);
+    const mockSupabase = buildMockSupabase({ roleData: { role: "admin" } });
+    mockCreateSupabaseAdmin.mockReturnValue(mockSupabase);
+
+    const status = await getSubscriptionStatus();
+
+    expect(status).toEqual({
+      hasAccess: true,
+      isPaid: true,
+      isBeta: false,
+      isTrialing: false,
+      trialDaysLeft: 0,
+      trialExpired: false,
     });
   });
 
@@ -89,6 +125,7 @@ describe("getSubscriptionStatus", () => {
     expect(status).toEqual({
       hasAccess: true,
       isPaid: true,
+      isBeta: false,
       isTrialing: false,
       trialDaysLeft: 0,
       trialExpired: false,
@@ -109,6 +146,7 @@ describe("getSubscriptionStatus", () => {
     expect(status).toEqual({
       hasAccess: false,
       isPaid: false,
+      isBeta: false,
       isTrialing: false,
       trialDaysLeft: 0,
       trialExpired: true,
@@ -152,6 +190,7 @@ describe("getSubscriptionStatus", () => {
     expect(status).toEqual({
       hasAccess: false,
       isPaid: false,
+      isBeta: false,
       isTrialing: false,
       trialDaysLeft: 0,
       trialExpired: true,

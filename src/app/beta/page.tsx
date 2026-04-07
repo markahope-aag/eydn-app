@@ -59,8 +59,8 @@ export default function BetaPage() {
         <Link href="/">
           <Image src="/logo.png" alt="eydn" width={120} height={28} className="h-7 w-auto" />
         </Link>
-        <Link href="/sign-up" className="btn-primary btn-sm">
-          Sign Up
+        <Link href="/sign-in" className="text-[14px] font-semibold text-violet hover:text-plum transition">
+          Sign In
         </Link>
       </header>
 
@@ -68,7 +68,7 @@ export default function BetaPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="max-w-lg w-full text-center">
           <div className="inline-block bg-violet/10 text-violet text-[13px] font-semibold px-4 py-1.5 rounded-full mb-6">
-            {loading ? "Loading..." : status?.beta_available ? `${status.slots_remaining} beta spots left` : "Beta is full — join the waitlist"}
+            {loading ? "Loading..." : status?.beta_available ? `${status.slots_remaining} of ${status.total_slots} spots left` : "Beta is full — join the waitlist"}
           </div>
 
           <h1 className="text-[36px] font-semibold text-plum leading-tight">
@@ -82,18 +82,15 @@ export default function BetaPage() {
               : "Our beta is full, but you can join the waitlist and get an exclusive 20% discount when we launch."}
           </p>
 
-          {/* Beta available — show code + sign up CTA */}
+          {/* Beta available — direct sign-up, no promo code */}
           {status?.beta_available && !loading && (
             <div className="mt-8 card-summary p-8">
-              <p className="text-[13px] font-semibold text-muted mb-2">Your free beta access code:</p>
-              <div className="bg-plum text-whisper font-mono text-[28px] font-bold tracking-[4px] py-3 px-6 rounded-[12px] inline-block">
-                BETA50
-              </div>
-              <p className="mt-4 text-[14px] text-muted">
-                Use this code when you sign up to get full access — completely free.
+              <p className="text-[15px] text-plum font-semibold">Full access. No payment. No time limit.</p>
+              <p className="mt-2 text-[14px] text-muted">
+                Create your account and your beta spot is claimed automatically.
               </p>
               <Link
-                href="/sign-up"
+                href="/sign-up?redirect_url=/beta/claim"
                 className="btn-primary w-full mt-6 block text-center"
               >
                 Start Planning — Free
@@ -157,7 +154,6 @@ export default function BetaPage() {
           {/* Success state */}
           {submitted && (
             <div className="mt-8 card-summary p-8 text-center">
-              <div className="text-[48px] mb-4">🎉</div>
               <h2 className="text-[20px] font-semibold text-plum">{successMessage}</h2>
               <p className="mt-3 text-[15px] text-muted">
                 Check your inbox for your exclusive discount code. We&apos;ll notify you as soon as we launch.
@@ -171,13 +167,12 @@ export default function BetaPage() {
           {/* Features preview */}
           <div className="mt-12 grid gap-4 sm:grid-cols-3 text-left">
             {[
-              { icon: "🤖", title: "AI Wedding Guide", desc: "Chat with Eydn for personalized planning advice" },
-              { icon: "📋", title: "Smart Timeline", desc: "50+ auto-generated tasks with real deadlines" },
-              { icon: "💰", title: "Budget Tracker", desc: "Track every dollar with vendor-linked expenses" },
+              { title: "AI Wedding Guide", desc: "Chat with Eydn for personalized planning advice" },
+              { title: "Smart Timeline", desc: "50+ auto-generated tasks with real deadlines" },
+              { title: "Budget Tracker", desc: "Track every dollar with vendor-linked expenses" },
             ].map((f) => (
               <div key={f.title} className="card p-4">
-                <span className="text-[24px]">{f.icon}</span>
-                <h3 className="mt-2 text-[14px] font-semibold text-plum">{f.title}</h3>
+                <h3 className="text-[14px] font-semibold text-plum">{f.title}</h3>
                 <p className="mt-1 text-[12px] text-muted">{f.desc}</p>
               </div>
             ))}

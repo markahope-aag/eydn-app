@@ -7,6 +7,7 @@ import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { Tooltip } from "@/components/Tooltip";
 import { trackCollaboratorInvited, trackExport } from "@/lib/analytics";
+import { usePremium } from "@/components/PremiumGate";
 
 type Collaborator = {
   id: string;
@@ -89,6 +90,9 @@ export default function SettingsPage() {
   // Activity log
   const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
   const [activityLoading, setActivityLoading] = useState(true);
+
+  // Subscription
+  const { loaded: subLoaded, isTrialing, trialDaysLeft, isPaid, isBeta } = usePremium();
 
   // Export
   const [exporting, setExporting] = useState(false);
@@ -462,6 +466,53 @@ export default function SettingsPage() {
           <p className="text-[13px] text-muted">Click your avatar in the bottom-left sidebar to update your account settings.</p>
         </div>
       </div>
+
+      {/* Subscription */}
+      {subLoaded && (
+        <div className="mt-10">
+          <h2 className="text-[18px] font-semibold text-plum">Subscription</h2>
+          {isPaid ? (
+            <div className="mt-3 card p-5 flex items-center gap-3">
+              <span className="w-2 h-2 rounded-full bg-confirmed-text flex-shrink-0" />
+              <p className="text-[15px] text-plum font-semibold">
+                {isBeta ? "Beta access — full features" : "Premium — lifetime access"}
+              </p>
+            </div>
+          ) : isTrialing ? (
+            <div className="mt-3 card p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex-1">
+                <p className="text-[15px] font-semibold text-plum">
+                  Free trial — {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} remaining
+                </p>
+                <p className="text-[13px] text-muted mt-1">
+                  Upgrade to keep everything you&apos;ve built. One payment, yours forever.
+                </p>
+              </div>
+              <Link
+                href="/dashboard/pricing"
+                className="rounded-full bg-brand-gradient px-5 py-2 text-[13px] font-semibold text-white shadow hover:opacity-90 transition text-center flex-shrink-0"
+              >
+                Upgrade — $79
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-3 card p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex-1">
+                <p className="text-[15px] font-semibold text-plum">Your free trial has ended</p>
+                <p className="text-[13px] text-muted mt-1">
+                  Unlock full access for $79 — one payment, yours forever.
+                </p>
+              </div>
+              <Link
+                href="/dashboard/pricing"
+                className="rounded-full bg-brand-gradient px-5 py-2 text-[13px] font-semibold text-white shadow hover:opacity-90 transition text-center flex-shrink-0"
+              >
+                Upgrade — $79
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Your Data */}
       <div className="mt-10">
