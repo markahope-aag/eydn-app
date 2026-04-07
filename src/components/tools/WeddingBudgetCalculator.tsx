@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -202,11 +202,6 @@ export default function WeddingBudgetCalculator() {
     return { text: formatCurrency(diff), cls: "text-emerald-600" };
   })();
 
-  const getShareUrl = useCallback(() => {
-    if (typeof window !== "undefined") return window.location.href;
-    const params = new URLSearchParams({ budget: String(budget), guests: String(guests), state: stateKey, month: String(monthIdx) });
-    return `https://eydn.app/tools/wedding-budget-calculator?${params.toString()}`;
-  }, [budget, guests, stateKey, monthIdx]);
 
   return (
     <div className="bg-white rounded-2xl border border-border shadow-sm p-6 md:p-8">
@@ -359,11 +354,16 @@ export default function WeddingBudgetCalculator() {
       <div className="mt-6 pt-5 border-t border-border flex flex-wrap items-center gap-4">
         <button
           onClick={() => {
-            const url = getShareUrl();
-            navigator.clipboard.writeText(url).then(
-              () => toast.success("Link copied — anyone with this URL sees your exact breakdown"),
-              () => window.prompt("Copy this link:", url),
-            );
+            if (savedCode) {
+              const url = `https://eydn.app/tools/wedding-budget-calculator/s/${savedCode}`;
+              navigator.clipboard.writeText(url).then(
+                () => toast.success("Link copied"),
+                () => window.prompt("Copy this link:", url),
+              );
+            } else {
+              setShowSave(true);
+              setSavedCode(null);
+            }
           }}
           className="inline-flex items-center gap-2 text-[14px] font-semibold text-violet hover:text-plum transition cursor-pointer"
         >
@@ -371,7 +371,7 @@ export default function WeddingBudgetCalculator() {
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
           </svg>
-          Copy shareable link
+          {savedCode ? "Copy your link" : "Share your breakdown"}
         </button>
         <button
           onClick={() => window.print()}
