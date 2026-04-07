@@ -185,6 +185,7 @@ export type Database = {
           guests: number
           id: string
           month: number
+          name: string | null
           short_code: string
           state: string
         }
@@ -195,6 +196,7 @@ export type Database = {
           guests: number
           id?: string
           month: number
+          name?: string | null
           short_code: string
           state: string
         }
@@ -205,6 +207,7 @@ export type Database = {
           guests?: number
           id?: string
           month?: number
+          name?: string | null
           short_code?: string
           state?: string
         }

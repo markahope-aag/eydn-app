@@ -57,16 +57,18 @@ The URL updates in real-time as the user adjusts inputs via `history.replaceStat
 
 1. User interacts with the calculator freely (no gate)
 2. Clicks "Save my breakdown"
-3. Modal asks for email with the promise: "No spam, ever. Just your saved calculator link."
+3. Modal asks for first name and email: "Enter your name and email and we'll give you a personal link to come back anytime."
 4. On submit, a POST to `/api/tools/calculator-save` stores their data and returns a 7-character short code
 5. Confirmation screen shows `eydn.app/tools/wedding-budget-calculator/s/a7x9k2` with a copy button
 6. When they visit that link later, a server-side redirect restores their exact inputs
+7. The calculator displays "Karly's Wedding Budget" at the top when a name is associated
 
 ### What gets stored
 
 `calculator_saves` table:
 - `id` (UUID, primary key)
 - `short_code` (text, unique, indexed) — 7-character base64url code
+- `name` (text, nullable) — first name for personalization ("Karly's Wedding Budget")
 - `email` (text, indexed)
 - `budget` (integer)
 - `guests` (integer)
@@ -81,6 +83,7 @@ If the same email saves again, the existing record is updated with the new calcu
 ### Lead value
 
 Each captured lead includes:
+- First name (for personalized emails and the calculator title)
 - Email address
 - Budget (reveals their spending tier — $15K vs $50K is very different messaging)
 - Guest count (wedding size)

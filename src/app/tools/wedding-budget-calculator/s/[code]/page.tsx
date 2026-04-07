@@ -11,7 +11,7 @@ export default async function SavedCalculatorPage({
 
   const { data } = await supabase
     .from("calculator_saves")
-    .select("budget, guests, state, month")
+    .select("name, budget, guests, state, month")
     .eq("short_code", code)
     .maybeSingle();
 
@@ -19,12 +19,13 @@ export default async function SavedCalculatorPage({
     redirect("/tools/wedding-budget-calculator");
   }
 
-  const params2 = new URLSearchParams({
+  const urlParams = new URLSearchParams({
     budget: String(data.budget),
     guests: String(data.guests),
     state: data.state as string,
     month: String(data.month),
   });
+  if (data.name) urlParams.set("name", data.name as string);
 
-  redirect(`/tools/wedding-budget-calculator?${params2.toString()}`);
+  redirect(`/tools/wedding-budget-calculator?${urlParams.toString()}`);
 }

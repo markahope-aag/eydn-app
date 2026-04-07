@@ -138,14 +138,17 @@ export default function WeddingBudgetCalculator() {
   const gParam = searchParams.get("guests");
   const sParam = searchParams.get("state");
   const mParam = searchParams.get("month");
+  const nParam = searchParams.get("name");
 
   const [budget, setBudget] = useState(() => bParam ? Math.min(75000, Math.max(5000, Number(bParam))) : 25000);
   const [guests, setGuests] = useState(() => gParam ? Math.min(300, Math.max(10, Number(gParam))) : 120);
   const [stateKey, setStateKey] = useState(() => sParam && allFlat.find((st) => st.label === sParam) ? sParam : "Wisconsin");
   const [monthIdx, setMonthIdx] = useState(() => mParam ? Math.min(11, Math.max(0, Number(mParam))) : 8);
+  const [ownerName, setOwnerName] = useState(() => nParam || "");
 
   // Save modal state
   const [showSave, setShowSave] = useState(false);
+  const [saveName, setSaveName] = useState("");
   const [saveEmail, setSaveEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedCode, setSavedCode] = useState<string | null>(null);
@@ -160,11 +163,12 @@ export default function WeddingBudgetCalculator() {
       const res = await fetch("/api/tools/calculator-save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: saveEmail.trim(), budget, guests, state: stateKey, month: monthIdx }),
+        body: JSON.stringify({ name: saveName.trim(), email: saveEmail.trim(), budget, guests, state: stateKey, month: monthIdx }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setSavedCode(data.short_code);
+      if (saveName.trim()) setOwnerName(saveName.trim());
     } catch {
       toast.error("Could not save. Try again.");
     } finally {
@@ -206,6 +210,11 @@ export default function WeddingBudgetCalculator() {
 
   return (
     <div className="bg-white rounded-2xl border border-border shadow-sm p-6 md:p-8">
+      {ownerName && (
+        <p className="text-[20px] font-semibold text-plum mb-6" style={{ fontFamily: "var(--font-serif)" }}>
+          {ownerName}&rsquo;s Wedding Budget
+        </p>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left: Inputs */}
         <div>
@@ -454,17 +463,26 @@ export default function WeddingBudgetCalculator() {
               <>
                 <h3 className="text-[20px] font-semibold text-plum">Save your breakdown</h3>
                 <p className="mt-2 text-[14px] text-muted leading-relaxed">
-                  Enter your email and we&rsquo;ll give you a personal link to come back to your exact calculator settings anytime.
+                  Enter your name and email and we&rsquo;ll give you a personal link to come back anytime.
                 </p>
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  value={saveEmail}
-                  onChange={(e) => setSaveEmail(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
-                  className="mt-4 w-full rounded-[10px] border border-border bg-white px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
-                  autoFocus
-                />
+                <div className="mt-4 flex gap-3">
+                  <input
+                    type="text"
+                    placeholder="First name"
+                    value={saveName}
+                    onChange={(e) => setSaveName(e.target.value)}
+                    className="w-1/3 rounded-[10px] border border-border bg-white px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+                    autoFocus
+                  />
+                  <input
+                    type="email"
+                    placeholder="Your email"
+                    value={saveEmail}
+                    onChange={(e) => setSaveEmail(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
+                    className="flex-1 rounded-[10px] border border-border bg-white px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+                  />
+                </div>
                 <p className="mt-2 text-[11px] text-muted/60">
                   No spam, ever. Just your saved calculator link.
                 </p>

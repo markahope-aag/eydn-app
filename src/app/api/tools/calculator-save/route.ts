@@ -9,7 +9,8 @@ function generateShortCode(): string {
 /** POST — save a calculator state and return the short code */
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { email, budget, guests, state, month } = body as {
+  const { name, email, budget, guests, state, month } = body as {
+    name?: string;
     email?: string;
     budget?: number;
     guests?: number;
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
   if (existing) {
     await supabase
       .from("calculator_saves")
-      .update({ budget, guests, state, month })
+      .update({ name: name?.trim() || null, budget, guests, state, month })
       .eq("id", existing.id);
 
     return NextResponse.json({ short_code: existing.short_code });
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
 
   const { error } = await supabase.from("calculator_saves").insert({
     short_code: shortCode,
+    name: name?.trim() || null,
     email: email.toLowerCase().trim(),
     budget,
     guests,
@@ -70,7 +72,7 @@ export async function GET(request: NextRequest) {
   const supabase = createSupabaseAdmin();
   const { data } = await supabase
     .from("calculator_saves")
-    .select("budget, guests, state, month")
+    .select("name, budget, guests, state, month")
     .eq("short_code", code)
     .maybeSingle();
 
