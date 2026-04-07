@@ -114,7 +114,7 @@ export default function HelpPage() {
 
       {/* Search */}
       <div className="mt-4 relative">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
           <path d="M11 11L14.5 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
@@ -123,7 +123,7 @@ export default function HelpPage() {
           placeholder="Search help topics..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-[10px] border border-border bg-white pl-9 pr-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+          className="w-full rounded-[10px] border border-border bg-white pl-11 pr-3 py-2.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
         />
       </div>
 
