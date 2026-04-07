@@ -702,7 +702,7 @@ export default function GuestsPage() {
           <span className="text-[13px] text-muted font-medium">Select all</span>
         </label>
         <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
             <path d="M11 11L14.5 14.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
@@ -712,7 +712,7 @@ export default function GuestsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search guests by name or email"
-            className="w-full rounded-[10px] border-border pl-9 pr-3 py-1.5 text-[15px]"
+            className="w-full rounded-[10px] border border-border bg-white pl-11 pr-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
           />
         </div>
         <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} aria-label="Filter by role" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]">
