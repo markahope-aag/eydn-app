@@ -177,6 +177,39 @@ export type Database = {
         }
         Relationships: []
       }
+      calculator_saves: {
+        Row: {
+          budget: number
+          created_at: string | null
+          email: string
+          guests: number
+          id: string
+          month: number
+          short_code: string
+          state: string
+        }
+        Insert: {
+          budget: number
+          created_at?: string | null
+          email: string
+          guests: number
+          id?: string
+          month: number
+          short_code: string
+          state: string
+        }
+        Update: {
+          budget?: number
+          created_at?: string | null
+          email?: string
+          guests?: number
+          id?: string
+          month?: number
+          short_code?: string
+          state?: string
+        }
+        Relationships: []
+      }
       calendar_feed_tokens: {
         Row: {
           created_at: string

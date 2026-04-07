@@ -144,6 +144,34 @@ export default function WeddingBudgetCalculator() {
   const [stateKey, setStateKey] = useState(() => sParam && allFlat.find((st) => st.label === sParam) ? sParam : "Wisconsin");
   const [monthIdx, setMonthIdx] = useState(() => mParam ? Math.min(11, Math.max(0, Number(mParam))) : 8);
 
+  // Save modal state
+  const [showSave, setShowSave] = useState(false);
+  const [saveEmail, setSaveEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [savedCode, setSavedCode] = useState<string | null>(null);
+
+  async function handleSave() {
+    if (!saveEmail.trim() || !saveEmail.includes("@")) {
+      toast.error("Enter a valid email address");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/tools/calculator-save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: saveEmail.trim(), budget, guests, state: stateKey, month: monthIdx }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setSavedCode(data.short_code);
+    } catch {
+      toast.error("Could not save. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   // Keep URL in sync so bookmarking/sharing always works
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -347,9 +375,17 @@ export default function WeddingBudgetCalculator() {
           </svg>
           Save as PDF
         </button>
-        <p className="text-[12px] text-muted/50 ml-auto">
-          Bookmark this page — the URL updates as you adjust
-        </p>
+        <button
+          onClick={() => { setShowSave(true); setSavedCode(null); }}
+          className="inline-flex items-center gap-2 text-[14px] font-semibold text-violet hover:text-plum transition cursor-pointer"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+            <polyline points="17 21 17 13 7 13 7 21" />
+            <polyline points="7 3 7 8 15 8" />
+          </svg>
+          Save my breakdown
+        </button>
       </div>
 
       {/* CTA */}
@@ -370,6 +406,88 @@ export default function WeddingBudgetCalculator() {
           Start free — $79 one-time
         </Link>
       </div>
+
+      {/* Save modal */}
+      {showSave && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm px-6">
+          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
+            {savedCode ? (
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-violet/10 mb-4">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-violet">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+                <h3 className="text-[20px] font-semibold text-plum">Saved</h3>
+                <p className="mt-2 text-[14px] text-muted leading-relaxed">
+                  Your breakdown is saved. Come back anytime with this link:
+                </p>
+                <div className="mt-4 flex items-center justify-center gap-2 bg-lavender rounded-full px-4 py-2.5">
+                  <span className="text-[13px] font-semibold text-plum truncate">
+                    eydn.app/tools/wedding-budget-calculator/s/{savedCode}
+                  </span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://eydn.app/tools/wedding-budget-calculator/s/${savedCode}`);
+                      toast.success("Link copied");
+                    }}
+                    className="flex-shrink-0 text-violet hover:text-plum transition cursor-pointer"
+                    aria-label="Copy saved link"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                  </button>
+                </div>
+                <p className="mt-4 text-[12px] text-muted">
+                  We sent this link to <span className="font-semibold">{saveEmail}</span> too.
+                </p>
+                <button
+                  onClick={() => setShowSave(false)}
+                  className="mt-6 btn-secondary"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-[20px] font-semibold text-plum">Save your breakdown</h3>
+                <p className="mt-2 text-[14px] text-muted leading-relaxed">
+                  Enter your email and we&rsquo;ll give you a personal link to come back to your exact calculator settings anytime.
+                </p>
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  value={saveEmail}
+                  onChange={(e) => setSaveEmail(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}
+                  className="mt-4 w-full rounded-[10px] border border-border bg-white px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+                  autoFocus
+                />
+                <p className="mt-2 text-[11px] text-muted/60">
+                  No spam, ever. Just your saved calculator link.
+                </p>
+                <div className="mt-5 flex gap-3">
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="btn-primary flex-1"
+                  >
+                    {saving ? "Saving..." : "Save & email my link"}
+                  </button>
+                  <button
+                    onClick={() => setShowSave(false)}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
