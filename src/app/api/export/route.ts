@@ -1,6 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
+import { untypedClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -8,7 +8,7 @@ export async function GET() {
   const { wedding, supabase } = result;
 
   const weddingId = wedding.id;
-  const raw = supabase as unknown as SupabaseClient;
+  const raw = untypedClient(supabase);
 
   // Run all queries in parallel
   const [

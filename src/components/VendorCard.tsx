@@ -65,11 +65,8 @@ export function VendorCard({ vendorId }: { vendorId: string }) {
       .finally(() => setLoading(false));
   }
 
-  // Auto-fetch on mount
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vendorId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchData(); }, [vendorId]);
 
   if (loading) {
     return (

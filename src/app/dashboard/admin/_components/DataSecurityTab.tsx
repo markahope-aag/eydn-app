@@ -16,6 +16,7 @@ export default function DataSecurityTab({
   onLoad: () => void;
   onTriggerBackup: () => void;
 }) {
+  // Fire once on mount — onLoad is stable (defined in parent with useCallback or equivalent)
   useEffect(() => { onLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (backupLoading) {

@@ -1,6 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
+import { untypedClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 type TrashItem = {
   type: string;
@@ -25,7 +25,7 @@ export async function GET() {
   if ("error" in result) return result.error;
   const { wedding, supabase } = result;
 
-  const raw = supabase as unknown as SupabaseClient;
+  const raw = untypedClient(supabase);
   const weddingId = wedding.id;
 
   const queries = SOFT_DELETE_TABLES.map(({ table, type, nameField }) =>

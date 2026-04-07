@@ -105,42 +105,29 @@ export function TaskDetail({
   const dueDateInfo = task.due_date ? formatDueDate(task.due_date) : null;
   const isOverdue = dueDateInfo?.isOverdue && task.status !== "done";
 
-  // Fetch resources, attachments, and related tasks on open
-  useEffect(() => {
-    fetchResources();
-    fetchAttachments();
-    fetchRelatedTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task.id]);
-
   async function fetchResources() {
     try {
       const res = await fetch(`/api/tasks/${task.id}/resources`);
       if (res.ok) setResources(await res.json());
-    } catch {
-      /* silent */
-    }
+    } catch { /* silent */ }
   }
 
   async function fetchAttachments() {
     try {
-      const res = await fetch(
-        `/api/attachments?entity_type=task&entity_id=${task.id}`
-      );
+      const res = await fetch(`/api/attachments?entity_type=task&entity_id=${task.id}`);
       if (res.ok) setAttachments(await res.json());
-    } catch {
-      /* silent */
-    }
+    } catch { /* silent */ }
   }
 
   async function fetchRelatedTasks() {
     try {
       const res = await fetch(`/api/tasks/${task.id}/related`);
       if (res.ok) setRelatedTasks(await res.json());
-    } catch {
-      /* silent */
-    }
+    } catch { /* silent */ }
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchResources(); fetchAttachments(); fetchRelatedTasks(); }, [task.id]);
 
   async function addResource(e: React.FormEvent) {
     e.preventDefault();

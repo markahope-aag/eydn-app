@@ -42,6 +42,7 @@ export function money(n: number | null | undefined): string {
   return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// React-PDF StyleSheet.create uses complex generics incompatible with simple typing
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createStyles(StyleSheet: { create: (styles: any) => any }) {
   return StyleSheet.create({

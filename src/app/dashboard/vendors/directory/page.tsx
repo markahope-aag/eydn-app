@@ -196,10 +196,9 @@ export default function VendorDirectoryPage() {
   useEffect(() => {
     const featured = vendors.filter((v) => v.featured);
     for (const v of featured.slice(0, 6)) {
-      if (!gmbCache[v.id]) fetchGmb(v.id);
+      fetchGmb(v.id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vendors]);
+  }, [vendors, fetchGmb]);
 
   function toggleDetails(vendorId: string) {
     if (expandedId === vendorId) {
@@ -678,8 +677,7 @@ function VendorRow({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gmbState]);
+  }, [gmbState, onVisible]);
 
   const photo = gmbState && gmbState !== "loading" && gmbState !== "error" ? gmbState.photoUrl : null;
 

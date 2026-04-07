@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
-import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { createSupabaseAdmin, untypedClient } from "@/lib/supabase/server";
 
 type AuditAction = "create" | "update" | "delete" | "restore";
 
@@ -129,7 +129,7 @@ export async function softDelete(
   id: string,
   weddingId: string
 ): Promise<{ error: { message: string } | null }> {
-  const { error } = await (supabase as unknown as SupabaseClient)
+  const { error } = await untypedClient(supabase)
     .from(table)
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", id)
@@ -147,7 +147,7 @@ export async function restoreRecord(
   id: string,
   weddingId: string
 ): Promise<{ error: { message: string } | null }> {
-  const { error } = await (supabase as unknown as SupabaseClient)
+  const { error } = await untypedClient(supabase)
     .from(table)
     .update({ deleted_at: null })
     .eq("id", id)

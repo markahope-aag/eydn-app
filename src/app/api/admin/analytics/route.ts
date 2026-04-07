@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/admin";
+import { untypedClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -122,7 +123,7 @@ export async function GET() {
   ];
 
   // Dynamic table iteration requires untyped client — table names come from runtime array
-  const sb = supabase as unknown as import("@supabase/supabase-js").SupabaseClient;
+  const sb = untypedClient(supabase);
   const featureAdoption = await Promise.all(
     featureTables.map(async ({ table, feature }) => {
       let query = sb.from(table).select("wedding_id");
