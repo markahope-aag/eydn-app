@@ -336,7 +336,7 @@ export default function WeddingBudgetCalculator() {
               }
             );
           }}
-          className="inline-flex items-center gap-2 text-[14px] font-semibold text-violet hover:text-plum transition"
+          className="inline-flex items-center gap-2 text-[14px] font-semibold text-violet hover:text-plum transition cursor-pointer"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
