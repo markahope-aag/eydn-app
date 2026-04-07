@@ -195,14 +195,16 @@ npm run security-check # Run security audit + TypeScript + ESLint
 - **[Vendor Marketplace](docs/VENDOR_MARKETPLACE.md)** - Vendor portal, placement tiers, and marketplace operations
 - **[Wedding Websites](docs/WEDDING_WEBSITES.md)** - Public wedding site features, RSVP system, and customization
 - **[Subscription Model](docs/SUBSCRIPTION_MODEL.md)** - Pricing strategy, trial system, and revenue model
-- **[Vendor Categories](docs/VENDOR_CATEGORIES.md)** - Supported vendor types and classifications
-- **[Email Templates](docs/VENDOR_EMAIL_TEMPLATES.md)** - Pre-built vendor outreach templates
-- **[Onboarding Process](docs/ONBOARDING_QUESTIONNAIRE.md)** - User onboarding flow and questionnaire
 
 ### Technical Documentation
 - **[System Architecture](docs/ARCHITECTURE.md)** - Technical architecture, database schema, and infrastructure
-- **[API Reference](docs/API.md)** - Complete API documentation with endpoints and examples
 - **[Development Guide](docs/DEVELOPMENT.md)** - Setup instructions, deployment, and contribution guidelines
+- **[Testing Guide](docs/TESTING_GUIDE.md)** - Comprehensive testing practices and procedures (388 tests)
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment and operational procedures
+- **[Performance Optimization](docs/PERFORMANCE_OPTIMIZATION.md)** - Performance tuning and monitoring strategies
+- **[API Reference](docs/API.md)** - Complete API documentation with endpoints and examples
+- **[Security Audit Checklist](docs/SECURITY_AUDIT_CHECKLIST.md)** - Systematic security audit procedures
+- **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues, solutions, and debugging procedures
 
 📖 **[Complete Documentation Index](docs/README.md)** - Full documentation overview and navigation
 

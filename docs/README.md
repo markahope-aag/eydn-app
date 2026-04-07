@@ -24,8 +24,13 @@ Welcome to the comprehensive documentation for eydn, the AI-powered wedding plan
 - **[System Architecture](ARCHITECTURE.md)** - Technical architecture, database schema, and infrastructure
 - **[API Reference](API.md)** - Complete API documentation with endpoints and examples
 - **[Development Guide](DEVELOPMENT.md)** - Setup instructions, deployment, and contribution guidelines
+- **[Testing Guide](TESTING_GUIDE.md)** - Comprehensive testing practices, configuration, and procedures
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Production deployment, environment configuration, and operations
+- **[Performance Optimization](PERFORMANCE_OPTIMIZATION.md)** - Performance tuning, monitoring, and optimization strategies
 - **[Security & Compliance](SECURITY.md)** - Security measures, compliance standards, and best practices
 - **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Common issues, solutions, and debugging procedures
+- **[CI/CD Pipeline](CI_CD_PIPELINE.md)** - Continuous integration and deployment processes
+- **[Technical Debt](TECHNICAL_DEBT.md)** - Post-launch improvements and optimization opportunities
 - **[Changelog](CHANGELOG.md)** - Platform updates, changes, and migration guides
 
 ## 🚀 Quick Start
@@ -33,7 +38,10 @@ Welcome to the comprehensive documentation for eydn, the AI-powered wedding plan
 ### For Developers
 1. Read the [Development Guide](DEVELOPMENT.md) for setup instructions
 2. Review the [System Architecture](ARCHITECTURE.md) to understand the codebase
-3. Check the [API Reference](API.md) for endpoint documentation
+3. Follow the [Testing Guide](TESTING_GUIDE.md) for testing practices
+4. Check the [API Reference](API.md) for endpoint documentation
+5. Use the [Performance Optimization](PERFORMANCE_OPTIMIZATION.md) guide for optimization
+6. Follow the [Deployment Guide](DEPLOYMENT_GUIDE.md) for production deployment
 
 ### For Product Teams
 1. Start with the [Product Vision](PRODUCT_VISION.md) for feature overview
@@ -69,15 +77,16 @@ Welcome to the comprehensive documentation for eydn, the AI-powered wedding plan
 
 ## 🔄 Documentation Updates
 
-### Recent Updates (March 2026)
+### Recent Updates (April 2026)
 - ✅ **Complete documentation overhaul** - Updated all docs to reflect current eydn platform
-- ✅ **Technical stack updates** - Next.js 16.2.0, React 19.2.4, Tailwind CSS 4
+- ✅ **Comprehensive testing guide** - 388 tests across 35 test files with Vitest configuration
+- ✅ **Production deployment guide** - Complete deployment procedures and environment setup
+- ✅ **Performance optimization guide** - Detailed optimization strategies and monitoring
+- ✅ **CI/CD pipeline documentation** - GitHub Actions workflow and automation
+- ✅ **Technical debt tracking** - Post-launch improvements and roadmap
 - ✅ **Authentication architecture** - Updated to reflect Next.js 16 proxy pattern
 - ✅ **Monitoring documentation** - Comprehensive monitoring stack (Sentry, Vercel Analytics, Ahrefs, GTM+GA4, UptimeRobot)
-- ✅ **Test coverage documentation** - 388 tests across 35 test files, all passing
-- ✅ **Font corrections** - Updated from Nunito to DM Sans (actual implementation)
 - ✅ **Security documentation** - Premium enforcement, rate limiting, audit trails
-- ✅ **Development guide updates** - Current setup instructions and deployment processes
 
 ### Planned Updates
 - **User Guides** - Step-by-step user guides for key features
