@@ -47,21 +47,32 @@ These multipliers are baked into the client-side data. They don't affect the cat
 The URL updates in real-time as the user adjusts inputs via `history.replaceState`. This means:
 
 - Bookmarking the page preserves the exact calculator state
-- Sharing the URL gives someone the same inputs
-- The "Copy shareable link" button copies the current URL
-- Example: `/tools/wedding-budget-calculator?budget=32000&guests=150&state=Texas&month=5`
+- Direct URL access with params restores inputs (e.g., `?budget=32000&guests=150&state=Texas&month=5`)
 
-## Save & email capture
+Note: the raw param URL is only used for bookmarking. Sharing is routed through the save flow (see below).
+
+## Save, share & email capture
+
+All sharing is gated through the save flow. There is no way to copy a shareable link without providing a name and email. This makes every shared calculator link a captured lead.
 
 ### User flow
 
-1. User interacts with the calculator freely (no gate)
-2. Clicks "Save my breakdown"
+1. User interacts with the calculator freely (no gate on usage)
+2. Clicks "Share your breakdown" or "Save my breakdown"
 3. Modal asks for first name and email: "Enter your name and email and we'll give you a personal link to come back anytime."
 4. On submit, a POST to `/api/tools/calculator-save` stores their data and returns a 7-character short code
 5. Confirmation screen shows `eydn.app/tools/wedding-budget-calculator/s/a7x9k2` with a copy button
-6. When they visit that link later, a server-side redirect restores their exact inputs
-7. The calculator displays "Karly's Wedding Budget" at the top when a name is associated
+6. "Share your breakdown" button changes to "Copy your link" — instant copy, no modal on repeat
+7. When they (or anyone) visit the short link, a server-side redirect restores their exact inputs
+8. The calculator displays "Karly's Wedding Budget" at the top when a name is associated
+
+### Why sharing requires saving
+
+Every shared link is a captured lead. There is no "Copy shareable link" that bypasses email capture. The raw URL with query params still works for bookmarking, but the only way to get a clean shareable link is through the save modal. This means:
+
+- Every person who shares the calculator gives us their name, email, budget, state, and guest count
+- The shared link (`/s/a7x9k2`) is cleaner than a URL with 4 query params
+- The recipient sees "Karly's Wedding Budget" which feels personal, not generic
 
 ### What gets stored
 
