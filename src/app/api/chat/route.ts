@@ -299,7 +299,8 @@ export async function POST(request: Request) {
 
   // Call Claude with tool use
   if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
+    console.error("[chat] AI service API key not configured");
+    return NextResponse.json({ error: "AI service temporarily unavailable" }, { status: 503 });
   }
 
   try {

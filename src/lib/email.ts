@@ -21,8 +21,8 @@ type EmailParams = {
 
 export async function sendEmail(params: EmailParams): Promise<{ success: boolean; error?: string; emailId?: string }> {
   if (!process.env.RESEND_API_KEY) {
-    console.warn("[EMAIL] RESEND_API_KEY not configured, skipping email");
-    return { success: false, error: "RESEND_API_KEY not configured" };
+    console.warn("[email] Email service not configured, skipping");
+    return { success: false, error: "Email service not configured" };
   }
 
   try {

@@ -98,7 +98,8 @@ export async function POST(request: Request) {
 
   const secret = process.env.BACKUP_SECRET;
   if (!secret) {
-    return NextResponse.json({ error: "BACKUP_SECRET not configured" }, { status: 500 });
+    console.error("[backups] Backup service not configured");
+    return NextResponse.json({ error: "Backup service not configured" }, { status: 503 });
   }
 
   // Call the backup cron endpoint internally
