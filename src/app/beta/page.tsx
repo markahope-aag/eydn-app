@@ -168,7 +168,7 @@ export default function BetaPage() {
           <div className="mt-12 grid gap-4 sm:grid-cols-3 text-left">
             {[
               { title: "AI Wedding Guide", desc: "Chat with Eydn for personalized planning advice" },
-              { title: "Smart Timeline", desc: "50+ auto-generated tasks with real deadlines" },
+              { title: "Task Timeline", desc: "50+ auto-generated tasks with real deadlines" },
               { title: "Budget Tracker", desc: "Track every dollar with vendor-linked expenses" },
             ].map((f) => (
               <div key={f.title} className="card p-4">

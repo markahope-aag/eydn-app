@@ -26,6 +26,121 @@ function canSearch(userId: string): boolean {
 // ─── Search result cache (24h) ──────────────────────────────────────────────
 const searchCache = new Map<string, { results: string; expiresAt: number }>();
 
+// Escape LIKE wildcards so user-supplied text matches literally.
+function escapeLike(s: string): string {
+  return s.replace(/[\\%_]/g, (m) => `\\${m}`);
+}
+
+// ─── Runtime validation ────────────────────────────────────────────────────
+// Claude's tool input_schema is a client-side hint — models can still emit
+// values that violate it. These assertions are the backstop before any DB write.
+
+class ToolValidationError extends Error {}
+
+const MAX_SHORT = 200;
+const MAX_MEDIUM = 500;
+const MAX_LONG = 2000;
+const MAX_MONEY = 1_000_000;
+
+const RSVP_STATUSES = ["not_invited", "invite_sent", "pending", "accepted", "declined"] as const;
+const VENDOR_STATUSES = ["searching", "contacted", "quote_received", "booked", "deposit_paid", "paid_in_full"] as const;
+const GUEST_ROLES = ["family", "friend", "wedding_party", "coworker", "plus_one", "other"] as const;
+const MOOD_CATEGORIES = [
+  "General", "Ceremony", "Reception", "Florals", "Table Settings", "Lighting",
+  "Attire", "Hair & Makeup", "Cake & Desserts", "Stationery", "Colors & Palette",
+  "Photo Inspo", "Favors", "Other",
+] as const;
+
+function assertString(val: unknown, field: string, max = MAX_SHORT): string {
+  if (typeof val !== "string") throw new ToolValidationError(`${field} must be text.`);
+  const trimmed = val.trim();
+  if (!trimmed) throw new ToolValidationError(`${field} cannot be empty.`);
+  if (trimmed.length > max) throw new ToolValidationError(`${field} is too long (max ${max} characters).`);
+  return trimmed;
+}
+
+function assertStringOrNull(val: unknown, field: string, max = MAX_SHORT): string | null {
+  if (val == null || val === "") return null;
+  return assertString(val, field, max);
+}
+
+function assertMoneyOrNull(val: unknown, field: string): number | null {
+  if (val == null) return null;
+  if (typeof val !== "number" || !Number.isFinite(val)) {
+    throw new ToolValidationError(`${field} must be a number.`);
+  }
+  if (val < 0) throw new ToolValidationError(`${field} cannot be negative.`);
+  if (val > MAX_MONEY) {
+    throw new ToolValidationError(`${field} exceeds maximum ($${MAX_MONEY.toLocaleString()}).`);
+  }
+  return val;
+}
+
+function assertEmailOrNull(val: unknown, field = "Email"): string | null {
+  if (val == null || val === "") return null;
+  if (typeof val !== "string") throw new ToolValidationError(`${field} must be text.`);
+  const trimmed = val.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+    throw new ToolValidationError(`"${trimmed}" is not a valid email address.`);
+  }
+  if (trimmed.length > MAX_SHORT) {
+    throw new ToolValidationError(`${field} is too long.`);
+  }
+  return trimmed;
+}
+
+function assertDateOrNull(val: unknown, field: string): string | null {
+  if (val == null || val === "") return null;
+  if (typeof val !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+    throw new ToolValidationError(`${field} must be in YYYY-MM-DD format.`);
+  }
+  const d = new Date(val);
+  if (Number.isNaN(d.getTime())) {
+    throw new ToolValidationError(`${field} is not a valid date.`);
+  }
+  return val;
+}
+
+function assertEnum<T extends string>(val: unknown, allowed: readonly T[], field: string): T {
+  if (typeof val !== "string" || !allowed.includes(val as T)) {
+    throw new ToolValidationError(`${field} must be one of: ${allowed.join(", ")}.`);
+  }
+  return val as T;
+}
+
+function assertEnumOrDefault<T extends string>(val: unknown, allowed: readonly T[], fallback: T): T {
+  if (val == null || val === "") return fallback;
+  return assertEnum(val, allowed, "value");
+}
+
+type NamedRow = { id: string; name?: string | null; title?: string | null };
+
+function labelOf(row: NamedRow): string {
+  return (row.name ?? row.title ?? "") as string;
+}
+
+type Resolution =
+  | { kind: "found"; row: NamedRow }
+  | { kind: "none" }
+  | { kind: "ambiguous"; labels: string[] };
+
+// Two-stage lookup: exact case-insensitive first, then fuzzy fallback.
+// Never returns a match when results are ambiguous — caller must surface
+// the disambiguation so Claude can ask the user or retry with a specific name.
+async function resolveByName(
+  rows: NamedRow[] | null,
+  fuzzyFetch: () => Promise<NamedRow[] | null>
+): Promise<Resolution> {
+  if (rows && rows.length === 1) return { kind: "found", row: rows[0] };
+  if (rows && rows.length > 1) {
+    return { kind: "ambiguous", labels: rows.map(labelOf) };
+  }
+  const fuzzy = await fuzzyFetch();
+  if (!fuzzy || fuzzy.length === 0) return { kind: "none" };
+  if (fuzzy.length === 1) return { kind: "found", row: fuzzy[0] };
+  return { kind: "ambiguous", labels: fuzzy.map(labelOf) };
+}
+
 export const EYDN_TOOLS: Tool[] = [
   {
     name: "add_guest",
@@ -171,116 +286,184 @@ export async function executeTool(
   try {
     switch (toolName) {
       case "add_guest": {
+        const name = assertString(input.name, "Guest name");
+        const email = assertEmailOrNull(input.email);
+        const role = assertEnumOrDefault(input.role, GUEST_ROLES, "friend");
+        const group_name = assertStringOrNull(input.group_name, "Group name");
+        const meal_preference = assertStringOrNull(input.meal_preference, "Meal preference");
+
         const { data: existing } = await supabase
           .from("guests").select("id").eq("wedding_id", weddingId)
-          .eq("name", input.name as string).is("deleted_at", null).limit(1);
-        if (existing && existing.length > 0) return `${input.name} is already on the guest list.`;
+          .ilike("name", name).is("deleted_at", null).limit(1);
+        if (existing && existing.length > 0) return `${name} is already on the guest list.`;
 
         await supabase.from("guests").insert({
           wedding_id: weddingId,
-          name: input.name as string,
-          email: (input.email as string) || null,
-          role: (input.role as string) || "friend",
-          group_name: (input.group_name as string) || null,
-          meal_preference: (input.meal_preference as string) || null,
+          name,
+          email,
+          role,
+          group_name,
+          meal_preference,
           rsvp_status: "not_invited",
         });
-        return `Added ${input.name} to the guest list.`;
+        return `Added ${name} to the guest list.`;
       }
 
       case "update_guest_rsvp": {
-        const { data: guest } = await supabase
-          .from("guests").select("id, name").eq("wedding_id", weddingId)
-          .ilike("name", `%${input.guest_name}%`).is("deleted_at", null).limit(1).single();
-        if (!guest) return `Could not find a guest named "${input.guest_name}".`;
+        const needle = assertString(input.guest_name, "Guest name");
+        const rsvp_status = assertEnum(input.rsvp_status, RSVP_STATUSES, "RSVP status");
 
-        await supabase.from("guests").update({ rsvp_status: input.rsvp_status as string })
-          .eq("id", (guest as { id: string }).id);
-        return `Updated ${(guest as { name: string }).name}'s RSVP to ${input.rsvp_status}.`;
+        const { data: exact } = await supabase
+          .from("guests").select("id, name").eq("wedding_id", weddingId)
+          .ilike("name", needle).is("deleted_at", null).limit(2);
+
+        const resolution = await resolveByName(exact as NamedRow[] | null, async () => {
+          const { data } = await supabase
+            .from("guests").select("id, name").eq("wedding_id", weddingId)
+            .ilike("name", `%${escapeLike(needle)}%`).is("deleted_at", null).limit(5);
+          return data as NamedRow[] | null;
+        });
+
+        if (resolution.kind === "none") return `Could not find a guest named "${needle}".`;
+        if (resolution.kind === "ambiguous") {
+          return `Multiple guests match "${needle}": ${resolution.labels.join(", ")}. Please be more specific.`;
+        }
+
+        await supabase.from("guests").update({ rsvp_status })
+          .eq("id", resolution.row.id);
+        return `Updated ${labelOf(resolution.row)}'s RSVP to ${rsvp_status}.`;
       }
 
       case "add_task": {
+        const title = assertString(input.title, "Task title", MAX_MEDIUM);
+        const category = assertStringOrNull(input.category, "Category") ?? "Planning";
+        const due_date = assertDateOrNull(input.due_date, "Due date");
+        const notes = assertStringOrNull(input.notes, "Notes", MAX_LONG);
+
         await supabase.from("tasks").insert({
           wedding_id: weddingId,
-          title: input.title as string,
-          category: (input.category as string) || "Planning",
-          due_date: (input.due_date as string) || null,
-          notes: (input.notes as string) || null,
+          title,
+          category,
+          due_date,
+          notes,
           completed: false,
           is_system_generated: false,
         });
-        return `Added task: "${input.title}"${input.due_date ? ` (due ${input.due_date})` : ""}.`;
+        return `Added task: "${title}"${due_date ? ` (due ${due_date})` : ""}.`;
       }
 
       case "complete_task": {
-        const { data: task } = await supabase
+        const needle = assertString(input.task_title, "Task title");
+
+        const { data: exact } = await supabase
           .from("tasks").select("id, title").eq("wedding_id", weddingId)
-          .ilike("title", `%${input.task_title}%`).is("deleted_at", null).eq("completed", false)
-          .limit(1).single();
-        if (!task) return `Could not find an incomplete task matching "${input.task_title}".`;
+          .ilike("title", needle).is("deleted_at", null).eq("completed", false).limit(2);
+
+        const resolution = await resolveByName(exact as NamedRow[] | null, async () => {
+          const { data } = await supabase
+            .from("tasks").select("id, title").eq("wedding_id", weddingId)
+            .ilike("title", `%${escapeLike(needle)}%`).is("deleted_at", null).eq("completed", false).limit(5);
+          return data as NamedRow[] | null;
+        });
+
+        if (resolution.kind === "none") return `Could not find an incomplete task matching "${needle}".`;
+        if (resolution.kind === "ambiguous") {
+          return `Multiple tasks match "${needle}": ${resolution.labels.join(", ")}. Please be more specific.`;
+        }
 
         await supabase.from("tasks").update({ completed: true })
-          .eq("id", (task as { id: string }).id);
-        return `Marked "${(task as { title: string }).title}" as complete!`;
+          .eq("id", resolution.row.id);
+        return `Marked "${labelOf(resolution.row)}" as complete!`;
       }
 
       case "add_vendor": {
+        const name = assertString(input.name, "Vendor name");
+        const category = assertString(input.category, "Category");
+        const poc_name = assertStringOrNull(input.poc_name, "Contact name");
+        const poc_email = assertEmailOrNull(input.poc_email, "Contact email");
+        const poc_phone = assertStringOrNull(input.poc_phone, "Phone");
+        const amount = assertMoneyOrNull(input.amount, "Amount");
+        const notes = assertStringOrNull(input.notes, "Notes", MAX_LONG);
+
         await supabase.from("vendors").insert({
           wedding_id: weddingId,
-          name: input.name as string,
-          category: input.category as string,
+          name,
+          category,
           status: "searching",
-          poc_name: (input.poc_name as string) || null,
-          poc_email: (input.poc_email as string) || null,
-          poc_phone: (input.poc_phone as string) || null,
-          amount: (input.amount as number) || null,
-          notes: (input.notes as string) || null,
+          poc_name,
+          poc_email,
+          poc_phone,
+          amount,
+          notes,
         });
-        return `Added ${input.name} (${input.category}) to your vendor list.`;
+        return `Added ${name} (${category}) to your vendor list.`;
       }
 
       case "update_vendor_status": {
-        const { data: vendor } = await supabase
-          .from("vendors").select("id, name").eq("wedding_id", weddingId)
-          .ilike("name", `%${input.vendor_name}%`).is("deleted_at", null)
-          .limit(1).single();
-        if (!vendor) return `Could not find a vendor named "${input.vendor_name}".`;
+        const needle = assertString(input.vendor_name, "Vendor name");
+        const status = assertEnum(input.status, VENDOR_STATUSES, "Status");
 
-        await supabase.from("vendors").update({ status: input.status as string })
-          .eq("id", (vendor as { id: string }).id);
-        return `Updated ${(vendor as { name: string }).name} status to ${(input.status as string).replace(/_/g, " ")}.`;
+        const { data: exact } = await supabase
+          .from("vendors").select("id, name").eq("wedding_id", weddingId)
+          .ilike("name", needle).is("deleted_at", null).limit(2);
+
+        const resolution = await resolveByName(exact as NamedRow[] | null, async () => {
+          const { data } = await supabase
+            .from("vendors").select("id, name").eq("wedding_id", weddingId)
+            .ilike("name", `%${escapeLike(needle)}%`).is("deleted_at", null).limit(5);
+          return data as NamedRow[] | null;
+        });
+
+        if (resolution.kind === "none") return `Could not find a vendor named "${needle}".`;
+        if (resolution.kind === "ambiguous") {
+          return `Multiple vendors match "${needle}": ${resolution.labels.join(", ")}. Please be more specific.`;
+        }
+
+        await supabase.from("vendors").update({ status })
+          .eq("id", resolution.row.id);
+        return `Updated ${labelOf(resolution.row)} status to ${status.replace(/_/g, " ")}.`;
       }
 
       case "add_expense": {
+        const description = assertString(input.description, "Description", MAX_MEDIUM);
+        const category = assertString(input.category, "Category");
+        const estimated = assertMoneyOrNull(input.estimated, "Estimated cost") ?? 0;
+        const amount_paid = assertMoneyOrNull(input.amount_paid, "Amount paid") ?? 0;
+
         await supabase.from("expenses").insert({
           wedding_id: weddingId,
-          description: input.description as string,
-          category: input.category as string,
-          estimated: (input.estimated as number) || 0,
-          amount_paid: (input.amount_paid as number) || 0,
+          description,
+          category,
+          estimated,
+          amount_paid,
           paid: false,
         });
-        return `Added budget item: "${input.description}" (${input.category})${input.estimated ? ` — estimated $${input.estimated}` : ""}.`;
+        return `Added budget item: "${description}" (${category})${estimated ? ` — estimated $${estimated}` : ""}.`;
       }
 
       case "add_to_mood_board": {
+        const caption = assertString(input.caption, "Caption", MAX_MEDIUM);
+        const category = assertEnum(input.category, MOOD_CATEGORIES, "Category");
+
         await supabase.from("mood_board_items").insert({
           wedding_id: weddingId,
           image_url: "",
-          caption: input.caption as string,
-          category: (input.category as string) || "General",
+          caption,
+          category,
         });
-        return `Saved to your vision board: "${input.caption}" (${input.category}).`;
+        return `Saved to your vision board: "${caption}" (${category}).`;
       }
 
       case "update_key_decisions": {
+        const info = assertString(input.info, "Info", 1000);
+
         const { data: wedding } = await supabase
           .from("weddings").select("key_decisions").eq("id", weddingId).single();
         const existing = (wedding as { key_decisions: string | null } | null)?.key_decisions || "";
-        const updated = existing ? `${existing}\n• ${input.info}` : `• ${input.info}`;
+        const updated = existing ? `${existing}\n• ${info}` : `• ${info}`;
         await supabase.from("weddings").update({ key_decisions: updated, updated_at: new Date().toISOString() })
           .eq("id", weddingId);
-        return `Got it — I'll remember that: "${input.info}"`;
+        return `Got it — I'll remember that: "${info}"`;
       }
 
       case "web_search": {
@@ -293,7 +476,7 @@ export async function executeTool(
           return "You've reached your daily search limit (10 searches per day). Try again tomorrow!";
         }
 
-        const query = input.query as string;
+        const query = assertString(input.query, "Search query", MAX_MEDIUM);
 
         // Check cache
         const cacheKey = query.toLowerCase().trim();
@@ -334,6 +517,7 @@ export async function executeTool(
         return `Unknown tool: ${toolName}`;
     }
   } catch (err) {
+    if (err instanceof ToolValidationError) return err.message;
     console.error(`[CHAT TOOL] ${toolName} failed:`, err);
     return `Sorry, I couldn't complete that action. Please try doing it manually in the app.`;
   }

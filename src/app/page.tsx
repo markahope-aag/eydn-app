@@ -1173,7 +1173,7 @@ export default function HomePage() {
 /* ── Data ────────────────────────────────────────────────── */
 
 const features = [
-  { title: "Smart task timeline", description: "50+ tasks auto-generated from your wedding date. Grouped by phase, with deadlines, priorities, and reminders." },
+  { title: "Task timeline", description: "50+ tasks auto-generated from your wedding date. Grouped by phase, with deadlines, priorities, and reminders." },
   { title: "Budget tracker", description: "Track estimated costs, payments, and final costs by category. Link vendors to line items automatically." },
   { title: "Guest management", description: "RSVPs, meal preferences, roles, addresses, plus-ones, and groups. Import via CSV. Send RSVP links." },
   { title: "Vendor tracker with Google profiles", description: "Manage 13 vendor categories with status pipeline, contacts, financials, email templates, and auto-enriched Google Business profiles with ratings and reviews." },
@@ -1200,7 +1200,7 @@ const memoryPlanFeatures = [
 
 const pricingFeatures = [
   "AI planner that takes action and searches the web",
-  "50+ auto-generated tasks with smart timeline",
+  "50+ auto-generated tasks grouped by phase",
   "Budget tracker with 36 pre-built line items",
   "Guest management with RSVP links",
   "Vendor tracker with Google Business profiles",
