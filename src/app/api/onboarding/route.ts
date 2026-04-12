@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { generateTasks } from "@/lib/tasks/seed-tasks";
+import { personalizeTaskMessages } from "@/lib/ai/task-personalizer";
 import { BUDGET_TEMPLATE } from "@/lib/budget/budget-template";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
 import { supabaseError } from "@/lib/api-error";
@@ -157,9 +158,29 @@ export async function POST(request: Request) {
       bookedVendors: booked_vendors,
     });
 
+    // AI personalization pass — rewrites each task's edyn_message in the
+    // couple's voice, referencing their venue, budget, style, etc. where
+    // natural. Date math, categories, and phases stay deterministic.
+    // Any failure (no API key, Claude down, malformed response, timeout)
+    // returns the original tasks unchanged.
+    const personalizedTasks = await personalizeTaskMessages(tasks, {
+      partner1_name,
+      partner2_name,
+      date,
+      venue,
+      venue_city,
+      budget,
+      guest_count_estimate,
+      style_description,
+      has_wedding_party,
+      has_pre_wedding_events,
+      has_honeymoon,
+      booked_vendors,
+    });
+
     const batchSize = 50;
-    for (let i = 0; i < tasks.length; i += batchSize) {
-      const batch = tasks.slice(i, i + batchSize);
+    for (let i = 0; i < personalizedTasks.length; i += batchSize) {
+      const batch = personalizedTasks.slice(i, i + batchSize);
       await supabase.from("tasks").insert(batch);
     }
   }
