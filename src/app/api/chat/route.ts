@@ -1,6 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { requireFeature } from "@/lib/subscription";
+import { getSubscriptionStatus } from "@/lib/subscription";
+import { getToolCallMeter, incrementToolCallCount } from "@/lib/tool-call-counter";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 import { safeParseJSON, isParseError } from "@/lib/validation";
 import { getClaudeClient } from "@/lib/ai/claude-client";
@@ -32,12 +33,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Too many requests. Please wait before sending another message." }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
   }
 
-  const paywall = await requireFeature("chat");
-  if (paywall) return paywall;
+  const status = await getSubscriptionStatus();
+  if (!status.features.chat) {
+    return NextResponse.json(
+      { error: "Premium feature — upgrade to continue", tier: status.tier, trialExpired: status.trialExpired },
+      { status: 403 }
+    );
+  }
 
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
   const { wedding: weddingData, supabase, userId } = result;
+
+  // Free-tier monthly tool-call cap enforcement. Trial/Pro/Beta/Admin
+  // tiers return { limit: null, remaining: null } and skip the counter.
+  const meter = await getToolCallMeter(userId, status.tier);
+  if (meter.remaining !== null && meter.remaining <= 0) {
+    return NextResponse.json(
+      {
+        error: "You've used your free AI actions for this month. Upgrade to Pro for unlimited chat.",
+        tier: status.tier,
+        toolCallsUsed: meter.used,
+        toolCallsLimit: meter.limit,
+      },
+      { status: 403 }
+    );
+  }
+  let remainingToolCalls = meter.remaining; // null = unlimited
 
   const wedding = weddingData as Wedding;
   const parsed = await safeParseJSON(request);
@@ -307,12 +329,20 @@ export async function POST(request: Request) {
     const claude = getClaudeClient();
     const { EYDN_TOOLS, executeTool } = await import("@/lib/ai/chat-tools");
 
+    // Filter out tools the current tier isn't allowed to use. Free tier
+    // loses `web_search` — Claude doesn't see it in the tool list, so it
+    // won't try to call it in the first place.
+    const availableTools = status.features.webSearch
+      ? EYDN_TOOLS
+      : EYDN_TOOLS.filter((t) => t.name !== "web_search");
+
     // Tool use loop — Claude may call tools, then we feed results back
     type MessageParam = { role: "user" | "assistant"; content: unknown };
     let currentMessages: MessageParam[] = [...messages];
     let finalText = "";
     const actionsTaken: string[] = [];
     let iterations = 0;
+    let capHit = false;
 
     while (iterations < AI.MAX_TOOL_ITERATIONS) {
       iterations++;
@@ -322,7 +352,7 @@ export async function POST(request: Request) {
         max_tokens: AI.MAX_TOKENS,
         system: systemPrompt,
         messages: currentMessages as Parameters<typeof claude.messages.create>[0]["messages"],
-        tools: EYDN_TOOLS,
+        tools: availableTools,
       });
 
       // Collect text and tool use blocks
@@ -333,6 +363,23 @@ export async function POST(request: Request) {
           finalText += block.text;
         } else if (block.type === "tool_use") {
           hasToolUse = true;
+
+          // Free-tier cap: if no actions remain, refuse this tool call and
+          // feed a synthetic result back so Claude can wrap up with text.
+          if (remainingToolCalls !== null && remainingToolCalls <= 0) {
+            capHit = true;
+            const refusal = "You've used your free AI actions for this month. Upgrade to Pro for unlimited chat.";
+            currentMessages = [
+              ...currentMessages,
+              { role: "assistant", content: response.content },
+              {
+                role: "user",
+                content: [{ type: "tool_result", tool_use_id: block.id, content: refusal }],
+              },
+            ];
+            continue;
+          }
+
           const result = await executeTool(
             block.name,
             block.input as Record<string, unknown>,
@@ -341,6 +388,12 @@ export async function POST(request: Request) {
             userId
           );
           actionsTaken.push(result);
+
+          // Count the tool call against the free-tier cap (no-op for others).
+          if (status.tier === "free") {
+            const newCount = await incrementToolCallCount(userId);
+            remainingToolCalls = Math.max(0, (meter.limit ?? 0) - newCount);
+          }
 
           // Add the assistant's response and tool result to continue the loop
           currentMessages = [
@@ -358,6 +411,12 @@ export async function POST(request: Request) {
       if (!hasToolUse || response.stop_reason === "end_turn") {
         break;
       }
+    }
+
+    // Surface a nudge in the response if the cap was hit mid-loop.
+    if (capHit && !finalText.toLowerCase().includes("upgrade")) {
+      finalText += (finalText ? "\n\n" : "") +
+        "You've used your free AI actions for this month. Upgrade to Pro for unlimited chat.";
     }
 
     // If actions were taken but no final text, add a summary
@@ -391,10 +450,15 @@ export async function POST(request: Request) {
       },
     });
 
+    // Final meter state reflects any increments from this request.
+    const finalMeter = await getToolCallMeter(userId, status.tier);
     return new Response(readableStream, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "Transfer-Encoding": "chunked",
+        "X-Tool-Calls-Used": String(finalMeter.used),
+        "X-Tool-Calls-Limit": finalMeter.limit === null ? "-1" : String(finalMeter.limit),
+        "X-Tool-Calls-Remaining": finalMeter.remaining === null ? "-1" : String(finalMeter.remaining),
       },
     });
   } catch (error) {

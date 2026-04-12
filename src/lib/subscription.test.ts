@@ -27,8 +27,9 @@ import { getSubscriptionStatus, requirePremium } from "./subscription";
 const mockAuth = vi.mocked(auth);
 const mockCreateSupabaseAdmin = vi.mocked(createSupabaseAdmin);
 
-const FEATURES_OFF = {
-  chat: false,
+// Free tier: chat is allowed (capped per-user elsewhere), everything else gated.
+const FEATURES_FREE = {
+  chat: true,
   webSearch: false,
   exportBinder: false,
   emailTemplates: false,
@@ -92,7 +93,7 @@ describe("getSubscriptionStatus", () => {
 
     expect(status).toEqual({
       tier: "free",
-      features: FEATURES_OFF,
+      features: FEATURES_FREE,
       hasAccess: false,
       isPaid: false,
       isBeta: false,
@@ -172,7 +173,7 @@ describe("getSubscriptionStatus", () => {
 
     expect(status).toEqual({
       tier: "free",
-      features: FEATURES_OFF,
+      features: FEATURES_FREE,
       hasAccess: false,
       isPaid: false,
       isBeta: false,
@@ -218,7 +219,7 @@ describe("getSubscriptionStatus", () => {
 
     expect(status).toEqual({
       tier: "free",
-      features: FEATURES_OFF,
+      features: FEATURES_FREE,
       hasAccess: false,
       isPaid: false,
       isBeta: false,

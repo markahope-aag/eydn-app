@@ -39,12 +39,9 @@ export type SubscriptionStatus = {
   trialExpired: boolean;
 };
 
-// Feature map per tier. The `free` row is currently conservative —
-// everything false — because the trial-expiry downgrade path (task #5) and
-// the chat tool-call cap (task #6) haven't shipped yet. Flipping `free.chat`
-// to true without a cap would uncap Claude inference cost. When #5 and #6
-// land together, update this map so free gets { chat: true } and chat-route
-// enforces the cap, and the rest of the free-tier features stay blocked.
+// Feature map per tier. Free tier can chat (the cap is enforced separately
+// in the /api/chat route via tool-call-counter.ts); everything else is
+// gated. Trial, Pro, Beta, and Admin get full access to every feature.
 const ALL_ON: Features = {
   chat: true,
   webSearch: true,
@@ -55,8 +52,8 @@ const ALL_ON: Features = {
   budgetOptimizer: true,
 };
 
-const ALL_OFF: Features = {
-  chat: false,
+const FREE_FEATURES: Features = {
+  chat: true, // Capped per-user per-month — see src/lib/tool-call-counter.ts
   webSearch: false,
   exportBinder: false,
   emailTemplates: false,
@@ -67,7 +64,7 @@ const ALL_OFF: Features = {
 
 const TIER_FEATURES: Record<Tier, Features> = {
   trialing: ALL_ON,
-  free: ALL_OFF, // Task #5 + #6 will relax this — see comment above.
+  free: FREE_FEATURES,
   pro: ALL_ON,
   beta: ALL_ON,
   admin: ALL_ON,

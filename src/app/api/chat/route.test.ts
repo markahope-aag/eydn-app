@@ -33,7 +33,12 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/lib/subscription", () => ({
-  requireFeature: vi.fn(),
+  getSubscriptionStatus: vi.fn(),
+}));
+
+vi.mock("@/lib/tool-call-counter", () => ({
+  getToolCallMeter: vi.fn(async () => ({ used: 0, limit: null, remaining: null })),
+  incrementToolCallCount: vi.fn(async () => 1),
 }));
 
 vi.mock("@/lib/ai/claude-client", () => ({
@@ -45,8 +50,36 @@ vi.mock("@/lib/ai/edyn-system-prompt", () => ({
 }));
 
 import { getWeddingForUser } from "@/lib/auth";
-import { requireFeature } from "@/lib/subscription";
+import { getSubscriptionStatus } from "@/lib/subscription";
 import { GET, POST } from "./route";
+
+const TRIALING_STATUS = {
+  tier: "trialing" as const,
+  features: {
+    chat: true, webSearch: true, exportBinder: true, emailTemplates: true,
+    attachments: true, catchUpPlans: true, budgetOptimizer: true,
+  },
+  hasAccess: true,
+  isPaid: false,
+  isBeta: false,
+  isTrialing: true,
+  trialDaysLeft: 7,
+  trialExpired: false,
+};
+
+const FREE_STATUS_NO_CHAT = {
+  tier: "free" as const,
+  features: {
+    chat: false, webSearch: false, exportBinder: false, emailTemplates: false,
+    attachments: false, catchUpPlans: false, budgetOptimizer: false,
+  },
+  hasAccess: false,
+  isPaid: false,
+  isBeta: false,
+  isTrialing: false,
+  trialDaysLeft: 0,
+  trialExpired: true,
+};
 
 // --- Helpers ---
 
@@ -106,7 +139,7 @@ describe("POST /api/chat", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSupabase = createMockSupabase();
-    vi.mocked(requireFeature).mockResolvedValue(null);
+    vi.mocked(getSubscriptionStatus).mockResolvedValue(TRIALING_STATUS);
     vi.mocked(getWeddingForUser).mockResolvedValue({
       wedding: mockWedding,
       supabase: mockSupabase,
@@ -116,9 +149,7 @@ describe("POST /api/chat", () => {
   });
 
   it("returns 403 when premium check fails", async () => {
-    vi.mocked(requireFeature).mockResolvedValue(
-      NextResponse.json({ error: "Premium required" }, { status: 403 })
-    );
+    vi.mocked(getSubscriptionStatus).mockResolvedValue(FREE_STATUS_NO_CHAT);
 
     const response = await POST(mockRequest({ message: "Hello" }));
     const data = await response.json();
@@ -161,15 +192,12 @@ describe("POST /api/chat", () => {
   });
 
   it("checks premium before processing message", async () => {
-    vi.mocked(requireFeature).mockResolvedValue(
-      NextResponse.json({ error: "Premium required" }, { status: 403 })
-    );
+    vi.mocked(getSubscriptionStatus).mockResolvedValue(FREE_STATUS_NO_CHAT);
 
     const response = await POST(mockRequest({ message: "Hello" }));
 
-    expect(requireFeature).toHaveBeenCalled();
+    expect(getSubscriptionStatus).toHaveBeenCalled();
     expect(response.status).toBe(403);
-    // Should NOT have called getWeddingForUser since premium check fails first
   });
 });
 
@@ -198,14 +226,12 @@ describe("Chat History Access Policy", () => {
 
     expect(response.status).toBe(200);
     expect(data).toHaveLength(2);
-    // requireFeature should NOT have been called for GET (history fetch is not gated)
-    expect(requireFeature).not.toHaveBeenCalled();
+    // getSubscriptionStatus should NOT have been called for GET (history fetch is not gated)
+    expect(getSubscriptionStatus).not.toHaveBeenCalled();
   });
 
   it("blocks expired trial users from sending new messages (POST)", async () => {
-    vi.mocked(requireFeature).mockResolvedValue(
-      NextResponse.json({ error: "Premium required", trialExpired: true }, { status: 403 })
-    );
+    vi.mocked(getSubscriptionStatus).mockResolvedValue(FREE_STATUS_NO_CHAT);
     vi.mocked(getWeddingForUser).mockResolvedValue({
       wedding: mockWedding,
       supabase: mockSupabase,

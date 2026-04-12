@@ -3,11 +3,16 @@
 import { useSyncExternalStore, useCallback } from "react";
 import { toast } from "sonner";
 import type { SubscriptionStatus, FeatureKey, Tier, Features } from "@/lib/subscription";
+import type { ToolCallMeter } from "@/lib/tool-call-counter";
 
 export type { FeatureKey, Tier, Features };
 
+// Shape returned by /api/subscription-status — the base status plus the
+// monthly tool-call meter (non-free tiers report limit/remaining as null).
+type SubscriptionStatusResponse = SubscriptionStatus & { toolCalls: ToolCallMeter };
+
 // Cached subscription status — fetched once, shared across all consumers
-let cachedStatus: SubscriptionStatus | null = null;
+let cachedStatus: SubscriptionStatusResponse | null = null;
 let fetchPromise: Promise<void> | null = null;
 let statusListeners: Array<() => void> = [];
 
@@ -86,6 +91,7 @@ export function usePremium() {
   return {
     tier: status?.tier ?? ("trialing" as Tier),
     features: status?.features ?? null,
+    toolCalls: status?.toolCalls ?? null,
     hasAccess: status?.hasAccess ?? true,
     isTrialing: status?.isTrialing ?? false,
     trialDaysLeft: status?.trialDaysLeft ?? 0,
