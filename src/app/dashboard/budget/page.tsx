@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { Tooltip } from "@/components/Tooltip";
+import BudgetOptimizerBanner from "@/components/BudgetOptimizerBanner";
 import { BUDGET_CATEGORIES, BUDGET_TEMPLATE, BUDGET_ALLOCATIONS } from "@/lib/budget/budget-template";
 
 type Expense = {
@@ -276,6 +277,8 @@ export default function BudgetPage() {
   return (
     <div>
       <h1>Budget</h1>
+
+      <BudgetOptimizerBanner />
 
       {/* Budget milestone banners */}
       {budget > 0 && expenses.length > 0 && (() => {
