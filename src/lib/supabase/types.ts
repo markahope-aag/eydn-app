@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.4"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       activity_log: {
@@ -238,6 +263,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "calendar_feed_tokens_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catch_up_plans: {
+        Row: {
+          dismissed_at: string | null
+          generated_at: string
+          id: string
+          model: string
+          plan: Json
+          trigger_reason: string
+          wedding_id: string
+        }
+        Insert: {
+          dismissed_at?: string | null
+          generated_at?: string
+          id?: string
+          model: string
+          plan: Json
+          trigger_reason: string
+          wedding_id: string
+        }
+        Update: {
+          dismissed_at?: string | null
+          generated_at?: string
+          id?: string
+          model?: string
+          plan?: Json
+          trigger_reason?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catch_up_plans_wedding_id_fkey"
             columns: ["wedding_id"]
             isOneToOne: false
             referencedRelation: "weddings"
@@ -1380,6 +1443,7 @@ export type Database = {
         Row: {
           amount: number
           id: string
+          payment_method: string
           purchased_at: string
           status: string
           stripe_payment_intent_id: string | null
@@ -1390,6 +1454,7 @@ export type Database = {
         Insert: {
           amount: number
           id?: string
+          payment_method?: string
           purchased_at?: string
           status?: string
           stripe_payment_intent_id?: string | null
@@ -1400,6 +1465,7 @@ export type Database = {
         Update: {
           amount?: number
           id?: string
+          payment_method?: string
           purchased_at?: string
           status?: string
           stripe_payment_intent_id?: string | null
@@ -2361,6 +2427,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
