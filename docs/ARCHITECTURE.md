@@ -68,6 +68,8 @@ weddings (1) ──┬── (n) tasks
                ├── (n) wedding_collaborators
                ├── (n) mood_board_items
                ├── (n) date_change_alerts
+               ├── (n) catch_up_plans
+               ├── (n) budget_optimizations
                └── (1) rehearsal_dinner
 ```
 
@@ -481,10 +483,27 @@ The `getWeddingForUser()` function supports multi-role access control:
 - **Owner + Partner**: All planning features, budget management, vendor communications
 - **All Roles**: Task management, guest management, day-of planning, AI chat (premium)
 
-**Premium Feature Enforcement:**
-- `requirePremium()` function enforces subscription status
-- Protected endpoints: AI chat, file attachments, PDF exports
-- Collaborators inherit owner's subscription status
+**Subscription tier and feature gating (`src/lib/subscription.ts`):**
+
+The subscription system uses an explicit `Tier` enum (`trialing | free | pro | beta | admin`) as its source of truth, replacing the previous single `hasAccess` boolean. Each tier maps to a `Features` record of per-feature booleans:
+
+| Feature key | Free | Trialing | Pro / Beta / Admin |
+|-------------|------|----------|--------------------|
+| `chat` | capped | unlimited | unlimited |
+| `webSearch` | no | yes | yes |
+| `exportBinder` | no | yes | yes |
+| `emailTemplates` | no | yes | yes |
+| `attachments` | no | yes | yes |
+| `catchUpPlans` | no | yes | yes |
+| `budgetOptimizer` | no | yes | yes |
+
+Free-tier `chat` is capped on tool calls (not messages). The cap is tracked in `tool-call-counter.ts` and enforced in `/api/chat`. The `web_search` tool is removed from the available tool list for free-tier users.
+
+New routes should use `requireFeature(featureKey)` from `src/lib/subscription.ts`. The legacy `requirePremium()` function is retained for backward compatibility and is equivalent to checking `tier !== "free"`.
+
+The legacy fields on `SubscriptionStatus` (`hasAccess`, `isPaid`, `isBeta`, `isTrialing`, `trialDaysLeft`, `trialExpired`) are derived from `tier` automatically.
+
+Collaborators inherit the wedding owner's subscription tier.
 
 ### Row Level Security (RLS) Policies
 
@@ -530,15 +549,18 @@ src/app/api/
 ├── guests/                 # Guest list management
 ├── expenses/               # Budget tracking
 ├── seating/                # Seating chart management
-├── chat/                   # AI assistant (premium)
-├── attachments/            # File uploads (premium)
+├── chat/                   # AI assistant (free-tier capped, Pro unlimited)
+├── catch-up/               # AI catch-up plans (Pro-gated)
+├── budget-optimize/        # AI budget optimizer (Pro-gated)
+├── attachments/            # File uploads (Pro-gated)
+├── subscription-status/    # Tier + feature flags + tool-call meter
 ├── collaborators/          # Wedding collaboration
 ├── mood-board/             # Inspiration board
 ├── public/                 # Public wedding website APIs
 ├── admin/                  # Admin functionality
 ├── vendor-portal/          # Vendor marketplace
 ├── webhooks/               # External service webhooks
-└── cron/                   # Scheduled tasks
+└── cron/                   # Scheduled tasks (check-deadlines, trial-reminders)
 ```
 
 ### Authentication Pattern

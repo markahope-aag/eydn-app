@@ -1,6 +1,6 @@
 # Subscription Model Documentation
 
-eydn operates on a unique one-time purchase model that provides couples with lifetime access to all wedding planning features for a single $79 payment, preceded by a generous 14-day free trial.
+eydn uses a **freemium + reverse trial** model. New couples get full Pro access for 14 days (the reverse trial). At trial end they downgrade to the free tier — they are never locked out and their data is never deleted. Upgrading to Pro (Lifetime $79 or Monthly $14.99) restores full access.
 
 ## Business Model Overview
 
@@ -14,56 +14,60 @@ Unlike traditional SaaS models with recurring monthly fees, eydn's one-time purc
 - **Budget-Friendly**: Significantly cheaper than hiring a wedding planner ($3K-$15K)
 - **Transparent Pricing**: No hidden fees or surprise charges
 
-## Subscription Tiers
+## Pricing
 
-### Free Trial (14 Days)
-**Full access to all features with no restrictions**
+| SKU | Price | Notes |
+|-----|-------|-------|
+| Pro Lifetime | $79 one-time | Featured offer. "Pay once. Yours through the wedding day." |
+| Pro Monthly | $14.99/month | Secondary hedge. Stripe wiring pending as of April 2026. |
+| Memory Plan | $29/year | Post-wedding website retention. Orthogonal to Pro — a separate SKU. |
 
-#### **Included Features:**
-- Complete onboarding questionnaire and timeline generation
-- Unlimited task management with AI-powered suggestions
-- Full vendor pipeline with contact management and email templates
-- Comprehensive budget tracking with expense management
-- Guest list management with RSVP tracking
-- Wedding party coordination tools
-- Interactive seating chart builder
-- AI wedding assistant (eydn) with unlimited chat
-- Public wedding website creation and customization
-- Day-of planning tools and timeline generation
-- File uploads and document management
-- Email notifications and deadline reminders
+**Break-even anchor:** $14.99 × 12 = $179.88. $79 lifetime = 56% discount for committing upfront. Almost every couple plans 12+ months, so lifetime is the natural choice.
 
-#### **Trial Experience:**
-- **No Credit Card Required**: Sign up with just email and name
-- **Full Feature Access**: Access to all features including AI chat and file uploads
-- **Personal Wedding Setup**: Create real wedding with actual data
-- **Collaboration Support**: Can invite partners and coordinators during trial
-- **Generous Limits**: No restrictions on guests, vendors, or tasks
-- **14-Day Duration**: Full 14 days to experience all premium features
+## Subscription tiers
 
-#### **Trial Conversion:**
-- **Gentle Reminders**: Soft prompts about trial expiration
-- **Value Demonstration**: Showcase completed tasks and progress
-- **Seamless Upgrade**: One-click purchase to continue access
-- **Data Preservation**: All trial data carries over to paid account
+| Tier | How you get it |
+|------|---------------|
+| `trialing` | First 14 days after signup |
+| `free` | After trial expires with no purchase |
+| `pro` | Active row in `subscriber_purchases` |
+| `beta` | `user_roles` row with `role = 'beta'` |
+| `admin` | `user_roles` row with `role = 'admin'` |
 
-### Premium Access ($79 One-Time)
-**Lifetime access to all current and future features**
+### Feature matrix
 
-#### **Payment Processing:**
-- **Stripe Integration**: Secure payment processing with industry-standard security
-- **Multiple Payment Methods**: Credit cards, debit cards, and digital wallets
-- **International Support**: Payments accepted from global customers
-- **Instant Access**: Immediate feature unlock upon successful payment
+| Feature | Free | Trialing | Pro / Beta / Admin |
+|---------|------|----------|--------------------|
+| Guest list | yes | yes | yes |
+| Budget tracker | yes | yes | yes |
+| AI-personalized task timeline | yes | yes | yes |
+| Partner collaboration | yes | yes | yes |
+| Wedding website | yes | yes | yes |
+| AI chat (tool-use) | capped | unlimited | unlimited |
+| `web_search` in chat | no | yes | yes |
+| AI catch-up plans | no | yes | yes |
+| AI budget optimizer | no | yes | yes |
+| Day-of binder (PDF export) | no | yes | yes |
+| Vendor email templates | no | yes | yes |
+| Attachments on real entities | no | yes | yes |
 
-#### **Lifetime Benefits:**
-- **Permanent Access**: No expiration date on account access
-- **Future Features**: Access to new features as they're released
-- **Data Preservation**: Wedding data stored permanently with lifecycle management
-- **Multiple Weddings**: Can plan additional weddings (renewals, etc.)
-- **Collaboration Access**: Can invite unlimited partners and coordinators
-- **Reference Access**: Lifetime access to planning history and documents
-- **Memory Plan**: Optional $29/year plan for extended data retention after wedding
+The chat cap is on **tool calls**, not messages (one message can trigger up to 10 tool calls in the agentic loop). Free-tier users see a meter pill on the chat page and an upgrade banner when the cap is hit.
+
+### Trial-expiry UX
+
+Trial expiry is a **downgrade**, not a lockout. Copy shifts from "your access is ending" to "unlock chat / binder / templates with Pro." Couples never lose their planning data.
+
+A 3-day trial-expiry reminder email is sent automatically by the `/api/cron/trial-reminders` daily cron. The `weddings.trial_reminder_sent_at` column prevents duplicate sends.
+
+### Pro Lifetime — $79 one-time
+
+- Immediate feature unlock on Stripe `checkout.session.completed`
+- No expiration
+- Memory Plan ($29/yr) is a separate optional add-on for post-wedding website retention
+
+### Beta access
+
+Beta users get permanent full access with no payment. Access is a role in `user_roles`, not a purchase record. See `docs/BETA_LAUNCH_PLAN.md` for the full beta program details.
 
 ## Technical Implementation
 
@@ -83,15 +87,28 @@ create table public.subscriber_purchases (
 );
 ```
 
-#### **Subscription Status API**
+#### **Subscription status API**
 ```typescript
 // GET /api/subscription-status
 {
-  "status": "trial" | "premium" | "expired",
-  "trial_ends_at": "2024-02-15T00:00:00Z",
-  "is_premium": boolean,
-  "days_remaining": number,
-  "purchase_date": "2024-01-01T00:00:00Z" | null
+  "tier": "trialing" | "free" | "pro" | "beta" | "admin",
+  "features": {
+    "chat": boolean,
+    "webSearch": boolean,
+    "exportBinder": boolean,
+    "emailTemplates": boolean,
+    "attachments": boolean,
+    "catchUpPlans": boolean,
+    "budgetOptimizer": boolean
+  },
+  "toolCalls": { "used": number, "limit": number | null, "remaining": number | null },
+  // Legacy fields (derived from tier, kept for backward compat):
+  "hasAccess": boolean,
+  "isPaid": boolean,
+  "isBeta": boolean,
+  "isTrialing": boolean,
+  "trialDaysLeft": number,
+  "trialExpired": boolean
 }
 ```
 
@@ -129,43 +146,19 @@ export async function POST(request: Request) {
 
 ### Access Control
 
-#### **Premium Feature Enforcement**
-The platform now enforces premium access on specific features:
+#### **Feature gate enforcement**
+New routes use `requireFeature(featureKey)` for per-feature gating. The legacy `requirePremium()` is retained for existing routes.
 
-**Premium Features:**
-- **AI Chat** (`/api/chat`) - eydn AI wedding assistant
-- **File Attachments** (`/api/attachments`) - Document and image uploads
-- **PDF Export** - Day-of planner PDF generation
-
-#### **Server-Side Protection**
 ```typescript
-import { requirePremium } from '@/lib/subscription'
+import { requireFeature, requirePremium } from '@/lib/subscription'
 
-export async function POST(request: Request) {
-  // Check premium access first
-  const premiumCheck = await requirePremium();
-  if (premiumCheck) return premiumCheck; // Returns 403 if no access
-  
-  // Continue with premium feature logic
-  const result = await getWeddingForUser();
-  // ... rest of implementation
-}
-```
+// New code — per-feature gate (preferred)
+const gate = await requireFeature("catchUpPlans");
+if (gate) return gate; // 403 with { error, feature, tier, trialExpired }
 
-#### **Premium Guard Function**
-```typescript
-export async function requirePremium(): Promise<NextResponse | null> {
-  const status = await getSubscriptionStatus();
-  if (status.hasAccess) return null;
-  
-  return NextResponse.json(
-    { 
-      error: "Premium feature — upgrade to continue", 
-      trialExpired: status.trialExpired 
-    },
-    { status: 403 }
-  );
-}
+// Legacy code — generic gate (backward compat)
+const premiumCheck = await requirePremium();
+if (premiumCheck) return premiumCheck; // 403 with { error, trialExpired }
 ```
 
 #### **Collaboration Subscription Inheritance**

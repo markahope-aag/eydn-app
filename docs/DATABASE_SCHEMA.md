@@ -32,6 +32,7 @@ Main wedding record. One per user (or per collaborator group).
 | memory_plan_active | boolean | $29/yr retention plan |
 | memory_plan_expires_at | timestamptz | |
 | ceremony_time | text | HH:MM 24h. Single source of truth — day_of_plans mirrors this. |
+| trial_reminder_sent_at | timestamptz | Set after the 3-day trial-expiry reminder email is sent. Null = not yet sent. Used by the daily cron as a deduplication key. |
 | shared_attire_note | text | Shared attire description shown on wedding party page |
 | rsvp_deadline | text | RSVP deadline for wedding website |
 | photo_approval_required | boolean | Whether uploaded photos need approval |
@@ -400,6 +401,40 @@ Collaborative comments on any entity.
 | user_name | text | |
 | content | text | |
 | created_at | timestamptz | |
+
+---
+
+## AI planning features
+
+### `catch_up_plans`
+Stores AI-generated catch-up plans surfaced to Pro users when planning progress has stalled (overdue tasks, or nothing completed recently). One row per generated plan. The "latest active" plan is the most recent row where `dismissed_at IS NULL`.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| wedding_id | uuid | FK → weddings ON DELETE CASCADE |
+| generated_at | timestamptz | |
+| trigger_reason | text | Human-readable description of why the plan was generated (e.g. "8 overdue tasks") |
+| plan | jsonb | `{ summary: string, priorities: [{ title, why, when }] }` |
+| model | text | Claude model that generated the plan |
+| dismissed_at | timestamptz | Set when the user dismisses the plan; null = still active |
+
+Indexes: `(wedding_id, generated_at DESC)` for latest-plan lookups; partial index on `(wedding_id) WHERE dismissed_at IS NULL` for active-plan lookups. RLS: service role full access.
+
+### `budget_optimizations`
+Stores AI-generated budget optimization suggestions surfaced to Pro users when budget categories exceed their estimated allocation. Follows the same generate-store-dismiss pattern as `catch_up_plans`.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| wedding_id | uuid | FK → weddings ON DELETE CASCADE |
+| generated_at | timestamptz | |
+| trigger_reason | text | Human-readable description of the over-budget trigger |
+| suggestion | jsonb | `{ summary: string, suggestions: [{ title, why, action }] }` |
+| model | text | Claude model that generated the suggestion |
+| dismissed_at | timestamptz | Null = still active |
+
+Indexes and RLS policy mirror `catch_up_plans`.
 
 ---
 

@@ -12,14 +12,21 @@ All API routes (except public and webhook endpoints) require authentication via 
 - **Partner**: Collaborative access to wedding planning (invited by owner)
 - **Coordinator**: Professional planning access (invited by owner, limited settings access)
 
-### Premium Features
+### Premium features
 
-The following endpoints require premium access (active subscription or trial):
-- `POST /api/chat` - AI wedding assistant
-- `POST /api/attachments` - File uploads
-- `GET /api/day-of` (PDF export) - Day-of planning PDF generation
+Feature gating is now per-feature rather than a single premium gate. The following endpoints require specific features:
 
-### Authorization Pattern
+| Endpoint | Required feature |
+|----------|-----------------|
+| `POST /api/chat` | `chat` (free tier: capped; non-free: unlimited) |
+| `POST /api/attachments` | `attachments` |
+| `GET /api/day-of` (PDF export) | `exportBinder` |
+| `POST /api/catch-up` | `catchUpPlans` |
+| `POST /api/budget-optimize` | `budgetOptimizer` |
+
+Use `requireFeature(featureKey)` in new routes. `requirePremium()` is kept for backward compatibility.
+
+### Authorization pattern
 
 ```typescript
 const result = await getWeddingForUser();
@@ -31,9 +38,13 @@ if (role !== "owner") {
   return NextResponse.json({ error: "Owner access required" }, { status: 403 });
 }
 
-// Premium feature protection
+// Per-feature protection (preferred in new code)
+const gate = await requireFeature("catchUpPlans");
+if (gate) return gate; // Returns 403 with { error, feature, tier, trialExpired }
+
+// Backward-compat generic gate (existing routes)
 const premiumCheck = await requirePremium();
-if (premiumCheck) return premiumCheck; // Returns 403 if no access
+if (premiumCheck) return premiumCheck; // Returns 403 with { error, trialExpired }
 ```
 
 ### Headers
@@ -415,28 +426,165 @@ Create or update seating assignments.
 
 ## AI & Chat
 
+### Catch-up plans
+
+#### `GET /api/catch-up`
+Returns the latest active (non-dismissed) catch-up plan for the authenticated wedding, plus a detection signal indicating whether one should be generated.
+
+**Access:** All authenticated users (plan content is returned regardless of tier; `canGenerate` indicates whether the user can request a new plan).
+
+**Response:**
+```json
+{
+  "plan": {
+    "id": "uuid",
+    "wedding_id": "uuid",
+    "generated_at": "2026-04-12T10:00:00Z",
+    "trigger_reason": "8 overdue tasks",
+    "plan": {
+      "summary": "string",
+      "priorities": [{ "title": "string", "why": "string", "when": "string" }]
+    },
+    "model": "claude-sonnet-4-5",
+    "dismissed_at": null
+  },
+  "detection": { "triggered": true, "reason": "string" },
+  "canGenerate": true,
+  "tier": "trialing"
+}
+```
+
+`plan` is `null` if no active plan exists.
+
+#### `POST /api/catch-up`
+Generate a new catch-up plan. Requires the `catchUpPlans` feature (Pro, trialing, beta, admin).
+
+**403 response:**
+```json
+{
+  "error": "AI catch-up plans are a Pro feature.",
+  "tier": "free",
+  "trialExpired": true
+}
+```
+
+**200 — no plan needed** (wedding is on track):
+```json
+{ "triggered": false }
+```
+
+**201 — plan generated:**
+```json
+{ "triggered": true, "plan": { ...plan row... } }
+```
+
+#### `PATCH /api/catch-up`
+Dismiss the current active catch-up plan.
+
+**Request body:** `{ "id": "uuid" }`
+
+**Response:** `{ "ok": true }`
+
+---
+
+### Budget optimizer
+
+#### `GET /api/budget-optimize`
+Returns the latest active (non-dismissed) budget optimization suggestion, plus a detection signal.
+
+**Access:** All authenticated users.
+
+**Response:**
+```json
+{
+  "optimization": {
+    "id": "uuid",
+    "wedding_id": "uuid",
+    "generated_at": "2026-04-12T10:00:00Z",
+    "trigger_reason": "Catering 18% over estimate",
+    "suggestion": {
+      "summary": "string",
+      "suggestions": [{ "title": "string", "why": "string", "action": "string" }]
+    },
+    "model": "claude-sonnet-4-5",
+    "dismissed_at": null
+  },
+  "detection": { "triggered": true, "reason": "string" },
+  "canGenerate": true,
+  "tier": "trialing"
+}
+```
+
+`optimization` is `null` if no active suggestion exists.
+
+#### `POST /api/budget-optimize`
+Generate a new budget optimization suggestion. Requires the `budgetOptimizer` feature.
+
+**403 response:**
+```json
+{
+  "error": "AI budget optimizer is a Pro feature.",
+  "tier": "free",
+  "trialExpired": true
+}
+```
+
+**200 — no suggestion needed:**
+```json
+{ "triggered": false }
+```
+
+**201 — suggestion generated:**
+```json
+{ "triggered": true, "optimization": { ...optimization row... } }
+```
+
+#### `PATCH /api/budget-optimize`
+Dismiss the current active budget optimization suggestion.
+
+**Request body:** `{ "id": "uuid" }`
+
+**Response:** `{ "ok": true }`
+
+---
+
 ### Chat
 
 #### `POST /api/chat`
 Send a message to the AI wedding planner.
 
+**Access:** All tiers (free tier is tool-call capped; `web_search` tool is unavailable to free-tier users).
+
 **Request Body:**
 ```json
 {
-  "message": "What should I do first for my wedding planning?",
-  "context": {
-    "wedding_date": "2024-06-15",
-    "guest_count": 150,
-    "budget": 25000
-  }
+  "message": "What should I do first for my wedding planning?"
 }
 ```
 
-**Response:**
+**Response headers** (on every successful response):
+```
+X-Tool-Calls-Used: <number>
+X-Tool-Calls-Limit: <number | -1>        // -1 = unlimited
+X-Tool-Calls-Remaining: <number | -1>    // -1 = unlimited
+```
+
+**403 — feature blocked** (free tier, `chat` feature disabled):
 ```json
 {
-  "response": "Hi! I'm eydn, your wedding guide. Based on your June wedding, let's start with...",
-  "suggestions": ["Book venue", "Set budget", "Create guest list"]
+  "error": "Premium feature — upgrade to continue",
+  "tier": "free",
+  "trialExpired": true
+}
+```
+
+**403 — cap exceeded** (free tier, monthly tool-call limit hit):
+```json
+{
+  "error": "You've used your free AI actions for this month. Upgrade to Pro for unlimited chat.",
+  "tier": "free",
+  "toolCallsUsed": 25,
+  "toolCallsLimit": 25
 }
 ```
 
@@ -589,12 +737,33 @@ Get current subscription status.
 **Response:**
 ```json
 {
-  "status": "trial",
-  "trial_ends_at": "2024-02-15T00:00:00Z",
-  "is_premium": false,
-  "days_remaining": 10
+  "tier": "trialing",
+  "features": {
+    "chat": true,
+    "webSearch": true,
+    "exportBinder": true,
+    "emailTemplates": true,
+    "attachments": true,
+    "catchUpPlans": true,
+    "budgetOptimizer": true
+  },
+  "toolCalls": {
+    "used": 3,
+    "limit": null,
+    "remaining": null
+  },
+  "hasAccess": true,
+  "isPaid": false,
+  "isBeta": false,
+  "isTrialing": true,
+  "trialDaysLeft": 11,
+  "trialExpired": false
 }
 ```
+
+`tier` is the canonical field. Possible values: `trialing | free | pro | beta | admin`. The legacy boolean fields (`hasAccess`, `isPaid`, `isTrialing`, `trialDaysLeft`, `trialExpired`) are derived from `tier` and retained for backward compatibility.
+
+`toolCalls.limit` and `toolCalls.remaining` are `null` for tiers with no cap (trialing, pro, beta, admin).
 
 #### `POST /api/subscribe`
 Create Stripe checkout session for subscription.
@@ -702,12 +871,37 @@ Update user settings.
 
 ## Cron Jobs
 
-### Deadline Checker
+### Deadline checker
 
 #### `POST /api/cron/check-deadlines`
 Automated endpoint to check for upcoming deadlines and send notifications.
 
-**Note:** This endpoint is called by Vercel Cron and requires proper authentication.
+**Authentication:** `Authorization: Bearer <CRON_SECRET>` (Vercel Cron injects this automatically).
+
+### Trial-expiry reminder
+
+#### `GET /api/cron/trial-reminders`
+Daily cron job that sends the 3-day trial-expiry reminder email to couples whose trial started 10–12 days ago and who have not yet received a reminder. The ±1-day window ensures the email is sent even if the cron misses a day, without double-sending.
+
+**Authentication:** `Authorization: Bearer <CRON_SECRET>`
+
+**Skip conditions:** user has an active purchase, user has a `beta` or `admin` role, user has opted out of lifecycle emails, no primary email address found in Clerk.
+
+**Deduplication:** `weddings.trial_reminder_sent_at` is set after a successful send; the query filters on `IS NULL` so each couple can receive at most one reminder.
+
+**Response:**
+```json
+{
+  "ok": true,
+  "candidatesConsidered": 12,
+  "emailsSent": 8,
+  "skippedPaid": 2,
+  "skippedPrivileged": 1,
+  "skippedUnsubscribed": 0,
+  "skippedNoEmail": 1,
+  "errors": 0
+}
+```
 
 ## Error Responses
 
@@ -731,20 +925,27 @@ All endpoints return consistent error responses:
 - `404` - Not Found
 - `500` - Internal Server Error
 
-## Premium Feature Protection
+## Feature gating
 
-Certain API endpoints require premium access (paid subscription or active trial):
+As of April 2026 the platform uses per-feature gates rather than a single premium flag. The `features` map on `SubscriptionStatus` controls access individually.
 
-- **AI Chat** (`/api/chat`) - Requires `requirePremium()` check
-- **File Attachments** (`/api/attachments`) - Requires `requirePremium()` check
-- **PDF Export** - Premium feature in day-of planner
+**Free-tier users retain access to:** guest list, budget tracker, task timeline, partner collaboration, wedding website, and a capped amount of AI chat (tool calls, not messages).
 
-### Premium Enforcement
+**Pro-only features:** `web_search` inside chat, day-of binder PDF export, vendor email templates, file attachments on real entities, AI catch-up plans, AI budget optimizer.
+
+### Feature gate enforcement
 
 ```typescript
+// New code — per-feature (preferred)
+const gate = await requireFeature("catchUpPlans");
+if (gate) return gate;
+
+// Legacy code — generic premium gate (backward compat)
 const premiumCheck = await requirePremium();
-if (premiumCheck) return premiumCheck; // Returns 403 if no access
+if (premiumCheck) return premiumCheck;
 ```
+
+Both helpers return a `403 NextResponse` with a JSON body that includes `tier` and `trialExpired`. The per-feature helper also includes the `feature` key so the client can show the correct upgrade message.
 
 ## Webhooks
 

@@ -106,11 +106,13 @@
 - **Vendor Directory**: Curated directory with local vendor suggestions
 
 ### ✅ Subscription & Monetization
-- **14-Day Free Trial**: Full access to all features
-- **One-Time Purchase**: $79 lifetime access model
+- **14-day reverse trial**: New signups get full Pro access for 14 days, then downgrade to the free tier (no lockout; data is never deleted)
+- **Pro Lifetime — $79 one-time** (featured offer): full access through the wedding day, framed against the $179.88 annual equivalent
+- **Pro Monthly — $14.99/month** (secondary hedge, not yet wired to Stripe): for users who won't commit upfront; anchors the lifetime price as a deal
+- **Memory Plan — $29/year**: post-wedding retention, orthogonal to Pro (keeps the wedding website live)
+- **Free tier (post-trial)**: guest list, budget tracker, AI-personalized task timeline, partner collaboration, wedding website, and capped AI chat; loses web search, day-of binder, vendor email templates, file attachments, catch-up plans, and budget optimizer
+- **Beta role**: permanent full access with no payment — assigned via `/beta/claim`
 - **Stripe Integration**: Secure payment processing and webhooks
-- **Subscription Management**: Trial tracking and premium feature gating
-- **Paywall System**: Seamless upgrade experience
 
 ### ✅ Admin & Platform Management
 - **Admin Dashboard**: Platform statistics and user management

@@ -124,8 +124,8 @@ Beta access is a **role in the `user_roles` table**, not a promo code redemption
 1. `POST /api/beta/claim` checks the user is authenticated
 2. It counts existing beta role assignments to verify spots remain
 3. It inserts a row into `user_roles` with `role = 'beta'`
-4. The subscription system (`getSubscriptionStatus()`) treats the beta role identically to a paid purchase — `hasAccess: true, isPaid: true, isBeta: true`
-5. All client-side gating (trial banner, paywall, premium buttons) respects this status
+4. The subscription system (`getSubscriptionStatus()`) returns `tier: "beta"` with all feature flags on and no trial countdown. Legacy fields: `hasAccess: true, isPaid: true, isBeta: true`.
+5. All client-side gating (trial banner, upgrade prompts, feature gates) respects this status
 
 ### Database
 
