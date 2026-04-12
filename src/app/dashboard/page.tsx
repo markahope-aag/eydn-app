@@ -8,6 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { MilestoneCelebration } from "@/components/MilestoneCelebration";
 import { DayOfReveal } from "@/components/DayOfReveal";
+import CatchUpBanner from "@/components/CatchUpBanner";
 
 function buildGreeting(ctx: { name: string; both: string; days: number | null; totalTasks: number; doneTasks: number; taskPct: number }): string {
   const { name, both, days, totalTasks, doneTasks, taskPct } = ctx;
@@ -426,6 +427,8 @@ export default async function DashboardPage() {
           daysLeft={daysUntilWedding}
         />
       )}
+
+      <CatchUpBanner />
 
       {/* Proactive nudges from Eydn */}
       {sortedNudges.length > 0 && (
