@@ -797,7 +797,7 @@ export default function SeatingPage() {
               aria-label="Search unassigned guests"
               className="rounded-[10px] border-border px-3 py-1.5 text-[13px] mb-2"
             />
-            <div className="space-y-1 flex-1 overflow-y-auto" aria-label="Unassigned guests — drag to a table or use the dropdown to assign">
+            <div className="space-y-1 flex-1 overflow-y-auto" role="list" aria-label="Unassigned guests — drag to a table or use the dropdown to assign">
               {unassignedGuests
                 .filter((g) => !unassignedSearch || g.name.toLowerCase().includes(unassignedSearch.toLowerCase()))
                 .map((guest) => (

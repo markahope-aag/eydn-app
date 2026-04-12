@@ -75,7 +75,12 @@ for (const viewport of VIEWPORTS) {
         .analyze();
 
       expect(
-        results.violations.map((v) => `${v.id}: ${v.description}`)
+        results.violations.map(
+          (v) =>
+            `${v.id}: ${v.description} — targets: ${v.nodes
+              .map((n) => n.target.join(" "))
+              .join("; ")}`
+        )
       ).toEqual([]);
     });
   }
