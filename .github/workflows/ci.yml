@@ -1,11 +1,14 @@
 name: CI
 
 on:
-  # Manual trigger — run from GitHub Actions tab or gh CLI
-  workflow_dispatch:
-  # PRs still run automatically
+  # Every push to master runs the full pipeline
+  push:
+    branches: [master]
+  # PRs against master also run
   pull_request:
     branches: [master]
+  # Manual trigger — run from GitHub Actions tab or gh CLI
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
