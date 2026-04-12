@@ -22,6 +22,7 @@ function makeWedding(overrides: Partial<Wedding> = {}): Wedding {
     has_pre_wedding_events: null,
     has_honeymoon: null,
     trial_started_at: null,
+    trial_reminder_sent_at: null,
     website_slug: null,
     website_enabled: false,
     website_headline: null,
