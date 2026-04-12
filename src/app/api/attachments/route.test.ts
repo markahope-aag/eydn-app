@@ -73,11 +73,11 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/lib/subscription", () => ({
-  requirePremium: vi.fn(),
+  requireFeature: vi.fn(),
 }));
 
 import { getWeddingForUser } from "@/lib/auth";
-import { requirePremium } from "@/lib/subscription";
+import { requireFeature } from "@/lib/subscription";
 import { GET, POST } from "./route";
 
 // --- Helpers ---
@@ -114,7 +114,7 @@ describe("GET /api/attachments", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthSuccess();
-    vi.mocked(requirePremium).mockResolvedValue(null);
+    vi.mocked(requireFeature).mockResolvedValue(null);
   });
 
   it("returns attachment list", async () => {
@@ -140,7 +140,7 @@ describe("POST /api/attachments", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthSuccess();
-    vi.mocked(requirePremium).mockResolvedValue(null);
+    vi.mocked(requireFeature).mockResolvedValue(null);
   });
 
   it("skips premium check for synthetic ID website-cover", async () => {
@@ -153,7 +153,7 @@ describe("POST /api/attachments", () => {
 
     await POST(request);
 
-    expect(requirePremium).not.toHaveBeenCalled();
+    expect(requireFeature).not.toHaveBeenCalled();
   });
 
   it("skips premium check for synthetic ID mood-board", async () => {
@@ -166,7 +166,7 @@ describe("POST /api/attachments", () => {
 
     await POST(request);
 
-    expect(requirePremium).not.toHaveBeenCalled();
+    expect(requireFeature).not.toHaveBeenCalled();
   });
 
   it("skips entity verification for synthetic IDs", async () => {
@@ -184,7 +184,7 @@ describe("POST /api/attachments", () => {
   });
 
   it("returns 403 for real entity IDs when premium check fails", async () => {
-    vi.mocked(requirePremium).mockResolvedValue(
+    vi.mocked(requireFeature).mockResolvedValue(
       NextResponse.json({ error: "Premium required" }, { status: 403 })
     );
 
@@ -212,7 +212,7 @@ describe("POST /api/attachments", () => {
 
     await POST(request);
 
-    expect(requirePremium).toHaveBeenCalled();
+    expect(requireFeature).toHaveBeenCalled();
   });
 
   it("returns 400 when required fields are missing", async () => {
@@ -320,6 +320,6 @@ describe("POST /api/attachments", () => {
 
     await POST(request);
 
-    expect(requirePremium).not.toHaveBeenCalled();
+    expect(requireFeature).not.toHaveBeenCalled();
   });
 });

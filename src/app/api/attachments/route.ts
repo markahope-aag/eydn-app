@@ -1,6 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { requirePremium } from "@/lib/subscription";
+import { requireFeature } from "@/lib/subscription";
 import { UPLOAD } from "@/lib/config";
 
 // Synthetic entity IDs used by website and vision board uploads — not real DB records
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
 
   // Require premium for real task/vendor attachments (not website or mood-board uploads)
   if (!isSyntheticUpload(entityId)) {
-    const paywall = await requirePremium();
+    const paywall = await requireFeature("attachments");
     if (paywall) return paywall;
   }
 

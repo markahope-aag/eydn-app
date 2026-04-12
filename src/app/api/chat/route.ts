@@ -1,6 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { requirePremium } from "@/lib/subscription";
+import { requireFeature } from "@/lib/subscription";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 import { safeParseJSON, isParseError } from "@/lib/validation";
 import { getClaudeClient } from "@/lib/ai/claude-client";
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Too many requests. Please wait before sending another message." }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
   }
 
-  const paywall = await requirePremium();
+  const paywall = await requireFeature("chat");
   if (paywall) return paywall;
 
   const result = await getWeddingForUser();

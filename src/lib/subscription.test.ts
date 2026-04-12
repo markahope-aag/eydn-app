@@ -27,6 +27,25 @@ import { getSubscriptionStatus, requirePremium } from "./subscription";
 const mockAuth = vi.mocked(auth);
 const mockCreateSupabaseAdmin = vi.mocked(createSupabaseAdmin);
 
+const FEATURES_OFF = {
+  chat: false,
+  webSearch: false,
+  exportBinder: false,
+  emailTemplates: false,
+  attachments: false,
+  catchUpPlans: false,
+  budgetOptimizer: false,
+};
+const FEATURES_ON = {
+  chat: true,
+  webSearch: true,
+  exportBinder: true,
+  emailTemplates: true,
+  attachments: true,
+  catchUpPlans: true,
+  budgetOptimizer: true,
+};
+
 function buildMockSupabase(overrides?: {
   roleData?: unknown;
   purchaseData?: unknown;
@@ -72,6 +91,8 @@ describe("getSubscriptionStatus", () => {
     const status = await getSubscriptionStatus();
 
     expect(status).toEqual({
+      tier: "free",
+      features: FEATURES_OFF,
       hasAccess: false,
       isPaid: false,
       isBeta: false,
@@ -89,6 +110,8 @@ describe("getSubscriptionStatus", () => {
     const status = await getSubscriptionStatus();
 
     expect(status).toEqual({
+      tier: "beta",
+      features: FEATURES_ON,
       hasAccess: true,
       isPaid: true,
       isBeta: true,
@@ -106,6 +129,8 @@ describe("getSubscriptionStatus", () => {
     const status = await getSubscriptionStatus();
 
     expect(status).toEqual({
+      tier: "admin",
+      features: FEATURES_ON,
       hasAccess: true,
       isPaid: true,
       isBeta: false,
@@ -123,6 +148,8 @@ describe("getSubscriptionStatus", () => {
     const status = await getSubscriptionStatus();
 
     expect(status).toEqual({
+      tier: "pro",
+      features: FEATURES_ON,
       hasAccess: true,
       isPaid: true,
       isBeta: false,
@@ -144,6 +171,8 @@ describe("getSubscriptionStatus", () => {
     const status = await getSubscriptionStatus();
 
     expect(status).toEqual({
+      tier: "free",
+      features: FEATURES_OFF,
       hasAccess: false,
       isPaid: false,
       isBeta: false,
@@ -188,6 +217,8 @@ describe("getSubscriptionStatus", () => {
     const status = await getSubscriptionStatus();
 
     expect(status).toEqual({
+      tier: "free",
+      features: FEATURES_OFF,
       hasAccess: false,
       isPaid: false,
       isBeta: false,

@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
-type SubscriptionStatus = {
-  hasAccess: boolean;
-  isPaid: boolean;
-  isBeta: boolean;
-  isTrialing: boolean;
-  trialDaysLeft: number;
-  trialExpired: boolean;
-};
+import type { SubscriptionStatus } from "@/lib/subscription";
 
 export function Paywall({
   children,

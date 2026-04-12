@@ -33,7 +33,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/lib/subscription", () => ({
-  requirePremium: vi.fn(),
+  requireFeature: vi.fn(),
 }));
 
 vi.mock("@/lib/ai/claude-client", () => ({
@@ -45,7 +45,7 @@ vi.mock("@/lib/ai/edyn-system-prompt", () => ({
 }));
 
 import { getWeddingForUser } from "@/lib/auth";
-import { requirePremium } from "@/lib/subscription";
+import { requireFeature } from "@/lib/subscription";
 import { GET, POST } from "./route";
 
 // --- Helpers ---
@@ -106,7 +106,7 @@ describe("POST /api/chat", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSupabase = createMockSupabase();
-    vi.mocked(requirePremium).mockResolvedValue(null);
+    vi.mocked(requireFeature).mockResolvedValue(null);
     vi.mocked(getWeddingForUser).mockResolvedValue({
       wedding: mockWedding,
       supabase: mockSupabase,
@@ -116,7 +116,7 @@ describe("POST /api/chat", () => {
   });
 
   it("returns 403 when premium check fails", async () => {
-    vi.mocked(requirePremium).mockResolvedValue(
+    vi.mocked(requireFeature).mockResolvedValue(
       NextResponse.json({ error: "Premium required" }, { status: 403 })
     );
 
@@ -161,13 +161,13 @@ describe("POST /api/chat", () => {
   });
 
   it("checks premium before processing message", async () => {
-    vi.mocked(requirePremium).mockResolvedValue(
+    vi.mocked(requireFeature).mockResolvedValue(
       NextResponse.json({ error: "Premium required" }, { status: 403 })
     );
 
     const response = await POST(mockRequest({ message: "Hello" }));
 
-    expect(requirePremium).toHaveBeenCalled();
+    expect(requireFeature).toHaveBeenCalled();
     expect(response.status).toBe(403);
     // Should NOT have called getWeddingForUser since premium check fails first
   });
@@ -198,12 +198,12 @@ describe("Chat History Access Policy", () => {
 
     expect(response.status).toBe(200);
     expect(data).toHaveLength(2);
-    // requirePremium should NOT have been called for GET
-    expect(requirePremium).not.toHaveBeenCalled();
+    // requireFeature should NOT have been called for GET (history fetch is not gated)
+    expect(requireFeature).not.toHaveBeenCalled();
   });
 
   it("blocks expired trial users from sending new messages (POST)", async () => {
-    vi.mocked(requirePremium).mockResolvedValue(
+    vi.mocked(requireFeature).mockResolvedValue(
       NextResponse.json({ error: "Premium required", trialExpired: true }, { status: 403 })
     );
     vi.mocked(getWeddingForUser).mockResolvedValue({

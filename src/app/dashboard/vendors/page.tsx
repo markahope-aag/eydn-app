@@ -12,6 +12,7 @@ import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { VENDOR_CATEGORIES, VENDOR_STATUSES, categoryLabel } from "@/lib/vendors/categories";
 import { Tooltip } from "@/components/Tooltip";
 import { EmailTemplate } from "./EmailTemplate";
+import { usePremium } from "@/components/PremiumGate";
 import { trackVendorAdded } from "@/lib/analytics";
 
 type Vendor = {
@@ -38,6 +39,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function VendorsPage() {
+  const { guardFeature } = usePremium();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [noWedding, setNoWedding] = useState(false);
@@ -377,7 +379,7 @@ export default function VendorsPage() {
                       </span>
                     )}
                     <button
-                      onClick={() => setEmailCategory(vendor.category)}
+                      onClick={() => guardFeature("emailTemplates", () => setEmailCategory(vendor.category))}
                       className="btn-ghost btn-sm text-[12px] flex items-center gap-1"
                       title="Email template"
                     >

@@ -7,7 +7,30 @@ const PRICE = 79;
 
 export { PRICE as SUBSCRIPTION_PRICE };
 
+// Explicit tier — source of truth for everything downstream. All legacy
+// boolean fields on SubscriptionStatus are derived from this.
+export type Tier = "trialing" | "free" | "pro" | "beta" | "admin";
+
+// Per-feature gates. Callers should prefer these over the legacy
+// hasAccess boolean. See project_pricing_model.md for the full matrix.
+export type FeatureKey =
+  | "chat"           // POST /api/chat (free tier will become capped in #6)
+  | "webSearch"      // web_search tool inside the chat loop (Pro-only)
+  | "exportBinder"   // Day-of binder PDF export
+  | "emailTemplates" // Vendor email templates
+  | "attachments"    // Attachments on real entities (tasks, vendors)
+  | "catchUpPlans"   // AI catch-up plans (task #7)
+  | "budgetOptimizer"; // AI budget optimizer (task #8)
+
+export type Features = Record<FeatureKey, boolean>;
+
 export type SubscriptionStatus = {
+  tier: Tier;
+  features: Features;
+
+  // Legacy fields — derived from tier, kept for backward compat during the
+  // migration from the old hasAccess-boolean model. Prefer `tier` and
+  // `features` in new code.
   hasAccess: boolean;
   isPaid: boolean;
   isBeta: boolean;
@@ -16,9 +39,74 @@ export type SubscriptionStatus = {
   trialExpired: boolean;
 };
 
+// Feature map per tier. The `free` row is currently conservative —
+// everything false — because the trial-expiry downgrade path (task #5) and
+// the chat tool-call cap (task #6) haven't shipped yet. Flipping `free.chat`
+// to true without a cap would uncap Claude inference cost. When #5 and #6
+// land together, update this map so free gets { chat: true } and chat-route
+// enforces the cap, and the rest of the free-tier features stay blocked.
+const ALL_ON: Features = {
+  chat: true,
+  webSearch: true,
+  exportBinder: true,
+  emailTemplates: true,
+  attachments: true,
+  catchUpPlans: true,
+  budgetOptimizer: true,
+};
+
+const ALL_OFF: Features = {
+  chat: false,
+  webSearch: false,
+  exportBinder: false,
+  emailTemplates: false,
+  attachments: false,
+  catchUpPlans: false,
+  budgetOptimizer: false,
+};
+
+const TIER_FEATURES: Record<Tier, Features> = {
+  trialing: ALL_ON,
+  free: ALL_OFF, // Task #5 + #6 will relax this — see comment above.
+  pro: ALL_ON,
+  beta: ALL_ON,
+  admin: ALL_ON,
+};
+
+function deriveStatus(tier: Tier, trialDaysLeft = 0): SubscriptionStatus {
+  return {
+    tier,
+    features: TIER_FEATURES[tier],
+    hasAccess: tier !== "free",
+    isPaid: tier === "pro" || tier === "beta" || tier === "admin",
+    isBeta: tier === "beta",
+    isTrialing: tier === "trialing",
+    trialDaysLeft,
+    trialExpired: tier === "free",
+  };
+}
+
 /**
- * Guard for premium API routes. Returns null if the user has access,
- * or a 403 NextResponse if they don't.
+ * Guard for API routes that require a specific premium feature. Returns
+ * null if the caller has access, or a 403 NextResponse otherwise.
+ */
+export async function requireFeature(feature: FeatureKey): Promise<NextResponse | null> {
+  const status = await getSubscriptionStatus();
+  if (status.features[feature]) return null;
+  return NextResponse.json(
+    {
+      error: "Premium feature — upgrade to continue",
+      feature,
+      tier: status.tier,
+      trialExpired: status.trialExpired,
+    },
+    { status: 403 }
+  );
+}
+
+/**
+ * Backward-compat alias for the old boolean gate. Prefer `requireFeature`
+ * in new code.
  */
 export async function requirePremium(): Promise<NextResponse | null> {
   const status = await getSubscriptionStatus();
@@ -31,9 +119,7 @@ export async function requirePremium(): Promise<NextResponse | null> {
 
 export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   const { userId } = await auth();
-  if (!userId) {
-    return { hasAccess: false, isPaid: false, isBeta: false, isTrialing: false, trialDaysLeft: 0, trialExpired: true };
-  }
+  if (!userId) return deriveStatus("free");
 
   const supabase = createSupabaseAdmin();
 
@@ -47,8 +133,8 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
     .single();
 
   if (privilegedRole) {
-    const isBeta = (privilegedRole as { role: string }).role === "beta";
-    return { hasAccess: true, isPaid: true, isBeta, isTrialing: false, trialDaysLeft: 0, trialExpired: false };
+    const role = (privilegedRole as { role: string }).role;
+    return deriveStatus(role === "beta" ? "beta" : "admin");
   }
 
   // Check for active purchase by this user
@@ -60,9 +146,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
     .limit(1)
     .single();
 
-  if (purchase) {
-    return { hasAccess: true, isPaid: true, isBeta: false, isTrialing: false, trialDaysLeft: 0, trialExpired: false };
-  }
+  if (purchase) return deriveStatus("pro");
 
   // Check trial status from owned wedding
   const { data: ownedWedding } = await supabase
@@ -85,7 +169,6 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
     .single();
 
   if (collab) {
-    // Get the wedding to find the owner
     const { data: wedding } = await supabase
       .from("weddings")
       .select("user_id, trial_started_at, created_at")
@@ -93,7 +176,6 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
       .single();
 
     if (wedding) {
-      // Check if the OWNER has an active purchase
       const { data: ownerPurchase } = await supabase
         .from("subscriber_purchases")
         .select("id")
@@ -102,17 +184,12 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
         .limit(1)
         .single();
 
-      if (ownerPurchase) {
-        return { hasAccess: true, isPaid: true, isBeta: false, isTrialing: false, trialDaysLeft: 0, trialExpired: false };
-      }
-
-      // Inherit the owner's trial status
+      if (ownerPurchase) return deriveStatus("pro");
       return computeTrialStatus(wedding as { trial_started_at: string | null; created_at: string });
     }
   }
 
-  // No owned wedding and no collaboration — no access
-  return { hasAccess: false, isPaid: false, isBeta: false, isTrialing: false, trialDaysLeft: 0, trialExpired: true };
+  return deriveStatus("free");
 }
 
 function computeTrialStatus(wedding: { trial_started_at: string | null; created_at: string }): SubscriptionStatus {
@@ -121,9 +198,6 @@ function computeTrialStatus(wedding: { trial_started_at: string | null; created_
   const now = new Date();
   const daysLeft = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 
-  if (daysLeft > 0) {
-    return { hasAccess: true, isPaid: false, isBeta: false, isTrialing: true, trialDaysLeft: daysLeft, trialExpired: false };
-  }
-
-  return { hasAccess: false, isPaid: false, isBeta: false, isTrialing: false, trialDaysLeft: 0, trialExpired: true };
+  if (daysLeft > 0) return deriveStatus("trialing", daysLeft);
+  return deriveStatus("free");
 }

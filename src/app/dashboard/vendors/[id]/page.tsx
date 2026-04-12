@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { VENDOR_STATUSES } from "@/lib/vendors/categories";
 import { EmailTemplate } from "../EmailTemplate";
+import { usePremium } from "@/components/PremiumGate";
 import { Comments } from "@/components/Comments";
 import { VendorCard } from "@/components/VendorCard";
 import { FileUpload } from "@/components/FileUpload";
@@ -58,6 +59,7 @@ export default function VendorDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
+  const { guardFeature } = usePremium();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
   const [showEmail, setShowEmail] = useState(false);
@@ -406,7 +408,7 @@ export default function VendorDetailPage({
 
       {/* Email template */}
       <button
-        onClick={() => setShowEmail(true)}
+        onClick={() => guardFeature("emailTemplates", () => setShowEmail(true))}
         className="btn-secondary mt-6 inline-flex items-center gap-2"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

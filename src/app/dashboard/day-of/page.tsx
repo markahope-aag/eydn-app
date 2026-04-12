@@ -252,11 +252,12 @@ export default function DayOfPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1>Day-of Planner</h1>
         <div className="flex items-center gap-2">
-          <PremiumButton onClick={() => exportDayOfPDF(plan)} className="btn-secondary btn-sm">
+          <PremiumButton onClick={() => exportDayOfPDF(plan)} className="btn-secondary btn-sm" feature="exportBinder">
             Export PDF
           </PremiumButton>
           <Tooltip text="Downloads your timeline and vendor contacts as a printable PDF." />
           <PremiumButton
+            feature="exportBinder"
             onClick={async () => {
               setBinderLoading(true);
               try {
