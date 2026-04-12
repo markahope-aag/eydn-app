@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Paywall } from "@/components/Paywall";
+import { usePremium } from "@/components/PremiumGate";
 import { trackChatMessage } from "@/lib/analytics";
 import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
@@ -13,13 +14,28 @@ type Message = {
   content: string;
 };
 
+type Meter = { used: number; limit: number; remaining: number };
+
 export default function ChatPage() {
+  const { toolCalls } = usePremium();
   const [messages, setMessages] = useState<Message[]>([]);
   const [noWedding, setNoWedding] = useState(false);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [meter, setMeter] = useState<Meter | null>(null);
   const messagesEnd = useRef<HTMLDivElement>(null);
+
+  // Hydrate the meter from the initial /api/subscription-status fetch
+  // (via usePremium). Only shown when the tier actually has a cap —
+  // trial/pro/beta/admin return limit=null and render no pill.
+  useEffect(() => {
+    if (toolCalls && toolCalls.limit !== null && toolCalls.remaining !== null) {
+      setMeter({ used: toolCalls.used, limit: toolCalls.limit, remaining: toolCalls.remaining });
+    } else {
+      setMeter(null);
+    }
+  }, [toolCalls]);
 
   useEffect(() => {
     fetch("/api/chat")
@@ -71,15 +87,41 @@ export default function ChatPage() {
 
       if (res.ok) {
         trackChatMessage();
+        // Read the updated meter from response headers so the pill
+        // reflects the tool calls just consumed.
+        const limitHeader = res.headers.get("X-Tool-Calls-Limit");
+        const usedHeader = res.headers.get("X-Tool-Calls-Used");
+        const remainingHeader = res.headers.get("X-Tool-Calls-Remaining");
+        if (limitHeader && limitHeader !== "-1" && usedHeader && remainingHeader) {
+          setMeter({
+            used: Number(usedHeader),
+            limit: Number(limitHeader),
+            remaining: Number(remainingHeader),
+          });
+        }
       }
 
       if (res.status === 403) {
-        toast.error("AI chat requires a paid plan.", {
-          action: {
-            label: "See pricing",
-            onClick: () => { window.location.href = "/dashboard/pricing"; },
-          },
-        });
+        const body = await res.json().catch(() => null);
+        const isCap = body?.toolCallsLimit !== undefined;
+        toast.error(
+          isCap
+            ? "You've used your free AI actions this month. Upgrade to Pro for unlimited chat."
+            : "AI chat requires a paid plan.",
+          {
+            action: {
+              label: "See pricing",
+              onClick: () => { window.location.href = "/dashboard/pricing"; },
+            },
+          }
+        );
+        if (isCap && body?.toolCallsUsed !== undefined && body?.toolCallsLimit !== undefined) {
+          setMeter({
+            used: body.toolCallsUsed,
+            limit: body.toolCallsLimit,
+            remaining: Math.max(0, body.toolCallsLimit - body.toolCallsUsed),
+          });
+        }
         setMessages((prev) => prev.filter((m) => m.id !== assistantId));
         setStreaming(false);
         return;
@@ -120,9 +162,25 @@ export default function ChatPage() {
   return (
     <Paywall feature="Ask Eydn">
     <div className="flex flex-col h-[calc(100vh-10rem)] md:h-[calc(100vh-7rem)]">
-      <h1 className="flex-shrink-0">
-        Ask Eydn
-      </h1>
+      <div className="flex items-center justify-between gap-3 flex-shrink-0">
+        <h1>Ask Eydn</h1>
+        {meter && (
+          <div
+            className={`rounded-full px-3 py-1 text-[12px] font-semibold ${
+              meter.remaining === 0
+                ? "bg-plum/10 text-plum"
+                : meter.remaining <= 2
+                  ? "bg-amber-50 text-amber-700"
+                  : "bg-lavender text-violet"
+            }`}
+            title={`${meter.used} of ${meter.limit} free AI actions used this month`}
+          >
+            {meter.remaining === 0
+              ? "0 AI actions left"
+              : `${meter.remaining} of ${meter.limit} AI actions left`}
+          </div>
+        )}
+      </div>
       <p className="mt-1 text-[15px] text-muted flex-shrink-0">
         Your AI wedding planning assistant
       </p>
