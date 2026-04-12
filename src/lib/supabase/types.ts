@@ -202,6 +202,44 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_optimizations: {
+        Row: {
+          dismissed_at: string | null
+          generated_at: string
+          id: string
+          model: string
+          suggestion: Json
+          trigger_reason: string
+          wedding_id: string
+        }
+        Insert: {
+          dismissed_at?: string | null
+          generated_at?: string
+          id?: string
+          model: string
+          suggestion: Json
+          trigger_reason: string
+          wedding_id: string
+        }
+        Update: {
+          dismissed_at?: string | null
+          generated_at?: string
+          id?: string
+          model?: string
+          suggestion?: Json
+          trigger_reason?: string
+          wedding_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_optimizations_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calculator_saves: {
         Row: {
           budget: number
