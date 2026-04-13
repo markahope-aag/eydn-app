@@ -27,7 +27,7 @@ export function GlobalHeader() {
         </Link>
         <Show when="signed-out">
           <nav className="hidden sm:flex items-center gap-6">
-            <Link href="/tools/wedding-budget-calculator" className="text-[15px] text-muted hover:text-plum transition">Budget Calculator</Link>
+            <Link href="/tools" className="text-[15px] text-muted hover:text-plum transition">Free Tools</Link>
             <Link href="/#features" className="text-[15px] text-muted hover:text-plum transition">Features</Link>
             <Link href="/#how-it-works" className="text-[15px] text-muted hover:text-plum transition">How It Works</Link>
             <Link href="/#pricing" className="text-[15px] text-muted hover:text-plum transition">Pricing</Link>

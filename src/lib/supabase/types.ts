@@ -1477,6 +1477,42 @@ export type Database = {
           },
         ]
       }
+      quiz_completions: {
+        Row: {
+          id: string
+          quiz_id: string
+          email: string
+          first_name: string | null
+          result_key: string
+          result_label: string | null
+          answers: unknown
+          score: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          quiz_id: string
+          email: string
+          first_name?: string | null
+          result_key: string
+          result_label?: string | null
+          answers?: unknown
+          score?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          quiz_id?: string
+          email?: string
+          first_name?: string | null
+          result_key?: string
+          result_label?: string | null
+          answers?: unknown
+          score?: number | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       trial_email_log: {
         Row: {
           user_id: string
