@@ -59,8 +59,42 @@ export default function AdminBlogPage() {
   const [blogSearch, setBlogSearch] = useState("");
   const [blogSort, setBlogSort] = useState<"newest" | "oldest" | "title">("newest");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const coverFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  async function uploadToBlogBucket(file: File): Promise<string> {
+    const fd = new FormData();
+    fd.append("file", file);
+    if (form.slug || form.title) {
+      fd.append("slug", form.slug || form.title);
+    }
+    const res = await fetch("/api/blog/upload-image", { method: "POST", body: fd });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Upload failed (${res.status})`);
+    }
+    const { url } = (await res.json()) as { url: string };
+    return url;
+  }
+
+  async function handleCoverImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    event.target.value = "";
+
+    setUploadingCover(true);
+    try {
+      const url = await uploadToBlogBucket(file);
+      setForm((f) => ({ ...f, cover_image: url }));
+      toast.success("Cover image uploaded.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingCover(false);
+    }
+  }
 
   async function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -69,22 +103,7 @@ export default function AdminBlogPage() {
 
     setUploadingImage(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      if (form.slug || form.title) {
-        fd.append("slug", form.slug || form.title);
-      }
-
-      const res = await fetch("/api/blog/upload-image", {
-        method: "POST",
-        body: fd,
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Upload failed (${res.status})`);
-      }
-      const { url } = (await res.json()) as { url: string };
-
+      const url = await uploadToBlogBucket(file);
       const tag = `<img src="${url}" alt="${file.name.replace(/\.[^.]+$/, "")}" loading="lazy" />`;
       const textarea = contentRef.current;
       if (textarea) {
@@ -484,14 +503,46 @@ export default function AdminBlogPage() {
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>Cover Image URL</label>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                    <label style={{ ...labelStyle, marginBottom: 0 }}>Cover Image</label>
+                    <div>
+                      <input
+                        ref={coverFileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                        onChange={handleCoverImageUpload}
+                        style={{ display: "none" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => coverFileInputRef.current?.click()}
+                        disabled={uploadingCover}
+                        style={{
+                          fontSize: 12,
+                          padding: "4px 10px",
+                          border: "1px solid var(--border)",
+                          borderRadius: 6,
+                          background: uploadingCover ? "var(--lavender)" : "white",
+                          color: "var(--plum)",
+                          cursor: uploadingCover ? "default" : "pointer",
+                        }}
+                      >
+                        {uploadingCover ? "Uploading…" : "＋ Upload"}
+                      </button>
+                    </div>
+                  </div>
                   <input
                     type="text"
                     value={form.cover_image || ""}
                     onChange={(e) => setForm((f) => ({ ...f, cover_image: e.target.value || null }))}
-                    placeholder="https://..."
+                    placeholder="Upload above, or paste an image URL"
                     style={inputStyle}
                   />
+                  {form.cover_image && (
+                    <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 4, wordBreak: "break-all" }}>
+                      ✓ {form.cover_image.slice(0, 80)}{form.cover_image.length > 80 ? "…" : ""}
+                    </p>
+                  )}
                 </div>
               </div>
 
