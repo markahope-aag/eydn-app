@@ -6,6 +6,7 @@ import { Show, useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 
 const navLinks = [
+  { label: "Budget Calculator", href: "/tools/wedding-budget-calculator" },
   { label: "Features", href: "/#features" },
   { label: "How It Works", href: "/#how-it-works" },
   { label: "Pricing", href: "/#pricing" },
