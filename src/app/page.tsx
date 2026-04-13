@@ -1139,13 +1139,6 @@ export default function HomePage() {
               </div>
             </div>
             <div>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.65)", textTransform: "uppercase", letterSpacing: "0.15em" }}>For Vendors</p>
-              <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                <Link href="/dashboard/vendor-portal" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Vendor Portal</Link>
-                <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Placement Tiers</Link>
-              </div>
-            </div>
-            <div>
               <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.65)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Company</p>
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
                 <a href="mailto:support@eydn.app" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Contact</a>
