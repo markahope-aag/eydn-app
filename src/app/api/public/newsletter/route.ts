@@ -5,21 +5,29 @@ import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 import { logRequest } from "@/lib/api-logger";
 import { sendEmail } from "@/lib/email";
 import { getNewsletterWelcomeEmail } from "@/lib/email-newsletter";
-import { Resend } from "resend";
 
-async function syncToResendAudience(email: string): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const audienceId = process.env.RESEND_NEWSLETTER_AUDIENCE_ID;
-  if (!apiKey || !audienceId) return;
+/**
+ * Push the subscriber into Cadence — our in-house bulk-email system backed
+ * by AWS SES. Cadence manages contacts, lists, and broadcasts; Eydn only
+ * owns the signup moment and the transactional welcome email with the
+ * planning checklist. Fire-and-forget — never block the response.
+ */
+async function syncToCadence(email: string): Promise<void> {
+  const cadenceUrl = process.env.CADENCE_URL;
+  const formId = process.env.CADENCE_NEWSLETTER_FORM_ID;
+  if (!cadenceUrl || !formId) return;
   try {
-    const resend = new Resend(apiKey);
-    await resend.contacts.create({
-      email,
-      audienceId,
-      unsubscribed: false,
+    const res = await fetch(`${cadenceUrl.replace(/\/$/, "")}/api/subscribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ form_id: formId, email }),
     });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[NEWSLETTER] Cadence sync failed ${res.status}: ${body.slice(0, 200)}`);
+    }
   } catch (err) {
-    console.error("[NEWSLETTER] Resend audience sync failed:", err instanceof Error ? err.message : err);
+    console.error("[NEWSLETTER] Cadence sync error:", err instanceof Error ? err.message : err);
   }
 }
 
@@ -51,9 +59,10 @@ export async function POST(request: Request) {
     .single();
 
   if (existing) {
-    // Already on the list — don't re-send the welcome email, but still sync to
-    // Resend in case the audience is newer than the waitlist entry.
-    await syncToResendAudience(email);
+    // Already on the list — don't re-send the welcome email, but still
+    // sync to Cadence in case the subscribe form was added later than
+    // the historical waitlist entry.
+    void syncToCadence(email);
     logRequest("POST", "/api/public/newsletter", 200, Date.now() - start);
     return NextResponse.json({ success: true });
   }
@@ -64,7 +73,7 @@ export async function POST(request: Request) {
 
   if (insertError) {
     if (insertError.message.includes("unique") || insertError.message.includes("duplicate")) {
-      await syncToResendAudience(email);
+      void syncToCadence(email);
       logRequest("POST", "/api/public/newsletter", 200, Date.now() - start);
       return NextResponse.json({ success: true });
     }
@@ -73,10 +82,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Something went wrong. Try again." }, { status: 500 });
   }
 
-  // Fire-and-forget side effects — don't block the response on Resend.
+  // Fire-and-forget side effects — never block the response.
   const template = getNewsletterWelcomeEmail();
   void sendEmail({ to: email, subject: template.subject, html: template.html });
-  void syncToResendAudience(email);
+  void syncToCadence(email);
 
   logRequest("POST", "/api/public/newsletter", 200, Date.now() - start);
   return NextResponse.json({ success: true });
