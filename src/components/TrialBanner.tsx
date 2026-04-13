@@ -14,10 +14,15 @@ export default function TrialBanner() {
     const urgent = trialDaysLeft <= 3;
     const label =
       trialDaysLeft === 0
-        ? "Trial ends today"
+        ? "Your Pro trial ends today"
         : trialDaysLeft === 1
-          ? "1 day left in your free trial"
-          : `${trialDaysLeft} days left in your free trial`;
+          ? "1 day left in your Pro trial"
+          : `${trialDaysLeft} days left in your Pro trial`;
+
+    const subcopy =
+      trialDaysLeft <= 3
+        ? "When the trial ends, your plans stay put — but Ask Eydn, PDF exports, attachments, and templates drop off until you pick a plan."
+        : "You keep your plans either way. Pro keeps Ask Eydn, PDF exports, attachments, and templates turned on.";
 
     return (
       <div
@@ -30,15 +35,13 @@ export default function TrialBanner() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1">
             <p className="text-[15px] font-semibold text-plum">{label}</p>
-            <p className="text-[13px] text-muted mt-1">
-              Upgrade now to keep everything you&apos;ve built — one payment, yours forever.
-            </p>
+            <p className="text-[13px] text-muted mt-1">{subcopy}</p>
           </div>
           <Link
             href="/dashboard/pricing"
             className="rounded-full bg-brand-gradient px-5 py-2 text-[13px] font-semibold text-white shadow hover:opacity-90 transition text-center flex-shrink-0"
           >
-            Upgrade — $79
+            See plans
           </Link>
         </div>
       </div>
@@ -64,7 +67,7 @@ export default function TrialBanner() {
               href="/dashboard/pricing"
               className="rounded-full bg-brand-gradient px-5 py-2 text-[13px] font-semibold text-white shadow hover:opacity-90 transition text-center"
             >
-              Upgrade — $79
+              See plans
             </Link>
             <button
               type="button"

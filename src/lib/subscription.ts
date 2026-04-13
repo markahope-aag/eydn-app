@@ -4,8 +4,9 @@ import { NextResponse } from "next/server";
 
 const TRIAL_DAYS = 14;
 const PRICE = 79;
+const PRO_MONTHLY = 14.99;
 
-export { PRICE as SUBSCRIPTION_PRICE };
+export { PRICE as SUBSCRIPTION_PRICE, PRO_MONTHLY as PRO_MONTHLY_PRICE };
 
 // Explicit tier — source of truth for everything downstream. All legacy
 // boolean fields on SubscriptionStatus are derived from this.

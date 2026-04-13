@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 
 type Post = {
@@ -58,6 +58,70 @@ export default function AdminBlogPage() {
   const [tagsInput, setTagsInput] = useState("");
   const [blogSearch, setBlogSearch] = useState("");
   const [blogSort, setBlogSort] = useState<"newest" | "oldest" | "title">("newest");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const contentRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  async function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    event.target.value = "";
+
+    setUploadingImage(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      if (form.slug || form.title) {
+        fd.append("slug", form.slug || form.title);
+      }
+
+      const res = await fetch("/api/blog/upload-image", {
+        method: "POST",
+        body: fd,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Upload failed (${res.status})`);
+      }
+      const { url } = (await res.json()) as { url: string };
+
+      const tag = `<img src="${url}" alt="${file.name.replace(/\.[^.]+$/, "")}" loading="lazy" />`;
+      const textarea = contentRef.current;
+      if (textarea) {
+        const start = textarea.selectionStart ?? form.content.length;
+        const end = textarea.selectionEnd ?? form.content.length;
+        const next = form.content.slice(0, start) + tag + form.content.slice(end);
+        setForm((f) => ({
+          ...f,
+          content: next,
+          cover_image: f.cover_image || url,
+        }));
+        requestAnimationFrame(() => {
+          textarea.focus();
+          const pos = start + tag.length;
+          textarea.setSelectionRange(pos, pos);
+        });
+      } else {
+        setForm((f) => ({
+          ...f,
+          content: f.content + "\n" + tag,
+          cover_image: f.cover_image || url,
+        }));
+      }
+
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        // clipboard not available — not fatal
+      }
+
+      toast.success("Image uploaded. Tag inserted and URL copied.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -445,14 +509,45 @@ export default function AdminBlogPage() {
 
               {/* Content (HTML) */}
               <div>
-                <label style={labelStyle}>Content (HTML)</label>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }}>Content (HTML)</label>
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                      onChange={handleImageUpload}
+                      style={{ display: "none" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      style={{
+                        fontSize: 12,
+                        padding: "6px 12px",
+                        border: "1px solid var(--border)",
+                        borderRadius: 8,
+                        background: uploadingImage ? "var(--lavender)" : "white",
+                        color: "var(--plum)",
+                        cursor: uploadingImage ? "default" : "pointer",
+                      }}
+                    >
+                      {uploadingImage ? "Uploading…" : "＋ Upload image"}
+                    </button>
+                  </div>
+                </div>
                 <textarea
+                  ref={contentRef}
                   value={form.content}
                   onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
                   placeholder="<p>Write your article here using HTML...</p>"
                   rows={16}
                   style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace", fontSize: 13 }}
                 />
+                <p style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
+                  Click Upload image to add a file. The image tag is inserted at your cursor, the URL is copied to your clipboard, and if there&apos;s no cover image yet, it&apos;s set as the cover.
+                </p>
               </div>
 
               {/* Tags */}

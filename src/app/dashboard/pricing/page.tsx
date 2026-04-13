@@ -15,14 +15,16 @@ type PromoResult = {
   final_price?: number;
 };
 
+type Plan = "lifetime" | "monthly";
+
 export default function PricingPage() {
-  const [loading, setLoading] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
   const [promoInput, setPromoInput] = useState("");
   const [promoResult, setPromoResult] = useState<PromoResult | null>(null);
   const [showPromo, setShowPromo] = useState(false);
   const [validating, setValidating] = useState(false);
 
-  const finalPrice = promoResult?.valid ? promoResult.final_price! : 79;
+  const lifetimeFinalPrice = promoResult?.valid ? promoResult.final_price! : 79;
   const hasDiscount = promoResult?.valid && promoResult.discount_amount! > 0;
 
   async function validatePromo() {
@@ -39,9 +41,9 @@ export default function PricingPage() {
       setPromoResult(data);
 
       if (data.valid) {
-        toast.success(`Code applied — you save $${data.discount_amount!.toFixed(2)}!`);
+        toast.success(`Code applied. You save $${data.discount_amount!.toFixed(2)} on Lifetime.`);
       } else {
-        toast.error(data.reason || "Invalid code");
+        toast.error(data.reason || "That code didn't work.");
       }
     } catch {
       toast.error("That code didn't work. Check it and try again.");
@@ -55,8 +57,8 @@ export default function PricingPage() {
     setPromoInput("");
   }
 
-  async function handlePurchase() {
-    setLoading(true);
+  async function handleLifetime() {
+    setLoadingPlan("lifetime");
     try {
       const body = promoResult?.valid ? { promoCode: promoResult.code } : {};
       const res = await fetch("/api/subscribe", {
@@ -66,16 +68,15 @@ export default function PricingPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        if (data.error === "Already purchased") {
+        if (data.error === "Already purchased" || data.error === "You already have an active plan") {
           toast.success("You already have full access.");
           return;
         }
         throw new Error(data.error);
       }
       const data = await res.json();
-      trackPurchase(finalPrice);
+      trackPurchase(lifetimeFinalPrice);
       if (data.purchased) {
-        // $0 purchase — redirect directly
         window.location.href = data.url || "/dashboard?purchased=true";
       } else if (data.url) {
         window.location.href = data.url;
@@ -83,107 +84,201 @@ export default function PricingPage() {
     } catch {
       toast.error("That didn't go through. Try again.");
     } finally {
-      setLoading(false);
+      setLoadingPlan(null);
+    }
+  }
+
+  async function handleMonthly() {
+    setLoadingPlan("monthly");
+    try {
+      const res = await fetch("/api/subscribe/monthly", { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json();
+        if (data.error === "You already have an active plan") {
+          toast.success("You already have full access.");
+          return;
+        }
+        throw new Error(data.error);
+      }
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      toast.error("That didn't go through. Try again.");
+    } finally {
+      setLoadingPlan(null);
     }
   }
 
   return (
-    <div className="max-w-lg mx-auto text-center">
-      <h1>Unlock Eydn</h1>
-      <p className="mt-2 text-[15px] text-muted">
-        Your free trial has ended. Get full access to plan your perfect wedding.
-      </p>
-
-      <div className="mt-8 card-summary p-4 sm:p-6 md:p-8">
-        <div
-          style={{
-            background: "linear-gradient(135deg, var(--violet), var(--soft-violet))",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
-        >
-          {hasDiscount ? (
-            <div>
-              <span className="text-[28px] font-semibold line-through opacity-50">$79</span>
-              <span className="text-[48px] font-semibold leading-none ml-3">${finalPrice.toFixed(0)}</span>
-            </div>
-          ) : (
-            <span className="text-[48px] font-semibold leading-none">$79</span>
-          )}
-        </div>
-        <p className="mt-2 text-[15px] text-muted">One-time payment. 1 wedding. Forever.</p>
-        {hasDiscount && (
-          <p className="mt-1 text-[13px] text-violet font-semibold">
-            {promoResult!.code} applied — saving ${promoResult!.discount_amount!.toFixed(2)}
-          </p>
-        )}
-
-        <div className="mt-6 text-left space-y-3">
-          <Feature text="AI wedding assistant (Ask Eydn)" />
-          <Feature text="PDF day-of plan export" />
-          <Feature text="File attachments on tasks and vendors" />
-          <Feature text="Unlimited tasks, guests, and vendors" />
-          <Feature text="Budget tracker with vendor linking" />
-          <Feature text="Seating chart builder" />
-          <Feature text="Day-of planner with timeline" />
-          <Feature text="Email templates for vendor outreach" />
-        </div>
-
-        {/* Promo code section */}
-        <div className="mt-6 text-left">
-          {!showPromo && !hasDiscount && (
-            <button
-              onClick={() => setShowPromo(true)}
-              className="text-[13px] text-violet hover:text-soft-violet font-semibold"
-            >
-              Have a promo code?
-            </button>
-          )}
-          {showPromo && !hasDiscount && (
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={promoInput}
-                onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                placeholder="Enter code"
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); validatePromo(); } }}
-                className="flex-1 rounded-[10px] border-border px-3 py-2 text-[15px] font-mono uppercase"
-              />
-              <button
-                onClick={validatePromo}
-                disabled={validating || !promoInput.trim()}
-                className="btn-secondary btn-sm disabled:opacity-50"
-              >
-                {validating ? "..." : "Apply"}
-              </button>
-            </div>
-          )}
-          {hasDiscount && (
-            <button onClick={clearPromo} className="text-[12px] text-muted hover:text-plum">
-              Remove promo code
-            </button>
-          )}
-        </div>
-
-        <button
-          onClick={handlePurchase}
-          disabled={loading}
-          className="btn-primary w-full mt-8 disabled:opacity-50"
-        >
-          {loading
-            ? "Redirecting..."
-            : finalPrice === 0
-            ? "Get Full Access — Free"
-            : `Get Full Access — $${finalPrice.toFixed(0)}`}
-        </button>
-
-        <p className="mt-3 text-[12px] text-muted">
-          {finalPrice === 0
-            ? "No payment required with your promo code."
-            : "Secure payment via Stripe. No subscription — pay once, use forever."}
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center">
+        <h1>Two ways to unlock Eydn</h1>
+        <p className="mt-2 text-[15px] text-muted">
+          Pick the one that fits how you want to pay. Same features either way.
         </p>
       </div>
+
+      <div className="mt-10 grid gap-6 md:grid-cols-2 md:items-start">
+        {/* Lifetime — featured */}
+        <div className="card-summary relative p-6 sm:p-8 border-2 border-violet md:order-1 order-1">
+          <div
+            className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide text-white"
+            style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))" }}
+          >
+            Best value
+          </div>
+
+          <div className="text-center">
+            <div className="text-[13px] font-semibold text-violet uppercase tracking-wide">
+              Lifetime
+            </div>
+            <div
+              className="mt-3"
+              style={{
+                background: "linear-gradient(135deg, var(--violet), var(--soft-violet))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              {hasDiscount ? (
+                <div>
+                  <span className="text-[24px] font-semibold line-through opacity-50">$79</span>
+                  <span className="text-[48px] font-semibold leading-none ml-2">
+                    ${lifetimeFinalPrice.toFixed(0)}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-[48px] font-semibold leading-none">$79</span>
+              )}
+            </div>
+            <p className="mt-2 text-[14px] text-muted">One payment. 1 wedding. Yours forever.</p>
+            {hasDiscount && (
+              <p className="mt-1 text-[13px] text-violet font-semibold">
+                {promoResult!.code} applied — saving ${promoResult!.discount_amount!.toFixed(2)}
+              </p>
+            )}
+          </div>
+
+          <div className="mt-6 text-left space-y-3">
+            <Feature text="Everything in Pro, forever" />
+            <Feature text="AI wedding assistant (Ask Eydn)" />
+            <Feature text="PDF day-of plan export" />
+            <Feature text="File attachments on tasks and vendors" />
+            <Feature text="Unlimited tasks, guests, and vendors" />
+            <Feature text="Budget tracker with vendor linking" />
+            <Feature text="Seating chart and day-of timeline" />
+            <Feature text="Email templates for vendor outreach" />
+          </div>
+
+          {/* Promo code — Lifetime only */}
+          <div className="mt-6">
+            {!showPromo && !hasDiscount && (
+              <button
+                onClick={() => setShowPromo(true)}
+                className="text-[13px] text-violet hover:text-soft-violet font-semibold"
+              >
+                Have a promo code?
+              </button>
+            )}
+            {showPromo && !hasDiscount && (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={promoInput}
+                  onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                  placeholder="Enter code"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      validatePromo();
+                    }
+                  }}
+                  className="flex-1 rounded-[10px] border-border px-3 py-2 text-[15px] font-mono uppercase"
+                />
+                <button
+                  onClick={validatePromo}
+                  disabled={validating || !promoInput.trim()}
+                  className="btn-secondary btn-sm disabled:opacity-50"
+                >
+                  {validating ? "..." : "Apply"}
+                </button>
+              </div>
+            )}
+            {hasDiscount && (
+              <button onClick={clearPromo} className="text-[12px] text-muted hover:text-plum">
+                Remove promo code
+              </button>
+            )}
+          </div>
+
+          <button
+            onClick={handleLifetime}
+            disabled={loadingPlan !== null}
+            className="btn-primary w-full mt-8 disabled:opacity-50"
+          >
+            {loadingPlan === "lifetime"
+              ? "Redirecting..."
+              : lifetimeFinalPrice === 0
+              ? "Get Lifetime — Free"
+              : `Get Lifetime — $${lifetimeFinalPrice.toFixed(0)}`}
+          </button>
+
+          <p className="mt-3 text-center text-[12px] text-muted">
+            One-time payment via Stripe. No renewals, no surprises.
+          </p>
+        </div>
+
+        {/* Monthly — hedge */}
+        <div className="card-summary p-6 sm:p-8 md:order-2 order-2">
+          <div className="text-center">
+            <div className="text-[13px] font-semibold text-muted uppercase tracking-wide">
+              Monthly
+            </div>
+            <div className="mt-3">
+              <span className="text-[48px] font-semibold leading-none text-plum">$14.99</span>
+              <span className="text-[15px] text-muted ml-1">/ month</span>
+            </div>
+            <p className="mt-2 text-[14px] text-muted">
+              Month-to-month. Cancel anytime.
+            </p>
+          </div>
+
+          <div className="mt-6 text-left space-y-3">
+            <Feature text="Everything in Pro, while subscribed" />
+            <Feature text="AI wedding assistant (Ask Eydn)" />
+            <Feature text="PDF day-of plan export" />
+            <Feature text="File attachments on tasks and vendors" />
+            <Feature text="Unlimited tasks, guests, and vendors" />
+            <Feature text="Budget tracker with vendor linking" />
+            <Feature text="Seating chart and day-of timeline" />
+            <Feature text="Email templates for vendor outreach" />
+          </div>
+
+          <button
+            onClick={handleMonthly}
+            disabled={loadingPlan !== null}
+            className="btn-secondary w-full mt-8 disabled:opacity-50"
+          >
+            {loadingPlan === "monthly" ? "Redirecting..." : "Start Monthly — $14.99"}
+          </button>
+
+          <p className="mt-3 text-center text-[12px] text-muted">
+            Six months of Monthly costs more than Lifetime.
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-8 text-center text-[13px] text-muted max-w-md mx-auto">
+        Both plans unlock the same features. We don&apos;t take money from vendors, sell your data,
+        or let businesses influence what the AI recommends. That&apos;s{" "}
+        <a href="/pledge" className="text-violet hover:text-soft-violet underline">
+          the Eydn Pledge
+        </a>
+        .
+      </p>
     </div>
   );
 }

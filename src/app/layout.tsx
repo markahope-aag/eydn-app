@@ -4,7 +4,9 @@ import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/next";
 import Script from "next/script";
+import { Suspense } from "react";
 import { GlobalHeader } from "@/components/GlobalHeader";
+import { PostHogProvider } from "@/components/PostHogProvider";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -127,6 +129,9 @@ export default function RootLayout({
           Skip to main content
         </a>
         <ClerkProvider>
+          <Suspense fallback={null}>
+            <PostHogProvider />
+          </Suspense>
           <GlobalHeader />
           {children}
           <Toaster richColors position="top-right" />

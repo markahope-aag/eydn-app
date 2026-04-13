@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { captureServer } from "@/lib/analytics-server";
 import crypto from "crypto";
 
 function generateShortCode(): string {
@@ -40,6 +41,15 @@ export async function POST(request: NextRequest) {
       .update({ name: name?.trim() || null, budget, guests, state, month })
       .eq("id", existing.id);
 
+    await captureServer(email.toLowerCase().trim(), "calculator_completed", {
+      total_budget: budget,
+      guest_count: guests,
+      state,
+      email_captured: true,
+      calculator_session_id: (existing as { short_code: string }).short_code,
+      returning: true,
+    });
+
     return NextResponse.json({ short_code: existing.short_code });
   }
 
@@ -58,6 +68,15 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: "Could not save. Try again." }, { status: 500 });
   }
+
+  await captureServer(email.toLowerCase().trim(), "calculator_completed", {
+    total_budget: budget,
+    guest_count: guests,
+    state,
+    email_captured: true,
+    calculator_session_id: shortCode,
+    returning: false,
+  });
 
   return NextResponse.json({ short_code: shortCode }, { status: 201 });
 }

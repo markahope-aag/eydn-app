@@ -6,6 +6,7 @@ import { personalizeTaskMessages } from "@/lib/ai/task-personalizer";
 import { BUDGET_TEMPLATE } from "@/lib/budget/budget-template";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
 import { supabaseError } from "@/lib/api-error";
+import { captureServer } from "@/lib/analytics-server";
 
 export async function POST(request: Request) {
   const { userId } = await auth();
@@ -114,6 +115,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error?.message || "Couldn't create wedding" }, { status: 500 });
     }
     weddingId = newWedding.id;
+    await captureServer(userId, "trial_signup", {
+      wedding_id: weddingId,
+      source: "onboarding",
+    });
   }
 
   // Save questionnaire responses

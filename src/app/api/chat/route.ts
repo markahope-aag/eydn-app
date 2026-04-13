@@ -7,6 +7,7 @@ import { safeParseJSON, isParseError } from "@/lib/validation";
 import { getClaudeClient } from "@/lib/ai/claude-client";
 import { buildEdynSystemPrompt } from "@/lib/ai/edyn-system-prompt";
 import { AI, PAGE_SIZE, CHAT_CONTEXT } from "@/lib/config";
+import { captureServer, estimateClaudeCostUsd } from "@/lib/analytics-server";
 import type { Database } from "@/lib/supabase/types";
 
 type Wedding = Database["public"]["Tables"]["weddings"]["Row"];
@@ -343,6 +344,9 @@ export async function POST(request: Request) {
     const actionsTaken: string[] = [];
     let iterations = 0;
     let capHit = false;
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    let totalToolCalls = 0;
 
     while (iterations < AI.MAX_TOOL_ITERATIONS) {
       iterations++;
@@ -354,6 +358,9 @@ export async function POST(request: Request) {
         messages: currentMessages as Parameters<typeof claude.messages.create>[0]["messages"],
         tools: availableTools,
       });
+
+      totalInputTokens += response.usage?.input_tokens || 0;
+      totalOutputTokens += response.usage?.output_tokens || 0;
 
       // Collect text and tool use blocks
       let hasToolUse = false;
@@ -380,6 +387,7 @@ export async function POST(request: Request) {
             continue;
           }
 
+          totalToolCalls++;
           const result = await executeTool(
             block.name,
             block.input as Record<string, unknown>,
@@ -433,6 +441,17 @@ export async function POST(request: Request) {
       wedding_id: wedding.id,
       role: "assistant" as const,
       content: savedContent,
+    });
+
+    // Analytics — fire once per completed chat turn
+    await captureServer(userId, "ai_chat_message_sent", {
+      model: AI.MODEL,
+      input_tokens: totalInputTokens,
+      output_tokens: totalOutputTokens,
+      estimated_cost_usd: estimateClaudeCostUsd(totalInputTokens, totalOutputTokens),
+      tool_calls_count: totalToolCalls,
+      iterations,
+      tier: status.tier,
     });
 
     // Return the response with action confirmations

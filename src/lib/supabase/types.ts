@@ -1477,37 +1477,118 @@ export type Database = {
           },
         ]
       }
+      trial_email_log: {
+        Row: {
+          user_id: string
+          email_type: string
+          sent_at: string
+        }
+        Insert: {
+          user_id: string
+          email_type: string
+          sent_at?: string
+        }
+        Update: {
+          user_id?: string
+          email_type?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
+      scheduled_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          wedding_id: string | null
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          plan: string
+          scheduled_for: string
+          status: string
+          failure_count: number
+          last_failure_message: string | null
+          created_at: string
+          updated_at: string
+          processed_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          wedding_id?: string | null
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          plan: string
+          scheduled_for: string
+          status?: string
+          failure_count?: number
+          last_failure_message?: string | null
+          created_at?: string
+          updated_at?: string
+          processed_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          wedding_id?: string | null
+          stripe_customer_id?: string
+          stripe_payment_method_id?: string
+          plan?: string
+          scheduled_for?: string
+          status?: string
+          failure_count?: number
+          last_failure_message?: string | null
+          created_at?: string
+          updated_at?: string
+          processed_at?: string | null
+        }
+        Relationships: []
+      }
       subscriber_purchases: {
         Row: {
           amount: number
+          cancel_at_period_end: boolean
+          current_period_end: string | null
           id: string
           payment_method: string
+          plan: string
           purchased_at: string
           status: string
+          stripe_customer_id: string | null
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
+          stripe_subscription_id: string | null
           user_id: string
           wedding_id: string | null
         }
         Insert: {
           amount: number
+          cancel_at_period_end?: boolean
+          current_period_end?: string | null
           id?: string
           payment_method?: string
+          plan?: string
           purchased_at?: string
           status?: string
+          stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
           user_id: string
           wedding_id?: string | null
         }
         Update: {
           amount?: number
+          cancel_at_period_end?: boolean
+          current_period_end?: string | null
           id?: string
           payment_method?: string
+          plan?: string
           purchased_at?: string
           status?: string
+          stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
           user_id?: string
           wedding_id?: string | null
         }
