@@ -30,7 +30,7 @@ const DEFAULT_DESCRIPTION = "Plan your wedding with Eydn. AI-powered timeline, b
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Eydn — Your AI Wedding Planning Guide",
+    default: "Eydn — The AI Wedding Planning App",
     template: "%s | Eydn",
   },
   description: DEFAULT_DESCRIPTION,
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: "Eydn — Your AI Wedding Planning Guide",
+    title: "Eydn — The AI Wedding Planning App",
     description: DEFAULT_DESCRIPTION,
     images: [
       {
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Eydn — Your AI Wedding Planning Guide",
+    title: "Eydn — The AI Wedding Planning App",
     description: DEFAULT_DESCRIPTION,
     images: [{ url: "/og-image.png", alt: "Eydn — AI-powered wedding planning" }],
   },
