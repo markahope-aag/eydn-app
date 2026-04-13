@@ -1070,8 +1070,7 @@ export default function HomePage() {
         >
           <BotanicalOverlay color="#D4A5A5" opacity={0.08} />
           <BotanicalOverlay color="#C9A84C" opacity={0.05} />
-          <div style={{ maxWidth: 700, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 1 }}>
-            <p style={{ fontFamily: "var(--font-script)", fontSize: 42, color: "#C08080" }}>Begin your story</p>
+          <div style={{ maxWidth: 820, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 1 }}>
             <h2
               style={{
                 fontFamily: "var(--font-display)",
@@ -1079,14 +1078,13 @@ export default function HomePage() {
                 fontWeight: 600,
                 color: "#2A2018",
                 lineHeight: 1.08,
-                marginTop: 12,
               }}
               className="max-lg:!text-[48px]"
             >
-              Your story deserves to be told beautifully.
+              Your wedding deserves better than a spreadsheet.
             </h2>
             <div style={{ marginTop: 44 }}>
-              <AuthCTA variant="final" />
+              <AuthCTA variant="final" signedOutLabel="Get started free →" />
             </div>
           </div>
         </section>
