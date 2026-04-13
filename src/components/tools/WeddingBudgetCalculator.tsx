@@ -166,9 +166,19 @@ export default function WeddingBudgetCalculator() {
         body: JSON.stringify({ name: saveName.trim(), email: saveEmail.trim(), budget, guests, state: stateKey, month: monthIdx }),
       });
       if (!res.ok) throw new Error();
-      const data = await res.json();
+      const data = await res.json() as { short_code: string; sign_in_url: string | null; is_new_user: boolean | null };
       setSavedCode(data.short_code);
       if (saveName.trim()) setOwnerName(saveName.trim());
+
+      // If the handoff succeeded, send them straight into Eydn — their budget
+      // is already pre-loaded, their 14-day trial starts now. No second signup.
+      if (data.sign_in_url) {
+        toast.success("Your Eydn account is ready. Taking you there now.");
+        setTimeout(() => {
+          window.location.href = data.sign_in_url as string;
+        }, 600);
+        return;
+      }
     } catch {
       toast.error("Could not save. Try again.");
     } finally {
