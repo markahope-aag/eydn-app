@@ -5,6 +5,7 @@ import { Cormorant_Garamond, Great_Vibes } from "next/font/google";
 import { ScrollReveal } from "@/app/_components/ScrollReveal";
 import { LandingNav } from "@/app/_components/LandingNav";
 import { NewsletterSignup } from "@/app/_components/NewsletterSignup";
+import { BetaPopup } from "@/app/_components/BetaPopup";
 import { AuthCTA } from "@/app/_components/AuthCTA";
 
 /* ── Fonts (DM Sans + Cormorant --font-serif provided by root layout) ── */
@@ -457,6 +458,7 @@ export default function HomePage() {
     >
       <style dangerouslySetInnerHTML={{ __html: keyframeCSS }} />
       <LandingNav />
+      <BetaPopup />
 
       {/* ─── HERO ─── */}
       <section style={{ minHeight: "100vh", display: "flex" }}>
