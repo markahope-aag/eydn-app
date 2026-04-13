@@ -1172,7 +1172,7 @@ const features = [
   { title: "Vendor tracker with Google profiles", description: "Manage 13 vendor categories with status pipeline, contacts, financials, email templates, and auto-enriched Google Business profiles with ratings and reviews." },
   { title: "Wedding website", description: "A beautiful public page for your guests with schedule, travel info, registry links, photo gallery, and RSVP." },
   { title: "Complete day-of binder", description: "Timeline, ceremony script, music lists, speeches, setup assignments, attire details, vendor contacts, and packing checklist — all exportable as a beautiful branded PDF." },
-  { title: "Your data, protected", description: "Daily encrypted backups, soft-delete recovery, full data export, and audit logging. Your wedding plans are never at risk." },
+  { title: "Vision board", description: "Pin the photos, palettes, and details that feel right — then pull them into vendor briefs and style notes without retyping a thing." },
   { title: "AI planner that takes action", description: "Eydn sees your full wedding data and actually does things — adds guests, books vendors, searches the web for venues and pricing, generates vendor briefs, and proactively tells you what needs attention." },
   { title: "Seating chart", description: "Drag-and-drop tables for your reception. Ceremony layout for who stands where at the altar." },
   { title: "Photo gallery", description: "Guests upload their photos to a shared album right from your wedding website. No app download needed." },
