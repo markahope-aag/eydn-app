@@ -42,16 +42,6 @@ export function NewsletterSignup() {
       }}
     >
       <div style={{ maxWidth: 520, margin: "0 auto" }}>
-        <p
-          style={{
-            fontFamily: "var(--font-script)",
-            fontSize: 28,
-            color: "#D4A5A5",
-            marginBottom: 8,
-          }}
-        >
-          Stay in the loop
-        </p>
         <h3
           style={{
             fontFamily: "var(--font-display)",
@@ -61,18 +51,19 @@ export function NewsletterSignup() {
             lineHeight: 1.2,
           }}
         >
-          Planning tips, new features, and wedding inspiration
+          Get our free wedding planning checklist
         </h3>
         <p
           style={{
             fontFamily: "var(--font-body)",
             fontSize: 15,
-            color: "rgba(250,246,241,0.6)",
+            color: "rgba(250,246,241,0.7)",
             marginTop: 12,
             lineHeight: 1.6,
           }}
         >
-          One email, once a week. No spam, unsubscribe anytime.
+          Plus weekly tips from couples who&rsquo;ve been there. One email a week.
+          No spam, unsubscribe anytime.
         </p>
 
         {status === "success" ? (
@@ -85,7 +76,7 @@ export function NewsletterSignup() {
               fontWeight: 500,
             }}
           >
-            You&rsquo;re in. We&rsquo;ll be in touch.
+            Check your inbox — your checklist is on its way.
           </p>
         ) : (
           <form
