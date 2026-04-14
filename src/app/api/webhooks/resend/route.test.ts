@@ -45,15 +45,31 @@ describe("POST /api/webhooks/resend", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env = { ...ORIGINAL_ENV };
-    // Default: no webhook secret (skip verification)
-    delete process.env.RESEND_WEBHOOK_SECRET;
+    // Default: secret set + svix mock auto-accepts so the test body
+    // exercises the post-verification logic. Individual tests that
+    // need to test the missing-secret or invalid-signature paths
+    // override these explicitly.
+    process.env.RESEND_WEBHOOK_SECRET = "whsec_test_default";
+    mockVerify.mockReturnValue(undefined);
   });
 
   afterEach(() => {
     process.env = ORIGINAL_ENV;
   });
 
-  it("returns 400 when body is invalid JSON and no secret configured", async () => {
+  it("returns 503 when RESEND_WEBHOOK_SECRET is not configured", async () => {
+    delete process.env.RESEND_WEBHOOK_SECRET;
+
+    const res = await POST(mockRequest({ type: "email.delivered", data: { email_id: "123" } }));
+    const json = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(json.error).toMatch(/not configured/i);
+    expect(mockVerify).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when body is invalid JSON after signature verification", async () => {
     const req = new Request("http://localhost/api/webhooks/resend", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

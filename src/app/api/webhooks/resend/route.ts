@@ -14,33 +14,38 @@ function redactEmail(email: string): string {
  *   URL: https://eydn.app/api/webhooks/resend
  *   Events: email.delivered, email.opened, email.clicked, email.bounced, email.complained
  *
- * Resend signs webhooks with a secret — verify with svix.
- * Set RESEND_WEBHOOK_SECRET in env vars.
+ * Resend signs webhooks with a secret — verified via svix. Signature
+ * verification is MANDATORY: if RESEND_WEBHOOK_SECRET is not set, the
+ * endpoint refuses all requests (503). This prevents unauthenticated
+ * callers from poisoning email_events or triggering unsubscribe logic.
  */
 export async function POST(request: Request) {
-  let body: Record<string, unknown>;
-
-  // Verify webhook signature if secret is configured
   const secret = process.env.RESEND_WEBHOOK_SECRET;
-  if (secret) {
-    const payload = await request.text();
-    const wh = new Webhook(secret);
-    try {
-      wh.verify(payload, {
-        "svix-id": request.headers.get("svix-id") || "",
-        "svix-timestamp": request.headers.get("svix-timestamp") || "",
-        "svix-signature": request.headers.get("svix-signature") || "",
-      });
-    } catch {
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-    }
+  if (!secret) {
+    console.error("[RESEND WEBHOOK] RESEND_WEBHOOK_SECRET is not configured — refusing request");
+    return NextResponse.json(
+      { error: "Webhook secret not configured" },
+      { status: 503 }
+    );
+  }
+
+  const payload = await request.text();
+  const wh = new Webhook(secret);
+  try {
+    wh.verify(payload, {
+      "svix-id": request.headers.get("svix-id") || "",
+      "svix-timestamp": request.headers.get("svix-timestamp") || "",
+      "svix-signature": request.headers.get("svix-signature") || "",
+    });
+  } catch {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  let body: Record<string, unknown>;
+  try {
     body = JSON.parse(payload) as Record<string, unknown>;
-  } else {
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-    }
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
   const eventType = body.type as string;
