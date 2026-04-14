@@ -70,6 +70,12 @@ export function getTrialEmail(
         <p style="color: #6B6B6B; font-size: 13px; text-align: center; margin-top: 20px;">
           Your wedding data stays put either way. Only the Pro features (Ask Eydn, PDF exports, attachments, templates) go away.
         </p>
+        <p style="color: #6B6B6B; font-size: 12px; text-align: center; margin-top: 12px;">
+          Wondering why we charge at all?
+          <a href="${APP_URL}/why-we-charge-for-pro" style="color: #2C3E2D;">Here&rsquo;s the short answer</a>
+          &middot;
+          <a href="${APP_URL}/pledge" style="color: #2C3E2D;">The Eydn Pledge</a>
+        </p>
       `),
     };
   }
@@ -104,6 +110,13 @@ export function getTrialEmail(
       ${button("See plans", `${APP_URL}/dashboard/pricing`)}
       <p style="color: #6B6B6B; font-size: 13px; text-align: center; margin-top: 20px;">
         No pressure &mdash; your data is safe either way.
+      </p>
+      <p style="color: #6B6B6B; font-size: 12px; text-align: center; margin-top: 12px;">
+        <a href="${APP_URL}/why-we-charge-for-pro" style="color: #2C3E2D;">Why we charge for Pro</a>
+        &middot;
+        <a href="${APP_URL}/what-free-costs" style="color: #2C3E2D;">What &ldquo;free&rdquo; really costs you</a>
+        &middot;
+        <a href="${APP_URL}/pledge" style="color: #2C3E2D;">The Pledge</a>
       </p>
     `),
   };

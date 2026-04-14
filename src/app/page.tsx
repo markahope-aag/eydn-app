@@ -1043,6 +1043,61 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
+
+            {/* Trust strip — surfaces the Pledge and the four trust pages */}
+            <div
+              style={{
+                marginTop: 56,
+                padding: "32px 36px",
+                background: "#fff",
+                border: "1px solid rgba(44,32,24,0.08)",
+                borderRadius: 16,
+                textAlign: "left",
+              }}
+            >
+              <p style={{ fontFamily: "var(--font-script)", fontSize: 22, color: "#C08080", margin: 0 }}>
+                The Eydn Pledge
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 22,
+                  fontWeight: 600,
+                  color: "#2A2018",
+                  marginTop: 6,
+                  lineHeight: 1.35,
+                }}
+              >
+                We charge you directly so we never have to charge your vendors.
+              </p>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "#6B5E50", marginTop: 10, lineHeight: 1.7 }}>
+                No vendor kickbacks. No data sales. No ads. No AI influenced by who&rsquo;s paying.
+                If we ever break any of it, you get a refund.
+              </p>
+              <div
+                style={{
+                  marginTop: 20,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 16,
+                  fontFamily: "var(--font-body)",
+                  fontSize: 13,
+                }}
+              >
+                <Link href="/pledge" style={{ color: "#2C3E2D", textDecoration: "underline" }}>
+                  Read the pledge
+                </Link>
+                <Link href="/how-we-make-money" style={{ color: "#2C3E2D", textDecoration: "underline" }}>
+                  How we make money
+                </Link>
+                <Link href="/why-we-charge-for-pro" style={{ color: "#2C3E2D", textDecoration: "underline" }}>
+                  Why we charge for Pro
+                </Link>
+                <Link href="/what-free-costs" style={{ color: "#2C3E2D", textDecoration: "underline" }}>
+                  What &ldquo;free&rdquo; really costs you
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
       </ScrollReveal>
@@ -1134,8 +1189,17 @@ export default function HomePage() {
                 <Link href="/#pricing" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Pricing</Link>
                 <Link href="/#how-it-works" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>How It Works</Link>
                 <Link href="/blog" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#E8C97A", textDecoration: "none" }}>The Playbook</Link>
-                <Link href="/tools/wedding-budget-calculator" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Budget Calculator</Link>
+                <Link href="/tools" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Free Tools</Link>
                 <Link href="/beta" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Beta Program</Link>
+              </div>
+            </div>
+            <div>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 600, color: "rgba(250,246,241,0.65)", textTransform: "uppercase", letterSpacing: "0.15em" }}>Trust</p>
+              <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                <Link href="/pledge" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>The Eydn Pledge</Link>
+                <Link href="/how-we-make-money" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>How we make money</Link>
+                <Link href="/why-we-charge-for-pro" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Why we charge for Pro</Link>
+                <Link href="/what-free-costs" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>What &ldquo;free&rdquo; really costs</Link>
               </div>
             </div>
             <div>
