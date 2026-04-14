@@ -104,3 +104,134 @@ export async function POST(request: Request) {
     guests: inserted,
   }, { status: 201 });
 }
+
+const MAX_BULK_AFFECT = 1000;
+
+const PATCH_ALLOWED_FIELDS = [
+  "rsvp_status",
+  "group_name",
+  "role",
+  "meal_preference",
+] as const;
+
+type GuestUpdate = Database["public"]["Tables"]["guests"]["Update"];
+
+/**
+ * PATCH /api/guests/bulk — update many guests in a single round trip.
+ * Body: { ids: string[], updates: { rsvp_status?, group_name?, role?, meal_preference? } }
+ * The updates object is whitelisted to fields the bulk actions UI can
+ * change. `wedding_id` scoping is enforced server-side so a user can
+ * only update guests in their own wedding.
+ */
+export async function PATCH(request: Request) {
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  const { wedding, supabase, userId } = result;
+
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+
+  const body = parsed as { ids?: unknown; updates?: unknown };
+  if (!Array.isArray(body.ids) || body.ids.length === 0) {
+    return NextResponse.json({ error: "ids must be a non-empty array" }, { status: 400 });
+  }
+  if (body.ids.length > MAX_BULK_AFFECT) {
+    return NextResponse.json(
+      { error: `Maximum ${MAX_BULK_AFFECT} guests per request` },
+      { status: 400 }
+    );
+  }
+  if (!body.updates || typeof body.updates !== "object") {
+    return NextResponse.json({ error: "updates object is required" }, { status: 400 });
+  }
+
+  const ids = body.ids.filter((id): id is string => typeof id === "string");
+  const rawUpdates = body.updates as Record<string, unknown>;
+  const updates: GuestUpdate = {};
+  for (const field of PATCH_ALLOWED_FIELDS) {
+    if (field in rawUpdates) {
+      (updates as Record<string, unknown>)[field] = rawUpdates[field];
+    }
+  }
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: "No valid fields in updates" }, { status: 400 });
+  }
+
+  const { data, error } = await supabase
+    .from("guests")
+    .update(updates)
+    .eq("wedding_id", wedding.id)
+    .in("id", ids)
+    .select();
+
+  const err = supabaseError(error, "guests");
+  if (err) return err;
+
+  const updated = data || [];
+  logActivity(supabase, {
+    weddingId: wedding.id,
+    userId,
+    action: "update",
+    entityType: "guests",
+    entityId: `bulk_${Date.now()}`,
+    entityName: `${updated.length} guests (bulk update)`,
+  });
+
+  return NextResponse.json({
+    updated: updated.length,
+    requested: ids.length,
+    guests: updated,
+  });
+}
+
+/**
+ * DELETE /api/guests/bulk?ids=a,b,c — soft-delete many guests in one
+ * round trip. wedding_id scoping is enforced server-side.
+ */
+export async function DELETE(request: Request) {
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  const { wedding, supabase, userId } = result;
+
+  const url = new URL(request.url);
+  const idsParam = url.searchParams.get("ids");
+  if (!idsParam) {
+    return NextResponse.json({ error: "ids query param is required" }, { status: 400 });
+  }
+
+  const ids = idsParam.split(",").map((s) => s.trim()).filter(Boolean);
+  if (ids.length === 0) {
+    return NextResponse.json({ error: "ids cannot be empty" }, { status: 400 });
+  }
+  if (ids.length > MAX_BULK_AFFECT) {
+    return NextResponse.json(
+      { error: `Maximum ${MAX_BULK_AFFECT} guests per request` },
+      { status: 400 }
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("guests")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("wedding_id", wedding.id)
+    .in("id", ids)
+    .select("id");
+
+  const err = supabaseError(error, "guests");
+  if (err) return err;
+
+  const deleted = data || [];
+  logActivity(supabase, {
+    weddingId: wedding.id,
+    userId,
+    action: "delete",
+    entityType: "guests",
+    entityId: `bulk_${Date.now()}`,
+    entityName: `${deleted.length} guests (bulk delete)`,
+  });
+
+  return NextResponse.json({
+    deleted: deleted.length,
+    requested: ids.length,
+  });
+}

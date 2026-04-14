@@ -318,26 +318,22 @@ export default function GuestsPage() {
     );
     setBulkStatusOpen(false);
 
-    let successCount = 0;
-    for (const id of ids) {
-      try {
-        const res = await fetch(`/api/guests/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rsvp_status: status }),
-        });
-        if (!res.ok) throw new Error();
-        successCount++;
-      } catch {
-        // continue with others
+    try {
+      const res = await fetch("/api/guests/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, updates: { rsvp_status: status } }),
+      });
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as { updated: number; requested: number };
+      if (data.updated === data.requested) {
+        toast.success(`Updated status for ${data.updated} guests`);
+      } else {
+        toast.success(`Updated ${data.updated} of ${data.requested} guests`);
+        const reload = await fetch("/api/guests");
+        if (reload.ok) setGuests(await reload.json());
       }
-    }
-
-    if (successCount === ids.length) {
-      toast.success(`Updated status for ${successCount} guests`);
-    } else if (successCount > 0) {
-      toast.success(`Updated ${successCount} of ${ids.length} guests`);
-    } else {
+    } catch {
       setGuests(prev);
       toast.error("Bulk update didn't save. Try again.");
     }
@@ -354,26 +350,22 @@ export default function GuestsPage() {
     setShowBulkGroupInput(false);
     setBulkGroupValue("");
 
-    let successCount = 0;
-    for (const id of ids) {
-      try {
-        const res = await fetch(`/api/guests/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ group_name: groupVal }),
-        });
-        if (!res.ok) throw new Error();
-        successCount++;
-      } catch {
-        // continue
+    try {
+      const res = await fetch("/api/guests/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, updates: { group_name: groupVal } }),
+      });
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as { updated: number; requested: number };
+      if (data.updated === data.requested) {
+        toast.success(`Updated group for ${data.updated} guests`);
+      } else {
+        toast.success(`Updated ${data.updated} of ${data.requested} guests`);
+        const reload = await fetch("/api/guests");
+        if (reload.ok) setGuests(await reload.json());
       }
-    }
-
-    if (successCount === ids.length) {
-      toast.success(`Updated group for ${successCount} guests`);
-    } else if (successCount > 0) {
-      toast.success(`Updated ${successCount} of ${ids.length} guests`);
-    } else {
+    } catch {
       setGuests(prev);
       toast.error("Bulk update didn't save. Try again.");
     }
@@ -386,25 +378,20 @@ export default function GuestsPage() {
     setGuests((g) => g.filter((x) => !selectedGuests.has(x.id)));
     setConfirmBulkDelete(false);
 
-    let successCount = 0;
-    for (const id of ids) {
-      try {
-        const res = await fetch(`/api/guests/${id}`, { method: "DELETE" });
-        if (!res.ok) throw new Error();
-        successCount++;
-      } catch {
-        // continue
+    try {
+      const res = await fetch(`/api/guests/bulk?ids=${ids.join(",")}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as { deleted: number; requested: number };
+      if (data.deleted === data.requested) {
+        toast.success(`Removed ${data.deleted} guests`);
+      } else {
+        toast.success(`Removed ${data.deleted} of ${data.requested} guests`);
+        const reload = await fetch("/api/guests");
+        if (reload.ok) setGuests(await reload.json());
       }
-    }
-
-    if (successCount === ids.length) {
-      toast.success(`Removed ${successCount} guests`);
-    } else if (successCount > 0) {
-      toast.success(`Removed ${successCount} of ${ids.length} guests`);
-      // Reload to get accurate state
-      const reload = await fetch("/api/guests");
-      if (reload.ok) setGuests(await reload.json());
-    } else {
+    } catch {
       setGuests(prev);
       toast.error("Couldn't remove those guests. Try again.");
     }
