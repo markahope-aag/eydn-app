@@ -12,6 +12,72 @@ import type { Database } from "@/lib/supabase/types";
 
 type Wedding = Database["public"]["Tables"]["weddings"]["Row"];
 
+// Narrow projection types for the context-building queries. Each one
+// lists only the fields the chat system-prompt formatter reads, to
+// keep the Claude context small. Kept at module scope (rather than
+// inline inside the POST handler) so they're easy to spot and update
+// alongside schema changes.
+type TaskRow = {
+  title: string;
+  due_date: string | null;
+  completed: boolean;
+  category: string;
+  notes: string | null;
+};
+type VendorRow = {
+  name: string;
+  category: string;
+  status: string;
+  poc_name: string | null;
+  poc_email: string | null;
+  poc_phone: string | null;
+  amount: number | null;
+  amount_paid: number | null;
+  notes: string | null;
+  arrival_time: string | null;
+  meal_needed: boolean;
+};
+type GuestRow = {
+  name: string;
+  rsvp_status: string;
+  meal_preference: string | null;
+  role: string | null;
+  group_name: string | null;
+  plus_one_name: string | null;
+};
+type PartyRow = {
+  name: string;
+  role: string;
+  job_assignment: string | null;
+  attire: string | null;
+};
+type ExpenseRow = {
+  description: string;
+  category: string;
+  estimated: number;
+  amount_paid: number;
+  final_cost: number | null;
+  paid: boolean;
+};
+type AttRow = {
+  file_name: string;
+  entity_type: string;
+  entity_id: string;
+  mime_type: string | null;
+};
+type TableRow = {
+  table_number: number;
+  name: string | null;
+  shape: string;
+  capacity: number;
+};
+type BlogRow = {
+  title: string;
+  slug: string;
+  excerpt: string | null;
+};
+type MessageParam = { role: "user" | "assistant"; content: unknown };
+
 export async function GET() {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
@@ -135,7 +201,6 @@ export async function POST(request: Request) {
   // Build task summary with overdue highlighting
   let tasksSummary: string | undefined;
   if (allTasks && allTasks.length > 0) {
-    type TaskRow = { title: string; due_date: string | null; completed: boolean; category: string; notes: string | null };
     const now = new Date();
     const twoWeeks = new Date(
       now.getTime() + TIME_WINDOWS.CHAT_CONTEXT_DAYS * 24 * 60 * 60 * 1000
@@ -165,7 +230,6 @@ export async function POST(request: Request) {
   // Build vendor summary with status grouping
   let vendorsSummary: string | undefined;
   if (allVendors && allVendors.length > 0) {
-    type VendorRow = { name: string; category: string; status: string; poc_name: string | null; poc_email: string | null; poc_phone: string | null; amount: number | null; amount_paid: number | null; notes: string | null; arrival_time: string | null; meal_needed: boolean };
     const vendors = allVendors as VendorRow[];
     const booked = vendors.filter((v) => v.status === "booked" || v.status === "contracted");
     const inquired = vendors.filter((v) => v.status === "inquired" || v.status === "contacted");
@@ -193,7 +257,6 @@ export async function POST(request: Request) {
   // Build guest summary
   let guestsSummary: string | undefined;
   if (allGuests && allGuests.length > 0) {
-    type GuestRow = { name: string; rsvp_status: string; meal_preference: string | null; role: string | null; group_name: string | null; plus_one_name: string | null };
     const guests = allGuests as GuestRow[];
     const accepted = guests.filter((g) => g.rsvp_status === "accepted").length;
     const declined = guests.filter((g) => g.rsvp_status === "declined").length;
@@ -216,7 +279,6 @@ export async function POST(request: Request) {
   // Build wedding party summary
   let partySummary: string | undefined;
   if (weddingParty && weddingParty.length > 0) {
-    type PartyRow = { name: string; role: string; job_assignment: string | null; attire: string | null };
     partySummary = (weddingParty as PartyRow[]).map((p) => {
       let line = `- ${p.name} (${p.role})`;
       if (p.job_assignment) line += ` — job: ${p.job_assignment}`;
@@ -228,7 +290,6 @@ export async function POST(request: Request) {
   // Build budget summary
   let budgetSummary: string | undefined;
   if (expensesFull && expensesFull.length > 0) {
-    type ExpenseRow = { description: string; category: string; estimated: number; amount_paid: number; final_cost: number | null; paid: boolean };
     const rows = expensesFull as ExpenseRow[];
     const totalEstimated = rows.reduce((s, e) => s + (e.estimated || 0), 0);
     const totalPaid = rows.reduce((s, e) => s + (e.amount_paid || 0), 0);
@@ -272,7 +333,6 @@ export async function POST(request: Request) {
   // Build attachments summary
   let attachmentsSummary: string | undefined;
   if (attachments && attachments.length > 0) {
-    type AttRow = { file_name: string; entity_type: string; entity_id: string; mime_type: string | null };
     attachmentsSummary = (attachments as AttRow[]).map((a) =>
       `- ${a.file_name} (${a.entity_type}/${a.entity_id})${a.mime_type?.includes("pdf") ? " [PDF]" : ""}`
     ).join("\n");
@@ -281,7 +341,6 @@ export async function POST(request: Request) {
   // Build seating summary
   let seatingSummary: string | undefined;
   if (seatingTables && seatingTables.length > 0) {
-    type TableRow = { table_number: number; name: string | null; shape: string; capacity: number };
     seatingSummary = (seatingTables as TableRow[]).map((t) =>
       `- ${t.name || `Table ${t.table_number}`} (${t.shape}, seats ${t.capacity})`
     ).join("\n");
@@ -290,7 +349,6 @@ export async function POST(request: Request) {
   // Build blog reference
   let blogReference: string | undefined;
   if (blogPosts && blogPosts.length > 0) {
-    type BlogRow = { title: string; slug: string; excerpt: string | null };
     blogReference = (blogPosts as BlogRow[]).map((b) =>
       `- "${b.title}" — /blog/${b.slug}${b.excerpt ? `: ${b.excerpt.slice(0, CHAT_CONTEXT.BLOG_EXCERPT_LENGTH)}` : ""}`
     ).join("\n");
@@ -340,7 +398,6 @@ export async function POST(request: Request) {
       : EYDN_TOOLS.filter((t) => t.name !== "web_search");
 
     // Tool use loop — Claude may call tools, then we feed results back
-    type MessageParam = { role: "user" | "assistant"; content: unknown };
     let currentMessages: MessageParam[] = [...messages];
     let finalText = "";
     const actionsTaken: string[] = [];
