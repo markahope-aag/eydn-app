@@ -18,6 +18,7 @@ import { getEmailPreferences, emailFooterHtml } from "@/lib/email-preferences";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { escapeHtml } from "@/lib/validation";
+import { requireCronAuth } from "@/lib/cron-auth";
 
 const TRIAL_DAYS = 14;
 /** Send the reminder when trial has 3 days left — i.e. trial started 11 days ago.
@@ -84,11 +85,8 @@ type Wedding = {
 };
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const secret = process.env.CRON_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireCronAuth(request);
+  if (unauthorized) return unauthorized;
 
   const supabase = createSupabaseAdmin();
   const startTime = Date.now();

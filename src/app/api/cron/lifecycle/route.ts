@@ -5,6 +5,7 @@ import { sendEmail, getLifecycleEmail } from "@/lib/email";
 import { getEmailPreferences } from "@/lib/email-preferences";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { requireCronAuth } from "@/lib/cron-auth";
 
 /**
  * Daily lifecycle cron job.
@@ -14,16 +15,12 @@ import { NextResponse } from "next/server";
  *  2. Record lifecycle emails that are due (actual sending handled by email service)
  *  3. Soft-delete data for weddings entering the sunset phase (without memory plan)
  *
- * Protected by BACKUP_SECRET bearer token.
+ * Auth: Bearer CRON_SECRET or BACKUP_SECRET (shared helper).
  * Schedule: 0 4 * * * (daily at 4 AM UTC)
  */
 export async function POST(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const secret = process.env.BACKUP_SECRET;
-
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireCronAuth(request);
+  if (unauthorized) return unauthorized;
 
   const supabase = createSupabaseAdmin();
   const startTime = Date.now();

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
 import { getStripe } from "@/lib/stripe";
+import { requireCronAuth } from "@/lib/cron-auth";
 
 type PostHogQueryResponse = {
   results?: unknown[][];
@@ -54,11 +55,8 @@ async function stripeRevenueLast7Days(): Promise<number> {
  * Auth: Bearer BACKUP_SECRET
  */
 export async function POST(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const secret = process.env.BACKUP_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireCronAuth(request);
+  if (unauthorized) return unauthorized;
 
   const recipient = (process.env.ADMIN_EMAILS || "").split(",")[0]?.trim();
   if (!recipient) {

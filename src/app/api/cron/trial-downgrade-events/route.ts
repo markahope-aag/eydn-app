@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { captureServer } from "@/lib/analytics-server";
+import { requireCronAuth } from "@/lib/cron-auth";
 
 const TRIAL_DAYS = 14;
 
@@ -12,14 +13,11 @@ const TRIAL_DAYS = 14;
  * access gate is already time-based in src/lib/subscription.ts.
  *
  * Schedule: 0 6 * * * (daily at 6 AM UTC)
- * Auth: Bearer BACKUP_SECRET
+ * Auth: Bearer CRON_SECRET or BACKUP_SECRET (shared helper)
  */
 export async function POST(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const secret = process.env.BACKUP_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireCronAuth(request);
+  if (unauthorized) return unauthorized;
 
   const supabase = createSupabaseAdmin();
 

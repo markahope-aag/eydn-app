@@ -1,6 +1,7 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logCronExecution } from "@/lib/cron-logger";
+import { requireCronAuth } from "@/lib/cron-auth";
 
 /**
  * Nightly off-platform backup endpoint.
@@ -19,13 +20,8 @@ import { logCronExecution } from "@/lib/cron-logger";
  */
 
 export async function POST(request: Request) {
-  // Verify cron secret
-  const authHeader = request.headers.get("authorization");
-  const secret = process.env.BACKUP_SECRET;
-
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireCronAuth(request);
+  if (unauthorized) return unauthorized;
 
   const supabase = createSupabaseAdmin();
   const startTime = Date.now();

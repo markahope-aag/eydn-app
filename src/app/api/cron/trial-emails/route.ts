@@ -4,6 +4,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { sendEmail } from "@/lib/email";
 import { getTrialEmail, type TrialEmailType } from "@/lib/email-trial";
 import { captureServer } from "@/lib/analytics-server";
+import { requireCronAuth } from "@/lib/cron-auth";
 
 const TRIAL_DAYS = 14;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -26,14 +27,11 @@ type WeddingRow = {
  * Dedup via trial_email_log (user_id + email_type is a primary key).
  *
  * Schedule: 0 14 * * * (daily 14:00 UTC / 10 AM ET)
- * Auth: Bearer BACKUP_SECRET
+ * Auth: Bearer CRON_SECRET or BACKUP_SECRET (shared helper)
  */
 export async function POST(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const secret = process.env.BACKUP_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireCronAuth(request);
+  if (unauthorized) return unauthorized;
 
   const supabase = createSupabaseAdmin();
   const now = Date.now();

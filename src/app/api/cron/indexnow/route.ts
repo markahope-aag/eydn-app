@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { submitToIndexNow } from "@/lib/indexnow";
 import { logCronExecution } from "@/lib/cron-logger";
+import { requireCronAuth } from "@/lib/cron-auth";
 
 /**
  * Cron: Submit all indexable URLs to IndexNow.
@@ -9,11 +10,8 @@ import { logCronExecution } from "@/lib/cron-logger";
  * Runs weekly to keep search engines aware of content freshness.
  */
 export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const secret = process.env.CRON_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireCronAuth(request);
+  if (unauthorized) return unauthorized;
 
   const start = Date.now();
 

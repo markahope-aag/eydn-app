@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
 import { captureServer } from "@/lib/analytics-server";
+import { requireCronAuth } from "@/lib/cron-auth";
 
 const MAX_RETRIES = 1;
 
@@ -17,11 +18,8 @@ const MAX_RETRIES = 1;
  * Auth: Bearer BACKUP_SECRET
  */
 export async function POST(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const secret = process.env.BACKUP_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireCronAuth(request);
+  if (unauthorized) return unauthorized;
 
   const supabase = createSupabaseAdmin();
   const stripe = getStripe();

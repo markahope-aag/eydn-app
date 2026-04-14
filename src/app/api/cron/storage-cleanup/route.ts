@@ -1,6 +1,7 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { logCronExecution } from "@/lib/cron-logger";
 import { NextResponse } from "next/server";
+import { requireCronAuth } from "@/lib/cron-auth";
 
 const BUCKET = "attachments";
 
@@ -12,11 +13,8 @@ const BUCKET = "attachments";
  * Only deletes files older than 24 hours to avoid racing with in-progress uploads.
  */
 export async function POST(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const secret = process.env.CRON_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = requireCronAuth(request);
+  if (unauthorized) return unauthorized;
 
   const supabase = createSupabaseAdmin();
   const startTime = Date.now();
