@@ -89,12 +89,17 @@ export function NewsletterSignup() {
             }}
             className="max-sm:!flex-col"
           >
+            <label htmlFor="newsletter-email" className="sr-only">Your email address</label>
             <input
+              id="newsletter-email"
               type="email"
               placeholder="Your email"
               value={email}
               onChange={(e) => { setEmail(e.target.value); if (status === "error") setStatus("idle"); }}
               required
+              autoComplete="email"
+              aria-invalid={status === "error"}
+              aria-describedby={status === "error" ? "newsletter-error" : undefined}
               style={{
                 flex: 1,
                 minWidth: 0,
@@ -111,6 +116,7 @@ export function NewsletterSignup() {
             <button
               type="submit"
               disabled={status === "loading"}
+              aria-busy={status === "loading"}
               style={{
                 background: "linear-gradient(135deg, #D4A5A5, #C08080)",
                 color: "#fff",
@@ -133,6 +139,9 @@ export function NewsletterSignup() {
 
         {status === "error" && errorMsg && (
           <p
+            id="newsletter-error"
+            role="alert"
+            aria-live="polite"
             style={{
               fontFamily: "var(--font-body)",
               fontSize: 13,

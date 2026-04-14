@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type BetaStatus = {
   beta_available: boolean;
@@ -21,6 +21,9 @@ export function BetaPopup() {
   const [submitted, setSubmitted] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -34,6 +37,44 @@ export function BetaPopup() {
     const t = setTimeout(() => setVisible(true), APPEAR_AFTER_MS);
     return () => clearTimeout(t);
   }, []);
+
+  // Focus management, focus trap, and Escape-to-close while visible.
+  useEffect(() => {
+    if (!visible) return;
+    lastFocusedRef.current = document.activeElement as HTMLElement | null;
+    const raf = requestAnimationFrame(() => headingRef.current?.focus());
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        dismiss();
+        return;
+      }
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'a, button, input, textarea, select, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener("keydown", onKeyDown);
+      lastFocusedRef.current?.focus?.();
+    };
+  }, [visible]);
 
   function dismiss() {
     setVisible(false);
@@ -98,6 +139,7 @@ export function BetaPopup() {
         aria-hidden="true"
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="beta-popup-heading"
@@ -165,7 +207,9 @@ export function BetaPopup() {
             Beta program
           </div>
           <h2
+            ref={headingRef}
             id="beta-popup-heading"
+            tabIndex={-1}
             style={{
               fontFamily: "var(--font-display)",
               fontSize: 28,
@@ -173,6 +217,7 @@ export function BetaPopup() {
               color: "#FAF6F1",
               marginTop: 12,
               lineHeight: 1.2,
+              outline: "none",
             }}
           >
             Get Eydn free — for life.
@@ -342,26 +387,35 @@ function BetaForm({
   };
 
   return (
-    <form onSubmit={onSubmit} style={{ marginTop: 18 }}>
+    <form onSubmit={onSubmit} style={{ marginTop: 18 }} aria-describedby={error ? "beta-form-error" : undefined}>
+      <label htmlFor="beta-name" className="sr-only">Your name</label>
       <input
+        id="beta-name"
         type="text"
         placeholder="Your name"
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
+        autoComplete="name"
+        aria-invalid={Boolean(error)}
         style={fieldStyle}
       />
+      <label htmlFor="beta-email" className="sr-only">Your email</label>
       <input
+        id="beta-email"
         type="email"
         placeholder="Your email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
+        autoComplete="email"
+        aria-invalid={Boolean(error)}
         style={{ ...fieldStyle, marginTop: 10 }}
       />
       <button
         type="submit"
         disabled={submitting}
+        aria-busy={submitting}
         style={{
           marginTop: 14,
           width: "100%",
@@ -382,6 +436,9 @@ function BetaForm({
       </button>
       {error && (
         <p
+          id="beta-form-error"
+          role="alert"
+          aria-live="polite"
           style={{
             fontFamily: "var(--font-body)",
             fontSize: 12,

@@ -126,7 +126,14 @@ export function QuizRunner({ quiz }: Props) {
               </button>
             )}
           </div>
-          <div className="h-1 rounded-full bg-lavender/40 overflow-hidden">
+          <div
+            className="h-1 rounded-full bg-lavender/40 overflow-hidden"
+            role="progressbar"
+            aria-valuenow={current + 1}
+            aria-valuemin={1}
+            aria-valuemax={totalQuestions}
+            aria-label={`Question ${current + 1} of ${totalQuestions}`}
+          >
             <div
               className="h-full bg-brand-gradient transition-all duration-300"
               style={{ width: `${progress}%` }}
@@ -134,16 +141,16 @@ export function QuizRunner({ quiz }: Props) {
           </div>
         </div>
 
-        <h2 className="font-serif text-[28px] text-plum leading-snug mb-8">
+        <h2 id="quiz-question" className="font-serif text-[28px] text-plum leading-snug mb-8">
           {q.prompt}
         </h2>
 
-        <div className="space-y-3">
+        <div className="space-y-3" role="group" aria-labelledby="quiz-question">
           {q.options.map((opt, i) => (
             <button
               key={i}
               onClick={() => pickOption(opt.value)}
-              className="w-full text-left p-5 rounded-xl border border-border bg-white hover:border-violet hover:bg-lavender/20 transition group"
+              className="w-full text-left p-5 rounded-xl border border-border bg-white hover:border-violet hover:bg-lavender/20 focus-visible:border-violet focus-visible:ring-2 focus-visible:ring-violet/30 transition group"
             >
               <span className="text-[15px] text-plum group-hover:text-violet transition">
                 {opt.label}
@@ -171,25 +178,32 @@ export function QuizRunner({ quiz }: Props) {
         </p>
 
         <form onSubmit={submitGate} className="mt-8 space-y-3 text-left">
+          <label htmlFor="quiz-first-name" className="sr-only">Your first name</label>
           <input
+            id="quiz-first-name"
             type="text"
             placeholder="Your first name"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             required
+            autoComplete="given-name"
             className="w-full rounded-xl border border-border bg-white px-4 py-3 text-[15px] text-plum outline-none focus:border-violet"
           />
+          <label htmlFor="quiz-email" className="sr-only">Your email address</label>
           <input
+            id="quiz-email"
             type="email"
             placeholder="Your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
             className="w-full rounded-xl border border-border bg-white px-4 py-3 text-[15px] text-plum outline-none focus:border-violet"
           />
           <button
             type="submit"
             disabled={submitting}
+            aria-busy={submitting}
             className="w-full btn-primary disabled:opacity-50"
           >
             {submitting ? "Loading..." : "Show me my result"}
