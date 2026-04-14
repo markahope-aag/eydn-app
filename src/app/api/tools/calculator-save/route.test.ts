@@ -18,7 +18,7 @@ vi.mock("crypto", () => ({
 }));
 
 import { NextRequest } from "next/server";
-import { POST, GET } from "./route";
+import { POST } from "./route";
 
 function mockPostRequest(body: unknown): NextRequest {
   return new NextRequest("http://localhost/api/tools/calculator-save", {
@@ -26,13 +26,6 @@ function mockPostRequest(body: unknown): NextRequest {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-}
-
-function mockGetRequest(code?: string): NextRequest {
-  const url = code
-    ? `http://localhost/api/tools/calculator-save?code=${code}`
-    : "http://localhost/api/tools/calculator-save";
-  return new NextRequest(url);
 }
 
 describe("POST /api/tools/calculator-save", () => {
@@ -178,50 +171,7 @@ describe("POST /api/tools/calculator-save", () => {
   });
 });
 
-describe("GET /api/tools/calculator-save", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-  });
-
-  it("returns 400 when code parameter is missing", async () => {
-    const res = await GET(mockGetRequest());
-    const json = await res.json();
-
-    expect(res.status).toBe(400);
-    expect(json.error).toMatch(/missing code/i);
-  });
-
-  it("returns 404 when code not found", async () => {
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-        }),
-      }),
-    });
-
-    const res = await GET(mockGetRequest("nonexistent"));
-    const json = await res.json();
-
-    expect(res.status).toBe(404);
-    expect(json.error).toMatch(/not found/i);
-  });
-
-  it("returns saved calculator data when code is valid", async () => {
-    const savedData = { name: "Alice", budget: 20000, guests: 150, state: "CA", month: 9 };
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue({ data: savedData, error: null }),
-        }),
-      }),
-    });
-
-    const res = await GET(mockGetRequest("abc1234"));
-    const json = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(json).toEqual(savedData);
-  });
-});
+// GET handler was removed — see route.ts for rationale.
+// The share link is served by the server component at
+// /tools/wedding-budget-calculator/s/[code]/page.tsx which doesn't
+// return the email field and is rate-limited via proxy.ts.

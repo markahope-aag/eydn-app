@@ -21,6 +21,9 @@ const ROUTE_LIMITS: [string, RLConfig][] = [
   ["/api/onboarding", RL_AUTH],
   ["/api/admin/setup", RL_AUTH],
   ["/api/", RL_API],
+  // Public share page — its server component reads calculator_saves by
+  // 7-char short_code. Rate limited to block brute-force enumeration.
+  ["/tools/wedding-budget-calculator/s/", RL_PUBLIC],
 ];
 
 // ─── Lazy-init rate limiters ─────────────────────────────────────────────────
@@ -74,8 +77,12 @@ function checkMemory(key: string, limit: number, windowMs: number): boolean {
 export default clerkMiddleware(async (_auth, request) => {
   const path = request.nextUrl.pathname;
 
-  // Only rate-limit API routes
-  if (!path.startsWith("/api/")) return;
+  // Rate-limit API routes plus a narrow set of public pages that read
+  // from the DB by guessable identifier (calculator share links).
+  // Everything else bypasses the limiter.
+  const isApi = path.startsWith("/api/");
+  const isCalculatorShare = path.startsWith("/tools/wedding-budget-calculator/s/");
+  if (!isApi && !isCalculatorShare) return;
 
   // Skip webhooks (Stripe sends retries on 429)
   if (path.startsWith("/api/webhooks/")) return;

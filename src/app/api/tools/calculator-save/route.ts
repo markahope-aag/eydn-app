@@ -202,23 +202,9 @@ export async function POST(request: NextRequest) {
   }, { status: existing ? 200 : 201 });
 }
 
-/** GET — load a saved calculator state by short code */
-export async function GET(request: NextRequest) {
-  const code = request.nextUrl.searchParams.get("code");
-  if (!code) {
-    return NextResponse.json({ error: "Missing code parameter" }, { status: 400 });
-  }
-
-  const supabase = createSupabaseAdmin();
-  const { data } = await supabase
-    .from("calculator_saves")
-    .select("name, budget, guests, state, month")
-    .eq("short_code", code)
-    .maybeSingle();
-
-  if (!data) {
-    return NextResponse.json({ error: "Calculator not found" }, { status: 404 });
-  }
-
-  return NextResponse.json(data);
-}
+// The GET handler was removed — the saved-calculator share link is
+// served by the server component at
+// /tools/wedding-budget-calculator/s/[code]/page.tsx which reads from
+// Supabase directly and never returns the email. Keeping a second
+// public GET endpoint would have re-introduced the PII enumeration
+// surface the audit flagged.
