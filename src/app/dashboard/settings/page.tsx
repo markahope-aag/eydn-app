@@ -124,7 +124,7 @@ export default function SettingsPage() {
           setReminderDays(prefs.reminder_days_before);
         }
       })
-      .catch((err) => console.error("Failed to load settings", err))
+      .catch(() => toast.error("Couldn't load your settings. Try refreshing."))
       .finally(() => setLoading(false));
 
     // Fetch collaborators (will 403 if not owner — that's fine)

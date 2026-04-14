@@ -102,7 +102,7 @@ export default function SeatingPage() {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ x: table.x, y: table.y }),
-          }).catch((err) => console.error("Failed to save table position", err));
+          }).catch(() => toast.error("Couldn't save the table position. Try moving it again."));
         }
         return prev;
       });

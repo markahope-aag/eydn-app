@@ -71,9 +71,6 @@ describe('Subscription Lifecycle Integration Tests', () => {
   });
 
   describe('Pro Monthly Subscription Lifecycle', () => {
-    const mockWedding = { id: 'wedding_123', user_id: 'user_123' };
-
-
     it('handles failed trial conversion with retry logic', async () => {
       // Mock scheduled subscription with failure
       (mockSupabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {

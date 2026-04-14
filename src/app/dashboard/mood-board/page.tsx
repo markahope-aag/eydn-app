@@ -177,7 +177,7 @@ export default function MoodBoardPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ caption: newCaption || null }),
-    }).catch((err) => console.error("Failed to save caption", err));
+    }).catch(() => toast.error("Couldn't save the caption. Try again."));
   }
 
   async function updateCategory(id: string, newCategory: string) {
@@ -186,7 +186,7 @@ export default function MoodBoardPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ category: newCategory }),
-    }).catch((err) => console.error("Failed to save category", err));
+    }).catch(() => toast.error("Couldn't update the category. Try again."));
   }
 
   async function updateLocation(id: string, newLocation: string | null) {
@@ -195,7 +195,7 @@ export default function MoodBoardPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ location: newLocation }),
-    }).catch((err) => console.error("Failed to save location", err));
+    }).catch(() => toast.error("Couldn't save the location. Try again."));
   }
 
   async function updateVendor(id: string, newVendorId: string | null) {
@@ -204,7 +204,7 @@ export default function MoodBoardPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ vendor_id: newVendorId }),
-    }).catch((err) => console.error("Failed to save vendor", err));
+    }).catch(() => toast.error("Couldn't link that vendor. Try again."));
   }
 
   function shareBoard() {

@@ -72,7 +72,7 @@ export default function VendorDetailPage({
     fetch(`/api/attachments?entity_type=vendor&entity_id=${vid}`)
       .then((r) => (r.ok ? r.json() : []))
       .then(setAttachments)
-      .catch((e) => console.error("[fetch] attachments", e));
+      .catch(() => toast.error("Couldn't load attachments. Try refreshing."));
   }, []);
 
   useEffect(() => {

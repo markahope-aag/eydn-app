@@ -44,7 +44,7 @@ export default function ChatPage() {
         return r.ok ? r.json() : Promise.reject();
       })
       .then(setMessages)
-      .catch((e) => console.error("[fetch] chat messages", e))
+      .catch(() => toast.error("Couldn't load chat history. Try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 

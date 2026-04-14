@@ -71,7 +71,7 @@ export default function DayOfPage() {
         const canonicalTime = weddingData?.ceremony_time || content.ceremonyTime || "";
         setCeremonyTime(canonicalTime);
       })
-      .catch((err) => console.error("Failed to load day-of plan", err))
+      .catch(() => toast.error("Couldn't load your day-of plan. Try refreshing."))
       .finally(() => setLoading(false));
   }, []);
 

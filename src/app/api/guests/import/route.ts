@@ -1,6 +1,15 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
+const MAX_CSV_BYTES = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_CSV_TYPES = new Set([
+  "text/csv",
+  "application/csv",
+  "application/vnd.ms-excel",
+  "text/plain",
+  "",
+]);
+
 /** Strip leading characters that trigger formula execution in Excel/Sheets. */
 function sanitizeCell(value: string): string {
   let s = value.trim();
@@ -57,6 +66,18 @@ export async function POST(request: Request) {
 
   if (!file) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  }
+  if (file.size > MAX_CSV_BYTES) {
+    return NextResponse.json(
+      { error: `CSV exceeds ${MAX_CSV_BYTES / (1024 * 1024)} MB limit` },
+      { status: 413 }
+    );
+  }
+  if (!ALLOWED_CSV_TYPES.has(file.type)) {
+    return NextResponse.json(
+      { error: `Unsupported file type: ${file.type}. Upload a .csv file.` },
+      { status: 415 }
+    );
   }
 
   const text = await file.text();
