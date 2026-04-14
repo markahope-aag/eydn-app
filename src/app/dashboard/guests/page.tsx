@@ -200,24 +200,32 @@ export default function GuestsPage() {
       );
       if (!contacts || contacts.length === 0) return;
 
-      let imported = 0;
-      for (const contact of contacts) {
-        const name = contact.name?.[0]?.trim();
-        if (!name) continue;
-        const res = await fetch("/api/guests", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            email: contact.email?.[0]?.trim() || null,
-            phone: contact.tel?.[0]?.trim() || null,
-          }),
-        });
-        if (res.ok) imported++;
+      const payload = contacts
+        .map((c) => ({
+          name: c.name?.[0]?.trim() || "",
+          email: c.email?.[0]?.trim() || null,
+          phone: c.tel?.[0]?.trim() || null,
+        }))
+        .filter((g) => g.name);
+
+      if (payload.length === 0) {
+        toast.info("No contacts with names were selected.");
+        return;
       }
-      if (imported > 0) {
-        trackGuestImport(imported);
-        toast.success(`Imported ${imported} contacts`);
+
+      const res = await fetch("/api/guests/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ guests: payload }),
+      });
+      if (!res.ok) {
+        toast.error("Couldn't import those contacts. Try again.");
+        return;
+      }
+      const data = (await res.json()) as { inserted: number };
+      if (data.inserted > 0) {
+        trackGuestImport(data.inserted);
+        toast.success(`Imported ${data.inserted} contacts`);
         const reload = await fetch("/api/guests");
         if (reload.ok) setGuests(await reload.json());
       } else {
