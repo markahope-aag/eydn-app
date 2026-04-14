@@ -9,54 +9,19 @@ import { EmptyState } from "@/components/EmptyState";
 import { usePremium } from "@/components/PremiumGate";
 import { Tooltip } from "@/components/Tooltip";
 import { trackGuestAdded, trackGuestImport } from "@/lib/analytics";
-
-type Guest = {
-  id: string;
-  name: string;
-  email: string | null;
-  rsvp_status: "not_invited" | "invite_sent" | "pending" | "accepted" | "declined";
-  meal_preference: string | null;
-  role: string | null;
-  plus_one: boolean;
-  plus_one_name: string | null;
-  address_line1: string | null;
-  address_line2: string | null;
-  city: string | null;
-  state: string | null;
-  zip: string | null;
-  phone: string | null;
-  group_name: string | null;
-};
-
-function titleCase(s: string) {
-  return s.replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-const ROLES = ["family", "friend", "wedding_party", "coworker", "plus_one", "other"];
-const ROLE_LABELS: Record<string, string> = {
-  family: "Family",
-  friend: "Friend",
-  wedding_party: "Wedding Party",
-  coworker: "Coworker",
-  plus_one: "Plus One",
-  other: "Other",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  not_invited: "Save for Later",
-  invite_sent: "Invite Sent",
-  pending: "Pending",
-  accepted: "Accepted",
-  declined: "Declined",
-};
-
-const STATUS_BADGE: Record<string, string> = {
-  not_invited: "bg-lavender text-muted",
-  invite_sent: "badge-pending",
-  pending: "badge-pending",
-  accepted: "badge-confirmed",
-  declined: "badge-declined",
-};
+import {
+  Guest,
+  titleCase,
+  ROLES,
+  ROLE_LABELS,
+  STATUS_LABELS,
+  STATUS_BADGE,
+} from "./_types";
+import {
+  exportGuestsCSV,
+  exportGuestsXLSX,
+  exportGuestsPDF,
+} from "./_exports";
 
 export default function GuestsPage() {
   const [guests, setGuests] = useState<Guest[]>([]);
@@ -290,160 +255,6 @@ export default function GuestsPage() {
     if (fileInput.current) fileInput.current.value = "";
   }
 
-  const EXPORT_HEADERS = ["Name", "Email", "RSVP Status", "Role", "Meal Preference", "Plus One Name", "Phone", "Group", "Address Line 1", "Address Line 2", "City", "State", "ZIP"];
-
-  function getExportRows() {
-    return guests.map((g) => [
-      g.name,
-      g.email || "",
-      STATUS_LABELS[g.rsvp_status] || g.rsvp_status,
-      g.role ? (ROLE_LABELS[g.role] || g.role) : "",
-      g.meal_preference || "",
-      g.plus_one_name || "",
-      g.phone || "",
-      g.group_name || "",
-      g.address_line1 || "",
-      g.address_line2 || "",
-      g.city || "",
-      g.state || "",
-      g.zip || "",
-    ]);
-  }
-
-  function exportCSV() {
-    if (guests.length === 0) return;
-    const csv = [EXPORT_HEADERS, ...getExportRows()]
-      .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "guest-list.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Guest list exported as CSV");
-  }
-
-  async function exportXLSX() {
-    if (guests.length === 0) return;
-    const ExcelJS = (await import("exceljs")).default;
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet("Guest List");
-
-    // Header row with styling
-    ws.addRow(EXPORT_HEADERS);
-    const headerRow = ws.getRow(1);
-    headerRow.font = { bold: true };
-    headerRow.eachCell((cell) => {
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF0E0FF" } };
-    });
-
-    // Data rows
-    const rows = getExportRows();
-    for (const row of rows) ws.addRow(row);
-
-    // Auto-size columns
-    ws.columns.forEach((col, i) => {
-      const maxLen = Math.max(EXPORT_HEADERS[i].length, ...rows.map((r) => String(r[i]).length));
-      col.width = maxLen + 3;
-    });
-
-    const buffer = await wb.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "guest-list.xlsx";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Guest list exported as Excel");
-  }
-
-  async function exportPDF() {
-    if (guests.length === 0) return;
-    const { pdf, Document, Page: PdfPage, Text, View, StyleSheet } = await import("@react-pdf/renderer");
-
-    const brand = { violet: "#2C3E2D", plum: "#1A1A2E", muted: "#6B6B6B", lavender: "#EDE7DF", border: "#E8D5B7", blush: "#D4A5A5" };
-
-    const s = StyleSheet.create({
-      page: { fontFamily: "Helvetica", fontSize: 9, color: brand.plum, padding: 36 },
-      header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
-      title: { fontSize: 18, fontFamily: "Helvetica-Bold", color: brand.plum },
-      subtitle: { fontSize: 9, color: brand.muted },
-      statsRow: { flexDirection: "row", gap: 16, marginBottom: 16 },
-      stat: { fontSize: 9, color: brand.muted },
-      statBold: { fontFamily: "Helvetica-Bold", color: brand.plum },
-      table: { borderWidth: 0.5, borderColor: brand.border, borderRadius: 4, overflow: "hidden" },
-      headerRow: { flexDirection: "row", backgroundColor: brand.lavender, paddingVertical: 5, paddingHorizontal: 6 },
-      headerCell: { fontSize: 7, fontFamily: "Helvetica-Bold", color: brand.muted, textTransform: "uppercase" as const, letterSpacing: 0.5 },
-      row: { flexDirection: "row", paddingVertical: 4, paddingHorizontal: 6, borderBottomWidth: 0.5, borderBottomColor: brand.border },
-      rowAlt: { flexDirection: "row", paddingVertical: 4, paddingHorizontal: 6, borderBottomWidth: 0.5, borderBottomColor: brand.border, backgroundColor: "#FDFAFF" },
-      cell: { fontSize: 8, color: brand.plum },
-      cellBold: { fontSize: 8, fontFamily: "Helvetica-Bold", color: brand.plum },
-      footer: { position: "absolute", bottom: 24, left: 36, right: 36, flexDirection: "row", justifyContent: "space-between" },
-      footerText: { fontSize: 7, color: brand.muted },
-      footerBrand: { fontSize: 7, fontFamily: "Helvetica-Bold", color: brand.violet },
-    });
-
-    // Columns: Name, Email, RSVP, Role, Meal, Phone, Group
-    const cols = [
-      { label: "Name", width: 80 },
-      { label: "Email", width: 100 },
-      { label: "RSVP", width: 55 },
-      { label: "Role", width: 55 },
-      { label: "Meal", width: 60 },
-      { label: "Phone", width: 70 },
-      { label: "Group", width: 60 },
-    ];
-
-    const PdfDoc = (
-      <Document>
-        <PdfPage size="A4" orientation="landscape" style={s.page}>
-          <View style={s.header}>
-            <Text style={s.title}>Guest List</Text>
-            <Text style={s.subtitle}>Eydn wedding planner</Text>
-          </View>
-          <View style={s.statsRow}>
-            <Text style={s.stat}>Total: <Text style={s.statBold}>{guests.length}</Text></Text>
-            <Text style={s.stat}>Accepted: <Text style={s.statBold}>{guests.filter((g) => g.rsvp_status === "accepted").length}</Text></Text>
-            <Text style={s.stat}>Declined: <Text style={s.statBold}>{guests.filter((g) => g.rsvp_status === "declined").length}</Text></Text>
-          </View>
-          <View style={s.table}>
-            <View style={s.headerRow}>
-              {cols.map((c) => (
-                <Text key={c.label} style={[s.headerCell, { width: c.width }]}>{c.label}</Text>
-              ))}
-            </View>
-            {guests.map((g, i) => (
-              <View key={g.id} style={i % 2 === 1 ? s.rowAlt : s.row}>
-                <Text style={[s.cellBold, { width: cols[0].width }]}>{g.name}</Text>
-                <Text style={[s.cell, { width: cols[1].width }]}>{g.email || "\u2014"}</Text>
-                <Text style={[s.cell, { width: cols[2].width }]}>{STATUS_LABELS[g.rsvp_status]}</Text>
-                <Text style={[s.cell, { width: cols[3].width }]}>{g.role ? (ROLE_LABELS[g.role] || g.role) : "\u2014"}</Text>
-                <Text style={[s.cell, { width: cols[4].width }]}>{g.meal_preference || "\u2014"}</Text>
-                <Text style={[s.cell, { width: cols[5].width }]}>{g.phone || "\u2014"}</Text>
-                <Text style={[s.cell, { width: cols[6].width }]}>{g.group_name || "\u2014"}</Text>
-              </View>
-            ))}
-          </View>
-          <View style={s.footer} fixed>
-            <Text style={s.footerText}>{guests.length} guests</Text>
-            <Text style={s.footerBrand}>eydn.app</Text>
-          </View>
-        </PdfPage>
-      </Document>
-    );
-
-    const blob = await pdf(PdfDoc).toBlob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "guest-list.pdf";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Guest list exported as PDF");
-  }
 
   const [showExportMenu, setShowExportMenu] = useState(false);
   const { guardAction } = usePremium();
@@ -625,21 +436,21 @@ export default function GuestsPage() {
                 <div className="fixed inset-0 z-10" role="presentation" onClick={() => setShowExportMenu(false)} />
                 <div className="absolute right-0 mt-1 z-20 bg-white border border-border rounded-[10px] shadow-lg py-1 w-40" role="menu">
                   <button
-                    onClick={() => { exportCSV(); setShowExportMenu(false); }}
+                    onClick={() => { exportGuestsCSV(guests); setShowExportMenu(false); }}
                     role="menuitem"
                     className="w-full text-left px-4 py-2 text-[14px] text-plum hover:bg-lavender transition"
                   >
                     Export as CSV
                   </button>
                   <button
-                    onClick={() => { exportXLSX(); setShowExportMenu(false); }}
+                    onClick={() => { exportGuestsXLSX(guests); setShowExportMenu(false); }}
                     role="menuitem"
                     className="w-full text-left px-4 py-2 text-[14px] text-plum hover:bg-lavender transition"
                   >
                     Export as Excel
                   </button>
                   <button
-                    onClick={() => { guardAction(() => exportPDF()); setShowExportMenu(false); }}
+                    onClick={() => { guardAction(() => exportGuestsPDF(guests)); setShowExportMenu(false); }}
                     role="menuitem"
                     className="w-full text-left px-4 py-2 text-[14px] text-plum hover:bg-lavender transition"
                   >
