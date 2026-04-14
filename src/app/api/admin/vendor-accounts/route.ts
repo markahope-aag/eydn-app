@@ -10,17 +10,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("vendor_accounts")
-    .select(`
-      *,
-      vendor_placements (
-        id,
-        status,
-        billing_period,
-        started_at,
-        ended_at,
-        placement_tiers ( name, price_monthly )
-      )
-    `)
+    .select("*")
     .order("created_at", { ascending: false });
 
   const err = supabaseError(error, "admin/vendor-accounts");

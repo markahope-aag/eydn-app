@@ -5,30 +5,13 @@ import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 import { logRequest } from "@/lib/api-logger";
 import { sendEmail } from "@/lib/email";
 import { getNewsletterWelcomeEmail } from "@/lib/email-newsletter";
+import { cadenceSubscribe } from "@/lib/cadence";
 
-/**
- * Push the subscriber into Cadence — our in-house bulk-email system backed
- * by AWS SES. Cadence manages contacts, lists, and broadcasts; Eydn only
- * owns the signup moment and the transactional welcome email with the
- * planning checklist. Fire-and-forget — never block the response.
- */
-async function syncToCadence(email: string): Promise<void> {
-  const cadenceUrl = process.env.CADENCE_URL;
-  const formId = process.env.CADENCE_NEWSLETTER_FORM_ID;
-  if (!cadenceUrl || !formId) return;
-  try {
-    const res = await fetch(`${cadenceUrl.replace(/\/$/, "")}/api/subscribe`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ form_id: formId, email }),
-    });
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      console.error(`[NEWSLETTER] Cadence sync failed ${res.status}: ${body.slice(0, 200)}`);
-    }
-  } catch (err) {
-    console.error("[NEWSLETTER] Cadence sync error:", err instanceof Error ? err.message : err);
-  }
+function syncNewsletterToCadence(email: string): Promise<void> {
+  return cadenceSubscribe({
+    formId: process.env.CADENCE_NEWSLETTER_FORM_ID || "",
+    email,
+  });
 }
 
 export async function POST(request: Request) {
@@ -62,7 +45,7 @@ export async function POST(request: Request) {
     // Already on the list — don't re-send the welcome email, but still
     // sync to Cadence in case the subscribe form was added later than
     // the historical waitlist entry.
-    void syncToCadence(email);
+    void syncNewsletterToCadence(email);
     logRequest("POST", "/api/public/newsletter", 200, Date.now() - start);
     return NextResponse.json({ success: true });
   }
@@ -73,7 +56,7 @@ export async function POST(request: Request) {
 
   if (insertError) {
     if (insertError.message.includes("unique") || insertError.message.includes("duplicate")) {
-      void syncToCadence(email);
+      void syncNewsletterToCadence(email);
       logRequest("POST", "/api/public/newsletter", 200, Date.now() - start);
       return NextResponse.json({ success: true });
     }
@@ -85,7 +68,7 @@ export async function POST(request: Request) {
   // Fire-and-forget side effects — never block the response.
   const template = getNewsletterWelcomeEmail();
   void sendEmail({ to: email, subject: template.subject, html: template.html });
-  void syncToCadence(email);
+  void syncNewsletterToCadence(email);
 
   logRequest("POST", "/api/public/newsletter", 200, Date.now() - start);
   return NextResponse.json({ success: true });

@@ -7,6 +7,7 @@ import { plannerAssessmentQuiz } from "@/lib/quizzes/planner-assessment";
 import { isValidEmail, safeParseJSON, isParseError } from "@/lib/validation";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 import { captureServer } from "@/lib/analytics-server";
+import { cadenceSubscribe } from "@/lib/cadence";
 
 type QuizId = "planning_style" | "planner_assessment";
 
@@ -15,27 +16,16 @@ const CADENCE_FORMS: Record<QuizId, string | undefined> = {
   planner_assessment: process.env.CADENCE_QUIZ_PLANNER_ASSESSMENT_FORM_ID,
 };
 
-async function syncToCadence(
+function syncToCadence(
   email: string,
   firstName: string,
   quizId: QuizId
 ): Promise<void> {
-  const cadenceUrl = process.env.CADENCE_URL;
-  const formId = CADENCE_FORMS[quizId];
-  if (!cadenceUrl || !formId) return;
-  try {
-    const res = await fetch(`${cadenceUrl.replace(/\/$/, "")}/api/subscribe`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ form_id: formId, email, first_name: firstName }),
-    });
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      console.error(`[QUIZ] Cadence sync failed ${res.status}: ${body.slice(0, 200)}`);
-    }
-  } catch (err) {
-    console.error("[QUIZ] Cadence sync error:", err instanceof Error ? err.message : err);
-  }
+  return cadenceSubscribe({
+    formId: CADENCE_FORMS[quizId] || "",
+    email,
+    firstName,
+  });
 }
 
 export async function POST(request: Request) {

@@ -1023,45 +1023,6 @@ export type Database = {
           },
         ]
       }
-      placement_tiers: {
-        Row: {
-          active: boolean
-          created_at: string
-          description: string | null
-          features: Json
-          id: string
-          name: string
-          price_annual: number
-          price_monthly: number
-          price_quarterly: number
-          sort_order: number
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          description?: string | null
-          features?: Json
-          id?: string
-          name: string
-          price_annual: number
-          price_monthly: number
-          price_quarterly: number
-          sort_order?: number
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          description?: string | null
-          features?: Json
-          id?: string
-          name?: string
-          price_annual?: number
-          price_monthly?: number
-          price_quarterly?: number
-          sort_order?: number
-        }
-        Relationships: []
-      }
       promo_code_redemptions: {
         Row: {
           discount_amount: number
@@ -1953,69 +1914,6 @@ export type Database = {
             columns: ["wedding_id"]
             isOneToOne: false
             referencedRelation: "weddings"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vendor_placements: {
-        Row: {
-          amount_paid: number
-          auto_renew: boolean
-          billing_period: string
-          created_at: string
-          expires_at: string
-          geographic_target: Json | null
-          id: string
-          starts_at: string
-          status: string
-          stripe_payment_intent_id: string | null
-          stripe_subscription_id: string | null
-          tier_id: string
-          vendor_account_id: string
-        }
-        Insert: {
-          amount_paid: number
-          auto_renew?: boolean
-          billing_period: string
-          created_at?: string
-          expires_at: string
-          geographic_target?: Json | null
-          id?: string
-          starts_at?: string
-          status?: string
-          stripe_payment_intent_id?: string | null
-          stripe_subscription_id?: string | null
-          tier_id: string
-          vendor_account_id: string
-        }
-        Update: {
-          amount_paid?: number
-          auto_renew?: boolean
-          billing_period?: string
-          created_at?: string
-          expires_at?: string
-          geographic_target?: Json | null
-          id?: string
-          starts_at?: string
-          status?: string
-          stripe_payment_intent_id?: string | null
-          stripe_subscription_id?: string | null
-          tier_id?: string
-          vendor_account_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendor_placements_tier_id_fkey"
-            columns: ["tier_id"]
-            isOneToOne: false
-            referencedRelation: "placement_tiers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vendor_placements_vendor_account_id_fkey"
-            columns: ["vendor_account_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_accounts"
             referencedColumns: ["id"]
           },
         ]

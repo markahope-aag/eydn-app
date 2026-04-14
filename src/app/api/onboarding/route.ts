@@ -133,14 +133,11 @@ export async function POST(request: Request) {
 
   // Save onboarding survey (prior tools for segmentation)
   if (prior_tools.length > 0) {
-    // Table created via migration — not yet in generated types
-    await (supabase as unknown as { from: (_t: string) => { upsert: (_d: Record<string, unknown>) => Promise<unknown> } })
-      .from("onboarding_survey")
-      .upsert({
-        wedding_id: weddingId,
-        prior_tools,
-        venue_status,
-      });
+    await supabase.from("onboarding_survey").upsert({
+      wedding_id: weddingId,
+      prior_tools,
+      venue_status,
+    });
   }
 
   // Generate tasks if wedding date is set

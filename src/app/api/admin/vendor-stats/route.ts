@@ -129,26 +129,13 @@ export async function GET() {
     sb.from("vendor_accounts").select("*", { count: "exact", head: true }).eq("status", "suspended"),
   ]);
 
-  // --- Placements ---
-  const { data: activePlacementsData } = await sb
-    .from("vendor_placements")
-    .select("id, tier_id, placement_tiers(name, price_monthly)")
-    .eq("status", "active");
-
-  const activePlacements = (activePlacementsData || []).length;
-  let mrr = 0;
-  const tierMap: Record<string, { tier: string; count: number; revenue: number }> = {};
-  (activePlacementsData || []).forEach((p: { placement_tiers?: { name?: string; price_monthly?: number } }) => {
-    const tierName = p.placement_tiers?.name || "Unknown";
-    const price = p.placement_tiers?.price_monthly || 0;
-    mrr += price;
-    if (!tierMap[tierName]) {
-      tierMap[tierName] = { tier: tierName, count: 0, revenue: 0 };
-    }
-    tierMap[tierName].count++;
-    tierMap[tierName].revenue += price;
-  });
-  const byTier = Object.values(tierMap).sort((a, b) => b.revenue - a.revenue);
+  // Vendor placements and tiers were removed when the marketplace
+  // monetization was scrapped (per the Eydn Pledge — we don't charge
+  // vendors). These fields are returned as 0 / empty so the admin UI
+  // continues to render, but no revenue is ever collected from vendors.
+  const activePlacements = 0;
+  const mrr = 0;
+  const byTier: { tier: string; count: number; revenue: number }[] = [];
 
   // --- Submissions ---
   const [

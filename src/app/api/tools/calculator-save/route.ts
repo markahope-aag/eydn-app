@@ -5,6 +5,7 @@ import { handoffCalculatorToEydn } from "@/lib/calculator-handoff";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
 import { getCalculatorEmail } from "@/lib/email-calculator";
+import { cadenceSubscribe } from "@/lib/cadence";
 import crypto from "crypto";
 
 function generateShortCode(): string {
@@ -34,30 +35,15 @@ function buildAllocations(budget: number) {
   }));
 }
 
-async function syncToCadenceNewsletter(
+function syncToCadenceNewsletter(
   email: string,
   firstName: string | null
 ): Promise<void> {
-  const cadenceUrl = process.env.CADENCE_URL;
-  const formId = process.env.CADENCE_NEWSLETTER_FORM_ID;
-  if (!cadenceUrl || !formId) return;
-  try {
-    const res = await fetch(`${cadenceUrl.replace(/\/$/, "")}/api/subscribe`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        form_id: formId,
-        email,
-        first_name: firstName || undefined,
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      console.error(`[CALCULATOR] Cadence sync failed ${res.status}: ${body.slice(0, 200)}`);
-    }
-  } catch (err) {
-    console.error("[CALCULATOR] Cadence sync error:", err instanceof Error ? err.message : err);
-  }
+  return cadenceSubscribe({
+    formId: process.env.CADENCE_NEWSLETTER_FORM_ID || "",
+    email,
+    firstName,
+  });
 }
 
 /** POST — save a calculator state, hand off into Eydn, return a sign-in URL */
