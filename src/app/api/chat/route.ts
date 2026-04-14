@@ -6,7 +6,7 @@ import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 import { safeParseJSON, isParseError } from "@/lib/validation";
 import { getClaudeClient } from "@/lib/ai/claude-client";
 import { buildEdynSystemPrompt } from "@/lib/ai/edyn-system-prompt";
-import { AI, PAGE_SIZE, CHAT_CONTEXT } from "@/lib/config";
+import { AI, PAGE_SIZE, CHAT_CONTEXT, TIME_WINDOWS } from "@/lib/config";
 import { captureServer, estimateClaudeCostUsd } from "@/lib/analytics-server";
 import type { Database } from "@/lib/supabase/types";
 
@@ -137,7 +137,9 @@ export async function POST(request: Request) {
   if (allTasks && allTasks.length > 0) {
     type TaskRow = { title: string; due_date: string | null; completed: boolean; category: string; notes: string | null };
     const now = new Date();
-    const twoWeeks = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const twoWeeks = new Date(
+      now.getTime() + TIME_WINDOWS.CHAT_CONTEXT_DAYS * 24 * 60 * 60 * 1000
+    );
     const incomplete = (allTasks as TaskRow[]).filter((t) => !t.completed);
     const completed = (allTasks as TaskRow[]).filter((t) => t.completed);
     const overdue = incomplete.filter((t) => t.due_date && new Date(t.due_date) < now);
