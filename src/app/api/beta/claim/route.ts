@@ -6,7 +6,7 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 const BETA_SLOTS = 50;
 
 /** POST: Claim a beta slot (assigns beta role to authenticated user) */
-export async function POST(_request: Request) {
+export async function POST() {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Sign in first" }, { status: 401 });
