@@ -22,7 +22,13 @@ vi.mock("next/server", () => ({
 
 import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
-import { getSubscriptionStatus, requirePremium } from "./subscription";
+import {
+  getSubscriptionStatus,
+  requirePremium,
+  requireFeature,
+  SUBSCRIPTION_PRICE,
+  PRO_MONTHLY_PRICE,
+} from "./subscription";
 
 const mockAuth = vi.mocked(auth);
 const mockCreateSupabaseAdmin = vi.mocked(createSupabaseAdmin);
@@ -263,5 +269,99 @@ describe("requirePremium", () => {
     const result = await requirePremium();
     expect(result).not.toBeNull();
     expect((result as { status: number }).status).toBe(403);
+  });
+});
+
+describe("requireFeature", () => {
+  it("returns null when a paid user has the feature", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+    mockCreateSupabaseAdmin.mockReturnValue(
+      buildMockSupabase({ purchaseData: { id: "purchase_1" } })
+    );
+
+    expect(await requireFeature("exportBinder")).toBeNull();
+    expect(await requireFeature("webSearch")).toBeNull();
+    expect(await requireFeature("catchUpPlans")).toBeNull();
+  });
+
+  it("returns 403 for free-tier users on gated features", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+    mockCreateSupabaseAdmin.mockReturnValue(
+      buildMockSupabase({
+        // No role, no purchase, no wedding → deriveStatus("free")
+      })
+    );
+
+    const result = await requireFeature("exportBinder");
+    expect(result).not.toBeNull();
+    expect((result as { status: number }).status).toBe(403);
+  });
+
+  it("allows free-tier users to access `chat`", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+    mockCreateSupabaseAdmin.mockReturnValue(buildMockSupabase({}));
+    expect(await requireFeature("chat")).toBeNull();
+  });
+
+  it("returns 403 when unauthenticated", async () => {
+    mockAuth.mockResolvedValue({ userId: null } as Awaited<ReturnType<typeof auth>>);
+    const result = await requireFeature("exportBinder");
+    expect((result as { status: number }).status).toBe(403);
+  });
+});
+
+describe("feature flags by tier", () => {
+  it("trialing users get every feature", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+    const now = new Date();
+    mockCreateSupabaseAdmin.mockReturnValue(
+      buildMockSupabase({ weddingData: { user_id: "user_123", trial_started_at: now.toISOString(), created_at: now.toISOString() } })
+    );
+
+    const status = await getSubscriptionStatus();
+    expect(status.tier).toBe("trialing");
+    expect(status.features).toEqual(FEATURES_ON);
+  });
+
+  it("paid (pro) users get every feature", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+    mockCreateSupabaseAdmin.mockReturnValue(
+      buildMockSupabase({ purchaseData: { id: "purchase_1" } })
+    );
+
+    const status = await getSubscriptionStatus();
+    expect(status.tier).toBe("pro");
+    expect(status.features).toEqual(FEATURES_ON);
+  });
+
+  it("free users get only chat", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+    mockCreateSupabaseAdmin.mockReturnValue(buildMockSupabase({}));
+
+    const status = await getSubscriptionStatus();
+    expect(status.tier).toBe("free");
+    expect(status.features).toEqual(FEATURES_FREE);
+  });
+
+  it("beta users get every feature and isBeta=true", async () => {
+    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
+    mockCreateSupabaseAdmin.mockReturnValue(
+      buildMockSupabase({ roleData: { role: "beta" } })
+    );
+
+    const status = await getSubscriptionStatus();
+    expect(status.tier).toBe("beta");
+    expect(status.isBeta).toBe(true);
+    expect(status.features).toEqual(FEATURES_ON);
+  });
+});
+
+describe("pricing constants", () => {
+  it("exports the lifetime price as $79", () => {
+    expect(SUBSCRIPTION_PRICE).toBe(79);
+  });
+
+  it("exports the Pro Monthly price as $14.99", () => {
+    expect(PRO_MONTHLY_PRICE).toBe(14.99);
   });
 });
