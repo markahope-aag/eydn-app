@@ -3,10 +3,61 @@ import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { captureServer } from "@/lib/analytics-server";
 import { handoffCalculatorToEydn } from "@/lib/calculator-handoff";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
+import { sendEmail } from "@/lib/email";
+import { getCalculatorEmail } from "@/lib/email-calculator";
 import crypto from "crypto";
 
 function generateShortCode(): string {
   return crypto.randomBytes(4).toString("base64url").slice(0, 7);
+}
+
+// Same breakdown percentages used by the calculator UI (see
+// src/components/tools/WeddingBudgetCalculator.tsx). Keep in sync.
+const BREAKDOWN = [
+  { label: "Venue", pct: 0.238 },
+  { label: "Catering & bar", pct: 0.192 },
+  { label: "Photography & video", pct: 0.12 },
+  { label: "Florals & decor", pct: 0.09 },
+  { label: "Attire & beauty", pct: 0.065 },
+  { label: "Music & entertainment", pct: 0.06 },
+  { label: "Rehearsal dinner", pct: 0.04 },
+  { label: "Stationery & gifts", pct: 0.025 },
+  { label: "Transportation", pct: 0.02 },
+  { label: "Ceremony & officiant", pct: 0.015 },
+];
+
+function buildAllocations(budget: number) {
+  return BREAKDOWN.map((row) => ({
+    label: row.label,
+    pct: row.pct,
+    amount: Math.round(budget * row.pct),
+  }));
+}
+
+async function syncToCadenceNewsletter(
+  email: string,
+  firstName: string | null
+): Promise<void> {
+  const cadenceUrl = process.env.CADENCE_URL;
+  const formId = process.env.CADENCE_NEWSLETTER_FORM_ID;
+  if (!cadenceUrl || !formId) return;
+  try {
+    const res = await fetch(`${cadenceUrl.replace(/\/$/, "")}/api/subscribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        form_id: formId,
+        email,
+        first_name: firstName || undefined,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`[CALCULATOR] Cadence sync failed ${res.status}: ${body.slice(0, 200)}`);
+    }
+  } catch (err) {
+    console.error("[CALCULATOR] Cadence sync error:", err instanceof Error ? err.message : err);
+  }
 }
 
 /** POST — save a calculator state, hand off into Eydn, return a sign-in URL */
@@ -105,6 +156,26 @@ export async function POST(request: NextRequest) {
       wedding_id: handoff.weddingId,
     });
   }
+
+  // Email 1 of the calculator nurture — inline breakdown + sign-in link.
+  // Fire-and-forget so the user-facing response never blocks on Resend.
+  const template = getCalculatorEmail({
+    firstName: normalizedName,
+    budget,
+    guests,
+    state,
+    allocations: buildAllocations(budget),
+    signInUrl: handoff?.signInUrl || null,
+    isNewUser: handoff?.isNewUser ?? true,
+  });
+  void sendEmail({
+    to: normalizedEmail,
+    subject: template.subject,
+    html: template.html,
+  });
+
+  // Push into Cadence so the couple joins the weekly planning nurture.
+  void syncToCadenceNewsletter(normalizedEmail, normalizedName);
 
   return NextResponse.json({
     short_code: shortCode,
