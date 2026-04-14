@@ -195,65 +195,9 @@ export async function POST(request: Request) {
         break;
       }
 
-      // Handle vendor placement purchase
-      if (!meta?.vendor_account_id || !meta?.tier_id) break;
-
-      // Calculate expiration based on billing period
-      const now = new Date();
-      const expiresAt = new Date(now);
-      const billingPeriod = (meta.billing_period || "monthly") as "monthly" | "quarterly" | "annual";
-      switch (billingPeriod) {
-        case "quarterly":
-          expiresAt.setMonth(expiresAt.getMonth() + 3);
-          break;
-        case "annual":
-          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-          break;
-        default:
-          expiresAt.setMonth(expiresAt.getMonth() + 1);
-          break;
-      }
-
-      // Create vendor placement record
-      const amountPaid = session.amount_total ? session.amount_total / 100 : 0;
-      const { error: placementError } = await supabase
-        .from("vendor_placements")
-        .insert({
-          vendor_account_id: meta.vendor_account_id,
-          tier_id: meta.tier_id,
-          billing_period: billingPeriod,
-          amount_paid: amountPaid,
-          stripe_subscription_id: session.subscription as string,
-          status: "active",
-          starts_at: now.toISOString(),
-          expires_at: expiresAt.toISOString(),
-          auto_renew: true,
-        });
-
-      if (placementError) {
-        console.error("[WEBHOOK] Failed to create placement:", placementError.message);
-      }
-
-      // Mark vendor account as preferred and update matching suggested_vendor as featured
-      const { data: vendor } = await supabase
-        .from("vendor_accounts")
-        .select("id, business_name, category")
-        .eq("id", meta.vendor_account_id)
-        .single();
-
-      if (vendor) {
-        await supabase
-          .from("vendor_accounts")
-          .update({ is_preferred: true })
-          .eq("id", vendor.id);
-
-        await supabase
-          .from("suggested_vendors")
-          .update({ featured: true })
-          .eq("name", vendor.business_name)
-          .eq("category", vendor.category);
-      }
-
+      // Vendor placement purchases are no longer accepted — Eydn charges
+      // couples, never vendors. Any stray session with vendor_account_id /
+      // tier_id metadata is ignored here. See /pledge.
       break;
     }
 
@@ -312,11 +256,6 @@ export async function POST(request: Request) {
 
       if (subscriptionId) {
         await supabase
-          .from("vendor_placements")
-          .update({ status: "past_due" })
-          .eq("stripe_subscription_id", subscriptionId);
-
-        await supabase
           .from("subscriber_purchases")
           .update({ status: "past_due" })
           .eq("stripe_subscription_id", subscriptionId);
@@ -327,14 +266,6 @@ export async function POST(request: Request) {
 
     case "customer.subscription.deleted": {
       const subscription = event.data.object as Stripe.Subscription;
-
-      await supabase
-        .from("vendor_placements")
-        .update({
-          status: "cancelled",
-          auto_renew: false,
-        })
-        .eq("stripe_subscription_id", subscription.id);
 
       // Pro Monthly cancellation — downgrade user to free tier
       if (subscription.metadata?.type === "pro_monthly_subscription") {

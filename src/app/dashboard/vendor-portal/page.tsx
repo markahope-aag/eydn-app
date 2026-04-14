@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 
 const VENDOR_CATEGORIES = [
@@ -38,35 +39,11 @@ type VendorAccount = {
   created_at: string;
 };
 
-type Tier = {
-  id: string;
-  name: string;
-  description: string | null;
-  price_monthly: number;
-  price_quarterly: number;
-  price_annual: number;
-  features: string[];
-  active: boolean;
-};
-
-type Placement = {
-  id: string;
-  tier_id: string;
-  status: string;
-  billing_period: string;
-  starts_at: string;
-  expires_at: string;
-  auto_renew: boolean;
-  placement_tiers: Tier;
-};
-
 type Analytics = {
   impressions: number;
   clicks: number;
   leads: number;
 };
-
-type Tab = "overview" | "profile" | "placement" | "analytics";
 
 export default function VendorPortalPage() {
   const [account, setAccount] = useState<VendorAccount | null>(null);
@@ -98,13 +75,20 @@ export default function VendorPortalPage() {
   }
 
   if (!hasAccount) {
-    return <RegistrationForm onSuccess={(a) => { setAccount(a); setHasAccount(true); }} />;
+    return (
+      <RegistrationForm
+        onSuccess={(a) => {
+          setAccount(a);
+          setHasAccount(true);
+        }}
+      />
+    );
   }
 
-  return <VendorDashboard account={account!} setAccount={setAccount} />;
+  return <VendorProfile account={account!} setAccount={setAccount} />;
 }
 
-/* ---------- Registration Form ---------- */
+/* ───────────────────── Registration ───────────────────── */
 
 function RegistrationForm({ onSuccess }: { onSuccess: (_a: VendorAccount) => void }) {
   const [submitting, setSubmitting] = useState(false);
@@ -120,17 +104,10 @@ function RegistrationForm({ onSuccess }: { onSuccess: (_a: VendorAccount) => voi
     price_range: "",
   });
 
-  function update(field: string, value: string) {
-    setForm((f) => ({ ...f, [field]: value }));
-  }
+  const update = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.business_name || !form.email) {
-      toast.error("Business name and email are required");
-      return;
-    }
-
     setSubmitting(true);
     try {
       const res = await fetch("/api/vendor-portal/account", {
@@ -140,34 +117,39 @@ function RegistrationForm({ onSuccess }: { onSuccess: (_a: VendorAccount) => voi
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Account didn't save. Try again.");
+        throw new Error(data.error || "Couldn't submit your application");
       }
       const data = await res.json();
-      toast.success("Account created. Your application is under review.");
       onSuccess(data);
+      toast.success("Application submitted. We'll review it shortly.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Account didn't save. Try again.");
+      toast.error(err instanceof Error ? err.message : "Couldn't submit. Try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="max-w-lg">
-      <h1>Become an Eydn Vendor</h1>
-      <p className="mt-2 text-[15px] text-muted">
-        Join the Eydn vendor network to get featured to couples planning their weddings.
+    <div className="max-w-2xl mx-auto">
+      <h1 className="font-serif text-[36px] text-plum">Join the Eydn vendor directory</h1>
+      <p className="mt-3 text-[15px] text-muted leading-relaxed">
+        Free to join. We don&rsquo;t charge for placement, we don&rsquo;t sell your
+        data, and we don&rsquo;t let money influence who shows up first. See{" "}
+        <Link href="/pledge" className="text-violet hover:text-soft-violet underline">
+          the Eydn Pledge
+        </Link>{" "}
+        for the whole commitment.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit} className="mt-8 space-y-4 card-summary p-6">
         <div>
           <label className="text-[13px] text-muted">Business Name *</label>
           <input
             type="text"
+            required
             value={form.business_name}
             onChange={(e) => update("business_name", e.target.value)}
             className="mt-1 w-full rounded-[10px] border border-border px-3 py-2 text-[15px]"
-            required
           />
         </div>
 
@@ -179,36 +161,40 @@ function RegistrationForm({ onSuccess }: { onSuccess: (_a: VendorAccount) => voi
             className="mt-1 w-full rounded-[10px] border border-border px-3 py-2 text-[15px]"
           >
             {VENDOR_CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>
+                {c}
+              </option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="text-[13px] text-muted">Business Email *</label>
+          <label className="text-[13px] text-muted">Contact Email *</label>
           <input
             type="email"
+            required
             value={form.email}
             onChange={(e) => update("email", e.target.value)}
             className="mt-1 w-full rounded-[10px] border border-border px-3 py-2 text-[15px]"
-            required
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[13px] text-muted">City</label>
+            <label className="text-[13px] text-muted">City *</label>
             <input
               type="text"
+              required
               value={form.city}
               onChange={(e) => update("city", e.target.value)}
               className="mt-1 w-full rounded-[10px] border border-border px-3 py-2 text-[15px]"
             />
           </div>
           <div>
-            <label className="text-[13px] text-muted">State</label>
+            <label className="text-[13px] text-muted">State *</label>
             <input
               type="text"
+              required
               value={form.state}
               onChange={(e) => update("state", e.target.value)}
               className="mt-1 w-full rounded-[10px] border border-border px-3 py-2 text-[15px]"
@@ -256,7 +242,9 @@ function RegistrationForm({ onSuccess }: { onSuccess: (_a: VendorAccount) => voi
           >
             <option value="">Select...</option>
             {PRICE_RANGES.map((p) => (
-              <option key={p} value={p}>{p}</option>
+              <option key={p} value={p}>
+                {p}
+              </option>
             ))}
           </select>
         </div>
@@ -269,167 +257,155 @@ function RegistrationForm({ onSuccess }: { onSuccess: (_a: VendorAccount) => voi
   );
 }
 
-/* ---------- Vendor Dashboard ---------- */
+/* ───────────────────── Read-only profile ───────────────────── */
 
-function VendorDashboard({
+function VendorProfile({
   account,
   setAccount,
 }: {
   account: VendorAccount;
   setAccount: (_a: VendorAccount) => void;
 }) {
-  const [tab, setTab] = useState<Tab>("overview");
-  const [tiers, setTiers] = useState<Tier[]>([]);
-  const [placements, setPlacements] = useState<Placement[]>([]);
+  const [editing, setEditing] = useState(false);
   const [analytics, setAnalytics] = useState<Analytics>({ impressions: 0, clicks: 0, leads: 0 });
 
   useEffect(() => {
-    fetch("/api/vendor-portal/tiers")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setTiers)
-      .catch((err) => console.error("Failed to load vendor tiers", err));
-
-    fetch("/api/vendor-portal/placements")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setPlacements)
-      .catch((err) => console.error("Failed to load vendor placements", err));
-
     fetch("/api/vendor-portal/analytics")
-      .then((r) => (r.ok ? r.json() : { impressions: 0, clicks: 0, leads: 0 }))
-      .then(setAnalytics)
-      .catch((err) => console.error("Failed to load vendor analytics", err));
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setAnalytics(data);
+      })
+      .catch(() => {});
   }, []);
 
-  const activePlacement = placements.find((p) => p.status === "active");
+  const statusLabel =
+    account.status === "approved"
+      ? "Approved — live in the directory"
+      : account.status === "pending"
+        ? "Pending review"
+        : account.status === "rejected"
+          ? "Not accepted"
+          : account.status;
 
-  const tabs: Tab[] = ["overview", "profile", "placement", "analytics"];
+  const statusColor =
+    account.status === "approved"
+      ? "text-green-700 bg-green-50 border-green-200"
+      : account.status === "rejected"
+        ? "text-red-700 bg-red-50 border-red-200"
+        : "text-amber-700 bg-amber-50 border-amber-200";
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <h1>Vendor Portal</h1>
-        <StatusBadge status={account.status} />
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div>
+        <h1 className="font-serif text-[36px] text-plum">{account.business_name}</h1>
+        <p className="mt-1 text-[14px] text-muted">{account.category}</p>
       </div>
 
-      {/* Tabs */}
-      <div className="mt-4 flex gap-1 border-b border-border">
-        {tabs.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${
-              tab === t
-                ? "border-violet text-violet"
-                : "border-transparent text-muted hover:text-plum"
-            }`}
-          >
-            {t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
+      <div className={`card-summary p-5 border ${statusColor}`}>
+        <div className="text-[12px] font-semibold uppercase tracking-wide">Status</div>
+        <div className="mt-1 text-[15px]">{statusLabel}</div>
       </div>
 
-      {/* Overview Tab */}
-      {tab === "overview" && (
-        <div className="mt-6 space-y-6">
-          <div className="card p-6">
-            <h2 className="text-[15px] font-semibold text-plum">{account.business_name}</h2>
-            <p className="text-[13px] text-muted mt-1">{account.category}</p>
-            {account.city && account.state && (
-              <p className="text-[13px] text-muted">{account.city}, {account.state}</p>
-            )}
-          </div>
-
-          {activePlacement && (
-            <div className="card p-6">
-              <p className="text-[13px] text-muted">Current Placement</p>
-              <p className="mt-1 text-[15px] font-semibold text-violet">
-                {activePlacement.placement_tiers?.name || "Active"}
-              </p>
-              <p className="text-[12px] text-muted mt-1">
-                Since {new Date(activePlacement.starts_at).toLocaleDateString()}
-              </p>
-            </div>
-          )}
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="card p-6">
-              <p className="text-[13px] text-muted">Impressions (30d)</p>
-              <p className="mt-1 text-2xl font-semibold text-plum">{analytics.impressions}</p>
-            </div>
-            <div className="card p-6">
-              <p className="text-[13px] text-muted">Clicks (30d)</p>
-              <p className="mt-1 text-2xl font-semibold text-plum">{analytics.clicks}</p>
-            </div>
-            <div className="card p-6">
-              <p className="text-[13px] text-muted">Leads (30d)</p>
-              <p className="mt-1 text-2xl font-semibold text-plum">{analytics.leads}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Profile Tab */}
-      {tab === "profile" && (
-        <ProfileEditor account={account} onUpdate={setAccount} />
-      )}
-
-      {/* Placement Tab */}
-      {tab === "placement" && (
-        <PlacementTab
+      {editing ? (
+        <EditForm
           account={account}
-          tiers={tiers}
-          activePlacement={activePlacement || null}
+          onSave={(updated) => {
+            setAccount(updated);
+            setEditing(false);
+            toast.success("Profile updated.");
+          }}
+          onCancel={() => setEditing(false)}
         />
-      )}
-
-      {/* Analytics Tab */}
-      {tab === "analytics" && (
-        <div className="mt-6 space-y-6">
-          <h2 className="text-[15px] font-semibold text-plum">Performance (Last 30 Days)</h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="card p-6">
-              <p className="text-[13px] text-muted">Impressions</p>
-              <p className="mt-1 text-2xl sm:text-3xl font-semibold text-plum">{analytics.impressions}</p>
-              <p className="text-[12px] text-muted mt-1">Times your listing was shown</p>
+      ) : (
+        <>
+          <div className="card-summary p-6">
+            <div className="flex items-start justify-between mb-4">
+              <h2 className="font-serif text-[22px] text-plum">Your profile</h2>
+              <button
+                onClick={() => setEditing(true)}
+                className="text-[13px] text-violet hover:text-soft-violet font-semibold"
+              >
+                Edit
+              </button>
             </div>
-            <div className="card p-6">
-              <p className="text-[13px] text-muted">Clicks</p>
-              <p className="mt-1 text-2xl sm:text-3xl font-semibold text-plum">{analytics.clicks}</p>
-              <p className="text-[12px] text-muted mt-1">Times couples clicked your listing</p>
-            </div>
-            <div className="card p-6">
-              <p className="text-[13px] text-muted">Leads</p>
-              <p className="mt-1 text-2xl sm:text-3xl font-semibold text-plum">{analytics.leads}</p>
-              <p className="text-[12px] text-muted mt-1">Couples who contacted you</p>
-            </div>
+            <dl className="space-y-3 text-[14px]">
+              <Row label="Contact email" value={account.email} />
+              <Row
+                label="Location"
+                value={[account.city, account.state].filter(Boolean).join(", ") || "—"}
+              />
+              {account.phone && <Row label="Phone" value={account.phone} />}
+              {account.website && (
+                <Row
+                  label="Website"
+                  value={
+                    <a
+                      href={account.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-violet hover:text-soft-violet underline"
+                    >
+                      {account.website}
+                    </a>
+                  }
+                />
+              )}
+              {account.price_range && <Row label="Price range" value={account.price_range} />}
+              {account.description && (
+                <Row label="Description" value={account.description} />
+              )}
+            </dl>
           </div>
-          {analytics.clicks > 0 && (
-            <div className="card p-6">
-              <p className="text-[13px] text-muted">Click-through Rate</p>
-              <p className="mt-1 text-2xl font-semibold text-violet">
-                {analytics.impressions > 0
-                  ? ((analytics.clicks / analytics.impressions) * 100).toFixed(1)
-                  : "0"}
-                %
-              </p>
+
+          <div className="card-summary p-6">
+            <h2 className="font-serif text-[22px] text-plum mb-4">Directory activity</h2>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <Stat label="Impressions" value={analytics.impressions} />
+              <Stat label="Profile clicks" value={analytics.clicks} />
+              <Stat label="Leads" value={analytics.leads} />
             </div>
-          )}
-        </div>
+            <p className="mt-4 text-[12px] text-muted">
+              Eydn never sells placement, shows sponsored results, or puts vendors who
+              pay us above vendors who don&rsquo;t. Your ranking is based on couple
+              feedback and category fit.
+            </p>
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-/* ---------- Profile Editor ---------- */
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-4">
+      <dt className="w-32 text-muted">{label}</dt>
+      <dd className="flex-1 text-plum">{value}</dd>
+    </div>
+  );
+}
 
-function ProfileEditor({
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <div className="font-serif text-[28px] text-plum">{value.toLocaleString("en-US")}</div>
+      <div className="text-[12px] text-muted uppercase tracking-wide">{label}</div>
+    </div>
+  );
+}
+
+/* ───────────────────── Edit form ───────────────────── */
+
+function EditForm({
   account,
-  onUpdate,
+  onSave,
+  onCancel,
 }: {
   account: VendorAccount;
-  onUpdate: (_a: VendorAccount) => void;
+  onSave: (_a: VendorAccount) => void;
+  onCancel: () => void;
 }) {
-  const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     business_name: account.business_name,
     category: account.category,
@@ -442,41 +418,45 @@ function ProfileEditor({
     price_range: account.price_range || "",
   });
 
-  function update(field: string, value: string) {
-    setForm((f) => ({ ...f, [field]: value }));
-  }
+  const update = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
-  async function handleSave(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
+    setSubmitting(true);
     try {
       const res = await fetch("/api/vendor-portal/account", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Couldn't update");
+      }
       const data = await res.json();
-      onUpdate(data);
-      toast.success("Profile updated");
-    } catch {
-      toast.error("Profile didn't save. Try again.");
+      onSave(data);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Update failed");
     } finally {
-      setSaving(false);
+      setSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={handleSave} className="mt-6 max-w-lg space-y-4">
+    <form onSubmit={handleSubmit} className="card-summary p-6 space-y-4">
+      <h2 className="font-serif text-[22px] text-plum">Edit profile</h2>
+
       <div>
         <label className="text-[13px] text-muted">Business Name</label>
         <input
           type="text"
+          required
           value={form.business_name}
           onChange={(e) => update("business_name", e.target.value)}
           className="mt-1 w-full rounded-[10px] border border-border px-3 py-2 text-[15px]"
         />
       </div>
+
       <div>
         <label className="text-[13px] text-muted">Category</label>
         <select
@@ -485,20 +465,25 @@ function ProfileEditor({
           className="mt-1 w-full rounded-[10px] border border-border px-3 py-2 text-[15px]"
         >
           {VENDOR_CATEGORIES.map((c) => (
-            <option key={c} value={c}>{c}</option>
+            <option key={c} value={c}>
+              {c}
+            </option>
           ))}
         </select>
       </div>
+
       <div>
-        <label className="text-[13px] text-muted">Email</label>
+        <label className="text-[13px] text-muted">Contact email</label>
         <input
           type="email"
+          required
           value={form.email}
           onChange={(e) => update("email", e.target.value)}
           className="mt-1 w-full rounded-[10px] border border-border px-3 py-2 text-[15px]"
         />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-[13px] text-muted">City</label>
           <input
@@ -518,6 +503,7 @@ function ProfileEditor({
           />
         </div>
       </div>
+
       <div>
         <label className="text-[13px] text-muted">Description</label>
         <textarea
@@ -527,6 +513,7 @@ function ProfileEditor({
           className="mt-1 w-full rounded-[10px] border border-border px-3 py-2 text-[15px]"
         />
       </div>
+
       <div>
         <label className="text-[13px] text-muted">Website</label>
         <input
@@ -537,6 +524,7 @@ function ProfileEditor({
           placeholder="https://"
         />
       </div>
+
       <div>
         <label className="text-[13px] text-muted">Phone</label>
         <input
@@ -546,6 +534,7 @@ function ProfileEditor({
           className="mt-1 w-full rounded-[10px] border border-border px-3 py-2 text-[15px]"
         />
       </div>
+
       <div>
         <label className="text-[13px] text-muted">Price Range</label>
         <select
@@ -555,164 +544,21 @@ function ProfileEditor({
         >
           <option value="">Select...</option>
           {PRICE_RANGES.map((p) => (
-            <option key={p} value={p}>{p}</option>
+            <option key={p} value={p}>
+              {p}
+            </option>
           ))}
         </select>
       </div>
-      <button type="submit" disabled={saving} className="btn-primary w-full">
-        {saving ? "Saving..." : "Save Profile"}
-      </button>
-    </form>
-  );
-}
 
-/* ---------- Placement Tab ---------- */
-
-function PlacementTab({
-  account,
-  tiers,
-  activePlacement,
-}: {
-  account: VendorAccount;
-  tiers: Tier[];
-  activePlacement: Placement | null;
-}) {
-  const [checkingOut, setCheckingOut] = useState<string | null>(null);
-
-  async function handlePurchase(tierId: string, billingPeriod: string) {
-    if (account.status !== "approved") {
-      toast.error("Your account needs to be approved first.");
-      return;
-    }
-
-    setCheckingOut(tierId);
-    try {
-      const res = await fetch("/api/vendor-portal/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier_id: tierId, billing_period: billingPeriod }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Couldn't start checkout. Try again.");
-      }
-      const { url } = await res.json();
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Checkout didn't go through. Try again.");
-    } finally {
-      setCheckingOut(null);
-    }
-  }
-
-  return (
-    <div className="mt-6 space-y-6">
-      {activePlacement && (
-        <div className="card p-6">
-          <h2 className="text-[15px] font-semibold text-plum">Current Placement</h2>
-          <div className="mt-3 flex items-center gap-3">
-            <span className="badge bg-lavender text-violet">
-              {activePlacement.placement_tiers?.name}
-            </span>
-            <span className="text-[13px] text-muted">
-              {activePlacement.billing_period} billing
-            </span>
-          </div>
-          <p className="text-[12px] text-muted mt-2">
-            Active since {new Date(activePlacement.starts_at).toLocaleDateString()}
-          </p>
-        </div>
-      )}
-
-      {account.status !== "approved" && (
-        <div className="card p-6 border-l-4 border-l-amber-400">
-          <p className="text-[15px] text-plum font-semibold">Account Pending Approval</p>
-          <p className="text-[13px] text-muted mt-1">
-            Your vendor account needs to be approved before you can purchase a placement tier.
-          </p>
-        </div>
-      )}
-
-      <h2 className="text-[15px] font-semibold text-plum">Available Placement Tiers</h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {tiers.map((tier) => (
-          <div key={tier.id} className="card p-6 flex flex-col">
-            <h3 className="text-[15px] font-semibold text-violet">{tier.name}</h3>
-            {tier.description && (
-              <p className="text-[13px] text-muted mt-1">{tier.description}</p>
-            )}
-            <p className="mt-3 text-2xl font-semibold text-plum">
-              ${tier.price_monthly}
-              <span className="text-[13px] font-normal text-muted">/mo</span>
-            </p>
-
-            {tier.features && tier.features.length > 0 && (
-              <ul className="mt-3 space-y-1.5 flex-1">
-                {tier.features.map((f, i) => (
-                  <li key={i} className="text-[13px] text-muted flex items-start gap-2">
-                    <span className="text-violet mt-0.5">&#10003;</span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="mt-4 space-y-2">
-              {activePlacement?.placement_tiers?.name === tier.name ? (
-                <span className="badge bg-lavender text-violet">Current Plan</span>
-              ) : (
-                <>
-                  <button
-                    onClick={() => handlePurchase(tier.id, "monthly")}
-                    disabled={checkingOut === tier.id || account.status !== "approved"}
-                    className="btn-primary btn-sm w-full"
-                  >
-                    {checkingOut === tier.id ? "Redirecting..." : activePlacement ? "Upgrade - Monthly" : "Purchase - Monthly"}
-                  </button>
-                  <button
-                    onClick={() => handlePurchase(tier.id, "quarterly")}
-                    disabled={checkingOut === tier.id || account.status !== "approved"}
-                    className="btn-secondary btn-sm w-full"
-                  >
-                    Quarterly - ${tier.price_quarterly}
-                  </button>
-                  <button
-                    onClick={() => handlePurchase(tier.id, "annual")}
-                    disabled={checkingOut === tier.id || account.status !== "approved"}
-                    className="btn-ghost btn-sm w-full"
-                  >
-                    Annual - ${tier.price_annual}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        ))}
+      <div className="flex gap-3">
+        <button type="submit" disabled={submitting} className="btn-primary flex-1">
+          {submitting ? "Saving..." : "Save changes"}
+        </button>
+        <button type="button" onClick={onCancel} className="btn-secondary">
+          Cancel
+        </button>
       </div>
-
-      {tiers.length === 0 && (
-        <p className="text-[15px] text-muted py-4 text-center">
-          No placement tiers are currently available.
-        </p>
-      )}
-    </div>
-  );
-}
-
-/* ---------- Status Badge ---------- */
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    pending: "bg-amber-100 text-amber-700",
-    approved: "bg-emerald-100 text-emerald-700",
-    suspended: "bg-red-100 text-red-700",
-  };
-
-  return (
-    <span className={`badge ${styles[status] || "bg-lavender text-muted"}`}>
-      {status}
-    </span>
+    </form>
   );
 }

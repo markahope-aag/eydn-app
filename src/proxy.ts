@@ -20,7 +20,6 @@ const ROUTE_LIMITS: [string, RLConfig][] = [
   ["/api/subscribe", RL_AUTH],
   ["/api/onboarding", RL_AUTH],
   ["/api/admin/setup", RL_AUTH],
-  ["/api/vendor-portal/checkout", RL_AUTH],
   ["/api/", RL_API],
 ];
 

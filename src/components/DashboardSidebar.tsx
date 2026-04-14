@@ -202,7 +202,6 @@ export function DashboardSidebar({ admin }: { admin: boolean }) {
             <div className="flex flex-col gap-0.5 mt-0.5">
               <NavLink item={{ href: "/dashboard/admin/vendors", label: "Directory" }} active={isActive(pathname, "/dashboard/admin/vendors")} onClick={() => setOpen(false)} />
               <NavLink item={{ href: "/dashboard/admin/vendor-analytics", label: "Insights" }} active={isActive(pathname, "/dashboard/admin/vendor-analytics")} onClick={() => setOpen(false)} />
-              <NavLink item={{ href: "/dashboard/admin/placements", label: "Placements" }} active={isActive(pathname, "/dashboard/admin/placements")} onClick={() => setOpen(false)} />
             </div>
 
             <p className="px-3 py-1.5 text-[15px] font-bold text-violet tracking-wide mt-3">
