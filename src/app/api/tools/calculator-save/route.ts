@@ -139,6 +139,24 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  // Per-email rate limit on the account-creating handoff. The outer IP
+  // bucket caught at the top of this route only stops single-IP spam;
+  // this second bucket stops an attacker rotating IPs from burning
+  // Clerk's quota by submitting thousands of distinct emails. If we hit
+  // the limit we still save the calculator row (already done above)
+  // and return the short_code link, but skip the Clerk + email path.
+  const emailRl = await checkRateLimit(
+    `calculator-handoff:${normalizedEmail}`,
+    RATE_LIMITS.accountCreationByEmail
+  );
+  if (emailRl.limited) {
+    return NextResponse.json({
+      short_code: shortCode,
+      sign_in_url: null,
+      is_new_user: null,
+    }, { status: existing ? 200 : 201 });
+  }
+
   // Hand the user off into Eydn — find or create their Clerk account,
   // seed a wedding with the budget pre-loaded, return a sign-in URL.
   const handoff = await handoffCalculatorToEydn(supabase, {

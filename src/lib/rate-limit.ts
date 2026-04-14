@@ -112,4 +112,9 @@ export const RATE_LIMITS = {
   auth: { limit: 15, windowSeconds: 60 } as RateLimitConfig,
   /** General API: 60 req / 60s per IP */
   api: { limit: 60, windowSeconds: 60 } as RateLimitConfig,
+  /** Account-creating flows keyed by normalized email: 3 req / hour.
+   *  Used alongside the per-IP bucket on the calculator handoff to
+   *  prevent an attacker from burning Clerk's user quota across a
+   *  rotating IP pool by submitting thousands of distinct emails. */
+  accountCreationByEmail: { limit: 3, windowSeconds: 60 * 60 } as RateLimitConfig,
 } as const;
