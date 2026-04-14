@@ -1180,6 +1180,42 @@ export type Database = {
           },
         ]
       }
+      quiz_completions: {
+        Row: {
+          answers: Json
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          quiz_id: string
+          result_key: string
+          result_label: string | null
+          score: number | null
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          quiz_id: string
+          result_key: string
+          result_label?: string | null
+          score?: number | null
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          quiz_id?: string
+          result_key?: string
+          result_label?: string | null
+          score?: number | null
+        }
+        Relationships: []
+      }
       registry_links: {
         Row: {
           created_at: string
@@ -1355,6 +1391,62 @@ export type Database = {
           },
         ]
       }
+      scheduled_subscriptions: {
+        Row: {
+          created_at: string
+          failure_count: number
+          id: string
+          last_failure_message: string | null
+          plan: string
+          processed_at: string | null
+          scheduled_for: string
+          status: string
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          updated_at: string
+          user_id: string
+          wedding_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          failure_count?: number
+          id?: string
+          last_failure_message?: string | null
+          plan: string
+          processed_at?: string | null
+          scheduled_for: string
+          status?: string
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          updated_at?: string
+          user_id: string
+          wedding_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          failure_count?: number
+          id?: string
+          last_failure_message?: string | null
+          plan?: string
+          processed_at?: string | null
+          scheduled_for?: string
+          status?: string
+          stripe_customer_id?: string
+          stripe_payment_method_id?: string
+          updated_at?: string
+          user_id?: string
+          wedding_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_subscriptions_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seat_assignments: {
         Row: {
           deleted_at: string | null
@@ -1437,108 +1529,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      quiz_completions: {
-        Row: {
-          id: string
-          quiz_id: string
-          email: string
-          first_name: string | null
-          result_key: string
-          result_label: string | null
-          answers: unknown
-          score: number | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          quiz_id: string
-          email: string
-          first_name?: string | null
-          result_key: string
-          result_label?: string | null
-          answers?: unknown
-          score?: number | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          quiz_id?: string
-          email?: string
-          first_name?: string | null
-          result_key?: string
-          result_label?: string | null
-          answers?: unknown
-          score?: number | null
-          created_at?: string
-        }
-        Relationships: []
-      }
-      trial_email_log: {
-        Row: {
-          user_id: string
-          email_type: string
-          sent_at: string
-        }
-        Insert: {
-          user_id: string
-          email_type: string
-          sent_at?: string
-        }
-        Update: {
-          user_id?: string
-          email_type?: string
-          sent_at?: string
-        }
-        Relationships: []
-      }
-      scheduled_subscriptions: {
-        Row: {
-          id: string
-          user_id: string
-          wedding_id: string | null
-          stripe_customer_id: string
-          stripe_payment_method_id: string
-          plan: string
-          scheduled_for: string
-          status: string
-          failure_count: number
-          last_failure_message: string | null
-          created_at: string
-          updated_at: string
-          processed_at: string | null
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          wedding_id?: string | null
-          stripe_customer_id: string
-          stripe_payment_method_id: string
-          plan: string
-          scheduled_for: string
-          status?: string
-          failure_count?: number
-          last_failure_message?: string | null
-          created_at?: string
-          updated_at?: string
-          processed_at?: string | null
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          wedding_id?: string | null
-          stripe_customer_id?: string
-          stripe_payment_method_id?: string
-          plan?: string
-          scheduled_for?: string
-          status?: string
-          failure_count?: number
-          last_failure_message?: string | null
-          created_at?: string
-          updated_at?: string
-          processed_at?: string | null
-        }
-        Relationships: []
       }
       subscriber_purchases: {
         Row: {
@@ -1791,6 +1781,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trial_email_log: {
+        Row: {
+          email_type: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          email_type: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          email_type?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
