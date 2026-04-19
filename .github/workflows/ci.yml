@@ -55,6 +55,8 @@ jobs:
           path: node_modules
           key: nm-${{ hashFiles('package-lock.json') }}
       - run: npx next build
+      - name: Bundle size guard
+        run: node scripts/check-bundle-size.mjs
       - uses: actions/cache/save@v5
         with:
           path: .next

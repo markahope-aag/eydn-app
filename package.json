@@ -13,7 +13,8 @@
     "audit": "npm audit --omit=dev",
     "audit:fix": "npm audit fix",
     "security-check": "npm audit --omit=dev && npx tsc --noEmit && npx eslint src/",
-    "sitemap:check": "node scripts/check-sitemap.mjs"
+    "sitemap:check": "node scripts/check-sitemap.mjs",
+    "bundle:check": "node scripts/check-bundle-size.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",
