@@ -98,6 +98,29 @@ jobs:
           path: node_modules
           key: nm-${{ hashFiles('package-lock.json') }}
       - run: npx vitest run --coverage
+      - name: Render coverage summary
+        if: always()
+        run: |
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "No coverage-summary.json — vitest skipped coverage." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          node -e '
+            const s = require("./coverage/coverage-summary.json").total;
+            const row = (k) => `| ${k} | ${s[k].pct}% | ${s[k].covered}/${s[k].total} |`;
+            const md = [
+              "## Test coverage",
+              "",
+              "| Metric | % | Covered / Total |",
+              "|---|---|---|",
+              row("statements"),
+              row("branches"),
+              row("functions"),
+              row("lines"),
+              "",
+            ].join("\n");
+            require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
+          '
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v7
