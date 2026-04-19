@@ -1,15 +1,13 @@
 import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
-import { Cormorant_Garamond, DM_Sans, Great_Vibes } from "next/font/google";
 import { ClerkFallback } from "@/components/ClerkFallback";
 
-const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "600"] });
-const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "500"] });
-const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
+// Fonts (Cormorant, DM Sans, Great Vibes) are loaded in the root layout —
+// reference via CSS variables instead of re-importing next/font here.
 
 export default function SignInPage() {
   return (
-    <div className={dmSans.className} style={{ minHeight: "100vh", display: "flex" }}>
+    <div style={{ minHeight: "100vh", display: "flex" }}>
       {/* Left panel — branding */}
       <div
         className="hidden lg:flex"
@@ -25,13 +23,13 @@ export default function SignInPage() {
       >
         <div style={{ position: "absolute", inset: 0, opacity: 0.08, backgroundImage: "radial-gradient(circle at 30% 20%, #C9A84C 0%, transparent 50%), radial-gradient(circle at 70% 80%, #C9A84C 0%, transparent 50%)" }} />
         <div style={{ position: "relative", zIndex: 1 }}>
-          <Link href="/" className={cormorant.className} style={{ fontSize: 28, fontWeight: 600, color: "#FAF6F1", textDecoration: "none" }}>
+          <Link href="/" style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600, color: "#FAF6F1", textDecoration: "none" }}>
             Eydn
           </Link>
-          <p className={greatVibes.className} style={{ fontSize: 24, color: "#C9A84C", marginTop: 48 }}>
+          <p style={{ fontFamily: "var(--font-script)", fontSize: 24, color: "#C9A84C", marginTop: 48 }}>
             Welcome back
           </p>
-          <h1 className={cormorant.className} style={{ fontSize: 52, fontWeight: 600, color: "#FAF6F1", lineHeight: 1.1, marginTop: 8 }}>
+          <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 52, fontWeight: 600, color: "#FAF6F1", lineHeight: 1.1, marginTop: 8 }}>
             Your wedding<br />awaits.
           </h1>
           <p style={{ fontSize: 16, color: "rgba(250,246,241,0.6)", lineHeight: 1.7, marginTop: 24, maxWidth: 360 }}>
@@ -63,7 +61,7 @@ export default function SignInPage() {
       >
         {/* Mobile logo */}
         <div className="lg:hidden" style={{ marginBottom: 32, textAlign: "center" }}>
-          <Link href="/" className={cormorant.className} style={{ fontSize: 24, fontWeight: 600, color: "#2C3E2D", textDecoration: "none" }}>
+          <Link href="/" style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600, color: "#2C3E2D", textDecoration: "none" }}>
             Eydn
           </Link>
         </div>

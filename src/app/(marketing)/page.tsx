@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Cormorant_Garamond, Great_Vibes } from "next/font/google";
 
 import { ScrollReveal } from "@/app/_components/ScrollReveal";
 import { LandingNavStatic as LandingNav } from "@/app/_components/LandingNavStatic";
@@ -26,21 +25,13 @@ import {
   darkRowIndices,
 } from "@/app/_components/landing/data";
 
-/* ── Fonts (DM Sans + Cormorant --font-serif provided by root layout) ── */
-
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  display: "swap",
-  variable: "--font-display",
-});
-
-const greatVibes = Great_Vibes({
-  subsets: ["latin"],
-  weight: ["400"],
-  display: "swap",
-  variable: "--font-script",
-});
+/* ── Fonts —————————————————————————————————————————————————
+   All page fonts are loaded once in src/app/layout.tsx. This page
+   references them via the CSS variables on :root:
+     --font-display  → Cormorant Garamond (same as --font-serif)
+     --font-script   → Great Vibes
+   Do NOT re-import next/font here — that emits duplicate @font-face
+   declarations and makes navigation flicker. —————————————————————— */
 
 /* ── Keyframe styles (injected once) ─────────────────────── */
 
@@ -84,12 +75,10 @@ const keyframeCSS = `
 /* ── Page ─────────────────────────────────────────────────── */
 
 export default function HomePage() {
-  const fontVars = `${cormorant.variable} ${greatVibes.variable}`;
-
   return (
     <main
       id="main-content"
-      className={`flex-1 flex flex-col ${fontVars}`}
+      className="flex-1 flex flex-col"
       style={{ animation: "fadeIn 0.6s ease-out", overflowX: "hidden" }}
     >
       <style dangerouslySetInnerHTML={{ __html: keyframeCSS }} />

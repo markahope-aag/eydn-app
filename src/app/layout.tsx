@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, DM_Sans } from "next/font/google";
+import { Cormorant_Garamond, DM_Sans, Great_Vibes } from "next/font/google";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/next";
 import Script from "next/script";
@@ -9,6 +9,13 @@ import "./globals.css";
 // moved to src/app/(app)/layout.tsx so the Clerk SDK (~216 KiB) doesn't load
 // on marketing routes — that was the single biggest PSI opportunity on the
 // landing page.
+//
+// Fonts are centralised here so pages don't re-import next/font and emit
+// duplicate @font-face declarations. Reference via the CSS variables:
+//   body text  → var(--font-body)      (DM Sans)
+//   serif      → var(--font-serif)     (Cormorant Garamond)
+//   display    → var(--font-display)   (aliased to --font-serif in globals.css)
+//   script     → var(--font-script)    (Great Vibes)
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -22,6 +29,13 @@ const cormorant = Cormorant_Garamond({
   weight: ["400", "600"],
   display: "swap",
   variable: "--font-serif",
+});
+
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: ["400"],
+  display: "swap",
+  variable: "--font-script",
 });
 
 const SITE_URL = "https://eydn.app";
@@ -85,7 +99,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.className} ${dmSans.variable} ${cormorant.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${dmSans.className} ${dmSans.variable} ${cormorant.variable} ${greatVibes.variable} h-full antialiased`} suppressHydrationWarning>
       <head />
       <body className="min-h-full flex flex-col bg-whisper text-plum overflow-x-hidden" suppressHydrationWarning>
         <script

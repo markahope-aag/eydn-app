@@ -59,6 +59,8 @@ html {
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
   --font-sans: "DM Sans", Arial, sans-serif;
+  /* Alias — landing-page components reference --font-display; same font as --font-serif */
+  --font-display: var(--font-serif);
 }
 
 body {
