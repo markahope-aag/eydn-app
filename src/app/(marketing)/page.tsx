@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -73,6 +74,28 @@ const keyframeCSS = `
 `;
 
 /* ── Page ─────────────────────────────────────────────────── */
+
+const HOME_DESCRIPTION =
+  "Plan your wedding with Eydn. AI-powered timeline, budget tracker, vendor management, guest RSVPs, seating chart, and wedding website — all in one place.";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: "Eydn — The AI Wedding Planning App",
+  },
+  description: HOME_DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "/",
+    title: "Eydn — The AI Wedding Planning App",
+    description: HOME_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Eydn — The AI Wedding Planning App",
+    description: HOME_DESCRIPTION,
+  },
+};
 
 export default function HomePage() {
   return (
