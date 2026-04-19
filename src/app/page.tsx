@@ -114,12 +114,12 @@ export default function HomePage() {
           <BotanicalOverlay color="#D4A5A5" opacity={0.08} />
           <BotanicalOverlay color="#C9A84C" opacity={0.05} />
           <div style={{ maxWidth: 600, position: "relative", zIndex: 1 }}>
-            <ScrollReveal>
+            <ScrollReveal immediate>
               <p style={{ fontFamily: "var(--font-script)", fontSize: 32, color: "#D4A5A5" }}>
                 Your wedding, beautifully planned
               </p>
             </ScrollReveal>
-            <ScrollReveal>
+            <ScrollReveal immediate>
               <h1
                 style={{
                   fontFamily: "var(--font-display)",
@@ -136,12 +136,12 @@ export default function HomePage() {
                 not your stress.
               </h1>
             </ScrollReveal>
-            <ScrollReveal>
+            <ScrollReveal immediate>
               <p style={{ fontFamily: "var(--font-body)", fontSize: 18, color: "#6B5E50", lineHeight: 1.65, marginTop: 28, maxWidth: 480 }}>
                 From guest lists to vendor outreach to your day-of binder — everything in one beautiful place, guided by an AI that knows your wedding inside and out.
               </p>
             </ScrollReveal>
-            <ScrollReveal>
+            <ScrollReveal immediate>
               <div style={{ marginTop: 36, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16 }}>
                 <AuthCTA
                   variant="hero"
@@ -165,7 +165,7 @@ export default function HomePage() {
                 />
               </div>
             </ScrollReveal>
-            <ScrollReveal>
+            <ScrollReveal immediate>
               <p style={{ marginTop: 24, fontFamily: "var(--font-body)", fontSize: 13, color: "#6B5E50", letterSpacing: "0.02em" }}>
                 <span style={{ color: "#8B6D14" }}>&#10022;</span> 50+ Tasks &middot;{" "}
                 <span style={{ color: "#8B6D14" }}>&#10022;</span> AI That Knows You &middot;{" "}

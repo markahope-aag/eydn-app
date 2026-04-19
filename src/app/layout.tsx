@@ -137,16 +137,19 @@ export default function RootLayout({
           <Toaster richColors position="top-right" />
         </ClerkProvider>
         <Analytics />
+        {/* Analytics deferred to lazyOnload — PSI flagged GTM + Ahrefs as ~180 KB of unused JS
+             at page load, contributing ~1s of Total Blocking Time. lazyOnload waits for the
+             browser idle callback, which is fine for pageview/conversion tracking. */}
         <Script
           id="ahrefs-analytics"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           src="https://analytics.ahrefs.com/analytics.js"
           data-key="N0UcdeuFPyyC4uaXyXmywA"
         />
         {/* Termly consent banner disabled for beta launch — re-enable for EU/GDPR expansion */}
         <Script
           id="gtm-script"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-55H9SNZB');`,
           }}
