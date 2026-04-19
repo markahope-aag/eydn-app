@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin";
 import { submitToIndexNow } from "@/lib/indexnow";
+import { sanitizeBlogContent } from "@/lib/blog/sanitize";
 
 /** GET /api/blog — list published posts (public) or all posts (admin) */
 export async function GET(request: NextRequest) {
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
 
   // Auto-generate slug from title if not provided
   const finalSlug = slug || title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  const sanitizedContent = sanitizeBlogContent(content);
 
   const { data, error } = await admin.supabase
     .from("blog_posts")
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
       title,
       slug: finalSlug,
       excerpt: excerpt || "",
-      content: content || "",
+      content: sanitizedContent,
       cover_image: cover_image || null,
       category: category || "planning",
       tags: tags || [],
@@ -67,7 +69,7 @@ export async function POST(request: NextRequest) {
       status: status || "draft",
       seo_title: seo_title || null,
       seo_description: seo_description || null,
-      read_time_minutes: read_time_minutes || Math.max(1, Math.ceil((content || "").split(/\s+/).length / 200)),
+      read_time_minutes: read_time_minutes || Math.max(1, Math.ceil(sanitizedContent.split(/\s+/).length / 200)),
       published_at: status === "published" ? new Date().toISOString() : null,
     })
     .select()

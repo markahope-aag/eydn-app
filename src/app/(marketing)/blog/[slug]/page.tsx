@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import sanitizeHtml from "sanitize-html";
+import { sanitizeBlogContent } from "@/lib/blog/sanitize";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 
 // Revalidate blog posts every 10 minutes
@@ -236,18 +236,7 @@ export default async function BlogPostPage({
         <div
           className="blog-content"
           style={{ marginTop: 40 }}
-          dangerouslySetInnerHTML={{
-            __html: sanitizeHtml(p.content, {
-              allowedTags: [...sanitizeHtml.defaults.allowedTags, "iframe", "img"],
-              allowedAttributes: {
-                ...sanitizeHtml.defaults.allowedAttributes,
-                a: [...(sanitizeHtml.defaults.allowedAttributes["a"] || []), "target", "rel"],
-                iframe: ["src", "width", "height", "frameborder", "allowfullscreen", "allow", "title"],
-                img: ["src", "alt", "width", "height", "loading", "decoding", "class", "style"],
-              },
-              allowedIframeHostnames: ["www.youtube.com", "www.youtube-nocookie.com", "player.vimeo.com"],
-            }),
-          }}
+          dangerouslySetInnerHTML={{ __html: sanitizeBlogContent(p.content) }}
         />
 
         {/* Tags */}

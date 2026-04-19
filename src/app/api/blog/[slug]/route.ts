@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin";
 import { submitToIndexNow } from "@/lib/indexnow";
+import { sanitizeBlogContent } from "@/lib/blog/sanitize";
 
 /** GET /api/blog/[slug] — get a single post */
 export async function GET(
@@ -48,14 +49,19 @@ export async function PATCH(
     }
   }
 
+  // Sanitize content on write so the DB can never hold raw XSS payloads.
+  if ("content" in updates) {
+    updates.content = sanitizeBlogContent(updates.content as string | null | undefined);
+  }
+
   // Auto-set published_at when publishing for the first time
   if (body.status === "published" && !body.published_at) {
     updates.published_at = new Date().toISOString();
   }
 
   // Auto-calculate read time if content changes
-  if (body.content && !body.read_time_minutes) {
-    updates.read_time_minutes = Math.max(1, Math.ceil(body.content.split(/\s+/).length / 200));
+  if (updates.content && !body.read_time_minutes) {
+    updates.read_time_minutes = Math.max(1, Math.ceil((updates.content as string).split(/\s+/).length / 200));
   }
 
   const { data, error } = await admin.supabase
