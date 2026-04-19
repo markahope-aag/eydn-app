@@ -3,10 +3,10 @@ import Link from "next/link";
 import { Cormorant_Garamond, Great_Vibes } from "next/font/google";
 
 import { ScrollReveal } from "@/app/_components/ScrollReveal";
-import { LandingNav } from "@/app/_components/LandingNav";
+import { LandingNavStatic as LandingNav } from "@/app/_components/LandingNavStatic";
 import { NewsletterSignup } from "@/app/_components/NewsletterSignup";
 import { BetaPopup } from "@/app/_components/BetaPopup";
-import { AuthCTA } from "@/app/_components/AuthCTA";
+import { AuthCTAStatic as AuthCTA } from "@/app/_components/AuthCTAStatic";
 import {
   BotanicalOverlay,
   HeroTaskCard,

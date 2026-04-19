@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/next";
 import Script from "next/script";
-import { Suspense } from "react";
-import { GlobalHeader } from "@/components/GlobalHeader";
-import { PostHogProvider } from "@/components/PostHogProvider";
 import "./globals.css";
+
+// ClerkProvider, GlobalHeader, PostHogProvider used to live here. They were
+// moved to src/app/(app)/layout.tsx so the Clerk SDK (~216 KiB) doesn't load
+// on marketing routes — that was the single biggest PSI opportunity on the
+// landing page.
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -128,14 +129,8 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <ClerkProvider>
-          <Suspense fallback={null}>
-            <PostHogProvider />
-          </Suspense>
-          <GlobalHeader />
-          {children}
-          <Toaster richColors position="top-right" />
-        </ClerkProvider>
+        {children}
+        <Toaster richColors position="top-right" />
         <Analytics />
         <Script
           id="ahrefs-analytics"
