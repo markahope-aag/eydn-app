@@ -127,8 +127,18 @@ export default clerkMiddleware(async (_auth, request) => {
 });
 
 export const config = {
+  // Only run middleware on paths that actually need Clerk auth or rate-limiting.
+  // Excluding marketing (homepage, blog, tools, legal, trust pages) stops
+  // clerkMiddleware from injecting the Clerk hydration script on public pages
+  // — that injection was adding ~216 KiB of unused JS to every marketing
+  // response even after ClerkProvider was removed from the tree.
   matcher: [
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    "/(api|trpc)(.*)",
+    "/api/:path*",
+    "/trpc/:path*",
+    "/dashboard/:path*",
+    "/sign-in/:path*",
+    "/sign-up/:path*",
+    "/beta/claim/:path*",
+    "/tools/wedding-budget-calculator/s/:path*",
   ],
 };
