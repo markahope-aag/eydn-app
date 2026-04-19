@@ -13,7 +13,7 @@ import {
   PieChart,
   Pie,
   Cell,
-} from "recharts";
+} from "@/components/charts/lazy-recharts";
 
 const COLORS = ["#2C3E2D", "#D4A5A5", "#C9A84C", "#E8D5B7", "#6B8E6B", "#B07D7D", "#A68A3C", "#D4C4A5"];
 

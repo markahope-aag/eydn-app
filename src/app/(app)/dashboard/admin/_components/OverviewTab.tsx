@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart, Bar, LineChart, Line, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
+import { BarChart, Bar, LineChart, Line, ResponsiveContainer, Tooltip as RechartsTooltip } from "@/components/charts/lazy-recharts";
 import type { Stats, AnalyticsData } from "./types";
 
 function StatCard({

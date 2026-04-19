@@ -10,7 +10,7 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
-} from "recharts";
+} from "@/components/charts/lazy-recharts";
 
 type DbStats = {
   tables: Record<string, number>;

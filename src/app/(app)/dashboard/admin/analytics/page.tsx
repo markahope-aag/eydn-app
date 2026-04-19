@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-} from "recharts";
+} from "@/components/charts/lazy-recharts";
 
 type AnalyticsData = {
   dailySignups: { date: string; count: number }[];
