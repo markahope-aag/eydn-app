@@ -1,0 +1,49 @@
+name: Sitemap monitor + BWT submit
+
+on:
+  # Weekly shrink alert
+  schedule:
+    - cron: "0 13 * * 1" # Monday 13:00 UTC
+
+  # Post-deploy: after main CI succeeds, push any new URLs to BWT
+  workflow_run:
+    workflows: ["CI"]
+    branches: [master]
+    types: [completed]
+
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      # Give Vercel time to finish deploying before we sample the live sitemap
+      - name: Wait for deploy propagation
+        if: github.event_name == 'workflow_run'
+        run: sleep 120
+
+      - name: Run monitor + submit new URLs
+        env:
+          BWT_API_KEY: ${{ secrets.BWT_API_KEY }}
+        run: node scripts/sitemap-monitor.mjs
+
+      - name: Commit updated state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain scripts/.sitemap-state.json)" ]]; then
+            git add scripts/.sitemap-state.json
+            git commit -m "chore: update sitemap-monitor state [skip ci]"
+            git push
+          else
+            echo "No state changes to commit."
+          fi

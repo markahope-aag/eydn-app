@@ -146,6 +146,18 @@ jobs:
           name: playwright-screenshots
           path: __tests__/visual/screenshots/
 
+  # ── Step 3e: Sitemap integrity (parallel, no build needed) ──────────────
+  sitemap-check:
+    name: Sitemap Integrity
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - run: node scripts/check-sitemap.mjs
+
   # ── Step 3d: Security audit (parallel) ──────────────────────────────────
   security-audit:
     name: Security Audit
