@@ -77,6 +77,7 @@ export default function SignUpPage() {
 
         <div id="clerk-signup-wrapper">
         <SignUp
+          fallbackRedirectUrl="/dashboard/onboarding"
           appearance={{
             variables: {
               colorPrimary: "#2C3E2D",
