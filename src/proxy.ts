@@ -92,7 +92,7 @@ export default clerkMiddleware(async (_auth, request) => {
 
   // Skip Clerk Frontend API proxy — auth traffic shouldn't be IP rate-limited,
   // and Clerk enforces its own limits upstream.
-  if (path.startsWith("/api/__clerk")) return;
+  if (path.startsWith("/api/clerk-proxy")) return;
 
   // Find matching rate limit config
   const match = ROUTE_LIMITS.find(([prefix]) => path.startsWith(prefix));
