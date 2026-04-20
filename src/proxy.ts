@@ -90,6 +90,10 @@ export default clerkMiddleware(async (_auth, request) => {
   // Skip cron jobs (authenticated by CRON_SECRET, not user IP)
   if (path.startsWith("/api/cron/")) return;
 
+  // Skip Clerk Frontend API proxy — auth traffic shouldn't be IP rate-limited,
+  // and Clerk enforces its own limits upstream.
+  if (path.startsWith("/api/__clerk")) return;
+
   // Find matching rate limit config
   const match = ROUTE_LIMITS.find(([prefix]) => path.startsWith(prefix));
   if (!match) return;
