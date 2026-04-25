@@ -26,11 +26,13 @@ const STEP_TO_LIFECYCLE_TYPE: Record<number, string> = {
  *
  * Runs once per day to:
  *  1. Transition weddings between phases (active → post_wedding → archived → sunset)
- *  2. Drive the `wedding_lifecycle` sequence (DB-defined steps anchored to wedding date)
- *  3. Soft-delete data for weddings entering the sunset phase (without memory plan)
+ *  2. Drive the `wedding_lifecycle` sequence (post-wedding archival flow)
+ *  3. Drive the `wedding_milestones` sequence (pre-wedding planning milestones,
+ *     uses negative offsets like -547 = 18 months before the wedding date)
+ *  4. Soft-delete data for weddings entering the sunset phase (without memory plan)
  *
- * Successful sequence sends are mirrored to the legacy `lifecycle_emails` table
- * during the Phase 1 transition so existing admin queries keep working.
+ * Successful wedding_lifecycle sends are mirrored to the legacy `lifecycle_emails`
+ * table during the Phase 1 transition so existing admin queries keep working.
  *
  * Auth: Bearer CRON_SECRET or BACKUP_SECRET (shared helper).
  * Schedule: 0 4 * * * (daily at 4 AM UTC)
@@ -107,7 +109,7 @@ export async function POST(request: Request) {
                 })
               );
 
-              const runResult = await runSequenceForRecipient("wedding_lifecycle", {
+              const sharedRecipient = {
                 userId: wedding.user_id,
                 weddingId: wedding.id,
                 email: userEmail,
@@ -120,9 +122,15 @@ export async function POST(request: Request) {
                   unsubscribeToken: prefs.unsubscribe_token,
                 },
                 anchor: new Date(wedding.date),
-              });
+              };
 
-              for (const step of runResult.sentSteps) {
+              // wedding_lifecycle: post-wedding archival flow.
+              const lifecycleRun = await runSequenceForRecipient(
+                "wedding_lifecycle",
+                sharedRecipient
+              );
+
+              for (const step of lifecycleRun.sentSteps) {
                 const legacyType = STEP_TO_LIFECYCLE_TYPE[step.stepOrder];
                 if (!legacyType) continue;
                 await supabase
@@ -134,9 +142,28 @@ export async function POST(request: Request) {
                 results.emailsRecorded.push({ weddingId: wedding.id, emailType: legacyType });
                 console.info(`[LIFECYCLE] Sent ${legacyType} → ${wedding.id}`);
               }
-
-              for (const err of runResult.errors) {
+              for (const err of lifecycleRun.errors) {
                 results.errors.push(`Lifecycle send failed for ${wedding.id}: ${err}`);
+              }
+
+              // wedding_milestones: pre-wedding planning milestones (negative
+              // offsets) plus a +7d post-wedding thank-you.
+              const milestonesRun = await runSequenceForRecipient(
+                "wedding_milestones",
+                sharedRecipient
+              );
+
+              for (const step of milestonesRun.sentSteps) {
+                results.emailsRecorded.push({
+                  weddingId: wedding.id,
+                  emailType: `milestone_step_${step.stepOrder}`,
+                });
+                console.info(
+                  `[LIFECYCLE] Sent milestone step ${step.stepOrder} (${step.templateSlug}) → ${wedding.id}`
+                );
+              }
+              for (const err of milestonesRun.errors) {
+                results.errors.push(`Milestone send failed for ${wedding.id}: ${err}`);
               }
             }
           } catch (sendErr) {
