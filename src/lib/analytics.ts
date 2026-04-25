@@ -43,11 +43,6 @@ export function trackPurchase(value = 79) {
   push({ event: "purchase", value, currency: "USD" });
 }
 
-/** Vendor subscribes to a placement tier */
-export function trackVendorPlacement(tier: string, value: number) {
-  push({ event: "vendor_placement", tier, value, currency: "USD" });
-}
-
 // ─── Feature Usage Events ───────────────────────────────────────────────────
 
 /** User sends a message to Eydn AI */

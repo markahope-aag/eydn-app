@@ -381,7 +381,7 @@ export default function AdminVendorsPage() {
                 type="text"
                 value={importForm.import_source}
                 onChange={(e) => setImportForm((f) => ({ ...f, import_source: e.target.value }))}
-                placeholder="e.g. WeddingWire TX vendors, March 2026"
+                placeholder="e.g. Vendor pipeline batch, March 2026"
                 className="w-full rounded-[10px] border-border px-3 py-2 text-[14px]"
               />
             </div>

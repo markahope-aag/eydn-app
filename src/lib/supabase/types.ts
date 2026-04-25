@@ -1763,13 +1763,10 @@ export type Database = {
           imported_at: string | null
           name: string
           phone: string | null
-          placement_expires_at: string | null
-          placement_tier: string | null
           price_range: string | null
           search_vector: unknown
           state: string
           updated_at: string
-          vendor_account_id: string | null
           website: string | null
           zip: string | null
         }
@@ -1788,13 +1785,10 @@ export type Database = {
           imported_at?: string | null
           name: string
           phone?: string | null
-          placement_expires_at?: string | null
-          placement_tier?: string | null
           price_range?: string | null
           search_vector?: unknown
           state: string
           updated_at?: string
-          vendor_account_id?: string | null
           website?: string | null
           zip?: string | null
         }
@@ -1813,25 +1807,14 @@ export type Database = {
           imported_at?: string | null
           name?: string
           phone?: string | null
-          placement_expires_at?: string | null
-          placement_tier?: string | null
           price_range?: string | null
           search_vector?: unknown
           state?: string
           updated_at?: string
-          vendor_account_id?: string | null
           website?: string | null
           zip?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "suggested_vendors_vendor_account_id_fkey"
-            columns: ["vendor_account_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_accounts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       task_resources: {
         Row: {
@@ -1978,111 +1961,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      vendor_accounts: {
-        Row: {
-          address: string | null
-          business_name: string
-          category: string
-          city: string
-          created_at: string
-          description: string | null
-          email: string
-          id: string
-          is_preferred: boolean
-          logo_url: string | null
-          phone: string | null
-          price_range: string | null
-          state: string
-          status: string
-          updated_at: string
-          user_id: string
-          website: string | null
-          zip: string | null
-        }
-        Insert: {
-          address?: string | null
-          business_name: string
-          category: string
-          city: string
-          created_at?: string
-          description?: string | null
-          email: string
-          id?: string
-          is_preferred?: boolean
-          logo_url?: string | null
-          phone?: string | null
-          price_range?: string | null
-          state: string
-          status?: string
-          updated_at?: string
-          user_id: string
-          website?: string | null
-          zip?: string | null
-        }
-        Update: {
-          address?: string | null
-          business_name?: string
-          category?: string
-          city?: string
-          created_at?: string
-          description?: string | null
-          email?: string
-          id?: string
-          is_preferred?: boolean
-          logo_url?: string | null
-          phone?: string | null
-          price_range?: string | null
-          state?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-          website?: string | null
-          zip?: string | null
-        }
-        Relationships: []
-      }
-      vendor_analytics: {
-        Row: {
-          created_at: string
-          event_type: string
-          id: string
-          metadata: Json | null
-          vendor_account_id: string
-          wedding_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          event_type: string
-          id?: string
-          metadata?: Json | null
-          vendor_account_id: string
-          wedding_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          event_type?: string
-          id?: string
-          metadata?: Json | null
-          vendor_account_id?: string
-          wedding_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendor_analytics_vendor_account_id_fkey"
-            columns: ["vendor_account_id"]
-            isOneToOne: false
-            referencedRelation: "vendor_accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vendor_analytics_wedding_id_fkey"
-            columns: ["wedding_id"]
-            isOneToOne: false
-            referencedRelation: "weddings"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       vendor_submissions: {
         Row: {

@@ -116,8 +116,7 @@
 
 ### ✅ Admin & Platform Management
 - **Admin Dashboard**: Platform statistics and user management
-- **Vendor Approval System**: Review and approve vendor submissions
-- **Placement Management**: Configure vendor placement tiers and pricing
+- **Vendor Directory Management**: Curate the platform vendor directory and review couple-submitted suggestions
 - **User Analytics**: Platform usage and engagement metrics
 - **System Configuration**: Platform settings and feature toggles
 

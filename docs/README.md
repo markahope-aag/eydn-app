@@ -13,7 +13,6 @@ Welcome to the comprehensive documentation for eydn, the AI-powered wedding plan
 - **[Task Timeline](TASK_TIMELINE.md)** - Complete 12-month wedding planning timeline with AI guidance
 - **[Wedding Collaboration](COLLABORATION.md)** - Partner and coordinator collaboration system
 - **[Mood Board](MOOD_BOARD.md)** - Visual inspiration board and organization tools
-- **[Vendor Marketplace](VENDOR_MARKETPLACE.md)** - Vendor portal, placement tiers, and marketplace operations
 - **[Wedding Websites](WEDDING_WEBSITES.md)** - Public wedding site features, RSVP system, and customization
 - **[Subscription Model](SUBSCRIPTION_MODEL.md)** - Pricing strategy, trial system, and revenue model
 - **[Vendor Categories](VENDOR_CATEGORIES.md)** - Supported vendor types and classifications

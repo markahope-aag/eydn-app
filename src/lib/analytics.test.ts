@@ -4,7 +4,6 @@ import {
   trackOnboardingComplete,
   trackTrialStart,
   trackPurchase,
-  trackVendorPlacement,
   trackChatMessage,
   trackGuestAdded,
   trackGuestImport,
@@ -55,13 +54,6 @@ describe("analytics tracking", () => {
   it("trackPurchase pushes purchase event with custom value", () => {
     trackPurchase(49);
     expect(window.dataLayer).toEqual([{ event: "purchase", value: 49, currency: "USD" }]);
-  });
-
-  it("trackVendorPlacement pushes vendor_placement with tier and value", () => {
-    trackVendorPlacement("gold", 199);
-    expect(window.dataLayer).toEqual([
-      { event: "vendor_placement", tier: "gold", value: 199, currency: "USD" },
-    ]);
   });
 
   it("trackChatMessage pushes chat_message event", () => {

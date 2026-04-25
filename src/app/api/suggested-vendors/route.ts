@@ -56,46 +56,15 @@ export async function GET(request: Request) {
   const err = supabaseError(error, "suggested-vendors");
   if (err) return err;
 
-  // Sort placements within the page (paid placements bubble to top)
-  type SuggestedVendor = { placement_tier: string | null; placement_expires_at: string | null; featured: boolean; vendor_account_id?: string; [key: string]: unknown };
-  const tierOrder: Record<string, number> = { Premium: 0, Featured: 1, Basic: 2 };
-  const rows = (data || []) as SuggestedVendor[];
-
-  const sorted = rows.sort((a, b) => {
-    const aActive = a.placement_tier && a.placement_expires_at && new Date(a.placement_expires_at) > new Date();
-    const bActive = b.placement_tier && b.placement_expires_at && new Date(b.placement_expires_at) > new Date();
-
-    if (aActive && !bActive) return -1;
-    if (!aActive && bActive) return 1;
-    if (aActive && bActive) {
-      const aOrder = tierOrder[a.placement_tier!] ?? 99;
-      const bOrder = tierOrder[b.placement_tier!] ?? 99;
-      if (aOrder !== bOrder) return aOrder - bOrder;
-    }
-    if (a.featured && !b.featured) return -1;
-    if (!a.featured && b.featured) return 1;
-    return 0;
-  });
-
-  // Track impressions for vendors with active placements
-  const vendorAccountIds = sorted
-    .filter((v): v is SuggestedVendor & { vendor_account_id: string } => !!v.vendor_account_id)
-    .map((v) => ({
-      vendor_account_id: v.vendor_account_id,
-      event_type: "impression",
-    }));
-
-  if (vendorAccountIds.length > 0) {
-    supabase.from("vendor_analytics").insert(vendorAccountIds).then(({ error: err }) => {
-      if (err) console.error("[ANALYTICS]", err.message);
-    });
-  }
+  // Ranking is purely editorial: featured rows come first (already enforced
+  // server-side via the .order() above), then alphabetical. No vendor pays
+  // for placement, so there's nothing else to weigh here.
 
   const totalCount = count ?? 0;
   const totalPages = Math.ceil(totalCount / limit);
 
   return NextResponse.json({
-    vendors: sorted,
+    vendors: data || [],
     pagination: {
       page,
       limit,

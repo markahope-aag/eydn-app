@@ -151,9 +151,7 @@ The database includes these main table groups:
 
 **Vendor Marketplace:**
 - `suggested_vendors` - Platform-curated vendor directory
-- `vendor_accounts` - Vendor business profiles
-- `vendor_placements` - Paid advertising placements
-- `vendor_analytics` - Performance tracking
+- `vendor_submissions` - Couple-suggested vendors awaiting admin review
 
 **System & Audit:**
 - `subscriber_purchases` - One-time payment tracking

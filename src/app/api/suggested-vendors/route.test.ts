@@ -80,19 +80,19 @@ describe("GET /api/suggested-vendors", () => {
     });
   });
 
-  it("sorts paid placements above unpaid even when unpaid is alphabetically first", async () => {
-    const future = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
+  it("returns vendors in the order Postgres returned them (featured-first sort is server-side)", async () => {
     mockQueryResult.mockResolvedValue({
       data: [
-        { id: "a", name: "Aster", featured: false, placement_tier: null, placement_expires_at: null },
-        { id: "b", name: "Budgeted Flowers", featured: false, placement_tier: "Premium", placement_expires_at: future },
+        { id: "a", name: "Aster", featured: false },
+        { id: "b", name: "Budgeted Flowers", featured: true },
       ],
       count: 2,
       error: null,
     });
     const res = await GET(getReq());
     const body = await res.json();
-    expect(body.vendors[0].id).toBe("b"); // Premium placement moves to top
+    // Order is preserved as-is from Postgres (which already sorts featured first).
+    expect(body.vendors.map((v: { id: string }) => v.id)).toEqual(["a", "b"]);
   });
 
   it("uses full-text OR ilike search when q is provided", async () => {

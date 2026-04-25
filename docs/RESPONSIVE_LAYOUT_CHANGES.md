@@ -96,19 +96,11 @@ All changed from `flex items-center justify-between` to `flex flex-col sm:flex-r
 
 - Card padding: `p-8` → `p-4 sm:p-6 md:p-8`
 
-## Vendor Portal
-
-**File**: `src/app/dashboard/vendor-portal/page.tsx`
-
-- Two form grids: `grid-cols-2` → `grid-cols-1 sm:grid-cols-2`
-- Stat text: `text-3xl` → `text-2xl sm:text-3xl`
-
 ## Admin Pages
 
 | File | Change |
 |------|--------|
 | `admin/vendors/page.tsx` | Import results grid: `grid-cols-2 sm:grid-cols-4` → `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4` |
-| `admin/placements/page.tsx` | Two form grids: `grid-cols-2` → `grid-cols-1 sm:grid-cols-2` |
 
 ## Landing Page
 

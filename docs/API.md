@@ -705,27 +705,7 @@ Get suggested vendors by category and location.
 ### Vendor Submissions
 
 #### `POST /api/vendor-submissions`
-Submit a vendor for inclusion in the directory.
-
-### Vendor Portal
-
-#### `GET /api/vendor-portal/account`
-Get vendor account information.
-
-#### `PUT /api/vendor-portal/account`
-Update vendor account.
-
-#### `GET /api/vendor-portal/analytics`
-Get vendor performance analytics.
-
-#### `GET /api/vendor-portal/placements`
-Get current vendor placements.
-
-#### `POST /api/vendor-portal/checkout`
-Purchase vendor placement.
-
-#### `GET /api/vendor-portal/tiers`
-Get available placement tiers.
+Submit a vendor for inclusion in the directory. Goes into the admin review queue.
 
 ## Subscription & Billing
 
@@ -809,17 +789,6 @@ Update suggested vendor.
 
 #### `DELETE /api/admin/suggested-vendors/[id]`
 Remove suggested vendor.
-
-### Admin Placements
-
-#### `GET /api/admin/placements`
-Get all vendor placements.
-
-#### `GET /api/admin/placement-tiers`
-Get placement tier configuration.
-
-#### `POST /api/admin/placement-tiers`
-Create new placement tier.
 
 ### Admin Settings
 

@@ -33,17 +33,6 @@ type VendorStats = {
     byStatus: { status: string; count: number }[];
     averagePerWedding: number;
   };
-  accounts: {
-    total: number;
-    pending: number;
-    approved: number;
-    suspended: number;
-  };
-  placements: {
-    activePlacements: number;
-    mrr: number;
-    byTier: { tier: string; count: number; revenue: number }[];
-  };
   submissions: {
     pending: number;
     approved: number;
@@ -94,7 +83,7 @@ export default function VendorAnalyticsPage() {
       <h1>Vendor Insights</h1>
 
       {/* Summary cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-3">
         <div className="card p-6">
           <p className="text-[13px] text-muted">Directory Vendors</p>
           <p className="mt-1 text-2xl font-semibold text-plum">{data.directory.total.toLocaleString()}</p>
@@ -106,17 +95,9 @@ export default function VendorAnalyticsPage() {
           <p className="text-[12px] text-muted mt-1">{data.usage.averagePerWedding} avg per wedding</p>
         </div>
         <div className="card p-6">
-          <p className="text-[13px] text-muted">Vendor Accounts</p>
-          <p className="mt-1 text-2xl font-semibold text-plum">{data.accounts.total}</p>
-          <p className="text-[12px] text-muted mt-1">{data.accounts.pending} pending</p>
-        </div>
-        <div className="card p-6">
-          <p className="text-[13px] text-muted">Active Placements</p>
-          <p className="mt-1 text-2xl font-semibold text-plum">{data.placements.activePlacements}</p>
-        </div>
-        <div className="card p-6">
-          <p className="text-[13px] text-muted">Monthly Revenue</p>
-          <p className="mt-1 text-2xl font-semibold text-plum">${data.placements.mrr.toLocaleString()}</p>
+          <p className="text-[13px] text-muted">Submissions Pending</p>
+          <p className="mt-1 text-2xl font-semibold text-plum">{data.submissions.pending.toLocaleString()}</p>
+          <p className="text-[12px] text-muted mt-1">{data.submissions.approved} approved · {data.submissions.rejected} rejected</p>
         </div>
       </div>
 
@@ -253,21 +234,6 @@ export default function VendorAnalyticsPage() {
         </div>
       </div>
 
-      {/* Revenue by Tier */}
-      {data.placements.byTier.length > 0 && (
-        <div className="card p-6">
-          <h2 className="text-[15px] font-semibold text-plum mb-4">Revenue by Tier</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {data.placements.byTier.map((t) => (
-              <div key={t.tier} className="rounded-[12px] border border-border p-4">
-                <p className="text-[15px] font-semibold text-violet">{t.tier}</p>
-                <p className="text-[13px] text-muted mt-1">{t.count} active</p>
-                <p className="mt-2 text-xl font-semibold text-plum">${t.revenue.toLocaleString()}/mo</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

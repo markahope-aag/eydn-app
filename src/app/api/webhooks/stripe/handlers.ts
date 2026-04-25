@@ -215,10 +215,6 @@ export async function handleCheckoutCompleted(
     await handleMemoryPlanCheckout(supabase, meta);
     return;
   }
-
-  // Vendor placement purchases are no longer accepted — Eydn charges
-  // couples, never vendors. Any stray session with vendor_account_id /
-  // tier_id metadata is ignored. See /pledge.
 }
 
 export async function handleSubscriptionUpdated(

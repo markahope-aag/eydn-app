@@ -295,10 +295,10 @@ describe("handleCheckoutCompleted", () => {
     expect(update?.match).toBe("w_1");
   });
 
-  it("ignores vendor placement metadata silently (vendor charging is deprecated)", async () => {
+  it("ignores unrecognized checkout metadata silently", async () => {
     const { supabase, calls } = createMockSupabase();
     const event = makeCheckoutEvent({
-      metadata: { vendor_account_id: "va_1", tier_id: "tier_1" },
+      metadata: { type: "unknown_purchase_kind" },
     });
 
     await handleCheckoutCompleted(supabase, event);

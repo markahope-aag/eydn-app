@@ -114,38 +114,15 @@ export async function GET() {
     ? Math.round(((totalBookings ?? 0) / weddingCount) * 10) / 10
     : 0;
 
-  const sb = supabase;
-
-  // --- Vendor accounts ---
-  const [
-    { count: totalAccounts },
-    { count: pendingAccounts },
-    { count: approvedAccounts },
-    { count: suspendedAccounts },
-  ] = await Promise.all([
-    sb.from("vendor_accounts").select("*", { count: "exact", head: true }),
-    sb.from("vendor_accounts").select("*", { count: "exact", head: true }).eq("status", "pending"),
-    sb.from("vendor_accounts").select("*", { count: "exact", head: true }).eq("status", "approved"),
-    sb.from("vendor_accounts").select("*", { count: "exact", head: true }).eq("status", "suspended"),
-  ]);
-
-  // Vendor placements and tiers were removed when the marketplace
-  // monetization was scrapped (per the Eydn Pledge — we don't charge
-  // vendors). These fields are returned as 0 / empty so the admin UI
-  // continues to render, but no revenue is ever collected from vendors.
-  const activePlacements = 0;
-  const mrr = 0;
-  const byTier: { tier: string; count: number; revenue: number }[] = [];
-
-  // --- Submissions ---
+  // --- Submissions (couples suggesting vendors for the directory) ---
   const [
     { count: pendingSubs },
     { count: approvedSubs },
     { count: rejectedSubs },
   ] = await Promise.all([
-    sb.from("vendor_submissions").select("*", { count: "exact", head: true }).eq("status", "pending"),
-    sb.from("vendor_submissions").select("*", { count: "exact", head: true }).eq("status", "approved"),
-    sb.from("vendor_submissions").select("*", { count: "exact", head: true }).eq("status", "rejected"),
+    supabase.from("vendor_submissions").select("*", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("vendor_submissions").select("*", { count: "exact", head: true }).eq("status", "approved"),
+    supabase.from("vendor_submissions").select("*", { count: "exact", head: true }).eq("status", "rejected"),
   ]);
 
   return NextResponse.json({
@@ -163,17 +140,6 @@ export async function GET() {
       topVendorNames,
       byStatus,
       averagePerWedding,
-    },
-    accounts: {
-      total: totalAccounts ?? 0,
-      pending: pendingAccounts ?? 0,
-      approved: approvedAccounts ?? 0,
-      suspended: suspendedAccounts ?? 0,
-    },
-    placements: {
-      activePlacements,
-      mrr,
-      byTier,
     },
     submissions: {
       pending: pendingSubs ?? 0,

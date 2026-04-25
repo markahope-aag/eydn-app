@@ -269,44 +269,6 @@ create table public.suggested_vendors (
 );
 ```
 
-#### `vendor_accounts`
-Vendor portal accounts for marketplace participation.
-
-```sql
-create table public.vendor_accounts (
-  id uuid primary key default gen_random_uuid(),
-  user_id text not null,                    -- Clerk user ID
-  business_name text not null,
-  category text not null,
-  location text not null,
-  description text,
-  website text,
-  email text not null,
-  phone text,
-  verified boolean default false,
-  created_at timestamptz not null default now()
-);
-```
-
-#### `vendor_placements`
-Paid vendor placement tracking.
-
-```sql
-create table public.vendor_placements (
-  id uuid primary key default gen_random_uuid(),
-  vendor_account_id uuid not null references public.vendor_accounts(id) on delete cascade,
-  tier text not null,                       -- premium, featured, standard
-  category text not null,
-  location text not null,
-  start_date date not null,
-  end_date date not null,
-  amount_paid numeric(12,2) not null,
-  stripe_payment_intent_id text,
-  is_active boolean default true,
-  created_at timestamptz not null default now()
-);
-```
-
 ### System Tables
 
 #### `notifications`
@@ -558,7 +520,6 @@ src/app/api/
 ├── mood-board/             # Inspiration board
 ├── public/                 # Public wedding website APIs
 ├── admin/                  # Admin functionality
-├── vendor-portal/          # Vendor marketplace
 ├── webhooks/               # External service webhooks
 └── cron/                   # Scheduled tasks (check-deadlines, trial-reminders)
 ```

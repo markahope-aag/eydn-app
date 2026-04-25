@@ -155,7 +155,8 @@ docs/                   # Product and technical documentation
 - **mood_board_items**: Pinterest-style inspiration board
 - **chat_messages**: AI conversation history
 - **wedding_photos**: Guest photo uploads with approval
-- **vendor_accounts & placements**: Marketplace monetization
+- **suggested_vendors**: Curated platform vendor directory
+- **vendor_submissions**: Couple-suggested vendors awaiting admin review
 - **subscriber_purchases**: One-time payment tracking
 - **activity_log**: Comprehensive audit trail
 
@@ -192,7 +193,6 @@ npm run security-check # Run security audit + TypeScript + ESLint
 - **[Task Timeline](docs/TASK_TIMELINE.md)** - Complete 12-month wedding planning timeline with AI guidance
 - **[Wedding Collaboration](docs/COLLABORATION.md)** - Partner and coordinator collaboration system
 - **[Mood Board](docs/MOOD_BOARD.md)** - Visual inspiration board and organization tools
-- **[Vendor Marketplace](docs/VENDOR_MARKETPLACE.md)** - Vendor portal, placement tiers, and marketplace operations
 - **[Wedding Websites](docs/WEDDING_WEBSITES.md)** - Public wedding site features, RSVP system, and customization
 - **[Subscription Model](docs/SUBSCRIPTION_MODEL.md)** - Pricing strategy, trial system, and revenue model
 

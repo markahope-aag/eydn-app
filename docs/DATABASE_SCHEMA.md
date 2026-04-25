@@ -438,59 +438,32 @@ Indexes and RLS policy mirror `catch_up_plans`.
 
 ---
 
-## Vendor Marketplace
+## Vendor Directory
 
-### `vendor_accounts`
-Vendor business profiles (vendor-side).
-
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid | PK |
-| user_id | text | |
-| business_name | text | |
-| category | text | |
-| description | text | |
-| website | text | |
-| phone | text | |
-| email | text | |
-| address, city, state, zip | text | |
-| logo_url | text | |
-| price_range | text | $, $$, $$$, $$$$ |
-| status | text | pending, approved, suspended |
-| is_preferred | boolean | |
-
-### `vendor_submissions`
-User-submitted vendor suggestions for admin review.
+Eydn does not charge vendors for inclusion or placement. All vendor-shaped data is in three tables: the curated platform directory, couple-suggested additions, and per-wedding vendor tracking.
 
 ### `suggested_vendors`
-Platform-curated vendor directory (34 seeded vendors).
+Platform-curated vendor directory.
 
 | Column | Type | Notes |
 |--------|------|-------|
 | id | uuid | PK |
 | name | text | |
 | category | text | |
-| location | text | |
-| website | text | |
-| price_range | text | |
-| rating | numeric | |
+| city, state, zip | text | city + state NOT NULL |
+| website, phone, email, address | text | |
+| price_range | text | $, $$, $$$, $$$$ |
 | description | text | |
-| vendor_account_id | uuid | FK → vendor_accounts (optional) |
-| placement_tier | text | Advertising tier |
-| placement_expires_at | timestamptz | |
+| featured | boolean | Sorts to top of search results when true |
+| active | boolean | Soft-disable flag |
 | search_vector | tsvector | Generated full-text search index |
-| imported_at | timestamptz | |
-| import_source | text | |
-| created_at | timestamptz | |
+| created_at, updated_at | timestamptz | |
 
-### `placement_tiers`
-Tiered advertising packages for vendors.
+### `vendor_submissions`
+Couple-submitted vendor suggestions awaiting admin review. Status: pending → approved → rejected.
 
-### `vendor_placements`
-Active vendor advertising placements with Stripe billing.
-
-### `vendor_analytics`
-Impression/click/lead tracking for vendor listings.
+### `vendors`
+Per-wedding vendor tracking (each couple's personal shortlist with status, contact, and payment notes). FK to `weddings.id`, soft-deletable.
 
 ---
 

@@ -2,6 +2,28 @@
 
 This document tracks all notable changes, updates, and improvements to the eydn wedding planning platform.
 
+## [1.7.0] - April 25, 2026
+
+### Vendor monetization removed in full
+
+Per the Eydn Pledge, vendors are never charged. An earlier migration dropped the `vendor_placements` and `placement_tiers` tables, but left the surrounding surface area in place — vendor self-registration accounts, performance analytics, the dead-column placement fields on `suggested_vendors`, and the `'vendor'` user role. All of that is now gone.
+
+What was deleted:
+- **Tables**: `vendor_accounts`, `vendor_analytics`. Orphaned columns removed from `suggested_vendors` (`vendor_account_id`, `placement_tier`, `placement_expires_at`). The `'vendor'` role removed from the `user_roles_role_check` constraint.
+- **API**: `/api/vendor-portal/account`, `/api/vendor-portal/analytics`, `/api/admin/vendor-accounts`. The dead `vendor_account_id` metadata branch in the Stripe checkout webhook handler.
+- **UI**: `/dashboard/vendor-portal/page.tsx` (564 lines — the full vendor self-service dashboard). The Vendor Insights admin page (`/dashboard/admin/vendor-analytics`) was kept and slimmed: the Vendor Accounts and Active Placements / Monthly Revenue cards are gone; the page now shows only directory health, booking patterns, and submission queue depth.
+- **Code helpers**: `trackVendorPlacement()` analytics helper removed.
+- **Docs**: `docs/VENDOR_MARKETPLACE.md` deleted entirely. Surgical edits to ARCHITECTURE.md, API.md, DATABASE_SCHEMA.md, DEVELOPMENT.md, RESPONSIVE_LAYOUT_CHANGES.md, PRODUCT_VISION.md, README.md, docs/README.md.
+
+What stayed:
+- `suggested_vendors` (the curated platform directory)
+- `vendor_submissions` (couples suggesting vendors for the directory)
+- `vendors` (per-wedding vendor tracking)
+- The marketing pages that name paid placements as a *competitor contrast* (`/pledge`, `/why-we-charge-for-pro`, `/what-free-costs`) — that's the brand position, not implementation.
+- Google Places enrichment for individual vendor cards (post-hoc decoration, unaffected)
+
+---
+
 ## [1.6.0] - April 12, 2026
 
 ### Freemium model — reverse trial to free tier
