@@ -646,6 +646,117 @@ export type Database = {
           },
         ]
       }
+      email_sequence_steps: {
+        Row: {
+          audience_filter: Json
+          enabled: boolean
+          id: string
+          offset_days: number
+          sequence_slug: string
+          step_order: number
+          template_slug: string
+        }
+        Insert: {
+          audience_filter?: Json
+          enabled?: boolean
+          id?: string
+          offset_days: number
+          sequence_slug: string
+          step_order: number
+          template_slug: string
+        }
+        Update: {
+          audience_filter?: Json
+          enabled?: boolean
+          id?: string
+          offset_days?: number
+          sequence_slug?: string
+          step_order?: number
+          template_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_sequence_steps_sequence_slug_fkey"
+            columns: ["sequence_slug"]
+            isOneToOne: false
+            referencedRelation: "email_sequences"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "email_sequence_steps_template_slug_fkey"
+            columns: ["template_slug"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      email_sequences: {
+        Row: {
+          audience_filter: Json
+          created_at: string
+          description: string | null
+          enabled: boolean
+          slug: string
+          trigger_event: string
+          updated_at: string
+        }
+        Insert: {
+          audience_filter?: Json
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          slug: string
+          trigger_event: string
+          updated_at?: string
+        }
+        Update: {
+          audience_filter?: Json
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          slug?: string
+          trigger_event?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          enabled: boolean
+          html: string
+          slug: string
+          subject: string
+          updated_at: string
+          variables: string[]
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          html: string
+          slug: string
+          subject: string
+          updated_at?: string
+          variables?: string[]
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          html?: string
+          slug?: string
+          subject?: string
+          updated_at?: string
+          variables?: string[]
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount_paid: number
@@ -1523,6 +1634,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "seating_tables_wedding_id_fkey"
+            columns: ["wedding_id"]
+            isOneToOne: false
+            referencedRelation: "weddings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sequence_send_log: {
+        Row: {
+          id: string
+          recipient_email: string | null
+          resend_email_id: string | null
+          sent_at: string
+          sequence_slug: string
+          step_order: number
+          user_id: string
+          wedding_id: string | null
+        }
+        Insert: {
+          id?: string
+          recipient_email?: string | null
+          resend_email_id?: string | null
+          sent_at?: string
+          sequence_slug: string
+          step_order: number
+          user_id: string
+          wedding_id?: string | null
+        }
+        Update: {
+          id?: string
+          recipient_email?: string | null
+          resend_email_id?: string | null
+          sent_at?: string
+          sequence_slug?: string
+          step_order?: number
+          user_id?: string
+          wedding_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sequence_send_log_wedding_id_fkey"
             columns: ["wedding_id"]
             isOneToOne: false
             referencedRelation: "weddings"

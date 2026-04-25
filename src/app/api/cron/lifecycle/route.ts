@@ -1,19 +1,36 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
-import { calculatePhase, getEmailsDue } from "@/lib/lifecycle";
+import { calculatePhase } from "@/lib/lifecycle";
 import { logCronExecution } from "@/lib/cron-logger";
-import { sendEmail, getLifecycleEmail } from "@/lib/email";
+import { runSequenceForRecipient } from "@/lib/email-sequences";
 import { getEmailPreferences } from "@/lib/email-preferences";
+import { escapeHtml } from "@/lib/validation";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { requireCronAuth } from "@/lib/cron-auth";
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://eydn.app";
+
+const STEP_TO_LIFECYCLE_TYPE: Record<number, string> = {
+  1: "post_wedding_welcome",
+  2: "download_reminder_1mo",
+  3: "download_reminder_6mo",
+  4: "download_reminder_9mo",
+  5: "memory_plan_offer",
+  6: "archive_notice",
+  7: "sunset_warning_21mo",
+  8: "sunset_final",
+};
 
 /**
  * Daily lifecycle cron job.
  *
  * Runs once per day to:
  *  1. Transition weddings between phases (active → post_wedding → archived → sunset)
- *  2. Record lifecycle emails that are due (actual sending handled by email service)
+ *  2. Drive the `wedding_lifecycle` sequence (DB-defined steps anchored to wedding date)
  *  3. Soft-delete data for weddings entering the sunset phase (without memory plan)
+ *
+ * Successful sequence sends are mirrored to the legacy `lifecycle_emails` table
+ * during the Phase 1 transition so existing admin queries keep working.
  *
  * Auth: Bearer CRON_SECRET or BACKUP_SECRET (shared helper).
  * Schedule: 0 4 * * * (daily at 4 AM UTC)
@@ -26,7 +43,6 @@ export async function POST(request: Request) {
   const startTime = Date.now();
 
   try {
-    // Fetch all weddings that have a date set
     const { data: weddings, error: weddingsError } = await supabase
       .from("weddings")
       .select("id, user_id, date, phase, memory_plan_active, partner1_name, partner2_name")
@@ -52,7 +68,6 @@ export async function POST(request: Request) {
         const newPhase = calculatePhase(wedding.date, memoryPlanActive);
         const oldPhase = wedding.phase ?? "active";
 
-        // Update phase if it changed
         if (newPhase !== oldPhase) {
           const { error: updateError } = await supabase
             .from("weddings")
@@ -64,79 +79,75 @@ export async function POST(request: Request) {
             continue;
           }
 
-          results.phaseChanges.push({
-            weddingId: wedding.id,
-            from: oldPhase,
-            to: newPhase,
-          });
-
+          results.phaseChanges.push({ weddingId: wedding.id, from: oldPhase, to: newPhase });
           console.info(
             `[LIFECYCLE] Wedding ${wedding.id} (${wedding.partner1_name} & ${wedding.partner2_name}): ${oldPhase} → ${newPhase}`
           );
         }
 
-        // Check which lifecycle emails are due
-        const { data: sentEmails } = await supabase
-          .from("lifecycle_emails")
-          .select("email_type")
-          .eq("wedding_id", wedding.id);
-
-        const alreadySent = (sentEmails || []).map((e) => e.email_type);
-        const emailsDue = wedding.date ? getEmailsDue(wedding.date, newPhase, alreadySent) : [];
-
-        // Record each due email
-        for (const emailType of emailsDue) {
-          const { error: emailError } = await supabase.from("lifecycle_emails").insert({
-            wedding_id: wedding.id,
-            email_type: emailType,
-            sent_at: new Date().toISOString(),
-          });
-
-          if (emailError) {
-            results.errors.push(
-              `Email record failed for ${wedding.id}/${emailType}: ${emailError.message}`
-            );
-            continue;
-          }
-
-          // Send the actual email via Resend (check preferences first)
+        // Drive the wedding_lifecycle sequence for this recipient.
+        if (wedding.date && wedding.user_id) {
           try {
             const prefs = await getEmailPreferences(wedding.id);
-            const MARKETING_EMAILS = ["memory_plan_offer", "download_reminder_9mo", "archive_notice"];
-            const isMarketing = MARKETING_EMAILS.includes(emailType);
+            const marketingUnsubscribed =
+              prefs.unsubscribed_all || !prefs.marketing_emails;
 
-            // Only check unsubscribe for marketing emails; transactional always send
-            if (isMarketing && (prefs.unsubscribed_all || !prefs.marketing_emails)) {
-              console.info(`[LIFECYCLE] Skipping marketing email ${emailType} for ${wedding.id} — unsubscribed`);
-            } else {
-              const partnerNames = `${wedding.partner1_name} & ${wedding.partner2_name}`;
-              const emailContent = getLifecycleEmail(emailType, {
-                partnerNames,
-                weddingDate: wedding.date!,
-                unsubscribeToken: prefs.unsubscribe_token,
+            const clerk = await clerkClient();
+            const user = await clerk.users.getUser(wedding.user_id);
+            const userEmail = user.emailAddresses[0]?.emailAddress;
+
+            if (userEmail) {
+              const partnerNames = escapeHtml(`${wedding.partner1_name} & ${wedding.partner2_name}`);
+              const firstName = (wedding.partner1_name || "").split(" ")[0] || "there";
+              const weddingDateFmt = escapeHtml(
+                new Date(wedding.date).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              );
+
+              const runResult = await runSequenceForRecipient("wedding_lifecycle", {
+                userId: wedding.user_id,
+                weddingId: wedding.id,
+                email: userEmail,
+                attrs: { marketing_unsubscribed: marketingUnsubscribed },
+                templateContext: {
+                  partnerNames,
+                  firstName: escapeHtml(firstName),
+                  weddingDate: weddingDateFmt,
+                  appUrl: APP_URL,
+                  unsubscribeToken: prefs.unsubscribe_token,
+                },
+                anchor: new Date(wedding.date),
               });
-              if (emailContent && wedding.user_id) {
-                const clerk = await clerkClient();
-                const user = await clerk.users.getUser(wedding.user_id);
-                const userEmail = user.emailAddresses[0]?.emailAddress;
-                if (userEmail) {
-                  await sendEmail({ to: userEmail, ...emailContent });
-                }
+
+              for (const step of runResult.sentSteps) {
+                const legacyType = STEP_TO_LIFECYCLE_TYPE[step.stepOrder];
+                if (!legacyType) continue;
+                await supabase
+                  .from("lifecycle_emails")
+                  .upsert(
+                    { wedding_id: wedding.id, email_type: legacyType },
+                    { onConflict: "wedding_id,email_type", ignoreDuplicates: true }
+                  );
+                results.emailsRecorded.push({ weddingId: wedding.id, emailType: legacyType });
+                console.info(`[LIFECYCLE] Sent ${legacyType} → ${wedding.id}`);
+              }
+
+              for (const err of runResult.errors) {
+                results.errors.push(`Lifecycle send failed for ${wedding.id}: ${err}`);
               }
             }
           } catch (sendErr) {
-            console.warn(`[LIFECYCLE] Email send failed for ${wedding.id}/${emailType}:`, sendErr);
+            console.warn(`[LIFECYCLE] Sequence send failed for ${wedding.id}:`, sendErr);
+            results.errors.push(
+              `Sequence run failed for ${wedding.id}: ${sendErr instanceof Error ? sendErr.message : String(sendErr)}`
+            );
           }
-
-          results.emailsRecorded.push({
-            weddingId: wedding.id,
-            emailType,
-          });
-
-          console.info(`[LIFECYCLE] Email recorded: ${emailType} for wedding ${wedding.id}`);
         }
 
-        // Handle sunset: soft-delete data for weddings without memory plan
+        // Sunset: soft-delete data for weddings without memory plan.
         if (newPhase === "sunset" && !memoryPlanActive && oldPhase !== "sunset") {
           try {
             await softDeleteWeddingData(supabase, wedding.id);
@@ -166,10 +177,7 @@ export async function POST(request: Request) {
       details: results as unknown as import("@/lib/supabase/types").Json,
     });
 
-    return NextResponse.json({
-      success: true,
-      ...results,
-    });
+    return NextResponse.json({ success: true, ...results });
   } catch (error) {
     console.error("[LIFECYCLE] Failed:", error instanceof Error ? error.message : error);
     await logCronExecution({
@@ -194,7 +202,6 @@ async function softDeleteWeddingData(
   supabase: ReturnType<typeof createSupabaseAdmin>,
   weddingId: string
 ) {
-  // Create a final backup of all wedding data before deletion
   const [
     { data: guests },
     { data: vendors },
@@ -223,7 +230,6 @@ async function softDeleteWeddingData(
     supabase.from("registry_links").select("*").eq("wedding_id", weddingId),
   ]);
 
-  // Store the final backup as a JSON blob in a sunset_backups table or log it
   const backupPayload = {
     weddingId,
     exportedAt: new Date().toISOString(),
@@ -248,7 +254,6 @@ async function softDeleteWeddingData(
     `[LIFECYCLE] Final backup for sunset wedding ${weddingId}: ${JSON.stringify(backupPayload).length} bytes`
   );
 
-  // Delete associated data (order matters for foreign key constraints)
   const tablesToDelete = [
     "seat_assignments",
     "ceremony_positions",
@@ -268,9 +273,7 @@ async function softDeleteWeddingData(
   ] as const;
 
   for (const table of tablesToDelete) {
-    // seat_assignments may reference seating_tables, so we handle it through the join
     if (table === "seat_assignments") {
-      // Delete seat assignments that belong to this wedding's tables
       const { data: tables } = await supabase
         .from("seating_tables")
         .select("id")
