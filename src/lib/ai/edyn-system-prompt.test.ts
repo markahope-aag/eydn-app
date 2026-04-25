@@ -12,6 +12,7 @@ function makeWedding(overrides: Partial<Wedding> = {}): Wedding {
     partner1_name: "Alice",
     partner2_name: "Bob",
     date: null,
+    inferred_date: null,
     venue: null,
     venue_city: null,
     budget: null,

@@ -15,6 +15,23 @@ type HandoffInput = {
   month: number;
 };
 
+/**
+ * From a 1–12 month value, return a placeholder wedding date string (YYYY-MM-DD)
+ * representing the 15th of the next occurrence of that month — this year if the
+ * month is still ahead of `now`, otherwise next year. Used only as a fallback
+ * anchor for the wedding_milestones email sequence; replaced the moment the
+ * user sets their actual date in the dashboard.
+ *
+ * Returns null for invalid input so the caller can leave inferred_date null.
+ */
+export function inferWeddingDate(month: number, now: Date = new Date()): string | null {
+  if (!Number.isFinite(month) || month < 1 || month > 12) return null;
+  const currentYear = now.getUTCFullYear();
+  const currentMonth = now.getUTCMonth() + 1; // 1–12
+  const year = month >= currentMonth ? currentYear : currentYear + 1;
+  return `${year}-${String(month).padStart(2, "0")}-15`;
+}
+
 type HandoffResult = {
   signInUrl: string;
   isNewUser: boolean;
@@ -147,6 +164,7 @@ export async function handoffCalculatorToEydn(
       weddingId = (existingWedding as { id: string }).id;
     } else {
       const nowIso = new Date().toISOString();
+      const inferredDate = inferWeddingDate(input.month);
       const { data: newWedding, error } = await supabase
         .from("weddings")
         .insert({
@@ -156,6 +174,7 @@ export async function handoffCalculatorToEydn(
           budget: input.budget,
           guest_count_estimate: input.guests,
           trial_started_at: nowIso,
+          inferred_date: inferredDate,
         })
         .select("id")
         .single();

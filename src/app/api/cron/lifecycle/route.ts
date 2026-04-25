@@ -45,10 +45,14 @@ export async function POST(request: Request) {
   const startTime = Date.now();
 
   try {
+    // Include weddings with either a confirmed `date` OR an `inferred_date`
+    // (set by the calculator handoff from the user's chosen month). The
+    // milestones sequence falls back to inferred_date when date is null;
+    // every other code path here keeps reading only `date`.
     const { data: weddings, error: weddingsError } = await supabase
       .from("weddings")
-      .select("id, user_id, date, phase, memory_plan_active, partner1_name, partner2_name")
-      .not("date", "is", null);
+      .select("id, user_id, date, inferred_date, phase, memory_plan_active, partner1_name, partner2_name")
+      .or("date.not.is.null,inferred_date.not.is.null");
 
     if (weddingsError) {
       throw new Error(`Failed to fetch weddings: ${weddingsError.message}`);
@@ -87,8 +91,11 @@ export async function POST(request: Request) {
           );
         }
 
-        // Drive the wedding_lifecycle sequence for this recipient.
-        if (wedding.date && wedding.user_id) {
+        // Email sequences need a Clerk-resolvable user and at least one date
+        // signal — either the confirmed `date` (used for both flows) or the
+        // calculator-derived `inferred_date` (used only by milestones).
+        const milestoneAnchor = wedding.date || wedding.inferred_date;
+        if ((wedding.date || wedding.inferred_date) && wedding.user_id) {
           try {
             const prefs = await getEmailPreferences(wedding.id);
             const marketingUnsubscribed =
@@ -101,69 +108,80 @@ export async function POST(request: Request) {
             if (userEmail) {
               const partnerNames = escapeHtml(`${wedding.partner1_name} & ${wedding.partner2_name}`);
               const firstName = (wedding.partner1_name || "").split(" ")[0] || "there";
-              const weddingDateFmt = escapeHtml(
-                new Date(wedding.date).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })
-              );
+              // Format whichever anchor we'll use for the milestone copy.
+              const weddingDateFmt = milestoneAnchor
+                ? escapeHtml(
+                    new Date(milestoneAnchor).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  )
+                : "";
 
-              const sharedRecipient = {
-                userId: wedding.user_id,
-                weddingId: wedding.id,
-                email: userEmail,
-                attrs: { marketing_unsubscribed: marketingUnsubscribed },
-                templateContext: {
-                  partnerNames,
-                  firstName: escapeHtml(firstName),
-                  weddingDate: weddingDateFmt,
-                  appUrl: APP_URL,
-                  unsubscribeToken: prefs.unsubscribe_token,
-                },
-                anchor: new Date(wedding.date),
+              const baseTemplateContext = {
+                partnerNames,
+                firstName: escapeHtml(firstName),
+                weddingDate: weddingDateFmt,
+                appUrl: APP_URL,
+                unsubscribeToken: prefs.unsubscribe_token,
               };
 
-              // wedding_lifecycle: post-wedding archival flow.
-              const lifecycleRun = await runSequenceForRecipient(
-                "wedding_lifecycle",
-                sharedRecipient
-              );
+              // wedding_lifecycle: post-wedding archival flow. Strictly anchored
+              // to the user-confirmed `date` — never fired on inferred_date so
+              // we don't send "your account is now read-only" based on a guess.
+              if (wedding.date) {
+                const lifecycleRun = await runSequenceForRecipient("wedding_lifecycle", {
+                  userId: wedding.user_id,
+                  weddingId: wedding.id,
+                  email: userEmail,
+                  attrs: { marketing_unsubscribed: marketingUnsubscribed },
+                  templateContext: baseTemplateContext,
+                  anchor: new Date(wedding.date),
+                });
 
-              for (const step of lifecycleRun.sentSteps) {
-                const legacyType = STEP_TO_LIFECYCLE_TYPE[step.stepOrder];
-                if (!legacyType) continue;
-                await supabase
-                  .from("lifecycle_emails")
-                  .upsert(
-                    { wedding_id: wedding.id, email_type: legacyType },
-                    { onConflict: "wedding_id,email_type", ignoreDuplicates: true }
-                  );
-                results.emailsRecorded.push({ weddingId: wedding.id, emailType: legacyType });
-                console.info(`[LIFECYCLE] Sent ${legacyType} → ${wedding.id}`);
-              }
-              for (const err of lifecycleRun.errors) {
-                results.errors.push(`Lifecycle send failed for ${wedding.id}: ${err}`);
+                for (const step of lifecycleRun.sentSteps) {
+                  const legacyType = STEP_TO_LIFECYCLE_TYPE[step.stepOrder];
+                  if (!legacyType) continue;
+                  await supabase
+                    .from("lifecycle_emails")
+                    .upsert(
+                      { wedding_id: wedding.id, email_type: legacyType },
+                      { onConflict: "wedding_id,email_type", ignoreDuplicates: true }
+                    );
+                  results.emailsRecorded.push({ weddingId: wedding.id, emailType: legacyType });
+                  console.info(`[LIFECYCLE] Sent ${legacyType} → ${wedding.id}`);
+                }
+                for (const err of lifecycleRun.errors) {
+                  results.errors.push(`Lifecycle send failed for ${wedding.id}: ${err}`);
+                }
               }
 
               // wedding_milestones: pre-wedding planning milestones (negative
-              // offsets) plus a +7d post-wedding thank-you.
-              const milestonesRun = await runSequenceForRecipient(
-                "wedding_milestones",
-                sharedRecipient
-              );
-
-              for (const step of milestonesRun.sentSteps) {
-                results.emailsRecorded.push({
+              // offsets) plus a +7d post-wedding thank-you. Falls back to
+              // inferred_date so calculator-only leads still receive milestones.
+              if (milestoneAnchor) {
+                const milestonesRun = await runSequenceForRecipient("wedding_milestones", {
+                  userId: wedding.user_id,
                   weddingId: wedding.id,
-                  emailType: `milestone_step_${step.stepOrder}`,
+                  email: userEmail,
+                  attrs: { marketing_unsubscribed: marketingUnsubscribed },
+                  templateContext: baseTemplateContext,
+                  anchor: new Date(milestoneAnchor),
                 });
-                console.info(
-                  `[LIFECYCLE] Sent milestone step ${step.stepOrder} (${step.templateSlug}) → ${wedding.id}`
-                );
-              }
-              for (const err of milestonesRun.errors) {
-                results.errors.push(`Milestone send failed for ${wedding.id}: ${err}`);
+
+                for (const step of milestonesRun.sentSteps) {
+                  results.emailsRecorded.push({
+                    weddingId: wedding.id,
+                    emailType: `milestone_step_${step.stepOrder}`,
+                  });
+                  console.info(
+                    `[LIFECYCLE] Sent milestone step ${step.stepOrder} (${step.templateSlug}) → ${wedding.id}`
+                  );
+                }
+                for (const err of milestonesRun.errors) {
+                  results.errors.push(`Milestone send failed for ${wedding.id}: ${err}`);
+                }
               }
             }
           } catch (sendErr) {

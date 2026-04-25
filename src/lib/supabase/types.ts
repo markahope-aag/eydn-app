@@ -2391,6 +2391,7 @@ export type Database = {
           has_pre_wedding_events: boolean | null
           has_wedding_party: boolean | null
           id: string
+          inferred_date: string | null
           key_decisions: string | null
           meal_options: Json | null
           memory_plan_active: boolean
@@ -2433,6 +2434,7 @@ export type Database = {
           has_pre_wedding_events?: boolean | null
           has_wedding_party?: boolean | null
           id?: string
+          inferred_date?: string | null
           key_decisions?: string | null
           meal_options?: Json | null
           memory_plan_active?: boolean
@@ -2475,6 +2477,7 @@ export type Database = {
           has_pre_wedding_events?: boolean | null
           has_wedding_party?: boolean | null
           id?: string
+          inferred_date?: string | null
           key_decisions?: string | null
           meal_options?: Json | null
           memory_plan_active?: boolean

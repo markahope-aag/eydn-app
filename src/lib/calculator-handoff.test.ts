@@ -1,6 +1,36 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handoffCalculatorToEydn } from './calculator-handoff';
+import { handoffCalculatorToEydn, inferWeddingDate } from './calculator-handoff';
 import { BUDGET_TEMPLATE } from '@/lib/budget/budget-template';
+
+describe('inferWeddingDate', () => {
+  // Frozen reference: April 25 2026 (today as of writing).
+  const APR_2026 = new Date('2026-04-25T12:00:00Z');
+
+  it('uses the current year when chosen month is later in the same year', () => {
+    expect(inferWeddingDate(6, APR_2026)).toBe('2026-06-15');
+    expect(inferWeddingDate(12, APR_2026)).toBe('2026-12-15');
+  });
+
+  it('uses the current year when chosen month is the same as the current month', () => {
+    expect(inferWeddingDate(4, APR_2026)).toBe('2026-04-15');
+  });
+
+  it('rolls over to next year when chosen month is in the past', () => {
+    expect(inferWeddingDate(1, APR_2026)).toBe('2027-01-15');
+    expect(inferWeddingDate(3, APR_2026)).toBe('2027-03-15');
+  });
+
+  it('zero-pads single-digit months', () => {
+    expect(inferWeddingDate(7, APR_2026)).toBe('2026-07-15');
+  });
+
+  it('returns null for invalid month values', () => {
+    expect(inferWeddingDate(0, APR_2026)).toBeNull();
+    expect(inferWeddingDate(13, APR_2026)).toBeNull();
+    expect(inferWeddingDate(-1, APR_2026)).toBeNull();
+    expect(inferWeddingDate(Number.NaN, APR_2026)).toBeNull();
+  });
+});
 
 // Mock dependencies
 vi.mock('@clerk/nextjs/server', () => ({
