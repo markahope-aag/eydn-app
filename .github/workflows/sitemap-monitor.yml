@@ -40,13 +40,29 @@ jobs:
         run: node scripts/sitemap-monitor.mjs
 
       - name: Commit updated state
+        # Tolerate the race where a human (or another workflow) pushes to
+        # master between checkout and push. Rebase + retry; if the rebase
+        # loses our state-file change, that's fine — the next scheduled run
+        # will recompute and write its own.
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [[ -n "$(git status --porcelain scripts/.sitemap-state.json)" ]]; then
-            git add scripts/.sitemap-state.json
-            git commit -m "chore: update sitemap-monitor state [skip ci]"
-            git push
-          else
+          if [[ -z "$(git status --porcelain scripts/.sitemap-state.json)" ]]; then
             echo "No state changes to commit."
+            exit 0
           fi
+          git add scripts/.sitemap-state.json
+          git commit -m "chore: update sitemap-monitor state [skip ci]"
+          for attempt in 1 2 3; do
+            if git push; then
+              echo "Pushed on attempt $attempt."
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt) — rebasing on origin/master and retrying."
+            git pull --rebase origin master || {
+              echo "Rebase failed; bailing out so we don't corrupt state. Next scheduled run will recover."
+              exit 0
+            }
+          done
+          echo "Could not push after 3 attempts. Next scheduled run will recover."
+          exit 0
