@@ -284,7 +284,7 @@ All schedules are defined in `vercel.json` and run on Vercel's cron infrastructu
 | Job | Schedule | What it does |
 |---|---|---|
 | `process-trial-conversions` | Every hour | Charges saved cards when trials end |
-| `trial-emails` | Daily 14:00 UTC | Sends trial sequence and post-downgrade nurture emails |
+| `trial-emails` | Daily 14:00 UTC | Sends trial sequence + post-downgrade nurture + calculator follow-up emails |
 | `lifecycle` | Daily 04:00 UTC | Wedding phase transitions and post-wedding/milestone emails |
 | `check-deadlines` | Daily 09:00 UTC | Task deadline reminder emails |
 | `trial-reminders` | Daily 15:00 UTC | 3-day trial expiry reminder emails |

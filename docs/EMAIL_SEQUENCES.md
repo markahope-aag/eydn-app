@@ -38,8 +38,8 @@ What shipped:
 - **Sidebar link** under Operations → Email Sequences.
 
 ### Net result
-- **31 templates** in the DB (11 existing migrated + 20 new), all editable via admin UI.
-- **4 sequences** wired up across 2 cron jobs.
+- **34 templates** in the DB (11 existing migrated + 20 from Phase 2 + 3 from Phase B), all editable via admin UI.
+- **5 sequences** wired up across 2 cron jobs.
 - **Zero code deploys** required to: change copy, retime a step, swap which template a step uses, disable a sequence, send a test, or add a new sequence on an existing trigger.
 - **The send provider is still Resend.** SES is a one-file swap behind `sendEmail()` whenever volume justifies it (~$200/mo Resend bill).
 
@@ -53,6 +53,19 @@ What shipped:
 - **Lifecycle cron** uses `wedding.date ?? wedding.inferred_date` for the `wedding_milestones` runner call. `wedding_lifecycle` (post-wedding archival) still strictly requires a confirmed `date` — never fires "your account is now read-only" based on a guess.
 
 When the user later confirms their actual `date`, it takes precedence.
+
+### Phase B — Calculator follow-up nurture (commit `31372df`)
+Closed the third calculator-leads gap: between Email 1 (immediate breakdown sent inline by `/api/tools/calculator-save`) and Day 10 of `trial_expiry`, calculator leads who didn't sign in heard nothing for 10 days. The 24-hour magic link expired and the trial sequence assumed they'd been using Eydn — neither was true.
+
+What shipped:
+- **New sequence `calculator_followup`** on a new `calculator_completed` trigger. Anchored to `calculator_saves.created_at`. Three nurture emails:
+  - **Day +1** (`calc_d1_account_waiting`) — "Your account is waiting", reminds them their budget is saved, prompts a normal sign-in (since the magic link is dead by now).
+  - **Day +3** (`calc_d3_venue_surprises`) — value-driven content on venue itemization, soft Pro mention.
+  - **Day +7** (`calc_d7_couples_like_you`) — social proof framed for their guest count and budget, dashboard CTA.
+- **Templates personalize** on `firstName`, `state`, `guests`, `budgetFormatted` — pulled from the `calculator_saves` row at cron time.
+- **Cron driver in trial-emails cron** iterates `calculator_saves` rows in a 10-day window, resolves Clerk `user_id` from email, looks up the wedding for email preferences, then calls the runner.
+- **Category `nurture`** so emails honor `marketing_emails` opt-out and carry an unsubscribe footer.
+- **Backfill INSERT** marks every existing `calculator_saves` row as already-sent for every step, so the rollout doesn't blast historical leads.
 
 ### Phase C — Cadence sync visibility (commit `b4aeb4b`)
 Closed a different silent failure: `cadenceSubscribe()` (the helper that pushes calculator/newsletter/quiz leads into our Cadence ESP) was fire-and-forget with a console.error. If `CADENCE_NEWSLETTER_FORM_ID` was unset, every submit silently no-op'd.
@@ -141,6 +154,20 @@ The `inferred_date` fallback (added April 2026) lets calculator-only leads enter
 | 7 | -14 | 2 weeks out | `milestone_2wk` |
 | 8 | -7 | 1 week out | `milestone_1wk` |
 | 9 | +7 | 1 week post | `milestone_post7d` |
+
+### Sequence: `calculator_followup`
+**Trigger:** `calculator_completed` (anchor = `calculator_saves.created_at`)
+**Audience:** every calculator save in the last 10 days. Honors `marketing_emails` opt-out (via the wedding's `email_preferences`).
+
+Driven by the trial-emails cron. Iterates `calculator_saves` rows directly (not via the wedding loop) so leads who never finished the handoff still get the follow-up. Three steps:
+
+| Step | Day | Template |
+|---:|---:|---|
+| 1 | +1 | `calc_d1_account_waiting` |
+| 2 | +3 | `calc_d3_venue_surprises` |
+| 3 | +7 | `calc_d7_couples_like_you` |
+
+Personalization vars: `firstName`, `state`, `guests`, `budgetFormatted` — all from the `calculator_saves` row.
 
 ### Sequence: `wedding_lifecycle`
 **Trigger:** `wedding_date` (anchor = `weddings.date`, post-wedding only)
