@@ -5,8 +5,11 @@
  * quiz completion) pushes contacts into the matching Cadence contact
  * list via the public /api/subscribe form endpoint.
  *
- * All calls are fire-and-forget: if the sync fails or the env vars
- * aren't configured, we log and return — never block the user response.
+ * Returns a structured result so callers can record success/failure
+ * (e.g. calculator-save writes the outcome back to calculator_saves so
+ * silent misconfigurations stop being invisible). Existing callers that
+ * don't care can ignore the return value — there's no exception path
+ * that would change their behavior.
  */
 
 type CadenceSubscribeInput = {
@@ -18,9 +21,19 @@ type CadenceSubscribeInput = {
   firstName?: string | null;
 };
 
-export async function cadenceSubscribe(input: CadenceSubscribeInput): Promise<void> {
+export type CadenceSubscribeResult =
+  | { status: "ok" }
+  | { status: "skipped"; reason: string }
+  | { status: "error"; error: string };
+
+export async function cadenceSubscribe(input: CadenceSubscribeInput): Promise<CadenceSubscribeResult> {
   const cadenceUrl = process.env.CADENCE_URL;
-  if (!cadenceUrl || !input.formId) return;
+  if (!cadenceUrl) {
+    return { status: "skipped", reason: "CADENCE_URL not configured" };
+  }
+  if (!input.formId) {
+    return { status: "skipped", reason: "formId missing — env var likely unset" };
+  }
 
   try {
     const res = await fetch(`${cadenceUrl.replace(/\/$/, "")}/api/subscribe`, {
@@ -34,9 +47,14 @@ export async function cadenceSubscribe(input: CadenceSubscribeInput): Promise<vo
     });
     if (!res.ok) {
       const body = await res.text().catch(() => "");
-      console.error(`[CADENCE] sync failed ${res.status}: ${body.slice(0, 200)}`);
+      const msg = `HTTP ${res.status}: ${body.slice(0, 200)}`;
+      console.error(`[CADENCE] sync failed ${msg}`);
+      return { status: "error", error: msg };
     }
+    return { status: "ok" };
   } catch (err) {
-    console.error("[CADENCE] sync error:", err instanceof Error ? err.message : err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[CADENCE] sync error:", msg);
+    return { status: "error", error: msg };
   }
 }

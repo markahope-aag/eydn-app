@@ -68,28 +68,47 @@ describe("cadenceSubscribe", () => {
     expect(url).toBe("https://cadence.example.com/api/subscribe");
   });
 
-  it("does not throw when the fetch rejects — swallows the error", async () => {
+  it("returns an error result when the fetch rejects — never throws", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network down"));
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await expect(
-      cadenceSubscribe({ formId: "form_xyz", email: "a@b.com" })
-    ).resolves.toBeUndefined();
+    const result = await cadenceSubscribe({ formId: "form_xyz", email: "a@b.com" });
 
+    expect(result.status).toBe("error");
+    if (result.status === "error") expect(result.error).toContain("network down");
     expect(errorSpy).toHaveBeenCalled();
   });
 
-  it("does not throw when the endpoint returns a non-OK status", async () => {
+  it("returns an error result when the endpoint returns a non-OK status", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response("oops", { status: 500 })
     );
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await expect(
-      cadenceSubscribe({ formId: "form_xyz", email: "a@b.com" })
-    ).resolves.toBeUndefined();
+    const result = await cadenceSubscribe({ formId: "form_xyz", email: "a@b.com" });
 
+    expect(result.status).toBe("error");
+    if (result.status === "error") expect(result.error).toContain("500");
     expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it("returns a skipped result when CADENCE_URL is unset", async () => {
+    delete process.env.CADENCE_URL;
+    const result = await cadenceSubscribe({ formId: "form_123", email: "a@b.com" });
+    expect(result.status).toBe("skipped");
+    if (result.status === "skipped") expect(result.reason).toMatch(/CADENCE_URL/);
+  });
+
+  it("returns a skipped result when formId is empty", async () => {
+    const result = await cadenceSubscribe({ formId: "", email: "a@b.com" });
+    expect(result.status).toBe("skipped");
+    if (result.status === "skipped") expect(result.reason).toMatch(/formId/);
+  });
+
+  it("returns ok on a successful 2xx response", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("", { status: 200 }));
+    const result = await cadenceSubscribe({ formId: "form_xyz", email: "a@b.com" });
+    expect(result.status).toBe("ok");
   });
 
   it("omits first_name from the payload when passed null", async () => {

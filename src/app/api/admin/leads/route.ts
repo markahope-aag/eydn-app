@@ -14,7 +14,7 @@ export async function GET() {
       .order("created_at", { ascending: false }),
     supabase
       .from("calculator_saves")
-      .select("name, email, budget, guests, state, month, created_at")
+      .select("name, email, budget, guests, state, month, created_at, cadence_synced_at, cadence_error")
       .order("created_at", { ascending: false }),
   ]);
 
@@ -25,6 +25,8 @@ export async function GET() {
     source: string;
     details: string | null;
     created_at: string;
+    cadenceStatus?: "synced" | "failed" | "pending";
+    cadenceMessage?: string | null;
   };
 
   const leads: Lead[] = [];
@@ -40,13 +42,30 @@ export async function GET() {
   }
 
   for (const c of calculator || []) {
-    const calc = c as { name: string | null; email: string; budget: number; guests: number; state: string; month: number; created_at: string };
+    const calc = c as {
+      name: string | null;
+      email: string;
+      budget: number;
+      guests: number;
+      state: string;
+      month: number;
+      created_at: string;
+      cadence_synced_at: string | null;
+      cadence_error: string | null;
+    };
+    const cadenceStatus: Lead["cadenceStatus"] = calc.cadence_synced_at
+      ? "synced"
+      : calc.cadence_error
+        ? "failed"
+        : "pending";
     leads.push({
       name: calc.name,
       email: calc.email,
       source: "calculator",
       details: `$${calc.budget.toLocaleString()} · ${calc.guests} guests · ${calc.state}`,
       created_at: calc.created_at,
+      cadenceStatus,
+      cadenceMessage: calc.cadence_error,
     });
   }
 
@@ -68,6 +87,11 @@ export async function GET() {
       }
       if (lead.name && !existing.name) {
         existing.name = lead.name;
+      }
+      // Preserve cadence status from the calculator side of the merge.
+      if (lead.cadenceStatus && !existing.cadenceStatus) {
+        existing.cadenceStatus = lead.cadenceStatus;
+        existing.cadenceMessage = lead.cadenceMessage ?? null;
       }
     } else {
       const entry = { ...lead };

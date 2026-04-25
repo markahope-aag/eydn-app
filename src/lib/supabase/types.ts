@@ -243,6 +243,8 @@ export type Database = {
       calculator_saves: {
         Row: {
           budget: number
+          cadence_error: string | null
+          cadence_synced_at: string | null
           created_at: string | null
           email: string
           guests: number
@@ -254,6 +256,8 @@ export type Database = {
         }
         Insert: {
           budget: number
+          cadence_error?: string | null
+          cadence_synced_at?: string | null
           created_at?: string | null
           email: string
           guests: number
@@ -265,6 +269,8 @@ export type Database = {
         }
         Update: {
           budget?: number
+          cadence_error?: string | null
+          cadence_synced_at?: string | null
           created_at?: string | null
           email?: string
           guests?: number

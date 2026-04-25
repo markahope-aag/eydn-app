@@ -17,6 +17,13 @@ vi.mock("crypto", () => ({
   },
 }));
 
+// Cadence sync runs fire-and-forget after the response — stub it out so the
+// background promise doesn't try to .update() on the per-test supabase mocks
+// (which only declare the chains the foreground response actually exercises).
+vi.mock("@/lib/cadence", () => ({
+  cadenceSubscribe: vi.fn().mockResolvedValue({ status: "skipped", reason: "test" }),
+}));
+
 import { NextRequest } from "next/server";
 import { POST } from "./route";
 
@@ -105,7 +112,14 @@ describe("POST /api/tools/calculator-save", () => {
           maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
       }),
-      insert: vi.fn().mockResolvedValue({ error: null }),
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { id: "save-new" }, error: null }),
+        }),
+      }),
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      }),
     });
 
     const res = await POST(mockPostRequest({
@@ -130,7 +144,11 @@ describe("POST /api/tools/calculator-save", () => {
           maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
       }),
-      insert: vi.fn().mockResolvedValue({ error: { message: "DB error" } }),
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: null, error: { message: "DB error" } }),
+        }),
+      }),
     });
 
     const res = await POST(mockPostRequest({
@@ -147,7 +165,11 @@ describe("POST /api/tools/calculator-save", () => {
   });
 
   it("trims email and lowercases it", async () => {
-    const insertSpy = vi.fn().mockResolvedValue({ error: null });
+    const insertSpy = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: { id: "save-new" }, error: null }),
+      }),
+    });
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -155,6 +177,9 @@ describe("POST /api/tools/calculator-save", () => {
         }),
       }),
       insert: insertSpy,
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      }),
     });
 
     await POST(mockPostRequest({

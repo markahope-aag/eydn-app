@@ -35,15 +35,29 @@ function buildAllocations(budget: number) {
   }));
 }
 
-function syncToCadenceNewsletter(
+async function syncToCadenceAndRecord(
+  supabase: ReturnType<typeof createSupabaseAdmin>,
+  saveId: string,
   email: string,
   firstName: string | null
 ): Promise<void> {
-  return cadenceSubscribe({
+  const result = await cadenceSubscribe({
     formId: process.env.CADENCE_NEWSLETTER_FORM_ID || "",
     email,
     firstName,
   });
+
+  // Persist the outcome on the calculator_saves row so a silent
+  // misconfiguration (missing env var, Cadence outage) is visible in the
+  // admin Leads page instead of vanishing into a fire-and-forget log line.
+  const update =
+    result.status === "ok"
+      ? { cadence_synced_at: new Date().toISOString(), cadence_error: null }
+      : result.status === "skipped"
+        ? { cadence_synced_at: null, cadence_error: `skipped: ${result.reason}` }
+        : { cadence_synced_at: null, cadence_error: result.error };
+
+  await supabase.from("calculator_saves").update(update).eq("id", saveId);
 }
 
 /** POST — save a calculator state, hand off into Eydn, return a sign-in URL */
@@ -83,6 +97,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   let shortCode: string;
+  let saveId: string;
 
   if (existing) {
     await supabase
@@ -90,6 +105,7 @@ export async function POST(request: NextRequest) {
       .update({ name: normalizedName, budget, guests, state, month })
       .eq("id", existing.id);
     shortCode = (existing as { short_code: string }).short_code;
+    saveId = (existing as { id: string }).id;
 
     await captureServer(normalizedEmail, "calculator_completed", {
       total_budget: budget,
@@ -101,19 +117,24 @@ export async function POST(request: NextRequest) {
     });
   } else {
     shortCode = generateShortCode();
-    const { error } = await supabase.from("calculator_saves").insert({
-      short_code: shortCode,
-      name: normalizedName,
-      email: normalizedEmail,
-      budget,
-      guests,
-      state,
-      month,
-    });
+    const { data: inserted, error } = await supabase
+      .from("calculator_saves")
+      .insert({
+        short_code: shortCode,
+        name: normalizedName,
+        email: normalizedEmail,
+        budget,
+        guests,
+        state,
+        month,
+      })
+      .select("id")
+      .single();
 
-    if (error) {
+    if (error || !inserted) {
       return NextResponse.json({ error: "Could not save. Try again." }, { status: 500 });
     }
+    saveId = (inserted as { id: string }).id;
 
     await captureServer(normalizedEmail, "calculator_completed", {
       total_budget: budget,
@@ -178,8 +199,11 @@ export async function POST(request: NextRequest) {
     html: template.html,
   });
 
-  // Push into Cadence so the couple joins the weekly planning nurture.
-  void syncToCadenceNewsletter(normalizedEmail, normalizedName);
+  // Push into Cadence so the couple joins the weekly planning nurture. Result
+  // (success / skipped / failed) is recorded back on the calculator_saves row
+  // so silent misconfigurations are visible in the admin Leads page.
+  // Non-blocking: the user-facing response never waits on Cadence.
+  void syncToCadenceAndRecord(supabase, saveId, normalizedEmail, normalizedName);
 
   return NextResponse.json({
     short_code: shortCode,

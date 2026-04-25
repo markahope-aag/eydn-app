@@ -9,6 +9,14 @@ type Lead = {
   source: string;
   details: string | null;
   created_at: string;
+  cadenceStatus?: "synced" | "failed" | "pending";
+  cadenceMessage?: string | null;
+};
+
+const CADENCE_BADGE: Record<NonNullable<Lead["cadenceStatus"]>, { label: string; cls: string }> = {
+  synced:  { label: "Cadence ✓",       cls: "badge-confirmed" },
+  failed:  { label: "Cadence failed",  cls: "badge-declined" },
+  pending: { label: "Cadence pending", cls: "badge-pending" },
 };
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -162,31 +170,47 @@ export default function LeadsPage() {
                 <th className="px-4 py-3 text-left font-semibold text-muted">Email</th>
                 <th className="px-4 py-3 text-left font-semibold text-muted">Source</th>
                 <th className="px-4 py-3 text-left font-semibold text-muted">Details</th>
+                <th className="px-4 py-3 text-left font-semibold text-muted">Cadence</th>
                 <th className="px-4 py-3 text-left font-semibold text-muted">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filtered.map((lead, i) => (
-                <tr key={`${lead.email}-${i}`}>
-                  <td className="px-4 py-3 font-semibold text-plum">
-                    {lead.name || <span className="text-muted/50 italic">No name</span>}
-                  </td>
-                  <td className="px-4 py-3 text-muted">{lead.email}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {lead.source.split(", ").map((s) => (
-                        <span key={s} className="badge badge-confirmed text-[11px]">
-                          {SOURCE_LABELS[s.trim()] || s}
+              {filtered.map((lead, i) => {
+                const cadenceBadge = lead.cadenceStatus ? CADENCE_BADGE[lead.cadenceStatus] : null;
+                return (
+                  <tr key={`${lead.email}-${i}`}>
+                    <td className="px-4 py-3 font-semibold text-plum">
+                      {lead.name || <span className="text-muted/50 italic">No name</span>}
+                    </td>
+                    <td className="px-4 py-3 text-muted">{lead.email}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {lead.source.split(", ").map((s) => (
+                          <span key={s} className="badge badge-confirmed text-[11px]">
+                            {SOURCE_LABELS[s.trim()] || s}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-[13px] text-muted">{lead.details || "—"}</td>
+                    <td className="px-4 py-3">
+                      {cadenceBadge ? (
+                        <span
+                          className={`badge ${cadenceBadge.cls} text-[11px]`}
+                          title={lead.cadenceMessage || undefined}
+                        >
+                          {cadenceBadge.label}
                         </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-[13px] text-muted">{lead.details || "—"}</td>
-                  <td className="px-4 py-3 text-muted">
-                    {new Date(lead.created_at).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
+                      ) : (
+                        <span className="text-muted/50">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-muted">
+                      {new Date(lead.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

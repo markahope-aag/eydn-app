@@ -7,8 +7,11 @@ import { sendEmail } from "@/lib/email";
 import { getNewsletterWelcomeEmail } from "@/lib/email-newsletter";
 import { cadenceSubscribe } from "@/lib/cadence";
 
-function syncNewsletterToCadence(email: string): Promise<void> {
-  return cadenceSubscribe({
+async function syncNewsletterToCadence(email: string): Promise<void> {
+  // Result intentionally discarded — newsletter signups don't have a
+  // per-row destination to record sync state on (calculator does, see
+  // syncToCadenceAndRecord in /api/tools/calculator-save).
+  await cadenceSubscribe({
     formId: process.env.CADENCE_NEWSLETTER_FORM_ID || "",
     email,
   });

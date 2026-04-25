@@ -16,12 +16,15 @@ const CADENCE_FORMS: Record<QuizId, string | undefined> = {
   planner_assessment: process.env.CADENCE_QUIZ_PLANNER_ASSESSMENT_FORM_ID,
 };
 
-function syncToCadence(
+async function syncToCadence(
   email: string,
   firstName: string,
   quizId: QuizId
 ): Promise<void> {
-  return cadenceSubscribe({
+  // Result intentionally discarded — quiz completions don't have a
+  // per-row destination to record sync state on (calculator does, see
+  // syncToCadenceAndRecord in /api/tools/calculator-save).
+  await cadenceSubscribe({
     formId: CADENCE_FORMS[quizId] || "",
     email,
     firstName,
