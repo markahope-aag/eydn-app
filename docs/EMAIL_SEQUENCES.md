@@ -1,8 +1,47 @@
 # Email Sequences — Admin Guide
 
-How the Eydn email sequence engine works, what's currently shipped, and how to maintain it without a code deploy.
+How the Eydn email sequence engine works, what was built across the April 2026 rollout (Phase 1 + Phase 2), and how to maintain it without a code deploy.
 
-> Companion to `COMMUNICATIONS.md` (which covers all communication channels). This doc focuses on the new DB-driven email engine introduced April 2026.
+> Companion to `COMMUNICATIONS.md` (which covers all communication channels). This doc focuses specifically on the DB-driven email engine.
+
+---
+
+## 0. What was built (April 2026)
+
+### Before
+All transactional and lifecycle email content lived in hand-written TypeScript helpers — `getTrialEmail()` in `src/lib/email-trial.ts` and `getLifecycleEmail()` in `src/lib/email.ts` — as a giant switch statement of inline HTML. Editing a subject line, a CTA, or a step delay meant a code change, PR, CI run, and Vercel deploy. The cron routes called these helpers directly and dedup'd via per-flow tables (`trial_email_log`, `lifecycle_emails`).
+
+### Phase 1 — the engine (commit `ff3902c`)
+Replaced the hand-coded send paths with a generic, DB-driven engine. **No new email content** — everything that was sending before is still sending the same content; the difference is *where* it's stored and *how* it's dispatched.
+
+What shipped:
+- **4 new tables**: `email_templates` (subject + HTML body + variables + category), `email_sequences` (slug + trigger event + audience filter), `email_sequence_steps` (sequence × ordered steps × day offsets), `sequence_send_log` (one row per send for dedup + audit).
+- **A runner** (`src/lib/email-sequences.ts`) — pure functions for due-step calculation, `{{var}}` template substitution, audience matching, and CAN-SPAM-aware footer selection. The runner is unit-tested independently of the database.
+- **A shared theme module** (`src/lib/email-theme.ts`) that pulls the palette and chrome from the canonical website tokens in `globals.css`. Old emails had drifted to a forest→blush gradient; the theme module corrects this back to the canonical forest→gold (`#2C3E2D` → `#8B7A30`) and switches `#6B6B6B` muted text to the WCAG-correct `#5A5A5A`.
+- **Seed migration** moved all 11 existing templates (3 trial + 8 lifecycle) into `email_templates` rows. The cron routes now call the runner instead of the hand-coded helpers.
+- **Backfill migration** copied every row in `trial_email_log` and `lifecycle_emails` into `sequence_send_log` so the cutover was a no-op — no user got re-emailed on the first run after deploy.
+- **Mirror writes**: the new cron paths still write back to `trial_email_log` and `lifecycle_emails` after a successful send, so existing admin Communications stats keep working. This is transitional — once the admin reads from `sequence_send_log` directly, the mirror can be dropped.
+- **Bug fix**: `lifecycle_emails.email_type` CHECK constraint was missing `download_reminder_1mo` (which the code was already trying to insert and silently failing on). Fixed by migration.
+
+### Phase 2 — new content + admin UI (commit `4726f11`)
+Now that templates and sequences are data, ship the three new sequences from the Drive sequence docs and an admin UI that lets you edit anything without a deploy.
+
+What shipped:
+- **3 new templates** appended to the existing `trial_expiry` sequence (steps 11, 12, 13 — vendor itemization tip, why-we-charge-$79 explainer, tomorrow-last-day warning).
+- **A new sequence `post_downgrade_nurture`** (8 emails, new `trial_downgraded` trigger, anchor = trial end date). Days 17, 20, 21, 25, 30, 45, 60, 90 of the user's account, all pushing $79 lifetime.
+- **A new sequence `wedding_milestones`** (9 emails, `wedding_date` trigger with negative offsets — 18mo through 1wk pre-wedding plus a +7d post-wedding thank-you).
+- **Backfill protection**: every existing wedding got pre-written "skip" rows in `sequence_send_log` for both new sequences, so the launch didn't blast 8–9 historical emails to mid-trial / mid-planning users. Only weddings created *after* the migration get the new sequences.
+- **New cron drivers**: `/api/cron/trial-emails` now also runs `post_downgrade_nurture` for users without a card on file (anchor = `trial_started_at + 14d`); `/api/cron/lifecycle` now also runs `wedding_milestones` alongside the existing post-wedding flow.
+- **Email-preferences enforcement**: nurture and marketing sequences honor `email_preferences.marketing_emails` and `unsubscribed_all`. The runner skips silently and doesn't write a send_log row for unsubscribed recipients.
+- **Admin API** (5 routes): list/get/patch templates, send-test from a template, list sequences with steps, patch a step.
+- **Admin UI** at `/dashboard/admin/email-sequences` — sequences card with inline step editing (offset + enabled), templates table with click-to-edit modal, modal has subject + HTML body editor, live preview, send-test against admin's email or a custom address.
+- **Sidebar link** under Operations → Email Sequences.
+
+### Net result
+- **31 templates** in the DB (11 existing migrated + 20 new), all editable via admin UI.
+- **4 sequences** wired up across 2 cron jobs.
+- **Zero code deploys** required to: change copy, retime a step, swap which template a step uses, disable a sequence, send a test, or add a new sequence on an existing trigger.
+- **The send provider is still Resend.** SES is a one-file swap behind `sendEmail()` whenever volume justifies it (~$200/mo Resend bill).
 
 ---
 
