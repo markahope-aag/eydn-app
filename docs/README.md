@@ -21,6 +21,7 @@ Welcome to the comprehensive documentation for eydn, the AI-powered wedding plan
 - **[Onboarding Process](ONBOARDING_QUESTIONNAIRE.md)** - User onboarding flow and questionnaire
 
 ### Technical Documentation
+- **[Operations Manual](OPERATIONS_MANUAL.md)** - Task-oriented runbook for platform operators: user management, billing, crons, incident response, and support workflows — no coding knowledge required
 - **[System Architecture](ARCHITECTURE.md)** - Technical architecture, database schema, and infrastructure
 - **[API Reference](API.md)** - Complete API documentation with endpoints and examples
 - **[Development Guide](DEVELOPMENT.md)** - Setup instructions, deployment, and contribution guidelines

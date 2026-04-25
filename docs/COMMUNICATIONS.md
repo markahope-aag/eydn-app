@@ -2,11 +2,14 @@
 
 How Eydn communicates with users across every channel.
 
+> **For email sequences specifically** (templates, step timing, audience filters, the admin editor) see **[EMAIL_SEQUENCES.md](EMAIL_SEQUENCES.md)** — the canonical doc for the DB-driven engine that powers all transactional + lifecycle + nurture sends. This file covers the broader channel inventory.
+
 ## Channels Overview
 
 | Channel | Provider | Status | Env Vars Required |
 |---------|----------|--------|-------------------|
-| Email | Resend | Active | `RESEND_API_KEY`, `RESEND_FROM_EMAIL` |
+| Email (transactional + sequences) | Resend | Active | `RESEND_API_KEY`, `RESEND_FROM_EMAIL` |
+| Email (newsletter / lead nurture) | Cadence (in-house, AWS SES) | Active | `CADENCE_URL`, `CADENCE_NEWSLETTER_FORM_ID` (+ per-quiz form IDs) |
 | In-app notifications | Supabase | Active | None (uses existing DB) |
 | Date change banners | Supabase | Active | None (uses existing DB) |
 | Lifecycle banners | Supabase | Active | None (uses existing DB) |

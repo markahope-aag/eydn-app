@@ -43,6 +43,27 @@ What shipped:
 - **Zero code deploys** required to: change copy, retime a step, swap which template a step uses, disable a sequence, send a test, or add a new sequence on an existing trigger.
 - **The send provider is still Resend.** SES is a one-file swap behind `sendEmail()` whenever volume justifies it (~$200/mo Resend bill).
 
+### Phase A — Calculator leads in the milestone series (commit `f8f3216`)
+Closed a gap: the wedding budget calculator collects `month` (1-12) but not a date, so calculator-derived weddings had `weddings.date = null` and were silently excluded from `wedding_milestones`.
+
+What shipped:
+- **`weddings.inferred_date` column** — distinct from `weddings.date` so other features (phase calc, post-wedding archival, countdown widgets) keep reading only the user-confirmed date. **Only the `wedding_milestones` sequence reads `inferred_date` as a fallback anchor.**
+- **`inferWeddingDate(month, now)` helper** — returns the 15th of the next occurrence of `month` (this year if month is still ahead, else next year). Pure, unit-tested.
+- **Calculator handoff** writes `inferred_date` on every new wedding insert.
+- **Lifecycle cron** uses `wedding.date ?? wedding.inferred_date` for the `wedding_milestones` runner call. `wedding_lifecycle` (post-wedding archival) still strictly requires a confirmed `date` — never fires "your account is now read-only" based on a guess.
+
+When the user later confirms their actual `date`, it takes precedence.
+
+### Phase C — Cadence sync visibility (commit `b4aeb4b`)
+Closed a different silent failure: `cadenceSubscribe()` (the helper that pushes calculator/newsletter/quiz leads into our Cadence ESP) was fire-and-forget with a console.error. If `CADENCE_NEWSLETTER_FORM_ID` was unset, every submit silently no-op'd.
+
+What shipped:
+- **`cadenceSubscribe` returns a structured result** — `ok` / `skipped` / `error`. Existing newsletter + quiz callers discard the result (no per-row destination); calculator-save records it.
+- **`calculator_saves.cadence_synced_at` + `cadence_error`** columns track each lead's sync state.
+- **Admin Leads page** shows a Cadence column per lead — synced ✓ / failed / pending. Hover the badge for the error message.
+
+Operator action: verify `CADENCE_URL` and `CADENCE_NEWSLETTER_FORM_ID` are set in production. Any save with a missing env var will surface as `cadence_error: 'skipped: CADENCE_URL not configured'` in the admin Leads page.
+
 ---
 
 ## 1. The 30-second model
@@ -104,8 +125,10 @@ Because all three live in the database, **you can change template copy, retime a
 | 8 | +76 | `downgrade_d90_coordination` |
 
 ### Sequence: `wedding_milestones`
-**Trigger:** `wedding_date` (anchor = `weddings.date`)
-**Audience:** every wedding with a date set. Honors `marketing_emails` opt-out.
+**Trigger:** `wedding_date` (anchor = `weddings.date ?? weddings.inferred_date`)
+**Audience:** every wedding with either a confirmed date OR a calculator-inferred date. Honors `marketing_emails` opt-out.
+
+The `inferred_date` fallback (added April 2026) lets calculator-only leads enter the milestone series even before they sign in and confirm their actual date. See §0 Phase A for details.
 
 | Step | Offset (days) | When | Template |
 |---:|---:|---|---|
@@ -257,7 +280,10 @@ The "Send test" button in the admin UI renders against fixed sample values (`Sam
 ### 8g. Mid-trial users may catch up multiple emails
 The April 2026 expansion of `trial_expiry` (adding days 11/12/13) wasn't backfilled because the trial window is short (5 days). A user currently on day 12 will get day 11 + day 12 emails on the same cron run. This is a one-time effect that bleeds out within ~5 days of any future expansion to `trial_expiry`. For longer sequences, always backfill (see 8a).
 
-### 8h. Legacy mirror tables still exist
+### 8h. `inferred_date` is read by milestones only
+The `weddings.inferred_date` column exists so calculator leads can receive `wedding_milestones` emails before they confirm their actual wedding date. **No other code path should read it.** Phase calculation (`calculatePhase`), post-wedding archival (`wedding_lifecycle`), countdown widgets, and the dashboard all keep reading `weddings.date`. If you add a new feature that needs a wedding date, decide explicitly whether it should accept the inferred fallback — most should not, because the inferred date is a guess derived from `month` only.
+
+### 8i. Legacy mirror tables still exist
 The runner writes to `sequence_send_log` (the new source of truth), but for the trial + post-wedding lifecycle sequences it *also* writes to the old `trial_email_log` and `lifecycle_emails` tables so the existing admin Communications stats keep working. This is transitional. Don't read from the old tables in new code — they're scheduled to be dropped once the admin reads off `sequence_send_log` directly.
 
 ---
