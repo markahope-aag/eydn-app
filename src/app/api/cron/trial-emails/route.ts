@@ -14,6 +14,11 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://eydn.app";
 // (steps up to +76 days post-downgrade = day 90 of account).
 const CANDIDATE_WINDOW_DAYS = 95;
 
+// calculator_followup is a tighter window: only fires within day 7 of the
+// calculator save, so a 10-day window is plenty of slack to catch any save
+// whose +7 step might still be due.
+const CALCULATOR_WINDOW_DAYS = 10;
+
 const STEP_TO_LEGACY_TYPE: Record<number, string> = {
   10: "day_10_save_card",
   14: "day_14_renews_today",
@@ -21,10 +26,11 @@ const STEP_TO_LEGACY_TYPE: Record<number, string> = {
 };
 
 /**
- * Daily cron: drives the trial-time email sequences.
+ * Daily cron: drives all calculator + trial-time email sequences.
  *
- *   trial_expiry           anchor=trial_started_at      days 10–14 of trial
- *   post_downgrade_nurture anchor=trial_started_at+14d  days 17, 20, ... 90
+ *   trial_expiry           anchor=trial_started_at         days 10–14 of trial
+ *   post_downgrade_nurture anchor=trial_started_at+14d     days 17, 20, ... 90
+ *   calculator_followup    anchor=calculator_saves.created days 1, 3, 7
  *
  * Per-step audience filters (`has_card_saved` true/false) split day-14 senders
  * between the renews-today and downgraded variants. post_downgrade_nurture only
@@ -161,6 +167,88 @@ export async function POST(request: Request) {
           template_slug: step.templateSlug,
         });
       }
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  // calculator_followup: 3 nurture emails between calculator submit and
+  // trial day 10. Anchored to calculator_saves.created_at (the handoff
+  // writes calculator_saves and weddings nearly simultaneously). We iterate
+  // calculator_saves directly so leads who never finished the handoff (rare,
+  // but possible if Clerk was down) still get the follow-up.
+  // ──────────────────────────────────────────────────────────────────────
+  const calcWindowStart = new Date(now - CALCULATOR_WINDOW_DAYS * DAY_MS).toISOString();
+  const { data: calcSaves } = await supabase
+    .from("calculator_saves")
+    .select("id, email, name, budget, guests, state, created_at")
+    .gte("created_at", calcWindowStart);
+
+  for (const cs of calcSaves || []) {
+    // Schema permits null created_at (default now()) but in practice every
+    // row has one; guard anyway so the runner gets a valid anchor.
+    if (!cs.created_at) continue;
+
+    // Resolve Clerk user_id from email. The handoff creates the Clerk user
+    // synchronously with the save, so this lookup is expected to succeed for
+    // any save older than ~1 minute.
+    let userId: string | null = null;
+    try {
+      const clerk = await clerkClient();
+      const list = await clerk.users.getUserList({ emailAddress: [cs.email], limit: 1 });
+      userId = list.data[0]?.id || null;
+    } catch {
+      continue;
+    }
+    if (!userId) continue;
+
+    // Look up the wedding so we can read email preferences (per-wedding).
+    const { data: wedding } = await supabase
+      .from("weddings")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const weddingId = wedding?.id ?? null;
+
+    let marketingUnsubscribed = false;
+    let unsubscribeToken = "";
+    if (weddingId) {
+      const prefs = await getEmailPreferences(weddingId);
+      marketingUnsubscribed = prefs.unsubscribed_all || !prefs.marketing_emails;
+      unsubscribeToken = prefs.unsubscribe_token;
+    }
+
+    const firstName = (cs.name || "").split(" ")[0] || "there";
+    const budgetFormatted = cs.budget.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    });
+
+    const calcResult = await runSequenceForRecipient("calculator_followup", {
+      userId,
+      weddingId,
+      email: cs.email,
+      attrs: { marketing_unsubscribed: marketingUnsubscribed },
+      templateContext: {
+        firstName,
+        guests: cs.guests,
+        state: cs.state,
+        budgetFormatted,
+        appUrl: APP_URL,
+        unsubscribeToken,
+      },
+      anchor: new Date(cs.created_at),
+    });
+
+    totalSent += calcResult.sent;
+    totalSkipped += calcResult.skippedAudience + calcResult.skippedUnsubscribed;
+    errors.push(...calcResult.errors);
+
+    for (const step of calcResult.sentSteps) {
+      await captureServer(userId, "calculator_followup_email_sent", {
+        step_order: step.stepOrder,
+        template_slug: step.templateSlug,
+      });
     }
   }
 

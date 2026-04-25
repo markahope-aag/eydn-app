@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 // tests + integration tests against real DB (added with the admin UI).
 
 const mockWeddings = vi.fn();
+const mockCalcSaves = vi.fn();
 const mockTrialLogUpsert = vi.fn().mockResolvedValue({ error: null });
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -16,6 +17,13 @@ vi.mock("@/lib/supabase/server", () => ({
         return {
           select: vi.fn(() => ({
             gte: vi.fn(() => mockWeddings()),
+          })),
+        };
+      }
+      if (table === "calculator_saves") {
+        return {
+          select: vi.fn(() => ({
+            gte: vi.fn(() => mockCalcSaves()),
           })),
         };
       }
@@ -69,6 +77,7 @@ beforeEach(() => {
   process.env = { ...ORIGINAL_ENV };
   process.env.CRON_SECRET = "test-cron-secret";
   mockWeddings.mockResolvedValue({ data: [] });
+  mockCalcSaves.mockResolvedValue({ data: [] });
 });
 
 describe("POST /api/cron/trial-emails", () => {
@@ -77,15 +86,16 @@ describe("POST /api/cron/trial-emails", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 200 with zero counts when there are no trials in window", async () => {
+  it("returns 200 with zero counts when there are no candidates in window", async () => {
     const res = await POST(cronReq("Bearer test-cron-secret"));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toMatchObject({ ok: true, sent: 0, skipped: 0 });
   });
 
-  it("queries weddings created within the trial window", async () => {
+  it("queries both weddings and calculator_saves within their windows", async () => {
     await POST(cronReq("Bearer test-cron-secret"));
     expect(mockWeddings).toHaveBeenCalled();
+    expect(mockCalcSaves).toHaveBeenCalled();
   });
 });
