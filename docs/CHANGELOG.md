@@ -2,6 +2,28 @@
 
 This document tracks all notable changes, updates, and improvements to the eydn wedding planning platform.
 
+## [1.12.0] - April 26, 2026
+
+### Removed: Places API seeder pipeline
+
+The Google Places batch-seeder pipeline has been removed in full. The scraper-import path now covers all structured vendor intake with proper quality gates (minimum score, street address, phone, website, and a finished description), making the Places pipeline redundant and actively harmful — it bypassed all of those gates and was the primary source of low-quality vendor rows slipping into the directory.
+
+**What was removed:**
+- Admin UI tab "Places Seed" at `/dashboard/admin/vendors` — renamed to **Import**. The auto-import rejections panel and CSV importer remain, now under the Import tab.
+- API routes `/api/admin/places-seed-configs/` and `/api/admin/places-usage`
+- Cron `/api/cron/seed-vendors` (previously ran Sundays 02:00 UTC)
+- Library `src/lib/places-seeder.ts` and its unit tests
+- DB tables `places_seed_configs` and `places_api_usage_log` (dropped via migration `20260426200028_drop_places_seed_tables.sql`)
+
+**What is kept:**
+- `src/app/api/places-photo/route.ts` — photo proxy used to render Places photo references on existing vendor rows
+- `src/app/api/suggested-vendors/[id]/gmb/route.ts` — on-demand GMB enrichment from the vendor edit modal
+- `src/lib/google-places.ts` — shared by the photo proxy and GMB enrichment routes
+- `GOOGLE_PLACES_API_KEY` env var — still consumed by on-demand enrichment
+- Existing `suggested_vendors` rows with `seed_source = 'places_api'` — the value is a valid audit marker; only the bookkeeping tables that backed the pipeline were dropped
+
+---
+
 ## [1.11.0] - April 26, 2026
 
 ### Scraper integration — refresh cron, webhook receiver, photos, description quality, business status

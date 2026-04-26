@@ -571,7 +571,6 @@ Eydn does not charge vendors for inclusion or placement. The directory shown to 
 | Source | Where rows come from | Stamped as |
 |---|---|---|
 | **Auto-import from scraper** | The hourly cron pulls new vendors from your external scraper's Supabase, applies quality rules, and inserts qualifying rows automatically | `seed_source = 'scraper_auto'` |
-| **Places API seeder** | A scheduled cron pulls businesses from Google Places for category × city combinations you configure | `seed_source = 'places_api'` |
 | **CSV import** | You upload a spreadsheet of vendors via the admin UI | `seed_source = 'csv'` |
 | **External Supabase import** | The "Import from Supabase" button pulls vendors from a separate Supabase instance (e.g. an out-of-app data pipeline you maintain elsewhere). Dedupes on (name, city, state). | `seed_source` not auto-stamped — set the optional **Source label** field on the import form for an audit hint, or leave NULL |
 | **Manual entry** | You add a vendor one-at-a-time via the admin form | `seed_source = 'manual'` (or NULL for legacy rows) |
@@ -600,13 +599,13 @@ If any of these are missing, the cron no-ops gracefully and returns a note to th
 - Phone populated
 - Website populated
 
-A vendor missing any of those gets logged to `vendor_import_rejections` with the failed-rule reasons. Admins review on the Places Seed tab → **Auto-import rejections** section.
+A vendor missing any of those gets logged to `vendor_import_rejections` with the failed-rule reasons. Admins review rejections on the **Import** tab → **Auto-import rejections** section.
 
 **The cron is idempotent.** Each scraper row's `id` is stamped onto the imported `suggested_vendors` row (`scraper_id` column) and onto rejection rows. The cron skips any scraper id already in either table, so re-runs don't double-process and don't re-evaluate decisions you've made.
 
 ### How do I review and override import rejections?
 
-On `/dashboard/admin/vendors` → **Places Seed** tab → **Auto-import rejections** card at the top.
+On `/dashboard/admin/vendors` → **Import** tab → **Auto-import rejections** card at the top.
 
 Each rejected vendor shows: name, category, city/state, scraper score, the failed rules (in red), and a collapsible "details" section with phone, website, email, street, full description, and the scraper id.
 
@@ -668,25 +667,6 @@ Vercel env vars (Production + Preview + Development):
 | `SCRAPER_WEBHOOK_SECRET` | shared with scraper's Settings → Integrations | `/api/webhooks/scraper` only |
 
 If any of the first three are missing, the crons no-op gracefully (return 200 with a note). If `SCRAPER_WEBHOOK_SECRET` is missing, the webhook returns 503.
-
-### How do I configure the Places API seeder?
-
-Go to `/dashboard/admin/vendors`, click the **Places Seed** tab.
-
-The page shows three things:
-
-1. **Today's API spend** — a card at the top showing how many cost units you've used today versus your daily cap. The cap defaults to 200 cost units (~25 textSearch calls) and is set via the `PLACES_API_DAILY_CAP` env var in Vercel. When the cap is hit, both the cron and "Run now" buttons stop until UTC midnight.
-
-2. **Add config form** — pick a category, type a city, pick a state, and set how many results you want (max 60). The cron will pull that many businesses from Google Places for that combination on its next run.
-
-3. **Configs table** — every config you've added, with last/next run times, the count from its last run, any error, and per-row controls:
-   - **Run now** — triggers a single run immediately (subject to the daily cap)
-   - **Toggle on/off** — pauses a config without deleting it
-   - **Del** — removes the config (already-seeded vendors stay in the directory)
-
-The cron itself runs **Sundays at 02:00 UTC**, picks up every enabled config whose `next_run_at` has passed, and re-runs them. After each run, `next_run_at` is set to 30 days out — so each config refreshes monthly by default.
-
-> Cost guidance: at the default cap, you can seed roughly 25 cities-per-category per day (each call returns up to 20 vendors). Bulk-seeding a new market is a "raise the cap temporarily" exercise: bump `PLACES_API_DAILY_CAP` to 1000 in Vercel, run a batch via "Run now", then drop it back. Verify spending against the [Google Cloud Console billing page](https://console.cloud.google.com/billing) — the cost units are an internal approximation, not the authoritative dollar figure.
 
 ### How do I import from an external Supabase instance?
 
@@ -768,7 +748,7 @@ ORDER BY last_imported DESC;
 
 ### How do I bulk-import vendors from a CSV?
 
-On the **Places Seed** tab there's a CSV import card at the top. Steps:
+On the **Import** tab there's a CSV import card. Steps:
 
 1. Prepare a CSV with these required columns: `name`, `category`, `city`, `state`. Optional columns: `country`, `zip`, `website`, `phone`, `email`, `address`, `description`, `price_range` (must be `$`/`$$`/`$$$`/`$$$$`), `gmb_place_id`.
 2. Click "Choose file" and select the CSV.
@@ -805,10 +785,6 @@ For bulk operations (deactivate everything in a category, etc.), use SQL via the
 
 2. **CSV imports do not refresh existing rows.** If you upload a CSV that includes a vendor already in the directory, the row is skipped (counted as duplicate). To bulk-update vendor copy, you'd need to delete the old rows first, or do the update via SQL.
 
-3. **The Places API seeder pulls basic info only** (name, address, phone, website, place ID). Reviews, photos, and full GMB data are pulled on-demand when a couple opens a vendor card. This keeps per-row seeding cheap (~$0.04 per call instead of ~$0.10 with full details).
-
-4. **`PLACES_API_DAILY_CAP` is a soft cap.** It's enforced by querying `places_api_usage_log` before each call. If two cron runs trigger simultaneously, both could squeak through before either logs. In practice this never happens — the cron is single-threaded — but if you trigger many "Run now" actions in parallel from the admin UI, expect minor overage.
-
-5. **Do not edit `seed_source` after the fact.** It's an audit trail of where the row came from, not a control flag. The runner doesn't read it; admin curation goes through the per-row featured/active toggles instead.
+3. **Do not edit `seed_source` after the fact.** It's an audit trail of where the row came from, not a control flag. The runner doesn't read it; admin curation goes through the per-row featured/active toggles instead.
 
 **Note:** Invite-only mode is a flag but there is no invite-token generation UI — this setting paired with manual outreach is the intended workflow for beta periods.

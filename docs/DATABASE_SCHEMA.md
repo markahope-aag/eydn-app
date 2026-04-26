@@ -1,6 +1,6 @@
 # eydn Database Schema
 
-**51 tables · 80 migrations · Supabase (PostgreSQL)**
+**49 tables · 81 migrations · Supabase (PostgreSQL)**
 
 ---
 
@@ -461,31 +461,8 @@ Platform-curated vendor directory.
 | gmb_place_id | text UNIQUE | Google Places canonical ID; dedup key for the seeder |
 | gmb_data | jsonb | Cached enrichment (reviews, photos, hours) — populated on-demand by `/api/suggested-vendors/[id]/gmb` |
 | gmb_last_refreshed_at | timestamptz | |
-| seed_source | text | `'places_api'` / `'csv'` / `'manual'` / `'submission'` — audit trail of where the row came from |
+| seed_source | text | `'places_api'` / `'scraper_auto'` / `'csv'` / `'manual'` / `'submission'` — audit trail of where the row came from. `'places_api'` is a legacy value on rows seeded before the Places pipeline was removed; the value is valid and the rows remain. |
 | created_at, updated_at | timestamptz | |
-
-### `places_seed_configs`
-Category × city combinations the seeder cron should pull from Google Places.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid | PK |
-| category, city, state, country | text | UNIQUE (category, city, state) |
-| max_results | int | 1–60, capped by Google's per-textSearch pagination limit |
-| enabled | boolean | Cron skips disabled rows |
-| last_run_at, next_run_at | timestamptz | Cron stamps after each run |
-| last_result_count | int | Diagnostics |
-| last_error | text | |
-
-### `places_api_usage_log`
-Per-call audit so the daily cost cap can be enforced via `SUM(cost_units) today < PLACES_API_DAILY_CAP`. Truncate older than 30 days when convenient.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid | PK |
-| endpoint | text | `'places.searchText'`, etc. |
-| cost_units | int | ≈ 8 per textSearch with our field mask |
-| called_at | timestamptz | |
 
 ### `vendor_submissions`
 Couple-submitted vendor suggestions awaiting admin review. Status: pending → approved → rejected.
