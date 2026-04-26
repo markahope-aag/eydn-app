@@ -599,21 +599,81 @@ The cron itself runs **Sundays at 02:00 UTC**, picks up every enabled config who
 
 ### How do I import from an external Supabase instance?
 
-If you maintain a vendor data pipeline outside Eydn (a separate Supabase project, a partner-supplied database, etc.), the **Import from Supabase** button on the Directory tab pulls rows from any reachable Supabase table into `suggested_vendors`.
+The **Import from Supabase** button on the Directory tab pulls rows from any reachable Supabase project's `vendors`/`suggested_vendors`/`businesses` table into the local directory. This is the path used to ingest data from any out-of-app vendor pipeline you maintain (a separate Supabase project, a partner-supplied database, etc.) — the importer is a manual, admin-triggered pull. There is no scheduled job, no webhook, no shared credential.
 
-1. Click **Import from Supabase** on `/dashboard/admin/vendors` (Directory tab).
+#### What it does end-to-end
+
+1. **Connects** to the remote Supabase project using the URL + service role key you supply. The URL must end in `.supabase.co` (the importer rejects anything else).
+2. **Reads** up to 5,000 rows from the table you name, optionally filtered by one column = value pair you supply.
+3. **Maps** remote columns to the local schema. Defaults assume the remote columns are named `name`, `category`, `city`, `state`, `website`, `phone`, `email`, `address`, `zip`, `country`, `description`, `price_range`. If your remote schema uses different names, supply a column map (currently only via direct API call; not surfaced in the admin UI form).
+4. **Normalizes** each row in transit (see normalization rules below).
+5. **Drops invalid rows** — anything missing `name`, `category`, `city`, or `state`, or with a state that can't resolve to a 2-letter code.
+6. **Dedupes** against existing `suggested_vendors` on lowercased `(name, city, state)`. Existing rows are **never overwritten**.
+7. **Stamps** every newly-inserted row with `imported_at` (timestamp) and `import_source` (your Source label, or the remote URL if blank).
+8. **Inserts** in batches of 100. A failed batch doesn't block subsequent batches; per-batch errors are returned in the response.
+
+#### Step-by-step
+
+1. Go to `/dashboard/admin/vendors`, **Directory** tab. Click **Import from Supabase**.
 2. Fill in:
-    - **Supabase URL** — the source instance's project URL (e.g. `https://xxxxx.supabase.co`)
-    - **Service role key** — for read access to the source table
-    - **Table name** — defaults to `vendors`; allowed values: `vendors`, `suggested_vendors`, `businesses`
-    - **Filter column / value** — optional, for partial pulls (e.g. only `status='active'` rows)
-    - **Source label** — free-text tag stored on each imported row's `import_source` field for audit
-3. Click **Dry run** first. The summary shows how many rows would import vs. dedupe.
-4. If the preview looks right, click **Import for real**.
+    - **Supabase URL** — the source project's URL (e.g. `https://xxxxx.supabase.co`)
+    - **Service role key** — for read access to the source table. Get it from the source project's Supabase dashboard → Project Settings → API → `service_role` secret.
+    - **Table name** — defaults to `vendors`. Other allowed values: `suggested_vendors`, `businesses`. The allowlist is hardcoded for safety; other names are rejected.
+    - **Filter column / value** — optional. For partial pulls (e.g. only `status='active'` rows, or only `state='TX'`).
+    - **Source label** — free-text tag stamped on each imported row's `import_source` field. Set it meaningfully — e.g. `"florists batch 2026-04-26"` — so you can later query "which rows came from this batch?"
+3. Click **Dry run** first. The response shows:
+    - `total_remote` — how many rows the source returned
+    - `valid` — how many passed normalization
+    - `skipped_invalid` — how many were dropped (missing required fields, unresolvable state, etc.)
+    - `duplicates` — how many already exist in your directory
+    - `would_import` — net new rows that would be inserted
+    - `preview` — the first 10 rows that would be inserted
+4. If `would_import` looks right and the preview has the right shape, click **Import for real**.
 
-Dedup is on `(name, city, state)`. Rows already present get skipped, not overwritten. The endpoint can handle ~5,000 rows per call; split larger batches.
+#### What gets normalized in transit
 
-> Operationally, this is the path used to ingest data from any out-of-app vendor pipeline. Anything that produces vendor rows in a Supabase-shaped schema can feed Eydn through it. Set the **Source label** field meaningfully (e.g. "florists batch April 2026") so you can audit later which import batch a row came from.
+| Field | Rule |
+|---|---|
+| **Category** | Aliases collapse to the 13-category enum. `"photography"` / `"wedding photographer"` / `"photo/video"` → `"Photographer"`. Unrecognized values pass through unchanged (and may need an admin edit later). |
+| **State** | `"texas"` / `"Tx"` / `"TX"` → `"TX"`. Unresolvable values → row dropped as invalid. |
+| **City** | Title-cased and trimmed. |
+| **Phone** | Standardized format regardless of input style. |
+| **Website** | Protocol added if missing; trailing slash stripped. |
+| **Email** | Lowercased and trimmed. |
+| **Price range** | Mapped to `$`/`$$`/`$$$`/`$$$$` if possible; null otherwise. |
+| **Country** | Defaults to `"US"` if missing. |
+
+#### Operational notes
+
+- **5,000-row cap per call.** If your source has more rows, split via the Filter column/value field — e.g. import `state='TX'` first, then `state='CA'`, etc.
+- **Synchronous, foreground request.** Large imports take 30+ seconds and the admin UI sits on it. No background job, no progress bar.
+- **Sensitive payload.** The service role key is sent over HTTPS to your Vercel function and then to the remote Supabase. **If a server error happens during the request, the key may end up in Vercel error logs.** Treat the import action as elevated; rotate the source-side service role key periodically (quarterly is fine).
+- **No `seed_source` stamp.** This pipeline pre-dates the `seed_source` column; rows are stamped via the older `imported_at` / `import_source` columns instead. To backfill `seed_source = 'external_supabase'` on imported rows, run:
+  ```sql
+  UPDATE public.suggested_vendors
+  SET seed_source = 'external_supabase'
+  WHERE imported_at IS NOT NULL AND seed_source IS NULL;
+  ```
+- **Failed dry run with `would_import = 0`** means everything in the source already exists in your directory (dedup match). To force an update of existing rows, you'd need to delete them first via SQL or the Directory tab — the importer never overwrites.
+
+#### Auditing later
+
+To find every row imported by a particular batch:
+```sql
+SELECT id, name, category, city, state, imported_at, import_source
+FROM public.suggested_vendors
+WHERE import_source = 'florists batch 2026-04-26'
+ORDER BY name;
+```
+
+To find every batch label that's been used:
+```sql
+SELECT import_source, COUNT(*) AS rows, MAX(imported_at) AS last_imported
+FROM public.suggested_vendors
+WHERE imported_at IS NOT NULL
+GROUP BY import_source
+ORDER BY last_imported DESC;
+```
 
 ### How do I bulk-import vendors from a CSV?
 
