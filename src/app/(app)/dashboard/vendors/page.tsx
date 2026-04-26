@@ -602,6 +602,7 @@ export default function VendorsPage() {
                             src={vendor.gmb_data.photoUrl}
                             alt={vendor.name}
                             fill
+                            unoptimized
                             className="object-cover"
                           />
                         </div>

@@ -521,6 +521,7 @@ function GmbHighlightCard({ state }: { state: PlaceData | "loading" | "error" | 
               src={data.photoUrl}
               alt={data.name}
               fill
+              unoptimized
               className="object-cover"
             />
           </div>
@@ -648,7 +649,7 @@ function FeaturedCard({
       {/* Photo */}
       {photo && (
         <div className="relative w-full h-36">
-          <Image src={photo} alt={vendor.name} fill className="object-cover" />
+          <Image src={photo} alt={vendor.name} fill unoptimized className="object-cover" />
         </div>
       )}
       <div className="p-4">
@@ -726,7 +727,7 @@ function VendorRow({
         {/* Thumbnail */}
         {photo ? (
           <div className="w-12 h-12 rounded-[10px] overflow-hidden relative flex-shrink-0">
-            <Image src={photo} alt={vendor.name} fill className="object-cover" />
+            <Image src={photo} alt={vendor.name} fill unoptimized className="object-cover" />
           </div>
         ) : (
           <div className="w-12 h-12 rounded-[10px] bg-lavender flex items-center justify-center flex-shrink-0">
