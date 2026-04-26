@@ -584,18 +584,26 @@ export default function AdminVendorsPage() {
                 <span className="text-[15px] font-semibold text-plum truncate">{v.name}</span>
                 {v.featured && <span className="badge badge-booked">Featured</span>}
                 {!v.active && <span className="badge badge-declined">Inactive</span>}
-                {v.quality_score !== null && (
-                  <span
-                    className="badge badge-pending"
-                    title="Internal quality score (admin-only, not shown to couples)"
-                  >
-                    {v.quality_score.toFixed(1)}
-                  </span>
-                )}
               </div>
               <p className="text-[12px] text-muted">
                 {v.category} · {v.city}, {v.state} {v.price_range && `· ${v.price_range}`}
               </p>
+            </div>
+            {/* Score column — fixed width so values line up across rows. */}
+            <div
+              className="w-16 text-right tabular-nums shrink-0"
+              title="Internal quality score (admin-only, not shown to couples)"
+            >
+              {v.quality_score !== null ? (
+                <>
+                  <span className="text-[15px] font-semibold text-violet">
+                    {v.quality_score.toFixed(1)}
+                  </span>
+                  <p className="text-[10px] text-muted uppercase tracking-wide">score</p>
+                </>
+              ) : (
+                <span className="text-[13px] text-muted/60">—</span>
+              )}
             </div>
             {/* Stop propagation so toggling Featured/Active doesn't open the modal. */}
             <label
