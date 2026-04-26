@@ -58,11 +58,16 @@ type ScraperVendor = {
   updated_at: string | null;
 };
 
-/** Columns we ask the scraper for. Kept in lock-step with ScraperVendor. */
+/** Columns we ask the scraper for. Kept in lock-step with ScraperVendor.
+ *  NOTE: `photos` is intentionally omitted — the scraper team is adding
+ *  that column but it hasn't shipped yet. Including it here causes the
+ *  whole query to fail with "column vendors.photos does not exist".
+ *  Add `photos` back once the scraper ships it. The receiving code is
+ *  already defensive (`row.photos ?? []`) so no other change needed. */
 const SCRAPER_SELECT =
   "id, name, category, street, city, state, zip, country, phone, website, email, " +
   "description, description_status, eydn_score, price_level, market, " +
-  "instagram, facebook, pinterest, business_status, hours, lat, lng, photos, _review_count, " +
+  "instagram, facebook, pinterest, business_status, hours, lat, lng, _review_count, " +
   "client_id, created_at, updated_at";
 
 /** Business statuses that mean "don't surface to couples". Vendor stays in
