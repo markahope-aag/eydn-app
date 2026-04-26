@@ -2,6 +2,35 @@
 
 This document tracks all notable changes, updates, and improvements to the eydn wedding planning platform.
 
+## [1.10.0] - April 26, 2026
+
+### Auto-import vendors from external scraper, hourly + quality-gated
+
+A new hourly cron (`/api/cron/import-vendors`) pulls new vendor rows from an external scraper's Supabase, normalizes them, applies Eydn's quality rules, and either inserts them into `suggested_vendors` or logs them to a new `vendor_import_rejections` table for admin review. End-to-end hands-off ingestion replaces what was previously a manual "Import from Supabase" click per batch.
+
+Schema additions:
+- `suggested_vendors.scraper_id text UNIQUE` — origin row id from the scraper, used for idempotent dedup across re-runs.
+- `suggested_vendors.manually_approved boolean` — set when an admin overrides a quality rejection; honored by the quality checker so re-imports never re-reject.
+- New `vendor_import_rejections` table — full raw scraper row + array of failed rules + audit timestamps.
+
+Quality rules (`src/lib/vendors/quality.ts`, hardcoded — product decision, not data):
+- `quality_score >= 35`
+- street address required
+- phone required
+- website required
+
+Normalization: expanded category aliases for `bakery`, `wedding cake bakery`, `hair salon wedding`, `hair salon`, `salon` so common scraper category strings now map cleanly into Eydn's enum.
+
+Admin surface:
+- New **Auto-import rejections** panel at the top of the Places Seed tab on `/dashboard/admin/vendors`. Filter by status (pending / overridden / all), expand a row to see all raw scraper fields, click Override to promote a rejected vendor to the directory anyway.
+- Three new env vars (Vercel): `SCRAPER_SUPABASE_URL`, `SCRAPER_SUPABASE_KEY`, `SCRAPER_EYDN_CLIENT_ID`. Missing creds → cron no-ops gracefully (returns 200 with a note); the schedule stays enabled while you wire up.
+
+Operationally idempotent: the cron skips any scraper row whose id is already in `suggested_vendors.scraper_id` OR `vendor_import_rejections.scraper_id`. Re-running is safe.
+
+10 unit tests for `checkQuality` (each rule independently, manually_approved override, multiple-failure reporting). Full suite green at 1342.
+
+---
+
 ## [1.9.0] - April 26, 2026
 
 ### Vendor quality score (admin-only)

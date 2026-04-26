@@ -6,6 +6,7 @@ import { VENDOR_CATEGORIES } from "@/lib/vendors/categories";
 import { PlacesSeedTab } from "./_components/PlacesSeedTab";
 import { CsvImportPanel } from "./_components/CsvImportPanel";
 import { VendorEditModal, type Vendor as ModalVendor } from "./_components/VendorEditModal";
+import { ImportRejectionsPanel } from "./_components/ImportRejectionsPanel";
 
 type SuggestedVendor = {
   id: string;
@@ -298,6 +299,14 @@ export default function AdminVendorsPage() {
 
       {tab === "seed" && (
         <div className="mt-4 space-y-6">
+          <ImportRejectionsPanel
+            onOverride={() => {
+              fetch("/api/admin/suggested-vendors")
+                .then((r) => (r.ok ? r.json() : []))
+                .then(setVendors)
+                .catch(() => {});
+            }}
+          />
           <CsvImportPanel
             onImported={() => {
               fetch("/api/admin/suggested-vendors")

@@ -82,6 +82,8 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "cake/dessert baker": "Cake/Dessert Baker",
   "cake baker": "Cake/Dessert Baker",
   "wedding cake": "Cake/Dessert Baker",
+  "wedding cake bakery": "Cake/Dessert Baker",
+  "wedding bakery": "Cake/Dessert Baker",
 
   // Hair Stylist
   "hair": "Hair Stylist",
@@ -89,6 +91,10 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "hairstylist": "Hair Stylist",
   "hair stylists": "Hair Stylist",
   "wedding hair": "Hair Stylist",
+  "hair salon": "Hair Stylist",
+  "hair salon wedding": "Hair Stylist",
+  "wedding hair salon": "Hair Stylist",
+  "salon": "Hair Stylist",
 
   // Makeup Artist
   "makeup": "Makeup Artist",

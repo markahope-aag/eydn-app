@@ -566,19 +566,68 @@ In the Settings tab (`/dashboard/admin?tab=settings`), under **Registration**:
 
 ## 11. Vendor directory management
 
-Eydn does not charge vendors for inclusion or placement. The directory shown to couples (`/dashboard/vendors/directory`) is sourced five ways, all of them under your control as admin:
+Eydn does not charge vendors for inclusion or placement. The directory shown to couples (`/dashboard/vendors/directory`) is sourced six ways, all of them under your control as admin:
 
 | Source | Where rows come from | Stamped as |
 |---|---|---|
+| **Auto-import from scraper** | The hourly cron pulls new vendors from your external scraper's Supabase, applies quality rules, and inserts qualifying rows automatically | `seed_source = 'scraper_auto'` |
 | **Places API seeder** | A scheduled cron pulls businesses from Google Places for category × city combinations you configure | `seed_source = 'places_api'` |
 | **CSV import** | You upload a spreadsheet of vendors via the admin UI | `seed_source = 'csv'` |
 | **External Supabase import** | The "Import from Supabase" button pulls vendors from a separate Supabase instance (e.g. an out-of-app data pipeline you maintain elsewhere). Dedupes on (name, city, state). | `seed_source` not auto-stamped — set the optional **Source label** field on the import form for an audit hint, or leave NULL |
 | **Manual entry** | You add a vendor one-at-a-time via the admin form | `seed_source = 'manual'` (or NULL for legacy rows) |
 | **Couple submissions** | A couple submits a vendor; you click Approve; it auto-promotes | `seed_source = 'submission'` |
 
-All five land in the `suggested_vendors` table.
+All six land in the `suggested_vendors` table.
 
 > **Internal quality score:** the `quality_score` column is an admin-only ranking signal (numeric, no fixed range — typically 0–100). The Supabase importer maps the remote `score` column to it by default; the CSV importer accepts a `quality_score` column; admins can edit it per-vendor in the edit modal. **It is excluded from the couple-facing API response** (`/api/suggested-vendors`) so it never leaks into the directory UI. Use it to sort the admin Directory tab via the "Score: high → low" sort dropdown — useful for prioritizing curation effort or pruning low-score rows. You can audit a row's origin by reading the `seed_source` column in Supabase, or by the `import_source` text field that the Supabase importer writes per batch.
+
+### How does the auto-import from the scraper work?
+
+An hourly cron (`/api/cron/import-vendors`) pulls new vendor rows from your external scraper's Supabase, applies Eydn's quality rules, and either inserts qualifying rows into `suggested_vendors` or logs them to `vendor_import_rejections` for admin review.
+
+**What you set in Vercel (one-time, env vars):**
+| Var | Value | Purpose |
+|---|---|---|
+| `SCRAPER_SUPABASE_URL` | The scraper's Supabase project URL (`https://xxxxx.supabase.co`) | Where to read vendors from |
+| `SCRAPER_SUPABASE_KEY` | The scraper project's `service_role` key | Read access to its `vendors` table |
+| `SCRAPER_EYDN_CLIENT_ID` | The scraper's `client_id` UUID for Eydn's tenant | Multi-tenant filter |
+
+If any of these are missing, the cron no-ops gracefully and returns a note to that effect — the schedule stays enabled but nothing imports. Set all three before expecting data to flow.
+
+**Quality rules** (in `src/lib/vendors/quality.ts`):
+- `quality_score` ≥ 35 (out of 100)
+- Street address (`street`) populated
+- Phone populated
+- Website populated
+
+A vendor missing any of those gets logged to `vendor_import_rejections` with the failed-rule reasons. Admins review on the Places Seed tab → **Auto-import rejections** section.
+
+**The cron is idempotent.** Each scraper row's `id` is stamped onto the imported `suggested_vendors` row (`scraper_id` column) and onto rejection rows. The cron skips any scraper id already in either table, so re-runs don't double-process and don't re-evaluate decisions you've made.
+
+### How do I review and override import rejections?
+
+On `/dashboard/admin/vendors` → **Places Seed** tab → **Auto-import rejections** card at the top.
+
+Each rejected vendor shows: name, category, city/state, scraper score, the failed rules (in red), and a collapsible "details" section with phone, website, email, street, full description, and the scraper id.
+
+To promote a rejected vendor anyway: click **Override + Add**. The system:
+1. Inserts the vendor into `suggested_vendors` with `manually_approved = true` and `seed_source = 'scraper_auto'`
+2. Stamps `overridden_at` + `overridden_by` (your Clerk user ID) on the rejection row for audit
+3. Future cron runs see the row in `suggested_vendors.scraper_id` and skip it — it won't get re-rejected
+
+The `manually_approved` flag is honored by the quality checker: if the same vendor is re-imported (e.g. after deletion + re-fetch), the quality rules are bypassed.
+
+**Filter the rejections list** by status: `Pending review` (default), `Overridden`, or `All`. Shows up to 200 rows.
+
+### How do I change the quality thresholds?
+
+Edit `QUALITY_RULES` in `src/lib/vendors/quality.ts` (a developer task, not admin-editable). Current rules:
+- `minScore: 35`
+- `requireStreetAddress: true`
+- `requirePhone: true`
+- `requireWebsite: true`
+
+Thresholds are deliberately code-only because they're product decisions tied to brand position; if they start changing weekly, move them to a `quality_rules` config table.
 
 ### How do I configure the Places API seeder?
 

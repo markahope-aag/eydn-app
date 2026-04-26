@@ -1833,10 +1833,12 @@ export type Database = {
           id: string
           import_source: string | null
           imported_at: string | null
+          manually_approved: boolean
           name: string
           phone: string | null
           price_range: string | null
           quality_score: number | null
+          scraper_id: string | null
           search_vector: unknown
           seed_source: string | null
           state: string
@@ -1860,10 +1862,12 @@ export type Database = {
           id?: string
           import_source?: string | null
           imported_at?: string | null
+          manually_approved?: boolean
           name: string
           phone?: string | null
           price_range?: string | null
           quality_score?: number | null
+          scraper_id?: string | null
           search_vector?: unknown
           seed_source?: string | null
           state: string
@@ -1887,10 +1891,12 @@ export type Database = {
           id?: string
           import_source?: string | null
           imported_at?: string | null
+          manually_approved?: boolean
           name?: string
           phone?: string | null
           price_range?: string | null
           quality_score?: number | null
+          scraper_id?: string | null
           search_vector?: unknown
           seed_source?: string | null
           state?: string
@@ -2043,6 +2049,39 @@ export type Database = {
           id?: string
           role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      vendor_import_rejections: {
+        Row: {
+          created_at: string
+          failed_rules: string[]
+          id: string
+          overridden_at: string | null
+          overridden_by: string | null
+          rejected_at: string
+          scraper_data: Json
+          scraper_id: string
+        }
+        Insert: {
+          created_at?: string
+          failed_rules: string[]
+          id?: string
+          overridden_at?: string | null
+          overridden_by?: string | null
+          rejected_at?: string
+          scraper_data: Json
+          scraper_id: string
+        }
+        Update: {
+          created_at?: string
+          failed_rules?: string[]
+          id?: string
+          overridden_at?: string | null
+          overridden_by?: string | null
+          rejected_at?: string
+          scraper_data?: Json
+          scraper_id?: string
         }
         Relationships: []
       }
