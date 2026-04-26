@@ -2,6 +2,35 @@
 
 This document tracks all notable changes, updates, and improvements to the eydn wedding planning platform.
 
+## [1.11.0] - April 26, 2026
+
+### Scraper integration — refresh cron, webhook receiver, photos, description quality, business status
+
+Round 2 of the scraper integration, after surveying the scraper codebase end-to-end. Five additions:
+
+**1. `description_status` quality rule.** The scraper marks each vendor's description as `'pending'` / `'ai_generated'` / `'needs_review'` / `'manually_written'`. We now reject `pending` and `needs_review` — those mean the source data was thin and Claude couldn't confidently rewrite. `manually_approved` overrides this like every other rule.
+
+**2. New `photos text[]` column on `suggested_vendors` (couple-facing).** The scraper now produces Google Places photo references; we surface them as a first-class array. Frontend detects format: strings starting with `places/...` route through the existing `/api/places-photo?ref=...` proxy (keeps the API key server-side); other strings render as direct URLs. Included in the public API.
+
+**3. New `scraper_extras jsonb` column (admin-only).** Stash for scraper-only fields with no first-class home: `instagram`, `facebook`, `pinterest`, `business_status`, `hours`, `lat`, `lng`, `description_status`, `review_count`. Surfaced in the admin edit modal's audit section. Distinct from `gmb_data` (reserved for live Places enrichment).
+
+**4. `business_status` drives `active` flag.** When the scraper reports `CLOSED_PERMANENTLY` or `CLOSED_TEMPORARILY`, the vendor lands `active=false` (or gets flipped to inactive on refresh). Stays in the directory for admin audit but never shown to couples.
+
+**5. Weekly refresh cron `/api/cron/refresh-vendors`.** Runs Saturdays 03:00 UTC. Picks up scraper-sourced vendors not refreshed in 90+ days, re-pulls current data from the scraper, updates mutable fields. Quality rules are NOT re-applied — once a vendor is in the directory, it stays unless an admin removes it. Bounded to 100 vendors per run; if more, increase frequency rather than batch size.
+
+**6. Webhook receiver `/api/webhooks/scraper`.** HMAC-SHA256 signature verification (constant-time compare) against `SCRAPER_WEBHOOK_SECRET`. On verified `job.complete` for our `client_id`, triggers the import logic immediately — closes the latency gap from "up to 1 hour" to "near-real-time" without losing the cron's safety net. The scraper's own `lib/integrations/webhooks.ts` matches our verification scheme exactly.
+
+**Edit modal additions:** Photo gallery preview (first 6 thumbs), description_status badge color-coded, business status, photo count, social URL chips.
+
+**Normalization:** added more category aliases (`hair salon`, `salon`, `wedding cake bakery`, etc.) for cleaner first-import data.
+
+**New env vars:**
+- `SCRAPER_WEBHOOK_SECRET` — shared with the scraper's webhook config (Settings → Integrations in the scraper UI). Must match exactly. Without it, the receiver returns 503.
+
+**Tests:** 4 new `checkQuality` cases for description_status; 7 new tests for `verifyWebhookSignature` (correct, wrong secret, tampered body, missing/empty/short/non-hex signature). Full suite green at 1353.
+
+---
+
 ## [1.10.0] - April 26, 2026
 
 ### Auto-import vendors from external scraper, hourly + quality-gated

@@ -40,11 +40,55 @@ type ScraperVendor = {
   website: string | null;
   email: string | null;
   description: string | null;
+  description_status: string | null;
   eydn_score: number | null;
   price_level: number | null;
+  market: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  pinterest: string | null;
+  business_status: string | null;
+  hours: string[] | null;
+  lat: number | null;
+  lng: number | null;
+  photos: string[] | null;
+  _review_count: number | null;
   client_id: string | null;
   created_at: string;
+  updated_at: string | null;
 };
+
+/** Columns we ask the scraper for. Kept in lock-step with ScraperVendor. */
+const SCRAPER_SELECT =
+  "id, name, category, street, city, state, zip, country, phone, website, email, " +
+  "description, description_status, eydn_score, price_level, market, " +
+  "instagram, facebook, pinterest, business_status, hours, lat, lng, photos, _review_count, " +
+  "client_id, created_at, updated_at";
+
+/** Business statuses that mean "don't surface to couples". Vendor stays in
+ *  the directory for admin audit but with active=false so it's hidden. */
+const CLOSED_BUSINESS_STATUSES = new Set(["CLOSED_PERMANENTLY", "CLOSED_TEMPORARILY"]);
+
+function isOperational(row: ScraperVendor): boolean {
+  if (!row.business_status) return true;
+  return !CLOSED_BUSINESS_STATUSES.has(row.business_status);
+}
+
+/** Build the scraper_extras JSONB blob: scraper-only fields with no first-class column in suggested_vendors. */
+function buildScraperExtras(row: ScraperVendor): Record<string, unknown> {
+  return {
+    market: row.market || undefined,
+    instagram: row.instagram || undefined,
+    facebook: row.facebook || undefined,
+    pinterest: row.pinterest || undefined,
+    business_status: row.business_status || undefined,
+    hours: row.hours || undefined,
+    lat: row.lat ?? undefined,
+    lng: row.lng ?? undefined,
+    description_status: row.description_status || undefined,
+    review_count: row._review_count ?? undefined,
+  };
+}
 
 /** Cap per cron run — keeps any single run bounded and predictable. */
 const MAX_BATCH = 500;
@@ -109,9 +153,7 @@ export async function runScraperImport(
   //    first; older rows catch up on subsequent cron runs.
   const { data: scraperRows, error: scraperError } = await scraperSupabase
     .from("vendors")
-    .select(
-      "id, name, category, street, city, state, zip, country, phone, website, email, description, eydn_score, price_level, client_id, created_at"
-    )
+    .select(SCRAPER_SELECT)
     .eq("client_id", clientId)
     .order("created_at", { ascending: false })
     .limit(MAX_BATCH);
@@ -128,7 +170,7 @@ export async function runScraperImport(
   const toInsert: SuggestedVendorInsert[] = [];
   const toReject: RejectionInsert[] = [];
 
-  for (const row of (scraperRows || []) as ScraperVendor[]) {
+  for (const row of (scraperRows || []) as unknown as ScraperVendor[]) {
     if (seen.has(row.id)) {
       result.alreadySeen++;
       continue;
@@ -146,6 +188,7 @@ export async function runScraperImport(
       phone: row.phone ? normalizePhone(row.phone) : null,
       website: row.website ? normalizeWebsite(row.website) : null,
       quality_score: row.eydn_score,
+      description_status: row.description_status,
       country: row.country?.trim() || "US",
       description: row.description?.trim() || null,
       price_range: row.price_level !== null ? normalizePriceRange(String(row.price_level)) : null,
@@ -192,8 +235,12 @@ export async function runScraperImport(
       description: candidate.description,
       price_range: candidate.price_range,
       quality_score: candidate.quality_score,
+      photos: row.photos ?? [],
+      scraper_extras: buildScraperExtras(row) as Database["public"]["Tables"]["suggested_vendors"]["Insert"]["scraper_extras"],
+      gmb_last_refreshed_at: new Date().toISOString(),
       featured: false,
-      active: true,
+      // Closed vendors land inactive — kept for admin audit but never shown.
+      active: isOperational(row),
       seed_source: "scraper_auto",
     });
   }
@@ -233,4 +280,139 @@ export async function runScraperImport(
 
 function tally(map: Record<string, number>, key: string) {
   map[key] = (map[key] || 0) + 1;
+}
+
+// ─── Refresh path ────────────────────────────────────────────────────────────
+// Periodically (weekly cron) re-pull stale vendors from the scraper to
+// pick up score/contact changes. Quality rules are NOT re-applied —
+// originally-imported rows stay imported even if their data has degraded.
+// Admin can sort by score in the directory and prune manually.
+
+const REFRESH_AGE_DAYS = 90;
+const MAX_REFRESH_BATCH = 100;
+
+export type ScraperRefreshResult = {
+  candidatesScanned: number;
+  refreshed: number;
+  notFoundInScraper: number;
+  errors: string[];
+  refreshedNames: string[]; // first 10
+};
+
+/**
+ * Re-pull vendors that were imported from the scraper and haven't been
+ * refreshed in REFRESH_AGE_DAYS. Updates mutable fields in place.
+ */
+export async function runScraperRefresh(
+  supabase: AdminSupabase,
+  scraperUrl: string,
+  scraperKey: string,
+  clientId: string
+): Promise<ScraperRefreshResult> {
+  const result: ScraperRefreshResult = {
+    candidatesScanned: 0,
+    refreshed: 0,
+    notFoundInScraper: 0,
+    errors: [],
+    refreshedNames: [],
+  };
+
+  const cutoff = new Date(Date.now() - REFRESH_AGE_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+  // Find scraper-sourced vendors that are stale OR have never been refreshed.
+  const { data: stale, error: staleError } = await supabase
+    .from("suggested_vendors")
+    .select("id, scraper_id, gmb_last_refreshed_at")
+    .eq("seed_source", "scraper_auto")
+    .not("scraper_id", "is", null)
+    .or(`gmb_last_refreshed_at.is.null,gmb_last_refreshed_at.lt.${cutoff}`)
+    .order("gmb_last_refreshed_at", { ascending: true, nullsFirst: true })
+    .limit(MAX_REFRESH_BATCH);
+
+  if (staleError) {
+    result.errors.push(`stale lookup failed: ${staleError.message}`);
+    return result;
+  }
+
+  result.candidatesScanned = (stale || []).length;
+  if (result.candidatesScanned === 0) return result;
+
+  const scraperIds = (stale || []).map((r) => r.scraper_id as string).filter(Boolean);
+  const idToEydnRow = new Map<string, string>();
+  for (const r of stale || []) {
+    if (r.scraper_id) idToEydnRow.set(r.scraper_id, r.id as string);
+  }
+
+  // Pull current data for those ids from the scraper.
+  const scraperSupabase = createClient(scraperUrl, scraperKey, {
+    auth: { persistSession: false },
+  });
+
+  const { data: current, error: currentError } = await scraperSupabase
+    .from("vendors")
+    .select(SCRAPER_SELECT)
+    .in("id", scraperIds)
+    .eq("client_id", clientId);
+
+  if (currentError) {
+    result.errors.push(`scraper refresh fetch failed: ${currentError.message}`);
+    return result;
+  }
+
+  const currentRows = (current || []) as unknown as ScraperVendor[];
+  const foundIds = new Set(currentRows.map((r) => r.id));
+  result.notFoundInScraper = scraperIds.filter((id) => !foundIds.has(id)).length;
+
+  const now = new Date().toISOString();
+  for (const row of currentRows) {
+    const eydnId = idToEydnRow.get(row.id);
+    if (!eydnId) continue;
+
+    const updates = {
+      name: row.name?.trim() || undefined,
+      address: row.street?.trim() || null,
+      city: row.city ? normalizeCity(row.city) : undefined,
+      state: row.state ? (normalizeState(row.state) || row.state.toUpperCase().slice(0, 2)) : undefined,
+      zip: row.zip?.trim() || null,
+      phone: row.phone ? normalizePhone(row.phone) : null,
+      website: row.website ? normalizeWebsite(row.website) : null,
+      email: row.email ? normalizeEmail(row.email) : null,
+      description: row.description?.trim() || null,
+      price_range: row.price_level !== null ? normalizePriceRange(String(row.price_level)) : null,
+      quality_score: row.eydn_score,
+      photos: row.photos ?? [],
+      scraper_extras: buildScraperExtras(row) as Database["public"]["Tables"]["suggested_vendors"]["Insert"]["scraper_extras"],
+      gmb_last_refreshed_at: now,
+      // If the vendor closed since last refresh, hide it without deleting.
+      active: isOperational(row),
+    };
+
+    const { error: updateError } = await supabase
+      .from("suggested_vendors")
+      .update(updates)
+      .eq("id", eydnId);
+
+    if (updateError) {
+      result.errors.push(`update failed for ${row.name}: ${updateError.message}`);
+      continue;
+    }
+
+    result.refreshed++;
+    if (result.refreshedNames.length < 10 && row.name) {
+      result.refreshedNames.push(row.name);
+    }
+  }
+
+  // For vendors we couldn't find in the scraper (deleted upstream), bump
+  // their refresh timestamp so they don't keep re-appearing in the queue.
+  // The data stays in the directory until admin removes it.
+  const missing = scraperIds.filter((id) => !foundIds.has(id));
+  if (missing.length > 0) {
+    await supabase
+      .from("suggested_vendors")
+      .update({ gmb_last_refreshed_at: now })
+      .in("scraper_id", missing);
+  }
+
+  return result;
 }

@@ -31,7 +31,17 @@ export const QUALITY_RULES = {
 
   /** Vendor must have a website couples can review before reaching out. */
   requireWebsite: true,
+
+  /**
+   * Description must have been finalized — either AI-rewritten or
+   * human-written. 'pending' or 'needs_review' descriptions usually mean
+   * the source data was thin and Claude couldn't confidently rewrite,
+   * so we don't want them in front of couples.
+   */
+  requireFinishedDescription: true,
 } as const;
+
+const ACCEPTABLE_DESCRIPTION_STATUSES = new Set(["ai_generated", "manually_written"]);
 
 /** Shape we expect from the normalized vendor going through quality check. */
 export type VendorCandidate = {
@@ -43,6 +53,11 @@ export type VendorCandidate = {
   phone: string | null;
   website: string | null;
   quality_score: number | null;
+  /**
+   * Status of the vendor's description in the source pipeline.
+   * 'pending' / 'needs_review' fail; 'ai_generated' / 'manually_written' pass.
+   */
+  description_status?: string | null;
   /** When true, every rule is treated as passing (admin override). */
   manually_approved?: boolean;
 };
@@ -80,6 +95,15 @@ export function checkQuality(v: VendorCandidate): QualityCheck {
 
   if (QUALITY_RULES.requireWebsite && !nonEmpty(v.website)) {
     failed.push("missing website");
+  }
+
+  if (QUALITY_RULES.requireFinishedDescription) {
+    const status = v.description_status ?? null;
+    if (!status) {
+      failed.push("description_status missing");
+    } else if (!ACCEPTABLE_DESCRIPTION_STATUSES.has(status)) {
+      failed.push(`description_status not finalized: ${status}`);
+    }
   }
 
   return { passed: failed.length === 0, failedRules: failed };

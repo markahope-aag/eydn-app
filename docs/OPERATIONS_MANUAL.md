@@ -626,8 +626,48 @@ Edit `QUALITY_RULES` in `src/lib/vendors/quality.ts` (a developer task, not admi
 - `requireStreetAddress: true`
 - `requirePhone: true`
 - `requireWebsite: true`
+- `requireFinishedDescription: true` — rejects vendors whose description is still `pending` or `needs_review` upstream
 
 Thresholds are deliberately code-only because they're product decisions tied to brand position; if they start changing weekly, move them to a `quality_rules` config table.
+
+### What happens when a vendor closes (per the scraper's `business_status`)?
+
+The cron honors the scraper's `business_status` field. If a vendor reports `CLOSED_PERMANENTLY` or `CLOSED_TEMPORARILY` it lands with `active=false` (and is flipped to inactive on the next refresh if it closes after import). It stays in the directory for admin audit but never appears to couples. To restore: open the vendor edit modal, toggle Active back on.
+
+### How does the weekly refresh work?
+
+Cron `/api/cron/refresh-vendors` runs Saturdays 03:00 UTC. It picks up to 100 scraper-sourced vendors that haven't been refreshed in 90+ days (or never), re-pulls current data from the scraper, and updates mutable fields in place: name, address, contact info, description, score, photos, scraper_extras, active flag.
+
+**Quality rules are NOT re-applied during refresh.** Once a vendor passes the gate at first import, it stays in the directory unless an admin deletes it. The refresh is data hygiene, not gatekeeping. If the refresh finds a vendor's score has dropped, the score updates but the vendor stays. Admin can use the Score: Low to High sort to surface degraded vendors and prune.
+
+If a scraper row that was previously imported is no longer in the scraper (deleted upstream), the refresh leaves the Eydn row alone but bumps `gmb_last_refreshed_at` so it doesn't keep re-appearing in the queue.
+
+### Can the scraper notify Eydn instantly when new data is ready?
+
+Yes. The scraper's Settings → Integrations tab supports outbound webhooks. Configure one pointing at `https://eydn.app/api/webhooks/scraper` with a fresh secret. Then add `SCRAPER_WEBHOOK_SECRET` to Vercel with the same value.
+
+The receiver verifies HMAC-SHA256 signatures (constant-time compare) and only triggers imports for `job.complete` events matching our `SCRAPER_EYDN_CLIENT_ID`. Test events and `job.failed` events are accepted but no-op.
+
+Without the webhook the hourly cron still imports new data within 60 minutes; the webhook just closes that gap. Both can run; the cron acts as a safety net for any webhook delivery failures.
+
+### Photos — where do they come from and how are they shown?
+
+The scraper produces `photos` as an array of strings. Each is either a full URL or a Google Places photo "name" like `places/PLACE_ID/photos/PHOTO_REF`. The Eydn directory frontend detects the format and routes through `/api/places-photo?ref=...` for Places references (so the API key never reaches the browser). URLs render directly.
+
+Photos are couple-facing — included in the public `/api/suggested-vendors` response and rendered in the directory card + detail panel. The admin edit modal shows the first 6 thumbnails for spot-checking.
+
+### What do I need to set up to use the scraper integration end-to-end?
+
+Vercel env vars (Production + Preview + Development):
+
+| Var | Value | Required for |
+|---|---|---|
+| `SCRAPER_SUPABASE_URL` | `https://xxxxx.supabase.co` | Hourly + weekly + webhook crons |
+| `SCRAPER_SUPABASE_KEY` | scraper's `service_role` key | Same |
+| `SCRAPER_EYDN_CLIENT_ID` | UUID of the scraper tenant for Eydn | Same |
+| `SCRAPER_WEBHOOK_SECRET` | shared with scraper's Settings → Integrations | `/api/webhooks/scraper` only |
+
+If any of the first three are missing, the crons no-op gracefully (return 200 with a note). If `SCRAPER_WEBHOOK_SECRET` is missing, the webhook returns 503.
 
 ### How do I configure the Places API seeder?
 

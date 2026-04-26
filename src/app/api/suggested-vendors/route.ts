@@ -29,6 +29,7 @@ export async function GET(request: Request) {
     "website", "phone", "email", "address",
     "city", "state", "zip", "country",
     "price_range", "featured", "active",
+    "photos",
     "gmb_place_id", "gmb_data", "gmb_last_refreshed_at",
     "created_at", "updated_at",
   ].join(", ");

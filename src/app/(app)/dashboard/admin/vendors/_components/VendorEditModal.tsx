@@ -30,6 +30,7 @@ export type Vendor = {
   quality_score: number | null;
   featured: boolean;
   active: boolean;
+  photos: string[] | null;
   // Audit / source fields (read-only in the modal)
   seed_source: string | null;
   gmb_place_id: string | null;
@@ -38,6 +39,7 @@ export type Vendor = {
   import_source: string | null;
   created_at: string | null;
   updated_at: string | null;
+  scraper_extras: Record<string, unknown> | null;
 };
 
 type GmbData = {
@@ -353,18 +355,61 @@ export function VendorEditModal({ vendor, onClose, onSaved, onDeleted }: Props) 
             </div>
           </div>
 
+          {/* Photos preview — surfaced from suggested_vendors.photos[]. */}
+          {vendor.photos && vendor.photos.length > 0 && (
+            <div className="border border-border rounded-lg p-3">
+              <p className="text-[14px] font-medium mb-2">
+                Photos <span className="text-muted text-[12px] font-normal">({vendor.photos.length})</span>
+              </p>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {vendor.photos.slice(0, 6).map((p, i) => {
+                  const src = p.startsWith("places/")
+                    ? `/api/places-photo?ref=${encodeURIComponent(p)}`
+                    : p;
+                  return (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      key={i}
+                      src={src}
+                      alt={`${vendor.name} photo ${i + 1}`}
+                      className="aspect-square object-cover rounded-md border border-border"
+                    />
+                  );
+                })}
+              </div>
+              {vendor.photos.length > 6 && (
+                <p className="text-[12px] text-muted mt-2">
+                  +{vendor.photos.length - 6} more
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Read-only audit metadata */}
           <details className="border border-border rounded-lg p-3 bg-whisper">
             <summary className="cursor-pointer text-[14px] font-medium">Audit + source metadata</summary>
             <dl className="mt-3 grid gap-2 sm:grid-cols-2 text-[12px]">
               <Field label="Vendor ID" value={vendor.id} mono />
               <Field label="Seed source" value={vendor.seed_source || "—"} mono />
+              <Field label="Description status" value={describeDescriptionStatus(vendor.scraper_extras)} />
               <Field label="GMB place ID" value={vendor.gmb_place_id || "—"} mono />
               <Field label="GMB last refreshed" value={fmtDate(vendor.gmb_last_refreshed_at)} />
               <Field label="Imported at" value={fmtDate(vendor.imported_at)} />
               <Field label="Import batch label" value={vendor.import_source || "—"} />
               <Field label="Created" value={fmtDate(vendor.created_at)} />
               <Field label="Updated" value={fmtDate(vendor.updated_at)} />
+              <Field
+                label="Business status"
+                value={(vendor.scraper_extras?.business_status as string | undefined) || "—"}
+              />
+              <Field
+                label="Photo count"
+                value={vendor.photos?.length ?? 0}
+              />
+              <Field
+                label="Social URLs"
+                value={renderSocial(vendor.scraper_extras)}
+              />
             </dl>
           </details>
 
@@ -461,4 +506,32 @@ function fmtDate(iso: string | null): string {
   } catch {
     return iso;
   }
+}
+
+function describeDescriptionStatus(extras: Record<string, unknown> | null): React.ReactNode {
+  const status = extras?.description_status as string | undefined;
+  if (!status) return "—";
+  const colorClass =
+    status === "ai_generated" || status === "manually_written"
+      ? "text-confirmed-text"
+      : "text-declined-text";
+  return <span className={colorClass}>{status}</span>;
+}
+
+function renderSocial(extras: Record<string, unknown> | null): React.ReactNode {
+  if (!extras) return "—";
+  const links: Array<[string, string]> = [];
+  if (typeof extras.instagram === "string" && extras.instagram) links.push(["IG", extras.instagram]);
+  if (typeof extras.facebook === "string" && extras.facebook) links.push(["FB", extras.facebook]);
+  if (typeof extras.pinterest === "string" && extras.pinterest) links.push(["PIN", extras.pinterest]);
+  if (links.length === 0) return "—";
+  return (
+    <span className="flex gap-2 flex-wrap">
+      {links.map(([label, href]) => (
+        <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="text-violet underline">
+          {label}
+        </a>
+      ))}
+    </span>
+  );
 }

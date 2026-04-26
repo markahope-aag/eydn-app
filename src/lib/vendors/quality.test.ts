@@ -10,6 +10,7 @@ const passingVendor: VendorCandidate = {
   phone: "+15125551234",
   website: "https://example.com",
   quality_score: 75,
+  description_status: "ai_generated",
 };
 
 describe("checkQuality", () => {
@@ -67,10 +68,11 @@ describe("checkQuality", () => {
       phone: null,
       website: null,
       quality_score: 10,
+      description_status: "pending",
     });
     expect(result.passed).toBe(false);
-    // 4 failures: low score + missing address + phone + website.
-    expect(result.failedRules.length).toBe(4);
+    // 5 failures: low score + missing address + phone + website + bad status.
+    expect(result.failedRules.length).toBe(5);
   });
 
   it("manually_approved overrides every rule", () => {
@@ -81,8 +83,32 @@ describe("checkQuality", () => {
       address: null,
       phone: null,
       website: null,
+      description_status: "pending",
     });
     expect(result.passed).toBe(true);
     expect(result.failedRules).toEqual([]);
+  });
+
+  it("fails when description_status is 'pending'", () => {
+    const result = checkQuality({ ...passingVendor, description_status: "pending" });
+    expect(result.passed).toBe(false);
+    expect(result.failedRules.some((r) => r.includes("not finalized: pending"))).toBe(true);
+  });
+
+  it("fails when description_status is 'needs_review'", () => {
+    const result = checkQuality({ ...passingVendor, description_status: "needs_review" });
+    expect(result.passed).toBe(false);
+    expect(result.failedRules.some((r) => r.includes("not finalized: needs_review"))).toBe(true);
+  });
+
+  it("passes when description_status is 'manually_written'", () => {
+    const result = checkQuality({ ...passingVendor, description_status: "manually_written" });
+    expect(result.passed).toBe(true);
+  });
+
+  it("fails when description_status is missing entirely", () => {
+    const result = checkQuality({ ...passingVendor, description_status: null });
+    expect(result.passed).toBe(false);
+    expect(result.failedRules).toContain("description_status missing");
   });
 });

@@ -25,6 +25,7 @@ type SuggestedVendor = {
   quality_score: number | null;
   featured: boolean;
   active: boolean;
+  photos: string[] | null;
   // Audit / source metadata used by the edit modal
   seed_source: string | null;
   gmb_place_id: string | null;
@@ -33,6 +34,7 @@ type SuggestedVendor = {
   import_source: string | null;
   created_at: string | null;
   updated_at: string | null;
+  scraper_extras: Record<string, unknown> | null;
 };
 
 type SortMode = "score_desc" | "score_asc" | "alpha";

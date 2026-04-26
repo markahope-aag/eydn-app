@@ -1836,8 +1836,10 @@ export type Database = {
           manually_approved: boolean
           name: string
           phone: string | null
+          photos: string[]
           price_range: string | null
           quality_score: number | null
+          scraper_extras: Json | null
           scraper_id: string | null
           search_vector: unknown
           seed_source: string | null
@@ -1865,8 +1867,10 @@ export type Database = {
           manually_approved?: boolean
           name: string
           phone?: string | null
+          photos?: string[]
           price_range?: string | null
           quality_score?: number | null
+          scraper_extras?: Json | null
           scraper_id?: string | null
           search_vector?: unknown
           seed_source?: string | null
@@ -1894,8 +1898,10 @@ export type Database = {
           manually_approved?: boolean
           name?: string
           phone?: string | null
+          photos?: string[]
           price_range?: string | null
           quality_score?: number | null
+          scraper_extras?: Json | null
           scraper_id?: string | null
           search_vector?: unknown
           seed_source?: string | null
