@@ -355,7 +355,10 @@ export default function AdminVendorsPage() {
             placeholder="Search vendors..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-[10px] border border-border bg-white pl-11 pr-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+            // pl-11 needs !-important: the unlayered input padding rule in
+            // globals.css ('padding: 8px 12px') beats Tailwind's layered
+            // utility regardless of order, so the icon would otherwise overlap.
+            className="w-full rounded-[10px] border border-border bg-white !pl-11 pr-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
           />
         </div>
         <select
@@ -394,8 +397,8 @@ export default function AdminVendorsPage() {
           className="rounded-[10px] border-border px-3 py-1.5 text-[15px]"
           title="Sort order"
         >
-          <option value="score_desc">Score: high to low</option>
-          <option value="score_asc">Score: low to high</option>
+          <option value="score_desc">Score: High to Low</option>
+          <option value="score_asc">Score: Low to High</option>
           <option value="alpha">Name: A → Z</option>
         </select>
         <span className="text-[13px] text-muted">{filtered.length} shown</span>
