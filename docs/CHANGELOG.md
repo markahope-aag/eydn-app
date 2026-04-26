@@ -2,6 +2,23 @@
 
 This document tracks all notable changes, updates, and improvements to the eydn wedding planning platform.
 
+## [1.9.0] - April 26, 2026
+
+### Vendor quality score (admin-only)
+
+Added a `quality_score numeric(5,2)` column to `suggested_vendors` for ranking signals from the external vendor data pipeline. Plumbed through every ingest path:
+
+- **Supabase importer** — default column map maps remote `score` → local `quality_score`. Override via `column_map` if your source uses a different name.
+- **CSV import** — accepts an optional `quality_score` column with numeric coercion + per-row validation.
+- **Admin PATCH** — added to the editable allowlist on `/api/admin/suggested-vendors/[id]`.
+- **Edit modal** — new numeric input field with a "(admin-only, not shown to couples)" hint.
+- **Directory list** — score badge on each row + new sort dropdown (default: Score high → low).
+- **Couple-facing API** — explicitly excluded from `/api/suggested-vendors` GET response (replaces `select('*')` with an explicit allowlist of public columns) so the score never leaks.
+
+Partial index `idx_suggested_vendors_quality_score (quality_score DESC NULLS LAST) WHERE quality_score IS NOT NULL` for sort performance once row counts grow.
+
+---
+
 ## [1.8.0] - April 25, 2026
 
 ### Vendor sourcing pipeline — Google Places API + CSV import
