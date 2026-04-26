@@ -291,9 +291,6 @@ export default function AdminVendorsPage() {
     return sortMode === "score_desc" ? bv - av : av - bv;
   });
 
-  // Get unique states from actual data for the filter dropdown
-  const vendorStates = [...new Set(vendors.map((v) => v.state).filter(Boolean))].sort();
-
   if (loading) return <p className="text-[15px] text-muted py-8">Loading...</p>;
 
   return (
@@ -420,7 +417,7 @@ export default function AdminVendorsPage() {
           className="rounded-[10px] border-border px-3 py-1.5 text-[15px]"
         >
           <option value="">All States</option>
-          {vendorStates.map((s) => (
+          {US_STATES.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
