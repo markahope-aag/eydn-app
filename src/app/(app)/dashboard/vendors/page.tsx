@@ -53,6 +53,178 @@ export default function VendorsPage() {
   const [newCity, setNewCity] = useState("");
   const [newState, setNewState] = useState("");
 
+  // Lookup state — typeahead against the directory + Google Places fallback
+  type DirMatch = {
+    id: string;
+    name: string;
+    category: string;
+    city: string;
+    state: string;
+    photoUrl?: string | null;
+  };
+  type PlaceMatch = {
+    placeId: string;
+    name: string;
+    formattedAddress: string | null;
+    rating: number | null;
+    userRatingCount: number | null;
+    websiteUri: string | null;
+    nationalPhoneNumber: string | null;
+    photoUrl: string | null;
+  };
+  const [dirMatches, setDirMatches] = useState<DirMatch[]>([]);
+  const [dirLoading, setDirLoading] = useState(false);
+  const [placeResult, setPlaceResult] = useState<PlaceMatch | null>(null);
+  const [placeLoading, setPlaceLoading] = useState(false);
+  const [addingFromPlace, setAddingFromPlace] = useState(false);
+
+  // Debounced typeahead against the directory whenever the user types a
+  // vendor name in the Add form.
+  useEffect(() => {
+    if (!showAdd) return;
+    const q = newName.trim();
+    if (q.length < 3) {
+      setDirMatches([]);
+      return;
+    }
+    let cancelled = false;
+    setDirLoading(true);
+    const timeout = setTimeout(() => {
+      fetch(`/api/suggested-vendors?q=${encodeURIComponent(q)}&limit=5`)
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((data: { vendors: Array<{ id: string; name: string; category: string; city: string; state: string; gmb_data?: { photoUrl?: string } | null }> }) => {
+          if (cancelled) return;
+          setDirMatches(
+            data.vendors.map((v) => ({
+              id: v.id,
+              name: v.name,
+              category: v.category,
+              city: v.city,
+              state: v.state,
+              photoUrl: v.gmb_data?.photoUrl ?? null,
+            }))
+          );
+        })
+        .catch(() => {
+          if (!cancelled) setDirMatches([]);
+        })
+        .finally(() => {
+          if (!cancelled) setDirLoading(false);
+        });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [newName, showAdd]);
+
+  // Reset lookup state when the form is closed or reopened.
+  useEffect(() => {
+    if (!showAdd) {
+      setDirMatches([]);
+      setPlaceResult(null);
+      setPlaceLoading(false);
+    }
+  }, [showAdd]);
+
+  async function pickFromDirectory(match: DirMatch) {
+    try {
+      const res = await fetch("/api/vendors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: match.name, category: match.category }),
+      });
+      if (!res.ok) throw new Error();
+      const saved = await res.json();
+      setVendors((prev) => [...prev, saved]);
+      // Reset and close the form.
+      setNewName(""); setNewWebsite(""); setNewCity(""); setNewState("");
+      setShowAdd(false);
+      trackVendorAdded(match.category);
+      toast.success(`Added ${match.name} from the directory`);
+    } catch {
+      toast.error("Couldn't add vendor. Try again.");
+    }
+  }
+
+  async function searchGooglePlaces() {
+    const name = newName.trim();
+    if (name.length < 2) {
+      toast.error("Type a vendor name first");
+      return;
+    }
+    setPlaceLoading(true);
+    setPlaceResult(null);
+    try {
+      const location = [newCity.trim(), newState.trim()].filter(Boolean).join(", ");
+      const res = await fetch("/api/vendors/places-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, category: newCategory, location: location || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Lookup failed");
+        return;
+      }
+      if (!data.place) {
+        toast(`No Google match for "${name}". You can still add manually.`);
+        return;
+      }
+      setPlaceResult(data.place);
+    } catch {
+      toast.error("Lookup failed. You can still add manually.");
+    } finally {
+      setPlaceLoading(false);
+    }
+  }
+
+  async function addFromPlace() {
+    if (!placeResult) return;
+    setAddingFromPlace(true);
+    try {
+      const res = await fetch("/api/vendors/from-place", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          place: placeResult,
+          category: newCategory,
+          nameOverride: newName.trim() || undefined,
+          cityHint: newCity.trim() || undefined,
+          stateHint: newState.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Couldn't add vendor");
+        return;
+      }
+      // Refresh the couple's list so the new row appears.
+      const r = await fetch("/api/vendors");
+      if (r.ok) setVendors(await r.json());
+
+      const note =
+        data.directoryAction === "added"
+          ? "Also added to the public directory ✓"
+          : data.directoryAction === "already_exists"
+          ? "Already in the directory · linked"
+          : data.directoryAction === "submitted_for_review"
+          ? "Submitted for directory review"
+          : "";
+      toast.success(`Added ${placeResult.name}${note ? ` · ${note}` : ""}`);
+
+      // Reset and close.
+      setNewName(""); setNewWebsite(""); setNewCity(""); setNewState("");
+      setPlaceResult(null);
+      setShowAdd(false);
+      trackVendorAdded(newCategory);
+    } catch {
+      toast.error("Couldn't add vendor. Try again.");
+    } finally {
+      setAddingFromPlace(false);
+    }
+  }
+
   useEffect(() => {
     fetch("/api/vendors")
       .then((r) => {
@@ -254,7 +426,7 @@ export default function VendorsPage() {
         <form onSubmit={addVendor} className="mt-4 card p-4 space-y-3">
           <p className="text-[13px] text-muted">
             Add a vendor you&apos;ve found or been recommended.
-            <Tooltip text="Only the vendor name and category are required. Website, city, and state are optional but help other couples discover this vendor in our directory." wide />
+            <Tooltip text="Type a name to search the Eydn directory first; if it isn't there, click 'Search Google Places' to pull in real address, phone, and reviews. Or just type and click Add Vendor for a manual entry." wide />
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <input
@@ -305,6 +477,104 @@ export default function VendorsPage() {
               />
             </div>
           </div>
+
+          {/* Directory typeahead — fires when 3+ chars in the name field. */}
+          {dirMatches.length > 0 && (
+            <div className="rounded-[10px] border border-border bg-whisper p-3 space-y-2">
+              <p className="text-[12px] text-muted">
+                Found {dirMatches.length} match{dirMatches.length === 1 ? "" : "es"} in our directory:
+              </p>
+              {dirMatches.map((m) => (
+                <div key={m.id} className="flex items-center gap-3">
+                  {m.photoUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={m.photoUrl} alt={m.name} className="w-10 h-10 rounded-[8px] object-cover" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-[8px] bg-lavender" aria-hidden="true" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-semibold text-plum truncate">{m.name}</p>
+                    <p className="text-[12px] text-muted truncate">
+                      {categoryLabel(m.category)} · {m.city}, {m.state}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => pickFromDirectory(m)}
+                    className="btn-secondary btn-sm"
+                  >
+                    Use this
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Google Places lookup — visible once the user has typed a name. */}
+          {newName.trim().length >= 3 && !placeResult && (
+            <div className="text-[13px] text-muted flex items-center gap-2">
+              {dirLoading
+                ? "Searching directory…"
+                : dirMatches.length === 0
+                ? "Don't see your vendor in the directory?"
+                : "Or look it up on Google for richer data:"}
+              <button
+                type="button"
+                onClick={searchGooglePlaces}
+                disabled={placeLoading}
+                className="btn-ghost btn-sm"
+              >
+                {placeLoading ? "Searching Google…" : "Search Google Places"}
+              </button>
+            </div>
+          )}
+
+          {/* Google Places result panel. */}
+          {placeResult && (
+            <div className="rounded-[10px] border border-violet/40 bg-lavender/30 p-3">
+              <p className="text-[12px] text-muted mb-2">Google Places match:</p>
+              <div className="flex items-start gap-3">
+                {placeResult.photoUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={placeResult.photoUrl} alt={placeResult.name} className="w-16 h-16 rounded-[8px] object-cover" />
+                ) : (
+                  <div className="w-16 h-16 rounded-[8px] bg-lavender" aria-hidden="true" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-plum">{placeResult.name}</p>
+                  {placeResult.formattedAddress && (
+                    <p className="text-[12px] text-muted truncate">{placeResult.formattedAddress}</p>
+                  )}
+                  <p className="text-[12px] text-muted">
+                    {placeResult.rating !== null && <>★ {placeResult.rating}</>}
+                    {placeResult.userRatingCount !== null && <> · {placeResult.userRatingCount} reviews</>}
+                    {placeResult.nationalPhoneNumber && <> · {placeResult.nationalPhoneNumber}</>}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={addFromPlace}
+                  disabled={addingFromPlace}
+                  className="btn-primary btn-sm"
+                >
+                  {addingFromPlace ? "Adding…" : "Add this vendor"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPlaceResult(null)}
+                  className="btn-ghost btn-sm"
+                >
+                  Not this one
+                </button>
+                <span className="text-[11px] text-muted ml-auto">
+                  Adds to your list and contributes to the public directory.
+                </span>
+              </div>
+            </div>
+          )}
+
           <button type="submit" className="btn-primary">
             Add Vendor
           </button>
