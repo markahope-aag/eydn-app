@@ -566,16 +566,17 @@ In the Settings tab (`/dashboard/admin?tab=settings`), under **Registration**:
 
 ## 11. Vendor directory management
 
-Eydn does not charge vendors for inclusion or placement. The directory shown to couples (`/dashboard/vendors/directory`) is sourced four ways, all of them under your control as admin:
+Eydn does not charge vendors for inclusion or placement. The directory shown to couples (`/dashboard/vendors/directory`) is sourced five ways, all of them under your control as admin:
 
 | Source | Where rows come from | Stamped as |
 |---|---|---|
 | **Places API seeder** | A scheduled cron pulls businesses from Google Places for category × city combinations you configure | `seed_source = 'places_api'` |
 | **CSV import** | You upload a spreadsheet of vendors via the admin UI | `seed_source = 'csv'` |
+| **External Supabase import** | The "Import from Supabase" button pulls vendors from a separate Supabase instance (e.g. an out-of-app data pipeline you maintain elsewhere). Dedupes on (name, city, state). | `seed_source` not auto-stamped — set the optional **Source label** field on the import form for an audit hint, or leave NULL |
 | **Manual entry** | You add a vendor one-at-a-time via the admin form | `seed_source = 'manual'` (or NULL for legacy rows) |
 | **Couple submissions** | A couple submits a vendor; you click Approve; it auto-promotes | `seed_source = 'submission'` |
 
-All four land in the `suggested_vendors` table. You can audit a row's origin by reading the `seed_source` column in Supabase.
+All five land in the `suggested_vendors` table. You can audit a row's origin by reading the `seed_source` column in Supabase, or by the `import_source` text field that the Supabase importer writes per batch.
 
 ### How do I configure the Places API seeder?
 
@@ -595,6 +596,24 @@ The page shows three things:
 The cron itself runs **Sundays at 02:00 UTC**, picks up every enabled config whose `next_run_at` has passed, and re-runs them. After each run, `next_run_at` is set to 30 days out — so each config refreshes monthly by default.
 
 > Cost guidance: at the default cap, you can seed roughly 25 cities-per-category per day (each call returns up to 20 vendors). Bulk-seeding a new market is a "raise the cap temporarily" exercise: bump `PLACES_API_DAILY_CAP` to 1000 in Vercel, run a batch via "Run now", then drop it back. Verify spending against the [Google Cloud Console billing page](https://console.cloud.google.com/billing) — the cost units are an internal approximation, not the authoritative dollar figure.
+
+### How do I import from an external Supabase instance?
+
+If you maintain a vendor data pipeline outside Eydn (a separate Supabase project, a partner-supplied database, etc.), the **Import from Supabase** button on the Directory tab pulls rows from any reachable Supabase table into `suggested_vendors`.
+
+1. Click **Import from Supabase** on `/dashboard/admin/vendors` (Directory tab).
+2. Fill in:
+    - **Supabase URL** — the source instance's project URL (e.g. `https://xxxxx.supabase.co`)
+    - **Service role key** — for read access to the source table
+    - **Table name** — defaults to `vendors`; allowed values: `vendors`, `suggested_vendors`, `businesses`
+    - **Filter column / value** — optional, for partial pulls (e.g. only `status='active'` rows)
+    - **Source label** — free-text tag stored on each imported row's `import_source` field for audit
+3. Click **Dry run** first. The summary shows how many rows would import vs. dedupe.
+4. If the preview looks right, click **Import for real**.
+
+Dedup is on `(name, city, state)`. Rows already present get skipped, not overwritten. The endpoint can handle ~5,000 rows per call; split larger batches.
+
+> Operationally, this is the path used to ingest data from any out-of-app vendor pipeline. Anything that produces vendor rows in a Supabase-shaped schema can feed Eydn through it. Set the **Source label** field meaningfully (e.g. "florists batch April 2026") so you can audit later which import batch a row came from.
 
 ### How do I bulk-import vendors from a CSV?
 

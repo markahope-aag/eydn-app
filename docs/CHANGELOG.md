@@ -6,10 +6,11 @@ This document tracks all notable changes, updates, and improvements to the eydn 
 
 ### Vendor sourcing pipeline — Google Places API + CSV import
 
-Two new ways to grow the curated `suggested_vendors` directory without writing code or running custom scripts. The directory now has four distinct sources, all visible in the new `seed_source` column:
+Two new ways to grow the curated `suggested_vendors` directory without writing code or running custom scripts. The directory now has five distinct sources:
 
 - **Places API seeder** (new) — A scheduled cron pulls businesses from Google Places for category × city combinations the admin configures. Runs Sundays at 02:00 UTC; per-config refresh interval is 30 days. Bounded by a `PLACES_API_DAILY_CAP` env var (default 200 cost units, ~25 textSearch calls/day) and tracked in a new `places_api_usage_log` table. Admin UI at `/dashboard/admin/vendors` → Places Seed tab supports add/edit/run-now/disable per config.
 - **CSV import** (new) — Admin uploads a CSV with `name, category, city, state` (required) plus optional fields (`website`, `phone`, `email`, `address`, `description`, `price_range`, `gmb_place_id`). Dry-run mode shows a preview before commit. Dedups on `gmb_place_id` first, then on `(name, city, state)` lowercase. Existing rows are not overwritten.
+- **External Supabase import** (existing) — the "Import from Supabase" button on the Directory tab continues to be the path for ingesting from out-of-app vendor pipelines maintained in a separate Supabase project.
 - **Manual entry** (existing) — admin form on the Directory tab.
 - **Couple submissions** (improved) — approval now stamps `seed_source = 'submission'` and explicitly sets `active = true, featured = false` so the audit trail is consistent.
 
