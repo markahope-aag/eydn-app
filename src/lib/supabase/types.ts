@@ -1140,6 +1140,75 @@ export type Database = {
           },
         ]
       }
+      places_api_usage_log: {
+        Row: {
+          called_at: string
+          cost_units: number
+          endpoint: string
+          id: string
+        }
+        Insert: {
+          called_at?: string
+          cost_units?: number
+          endpoint: string
+          id?: string
+        }
+        Update: {
+          called_at?: string
+          cost_units?: number
+          endpoint?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      places_seed_configs: {
+        Row: {
+          category: string
+          city: string
+          country: string
+          created_at: string
+          enabled: boolean
+          id: string
+          last_error: string | null
+          last_result_count: number | null
+          last_run_at: string | null
+          max_results: number
+          next_run_at: string | null
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          city: string
+          country?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_error?: string | null
+          last_result_count?: number | null
+          last_run_at?: string | null
+          max_results?: number
+          next_run_at?: string | null
+          state: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          city?: string
+          country?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_error?: string | null
+          last_result_count?: number | null
+          last_run_at?: string | null
+          max_results?: number
+          next_run_at?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       promo_code_redemptions: {
         Row: {
           discount_amount: number
@@ -1758,6 +1827,9 @@ export type Database = {
           description: string | null
           email: string | null
           featured: boolean
+          gmb_data: Json | null
+          gmb_last_refreshed_at: string | null
+          gmb_place_id: string | null
           id: string
           import_source: string | null
           imported_at: string | null
@@ -1765,6 +1837,7 @@ export type Database = {
           phone: string | null
           price_range: string | null
           search_vector: unknown
+          seed_source: string | null
           state: string
           updated_at: string
           website: string | null
@@ -1780,6 +1853,9 @@ export type Database = {
           description?: string | null
           email?: string | null
           featured?: boolean
+          gmb_data?: Json | null
+          gmb_last_refreshed_at?: string | null
+          gmb_place_id?: string | null
           id?: string
           import_source?: string | null
           imported_at?: string | null
@@ -1787,6 +1863,7 @@ export type Database = {
           phone?: string | null
           price_range?: string | null
           search_vector?: unknown
+          seed_source?: string | null
           state: string
           updated_at?: string
           website?: string | null
@@ -1802,6 +1879,9 @@ export type Database = {
           description?: string | null
           email?: string | null
           featured?: boolean
+          gmb_data?: Json | null
+          gmb_last_refreshed_at?: string | null
+          gmb_place_id?: string | null
           id?: string
           import_source?: string | null
           imported_at?: string | null
@@ -1809,6 +1889,7 @@ export type Database = {
           phone?: string | null
           price_range?: string | null
           search_vector?: unknown
+          seed_source?: string | null
           state?: string
           updated_at?: string
           website?: string | null

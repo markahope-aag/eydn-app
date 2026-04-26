@@ -34,6 +34,9 @@ export async function PATCH(
         email: sub.email,
         city: sub.city || "Unknown",
         state: sub.state || "Unknown",
+        active: true,
+        featured: false,
+        seed_source: "submission",
       });
     }
   }

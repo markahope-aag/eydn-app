@@ -18,6 +18,7 @@ This manual is for the **platform operator** — the founder, an ops manager, or
 8. [User support workflows](#8-user-support-workflows)
 9. [Routine maintenance calendar](#9-routine-maintenance-calendar)
 10. [Waitlist and growth ops](#10-waitlist-and-growth-ops)
+11. [Vendor directory management](#11-vendor-directory-management)
 
 ---
 
@@ -560,5 +561,84 @@ Alternatively, if you want to give someone permanent free access without the pro
 In the Settings tab (`/dashboard/admin?tab=settings`), under **Registration**:
 - Check **Invite only** to require an invite token for new signups.
 - Uncheck **Allow new signups** to close signups entirely.
+
+---
+
+## 11. Vendor directory management
+
+Eydn does not charge vendors for inclusion or placement. The directory shown to couples (`/dashboard/vendors/directory`) is sourced four ways, all of them under your control as admin:
+
+| Source | Where rows come from | Stamped as |
+|---|---|---|
+| **Places API seeder** | A scheduled cron pulls businesses from Google Places for category × city combinations you configure | `seed_source = 'places_api'` |
+| **CSV import** | You upload a spreadsheet of vendors via the admin UI | `seed_source = 'csv'` |
+| **Manual entry** | You add a vendor one-at-a-time via the admin form | `seed_source = 'manual'` (or NULL for legacy rows) |
+| **Couple submissions** | A couple submits a vendor; you click Approve; it auto-promotes | `seed_source = 'submission'` |
+
+All four land in the `suggested_vendors` table. You can audit a row's origin by reading the `seed_source` column in Supabase.
+
+### How do I configure the Places API seeder?
+
+Go to `/dashboard/admin/vendors`, click the **Places Seed** tab.
+
+The page shows three things:
+
+1. **Today's API spend** — a card at the top showing how many cost units you've used today versus your daily cap. The cap defaults to 200 cost units (~25 textSearch calls) and is set via the `PLACES_API_DAILY_CAP` env var in Vercel. When the cap is hit, both the cron and "Run now" buttons stop until UTC midnight.
+
+2. **Add config form** — pick a category, type a city, pick a state, and set how many results you want (max 60). The cron will pull that many businesses from Google Places for that combination on its next run.
+
+3. **Configs table** — every config you've added, with last/next run times, the count from its last run, any error, and per-row controls:
+   - **Run now** — triggers a single run immediately (subject to the daily cap)
+   - **Toggle on/off** — pauses a config without deleting it
+   - **Del** — removes the config (already-seeded vendors stay in the directory)
+
+The cron itself runs **Sundays at 02:00 UTC**, picks up every enabled config whose `next_run_at` has passed, and re-runs them. After each run, `next_run_at` is set to 30 days out — so each config refreshes monthly by default.
+
+> Cost guidance: at the default cap, you can seed roughly 25 cities-per-category per day (each call returns up to 20 vendors). Bulk-seeding a new market is a "raise the cap temporarily" exercise: bump `PLACES_API_DAILY_CAP` to 1000 in Vercel, run a batch via "Run now", then drop it back. Verify spending against the [Google Cloud Console billing page](https://console.cloud.google.com/billing) — the cost units are an internal approximation, not the authoritative dollar figure.
+
+### How do I bulk-import vendors from a CSV?
+
+On the **Places Seed** tab there's a CSV import card at the top. Steps:
+
+1. Prepare a CSV with these required columns: `name`, `category`, `city`, `state`. Optional columns: `country`, `zip`, `website`, `phone`, `email`, `address`, `description`, `price_range` (must be `$`/`$$`/`$$$`/`$$$$`), `gmb_place_id`.
+2. Click "Choose file" and select the CSV.
+3. Click **Dry run** — the system parses the file, validates each row, dedups against existing vendors, and shows you a summary: rows parsed, valid, invalid (with errors), how many would be inserted, how many would be matched as duplicates.
+4. If the summary looks right and the invalid count is zero, click **Commit import**. New rows are inserted; existing rows are not overwritten (admin must edit individually if they want to update copy).
+
+**Dedup rules:** rows with a `gmb_place_id` are matched first against existing place IDs. Rows without a place ID are matched on lowercase (name + city + state). Both insert and update behavior is non-destructive — never overwrites an existing row's fields.
+
+**File limits:** 5 MB max. Anything bigger should be split into batches.
+
+### How do I review couple-submitted vendors?
+
+On `/dashboard/admin/vendors`, **Submissions** tab. Each pending submission shows the suggested name, category, city, state, and submission date. Two buttons per row:
+
+- **Approve** — sets the submission status to approved AND inserts a corresponding row into `suggested_vendors` with `seed_source = 'submission'`. The vendor appears in the couple-facing directory immediately. Approved is the right choice if the submission is real and the basic info is plausible.
+- **Reject** — sets status to rejected. Nothing is added to the directory. Use for spam, duplicates, or businesses that don't fit Eydn's category list.
+
+Approval does not currently send a notification back to the submitter — that's a planned enhancement.
+
+### How do I edit or remove a vendor from the directory?
+
+On the **Directory** tab, each vendor row has:
+
+- **Featured toggle** — pinned to the top of search results when on
+- **Active toggle** — visible to couples when on; soft-hide by turning off (the row stays in the database)
+- **Edit** — change name, category, copy, contact info
+- **Delete** — permanent removal
+
+For bulk operations (deactivate everything in a category, etc.), use SQL via the Supabase dashboard.
+
+### Watch-outs
+
+1. **Auto-imported vendors land active by default.** This is intentional — manual approval-per-row would gate growth on admin attention. Spot-check the Directory tab after big seed runs and toggle off anything obviously wrong (closed businesses, wrong category, irrelevant types like a Verizon store showing up under "Photographer").
+
+2. **CSV imports do not refresh existing rows.** If you upload a CSV that includes a vendor already in the directory, the row is skipped (counted as duplicate). To bulk-update vendor copy, you'd need to delete the old rows first, or do the update via SQL.
+
+3. **The Places API seeder pulls basic info only** (name, address, phone, website, place ID). Reviews, photos, and full GMB data are pulled on-demand when a couple opens a vendor card. This keeps per-row seeding cheap (~$0.04 per call instead of ~$0.10 with full details).
+
+4. **`PLACES_API_DAILY_CAP` is a soft cap.** It's enforced by querying `places_api_usage_log` before each call. If two cron runs trigger simultaneously, both could squeak through before either logs. In practice this never happens — the cron is single-threaded — but if you trigger many "Run now" actions in parallel from the admin UI, expect minor overage.
+
+5. **Do not edit `seed_source` after the fact.** It's an audit trail of where the row came from, not a control flag. The runner doesn't read it; admin curation goes through the per-row featured/active toggles instead.
 
 **Note:** Invite-only mode is a flag but there is no invite-token generation UI — this setting paired with manual outreach is the intended workflow for beta periods.
