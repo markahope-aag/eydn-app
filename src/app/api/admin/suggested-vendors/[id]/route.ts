@@ -6,6 +6,7 @@ import { supabaseError } from "@/lib/api-error";
 const ALLOWED_FIELDS = [
   "name", "category", "description", "website", "phone", "email",
   "address", "city", "state", "zip", "country", "price_range",
+  "quality_score",
   "featured", "active",
 ];
 

@@ -576,7 +576,9 @@ Eydn does not charge vendors for inclusion or placement. The directory shown to 
 | **Manual entry** | You add a vendor one-at-a-time via the admin form | `seed_source = 'manual'` (or NULL for legacy rows) |
 | **Couple submissions** | A couple submits a vendor; you click Approve; it auto-promotes | `seed_source = 'submission'` |
 
-All five land in the `suggested_vendors` table. You can audit a row's origin by reading the `seed_source` column in Supabase, or by the `import_source` text field that the Supabase importer writes per batch.
+All five land in the `suggested_vendors` table.
+
+> **Internal quality score:** the `quality_score` column is an admin-only ranking signal (numeric, no fixed range — typically 0–100). The Supabase importer maps the remote `score` column to it by default; the CSV importer accepts a `quality_score` column; admins can edit it per-vendor in the edit modal. **It is excluded from the couple-facing API response** (`/api/suggested-vendors`) so it never leaks into the directory UI. Use it to sort the admin Directory tab via the "Score: high → low" sort dropdown — useful for prioritizing curation effort or pruning low-score rows. You can audit a row's origin by reading the `seed_source` column in Supabase, or by the `import_source` text field that the Supabase importer writes per batch.
 
 ### How do I configure the Places API seeder?
 

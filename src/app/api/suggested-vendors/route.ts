@@ -21,10 +21,20 @@ export async function GET(request: Request) {
 
   const supabase = createSupabaseAdmin();
 
-  // Build query with server-side filtering
+  // Build query with server-side filtering. Explicit column list — never
+  // include `quality_score` (admin-only ranking signal, see migration
+  // 20260426100000_suggested_vendors_quality_score.sql for rationale).
+  const PUBLIC_COLUMNS = [
+    "id", "name", "category", "description",
+    "website", "phone", "email", "address",
+    "city", "state", "zip", "country",
+    "price_range", "featured", "active",
+    "gmb_place_id", "gmb_data", "gmb_last_refreshed_at",
+    "created_at", "updated_at",
+  ].join(", ");
   let query = supabase
     .from("suggested_vendors")
-    .select("*", { count: "exact" })
+    .select(PUBLIC_COLUMNS, { count: "exact" })
     .eq("active", true);
 
   if (category) query = query.eq("category", category);

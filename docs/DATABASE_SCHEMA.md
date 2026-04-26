@@ -454,6 +454,7 @@ Platform-curated vendor directory.
 | website, phone, email, address | text | |
 | price_range | text | $, $$, $$$, $$$$ |
 | description | text | |
+| quality_score | numeric(5,2) | **Admin-only** ranking signal sourced from the external vendor data pipeline (or set by hand). Excluded from couple-facing API responses. |
 | featured | boolean | Sorts to top of search results when true |
 | active | boolean | Soft-disable flag |
 | search_vector | tsvector | Generated full-text search index |

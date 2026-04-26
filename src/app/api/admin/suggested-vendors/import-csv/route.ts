@@ -70,6 +70,7 @@ type VendorRow = {
   description?: string | null;
   price_range?: string | null;
   gmb_place_id?: string | null;
+  quality_score?: number | null;
 };
 
 /**
@@ -154,6 +155,17 @@ export async function POST(request: Request) {
       continue;
     }
 
+    const rawScore = get("quality_score");
+    let quality_score: number | null = null;
+    if (rawScore) {
+      const parsed = Number(rawScore);
+      if (!Number.isFinite(parsed)) {
+        errors.push(`Row ${i + 1}: quality_score '${rawScore}' is not a number`);
+        continue;
+      }
+      quality_score = parsed;
+    }
+
     validRows.push({
       name,
       category,
@@ -168,6 +180,7 @@ export async function POST(request: Request) {
       description: get("description") || null,
       price_range: priceRange,
       gmb_place_id: get("gmb_place_id") || null,
+      quality_score,
     });
   }
 
@@ -244,6 +257,7 @@ export async function POST(request: Request) {
           description: r.description,
           price_range: r.price_range,
           gmb_place_id: r.gmb_place_id,
+          quality_score: r.quality_score ?? null,
           active: true,
           featured: false,
           seed_source: "csv",

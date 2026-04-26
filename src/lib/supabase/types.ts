@@ -1836,6 +1836,7 @@ export type Database = {
           name: string
           phone: string | null
           price_range: string | null
+          quality_score: number | null
           search_vector: unknown
           seed_source: string | null
           state: string
@@ -1862,6 +1863,7 @@ export type Database = {
           name: string
           phone?: string | null
           price_range?: string | null
+          quality_score?: number | null
           search_vector?: unknown
           seed_source?: string | null
           state: string
@@ -1888,6 +1890,7 @@ export type Database = {
           name?: string
           phone?: string | null
           price_range?: string | null
+          quality_score?: number | null
           search_vector?: unknown
           seed_source?: string | null
           state?: string

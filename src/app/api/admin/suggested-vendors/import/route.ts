@@ -40,6 +40,7 @@ type ColumnMap = {
   zip?: string;
   country?: string;
   price_range?: string;
+  quality_score?: string;
 };
 
 const DEFAULT_COLUMN_MAP: ColumnMap = {
@@ -55,6 +56,10 @@ const DEFAULT_COLUMN_MAP: ColumnMap = {
   zip: "zip",
   country: "country",
   price_range: "price_range",
+  // Common upstream column names: 'score', 'quality_score', 'health_score'.
+  // Defaults to 'score' since that's the most common in pipeline schemas;
+  // override via column_map if your source uses a different name.
+  quality_score: "score",
 };
 
 export async function POST(request: Request) {
@@ -155,6 +160,8 @@ export async function POST(request: Request) {
     const rawWebsite = get(row, columnMap.website || "website");
     const rawEmail = get(row, columnMap.email || "email");
     const rawPriceRange = get(row, columnMap.price_range || "price_range");
+    const rawScore = get(row, columnMap.quality_score || "score");
+    const parsedScore = rawScore ? Number(rawScore) : Number.NaN;
 
     return {
       name: get(row, columnMap.name || "name"),
@@ -169,6 +176,7 @@ export async function POST(request: Request) {
       zip: get(row, columnMap.zip || "zip") || null,
       country: get(row, columnMap.country || "country") || "US",
       price_range: normalizePriceRange(rawPriceRange),
+      quality_score: Number.isFinite(parsedScore) ? parsedScore : null,
       featured: false,
       active: true,
     };

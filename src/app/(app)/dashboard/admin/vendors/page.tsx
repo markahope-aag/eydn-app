@@ -21,6 +21,7 @@ type SuggestedVendor = {
   zip: string | null;
   country: string | null;
   price_range: string | null;
+  quality_score: number | null;
   featured: boolean;
   active: boolean;
   // Audit / source metadata used by the edit modal
@@ -32,6 +33,8 @@ type SuggestedVendor = {
   created_at: string | null;
   updated_at: string | null;
 };
+
+type SortMode = "score_desc" | "score_asc" | "alpha";
 
 type Submission = {
   id: string;
@@ -64,6 +67,7 @@ export default function AdminVendorsPage() {
   const [filterState, setFilterState] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "featured" | "active" | "inactive">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortMode, setSortMode] = useState<SortMode>("score_desc");
   const [tab, setTab] = useState<"directory" | "submissions" | "seed">("directory");
   const [editingVendor, setEditingVendor] = useState<ModalVendor | null>(null);
 
@@ -243,6 +247,18 @@ export default function AdminVendorsPage() {
     return true;
   });
 
+  // Sort. NULL scores go to the bottom on score sorts; alpha sort is the
+  // baseline used when scores are unset across the directory.
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortMode === "alpha") return a.name.localeCompare(b.name);
+    const av = a.quality_score;
+    const bv = b.quality_score;
+    if (av === null && bv === null) return a.name.localeCompare(b.name);
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return sortMode === "score_desc" ? bv - av : av - bv;
+  });
+
   // Get unique states from actual data for the filter dropdown
   const vendorStates = [...new Set(vendors.map((v) => v.state).filter(Boolean))].sort();
 
@@ -371,6 +387,16 @@ export default function AdminVendorsPage() {
           <option value="featured">Featured Only</option>
           <option value="active">Active Only</option>
           <option value="inactive">Inactive Only</option>
+        </select>
+        <select
+          value={sortMode}
+          onChange={(e) => setSortMode(e.target.value as SortMode)}
+          className="rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+          title="Sort order"
+        >
+          <option value="score_desc">Score: high to low</option>
+          <option value="score_asc">Score: low to high</option>
+          <option value="alpha">Name: A → Z</option>
         </select>
         <span className="text-[13px] text-muted">{filtered.length} shown</span>
       </div>
@@ -546,7 +572,7 @@ export default function AdminVendorsPage() {
 
       {/* Vendor list */}
       <div className="mt-6 space-y-2">
-        {filtered.map((v) => (
+        {sorted.map((v) => (
           <div
             key={v.id}
             onClick={() => setEditingVendor(v as ModalVendor)}
@@ -558,6 +584,14 @@ export default function AdminVendorsPage() {
                 <span className="text-[15px] font-semibold text-plum truncate">{v.name}</span>
                 {v.featured && <span className="badge badge-booked">Featured</span>}
                 {!v.active && <span className="badge badge-declined">Inactive</span>}
+                {v.quality_score !== null && (
+                  <span
+                    className="badge badge-pending"
+                    title="Internal quality score (admin-only, not shown to couples)"
+                  >
+                    {v.quality_score.toFixed(1)}
+                  </span>
+                )}
               </div>
               <p className="text-[12px] text-muted">
                 {v.category} · {v.city}, {v.state} {v.price_range && `· ${v.price_range}`}

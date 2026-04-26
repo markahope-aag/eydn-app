@@ -27,6 +27,7 @@ export type Vendor = {
   zip: string | null;
   country: string | null;
   price_range: string | null;
+  quality_score: number | null;
   featured: boolean;
   active: boolean;
   // Audit / source fields (read-only in the modal)
@@ -61,6 +62,7 @@ type Props = {
 const EDITABLE_KEYS = [
   "name", "category", "description", "website", "phone", "email",
   "address", "city", "state", "zip", "country", "price_range",
+  "quality_score",
   "featured", "active",
 ] as const;
 
@@ -217,6 +219,26 @@ export function VendorEditModal({ vendor, onClose, onSaved, onDeleted }: Props) 
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label htmlFor="vscore">
+                Quality score{" "}
+                <span className="text-muted text-[11px] font-normal">(admin-only, not shown to couples)</span>
+              </label>
+              <input
+                id="vscore"
+                type="number"
+                step="0.01"
+                value={form.quality_score ?? ""}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  if (v === "") return setField("quality_score", null);
+                  const n = Number(v);
+                  setField("quality_score", Number.isFinite(n) ? n : null);
+                }}
+                placeholder="e.g. 87.4"
+                className="w-full mt-1.5"
+              />
             </div>
             <div className="sm:col-span-2">
               <label htmlFor="vdesc">Description</label>
