@@ -65,8 +65,22 @@ export async function POST(request: Request) {
   const scraperUrl = process.env.SCRAPER_SUPABASE_URL;
   const scraperKey = process.env.SCRAPER_SUPABASE_KEY;
   if (!scraperUrl || !scraperKey || !ourClientId) {
+    const missing = [
+      !scraperUrl && "SCRAPER_SUPABASE_URL",
+      !scraperKey && "SCRAPER_SUPABASE_KEY",
+      !ourClientId && "SCRAPER_EYDN_CLIENT_ID",
+    ].filter(Boolean).join(", ");
+    // Log this — silent skip on a verified job.complete is exactly the
+    // scenario where an admin needs to know "the webhook fired but data
+    // didn't move because env vars were missing".
+    await logCronExecution({
+      jobName: "import-vendors-webhook",
+      status: "error",
+      durationMs: 0,
+      errorMessage: `Skipped: scraper credentials missing (${missing}). Set in Vercel + redeploy.`,
+    });
     return NextResponse.json(
-      { ok: true, skipped: true, note: "scraper credentials not configured" }
+      { ok: true, skipped: true, note: `scraper credentials not configured: ${missing}` }
     );
   }
 

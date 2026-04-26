@@ -33,6 +33,12 @@ export async function POST(request: Request) {
       !scraperKey && "SCRAPER_SUPABASE_KEY",
       !clientId && "SCRAPER_EYDN_CLIENT_ID",
     ].filter(Boolean).join(", ");
+    await logCronExecution({
+      jobName: "refresh-vendors",
+      status: "error",
+      durationMs: 0,
+      errorMessage: `Skipped: scraper credentials missing (${missing}). Set in Vercel + redeploy.`,
+    });
     return NextResponse.json({
       ok: true,
       skipped: true,

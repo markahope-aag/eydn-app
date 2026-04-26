@@ -36,6 +36,15 @@ export async function POST(request: Request) {
       !scraperKey && "SCRAPER_SUPABASE_KEY",
       !clientId && "SCRAPER_EYDN_CLIENT_ID",
     ].filter(Boolean).join(", ");
+    // Surface skips as errors so they show up in the Cron Jobs admin tab.
+    // Silent no-ops are exactly how this kind of misconfiguration goes
+    // unnoticed for hours/days.
+    await logCronExecution({
+      jobName: "import-vendors",
+      status: "error",
+      durationMs: 0,
+      errorMessage: `Skipped: scraper credentials missing (${missing}). Set in Vercel + redeploy.`,
+    });
     return NextResponse.json({
       ok: true,
       skipped: true,
