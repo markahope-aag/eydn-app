@@ -132,9 +132,111 @@ const CATEGORY_ALIASES: Record<string, string> = {
   "shuttle": "Transportation",
   "car service": "Transportation",
   "wedding transportation": "Transportation",
+
+  // Bar Service
+  "bar": "Bar Service",
+  "bar service": "Bar Service",
+  "bartender": "Bar Service",
+  "bartenders": "Bar Service",
+  "bartending": "Bar Service",
+  "bartending services": "Bar Service",
+  "mobile bar": "Bar Service",
+  "wedding bar": "Bar Service",
+  "beverage": "Bar Service",
+  "beverages": "Bar Service",
+  "beverage service": "Bar Service",
+
+  // Attire
+  "attire": "Attire",
+  "wedding attire": "Attire",
+  "wedding dress": "Attire",
+  "wedding dresses": "Attire",
+  "bridal": "Attire",
+  "bridal shop": "Attire",
+  "bridal salon": "Attire",
+  "bridal boutique": "Attire",
+  "bridal store": "Attire",
+  "dress shop": "Attire",
+  "tuxedo": "Attire",
+  "tuxedos": "Attire",
+  "tux": "Attire",
+  "tux rental": "Attire",
+  "suit": "Attire",
+  "suits": "Attire",
+  "menswear": "Attire",
+  "formalwear": "Attire",
+  "formal wear": "Attire",
+  "wedding suits": "Attire",
+  "wedding tuxes": "Attire",
+  "accessories": "Attire",
+  "veil": "Attire",
+  "shoes": "Attire",
+
+  // Stationery
+  "stationery": "Stationery",
+  "stationary": "Stationery", // common misspelling
+  "invitations": "Stationery",
+  "invitation": "Stationery",
+  "wedding invitations": "Stationery",
+  "save the date": "Stationery",
+  "save the dates": "Stationery",
+  "save-the-dates": "Stationery",
+  "programs": "Stationery",
+  "wedding programs": "Stationery",
+  "calligraphy": "Stationery",
+  "calligrapher": "Stationery",
+  "signage": "Stationery",
+  "wedding signage": "Stationery",
+  "menus": "Stationery",
+  "place cards": "Stationery",
+
+  // Jewelry
+  "jewelry": "Jewelry",
+  "jeweler": "Jewelry",
+  "jewellery": "Jewelry",
+  "jeweller": "Jewelry",
+  "rings": "Jewelry",
+  "wedding rings": "Jewelry",
+  "engagement rings": "Jewelry",
+  "engagement ring": "Jewelry",
+  "wedding bands": "Jewelry",
+  "diamond": "Jewelry",
+  "diamonds": "Jewelry",
+
+  // Photo Booth
+  "photo booth": "Photo Booth",
+  "photobooth": "Photo Booth",
+  "photo booths": "Photo Booth",
+  "wedding photo booth": "Photo Booth",
+  "video booth": "Photo Booth",
+  "selfie booth": "Photo Booth",
+  "360 booth": "Photo Booth",
+
+  // Lighting & A/V
+  "lighting": "Lighting & A/V",
+  "wedding lighting": "Lighting & A/V",
+  "uplighting": "Lighting & A/V",
+  "string lights": "Lighting & A/V",
+  "av": "Lighting & A/V",
+  "a/v": "Lighting & A/V",
+  "audio visual": "Lighting & A/V",
+  "audio/visual": "Lighting & A/V",
+  "audio-visual": "Lighting & A/V",
+  "sound": "Lighting & A/V",
+  "sound system": "Lighting & A/V",
+  "projection": "Lighting & A/V",
+  "dance floor": "Lighting & A/V",
+  "production": "Lighting & A/V",
 };
 
-/** Normalize a category string to a canonical VENDOR_CATEGORIES value, or null if unrecognized */
+/**
+ * Normalize a category string to a canonical VENDOR_CATEGORIES value.
+ * Returns null when no static mapping is found — callers that want an
+ * AI fallback should use `normalizeCategoryWithAI()` from
+ * `@/lib/vendors/ai-categorize`. Strict null prevents random scraper
+ * categories like "bridal shop" from leaking into the directory as
+ * their own buckets.
+ */
 export function normalizeCategory(raw: string): string | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
@@ -155,8 +257,7 @@ export function normalizeCategory(raw: string): string | null {
   );
   if (partialMatch) return partialMatch;
 
-  // No match — return the original trimmed value so the admin can review
-  return trimmed;
+  return null;
 }
 
 // ─── State Normalization ─────────────────────────────────────────────────────

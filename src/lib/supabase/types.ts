@@ -352,6 +352,48 @@ export type Database = {
           },
         ]
       }
+      category_ai_mappings: {
+        Row: {
+          ai_model: string
+          confidence: number | null
+          created_at: string
+          hit_count: number
+          mapped_category: string | null
+          override_category: string | null
+          override_set_at: string | null
+          override_set_by: string | null
+          raw_category: string
+          reasoning: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_model: string
+          confidence?: number | null
+          created_at?: string
+          hit_count?: number
+          mapped_category?: string | null
+          override_category?: string | null
+          override_set_at?: string | null
+          override_set_by?: string | null
+          raw_category: string
+          reasoning?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_model?: string
+          confidence?: number | null
+          created_at?: string
+          hit_count?: number
+          mapped_category?: string | null
+          override_category?: string | null
+          override_set_at?: string | null
+          override_set_by?: string | null
+          raw_category?: string
+          reasoning?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ceremony_positions: {
         Row: {
           created_at: string

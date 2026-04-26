@@ -20,6 +20,7 @@ import {
   normalizeEmail,
   normalizePriceRange,
 } from "@/lib/vendors/normalize";
+import { normalizeCategoryWithAI } from "@/lib/vendors/ai-categorize";
 import { checkQuality, type VendorCandidate } from "@/lib/vendors/quality";
 import { applyFeaturedRule } from "@/lib/vendors/featured";
 
@@ -194,9 +195,18 @@ export async function runScraperImport(
     // Normalize. Mirrors the shape the manual Supabase importer produces.
     const rawCategory = row.category || "";
     const rawState = row.state || "";
+
+    // Three-tier category resolution: static aliases → DB cache → Claude Haiku.
+    // Each unknown raw string costs at most one AI call across the lifetime
+    // of the system; cached forever after.
+    const categoryResolved = rawCategory
+      ? await normalizeCategoryWithAI(rawCategory, supabase)
+      : null;
+    const resolvedCategory = categoryResolved?.category ?? null;
+
     const candidate: VendorCandidate & { country?: string; description?: string | null; price_range?: string | null } = {
       name: row.name?.trim() || null,
-      category: rawCategory ? (normalizeCategory(rawCategory) || rawCategory) : null,
+      category: resolvedCategory,
       address: row.street?.trim() || null,
       city: row.city ? normalizeCity(row.city) : null,
       state: rawState ? (normalizeState(rawState) || rawState.toUpperCase().slice(0, 2)) : null,
@@ -212,13 +222,30 @@ export async function runScraperImport(
     // Hard-fail: structural fields the schema requires. These are never
     // overridable — without name/category/city/state we can't even insert.
     if (!candidate.name || !candidate.category || !candidate.city || !candidate.state || candidate.state.length !== 2) {
+      const reasons: string[] = [];
+      if (!candidate.name) reasons.push("missing name");
+      if (!candidate.category) {
+        // Distinguish "no category at all" from "category not recognized" so
+        // the rejection panel tells the admin why this needs attention.
+        if (!rawCategory) {
+          reasons.push("missing category");
+        } else if (categoryResolved?.source === "ai") {
+          reasons.push(`category '${rawCategory}' rejected by AI: ${categoryResolved.reasoning ?? "low confidence"}`);
+        } else if (categoryResolved?.source === "cache") {
+          reasons.push(`category '${rawCategory}' previously rejected by AI: ${categoryResolved.reasoning ?? "no canonical match"}`);
+        } else {
+          reasons.push(`category '${rawCategory}' not recognized`);
+        }
+      }
+      if (!candidate.city) reasons.push("missing city");
+      if (!candidate.state || candidate.state.length !== 2) reasons.push(`invalid state '${rawState}'`);
       toReject.push({
         scraper_id: row.id,
         scraper_data: row as unknown as Database["public"]["Tables"]["vendor_import_rejections"]["Insert"]["scraper_data"],
-        failed_rules: ["missing required structural field (name/category/city/state)"],
+        failed_rules: reasons,
       });
       result.rejected++;
-      tally(result.rejectionSummary, "missing required structural field (name/category/city/state)");
+      for (const r of reasons) tally(result.rejectionSummary, r);
       continue;
     }
 

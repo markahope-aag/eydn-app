@@ -1,6 +1,7 @@
 export const VENDOR_CATEGORIES = [
   "Venue",
   "Caterer",
+  "Bar Service",
   "Photographer",
   "Videographer",
   "DJ or Band",
@@ -12,6 +13,11 @@ export const VENDOR_CATEGORIES = [
   "Rentals",
   "Wedding Planner / Day-of Coordinator",
   "Transportation",
+  "Attire",
+  "Stationery",
+  "Jewelry",
+  "Photo Booth",
+  "Lighting & A/V",
 ] as const;
 
 export type VendorCategory = (typeof VENDOR_CATEGORIES)[number];
@@ -32,6 +38,7 @@ export const CATEGORY_DISPLAY: Partial<Record<VendorCategory, string>> = {
   "Cake/Dessert Baker": "Cake & Desserts",
   "DJ or Band": "DJ / Band",
   "Wedding Planner / Day-of Coordinator": "Planner / Coordinator",
+  "Lighting & A/V": "Lighting / A-V",
 };
 
 /** Get the display label for a category, falling back to the raw value. */
