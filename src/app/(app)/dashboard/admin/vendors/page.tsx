@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { VENDOR_CATEGORIES } from "@/lib/vendors/categories";
 import { PlacesSeedTab } from "./_components/PlacesSeedTab";
 import { CsvImportPanel } from "./_components/CsvImportPanel";
+import { VendorEditModal, type Vendor as ModalVendor } from "./_components/VendorEditModal";
 
 type SuggestedVendor = {
   id: string;
@@ -14,11 +15,22 @@ type SuggestedVendor = {
   website: string | null;
   phone: string | null;
   email: string | null;
+  address: string | null;
   city: string;
   state: string;
+  zip: string | null;
+  country: string | null;
   price_range: string | null;
   featured: boolean;
   active: boolean;
+  // Audit / source metadata used by the edit modal
+  seed_source: string | null;
+  gmb_place_id: string | null;
+  gmb_last_refreshed_at: string | null;
+  imported_at: string | null;
+  import_source: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
 type Submission = {
@@ -53,6 +65,7 @@ export default function AdminVendorsPage() {
   const [filterStatus, setFilterStatus] = useState<"all" | "featured" | "active" | "inactive">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState<"directory" | "submissions" | "seed">("directory");
+  const [editingVendor, setEditingVendor] = useState<ModalVendor | null>(null);
 
   // Add form state
   const [form, setForm] = useState({
@@ -534,10 +547,15 @@ export default function AdminVendorsPage() {
       {/* Vendor list */}
       <div className="mt-6 space-y-2">
         {filtered.map((v) => (
-          <div key={v.id} className="card-list flex items-center gap-3 px-4 py-3">
-            <div className="flex-1">
+          <div
+            key={v.id}
+            onClick={() => setEditingVendor(v as ModalVendor)}
+            className="card-list flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-whisper transition"
+            title="Click to view + edit details"
+          >
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[15px] font-semibold text-plum">{v.name}</span>
+                <span className="text-[15px] font-semibold text-plum truncate">{v.name}</span>
                 {v.featured && <span className="badge badge-booked">Featured</span>}
                 {!v.active && <span className="badge badge-declined">Inactive</span>}
               </div>
@@ -545,15 +563,37 @@ export default function AdminVendorsPage() {
                 {v.category} · {v.city}, {v.state} {v.price_range && `· ${v.price_range}`}
               </p>
             </div>
-            <label className="flex items-center gap-1 text-[12px] text-muted">
-              <input type="checkbox" checked={v.featured} onChange={(e) => toggleFeatured(v.id, e.target.checked)} className="accent-violet" />
+            {/* Stop propagation so toggling Featured/Active doesn't open the modal. */}
+            <label
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 text-[12px] text-muted"
+            >
+              <input
+                type="checkbox"
+                checked={v.featured}
+                onChange={(e) => toggleFeatured(v.id, e.target.checked)}
+                className="accent-violet"
+              />
               Featured
             </label>
-            <label className="flex items-center gap-1 text-[12px] text-muted">
-              <input type="checkbox" checked={v.active} onChange={(e) => toggleActive(v.id, e.target.checked)} className="accent-violet" />
+            <label
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 text-[12px] text-muted"
+            >
+              <input
+                type="checkbox"
+                checked={v.active}
+                onChange={(e) => toggleActive(v.id, e.target.checked)}
+                className="accent-violet"
+              />
               Active
             </label>
-            <button onClick={() => deleteVendor(v.id)} className="btn-destructive btn-sm">Remove</button>
+            <button
+              onClick={(e) => { e.stopPropagation(); deleteVendor(v.id); }}
+              className="btn-destructive btn-sm"
+            >
+              Remove
+            </button>
           </div>
         ))}
         {filtered.length === 0 && (
@@ -562,6 +602,21 @@ export default function AdminVendorsPage() {
           </p>
         )}
       </div>
+
+      {editingVendor && (
+        <VendorEditModal
+          vendor={editingVendor}
+          onClose={() => setEditingVendor(null)}
+          onSaved={(updated) => {
+            setVendors((vs) => vs.map((x) => (x.id === updated.id ? (updated as SuggestedVendor) : x)));
+            setEditingVendor(null);
+          }}
+          onDeleted={(id) => {
+            setVendors((vs) => vs.filter((x) => x.id !== id));
+            setEditingVendor(null);
+          }}
+        />
+      )}
       </>}
     </div>
   );
