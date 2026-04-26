@@ -45,10 +45,6 @@
       "schedule": "0 14 * * *"
     },
     {
-      "path": "/api/cron/seed-vendors",
-      "schedule": "0 2 * * 0"
-    },
-    {
       "path": "/api/cron/import-vendors",
       "schedule": "0 * * * *"
     },

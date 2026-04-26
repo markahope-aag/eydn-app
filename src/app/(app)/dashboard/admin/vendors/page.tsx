@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { VENDOR_CATEGORIES } from "@/lib/vendors/categories";
-import { PlacesSeedTab } from "./_components/PlacesSeedTab";
 import { CsvImportPanel } from "./_components/CsvImportPanel";
 import { VendorEditModal, type Vendor as ModalVendor } from "./_components/VendorEditModal";
 import { ImportRejectionsPanel } from "./_components/ImportRejectionsPanel";
@@ -71,7 +70,7 @@ export default function AdminVendorsPage() {
   const [filterStatus, setFilterStatus] = useState<"all" | "featured" | "active" | "inactive">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("score_desc");
-  const [tab, setTab] = useState<"directory" | "submissions" | "seed">("directory");
+  const [tab, setTab] = useState<"directory" | "submissions" | "import">("directory");
   const [editingVendor, setEditingVendor] = useState<ModalVendor | null>(null);
 
   // Add form state
@@ -323,12 +322,12 @@ export default function AdminVendorsPage() {
         <button onClick={() => setTab("submissions")} className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${tab === "submissions" ? "border-violet text-violet" : "border-transparent text-muted"}`}>
           Submissions {pendingSubmissions.length > 0 && <span className="ml-1 bg-violet text-white text-[10px] rounded-full px-1.5 py-0.5">{pendingSubmissions.length}</span>}
         </button>
-        <button onClick={() => setTab("seed")} className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${tab === "seed" ? "border-violet text-violet" : "border-transparent text-muted"}`}>
-          Places Seed
+        <button onClick={() => setTab("import")} className={`px-4 py-2 text-[15px] font-semibold border-b-2 transition ${tab === "import" ? "border-violet text-violet" : "border-transparent text-muted"}`}>
+          Import
         </button>
       </div>
 
-      {tab === "seed" && (
+      {tab === "import" && (
         <div className="mt-4 space-y-6">
           <ImportRejectionsPanel
             onOverride={() => {
@@ -340,14 +339,6 @@ export default function AdminVendorsPage() {
           />
           <CsvImportPanel
             onImported={() => {
-              fetch("/api/admin/suggested-vendors")
-                .then((r) => (r.ok ? r.json() : []))
-                .then(setVendors)
-                .catch(() => {});
-            }}
-          />
-          <PlacesSeedTab
-            onVendorsImported={() => {
               fetch("/api/admin/suggested-vendors")
                 .then((r) => (r.ok ? r.json() : []))
                 .then(setVendors)
