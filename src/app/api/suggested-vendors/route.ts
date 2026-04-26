@@ -16,6 +16,9 @@ export async function GET(request: Request) {
   const city = url.searchParams.get("city");
   const state = url.searchParams.get("state");
   const q = url.searchParams.get("q");
+  // Optional single-vendor lookup — used by the admin "Preview as couple"
+  // flow to pin one specific vendor into the listing.
+  const id = url.searchParams.get("id");
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || String(PAGE_SIZE), 10)));
 
@@ -38,6 +41,7 @@ export async function GET(request: Request) {
     .select(PUBLIC_COLUMNS, { count: "exact" })
     .eq("active", true);
 
+  if (id) query = query.eq("id", id);
   if (category) query = query.eq("category", category);
   if (state) query = query.eq("state", state);
   if (city) query = query.ilike("city", `%${city}%`);

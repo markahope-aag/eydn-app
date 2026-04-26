@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { VENDOR_CATEGORIES, categoryLabel } from "@/lib/vendors/categories";
 
@@ -110,6 +111,11 @@ export default function VendorDirectoryPage() {
   const [gmbCache, setGmbCache] = useState<Record<string, PlaceData | "loading" | "error">>({});
   const sentinelRef = useRef<HTMLDivElement>(null);
 
+  // Admin "Preview as couple" deep link: /dashboard/vendors/directory?expand=<id>
+  // pins the requested vendor to the top of the list and auto-expands it.
+  const searchParams = useSearchParams();
+  const previewId = searchParams.get("expand");
+
   const debouncedSearch = useDebounce(search, 300);
 
   const activeFilterCount = [filterCategory, filterPrice, filterLocation].filter(Boolean).length;
@@ -199,6 +205,39 @@ export default function VendorDirectoryPage() {
       fetchGmb(v.id);
     }
   }, [vendors, fetchGmb]);
+
+  // ?expand=<id> handler — pins the requested vendor to the top, expands
+  // it, and scrolls into view. Fetches the vendor via the id filter when
+  // it's not already in the loaded page (e.g. it's on page 4 of 10).
+  useEffect(() => {
+    if (!previewId || loading) return;
+    const inList = vendors.some((v) => v.id === previewId);
+
+    if (inList) {
+      setExpandedId(previewId);
+      fetchGmb(previewId);
+      requestAnimationFrame(() => {
+        document.getElementById(`vendor-${previewId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      return;
+    }
+
+    fetch(`/api/suggested-vendors?id=${previewId}&limit=1`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: { vendors: SuggestedVendor[] }) => {
+        if (data.vendors.length === 0) {
+          toast.error("Vendor isn't visible to couples (inactive or removed).");
+          return;
+        }
+        setVendors((prev) => [data.vendors[0], ...prev.filter((v) => v.id !== previewId)]);
+        setExpandedId(previewId);
+        fetchGmb(previewId);
+        requestAnimationFrame(() => {
+          document.getElementById(`vendor-${previewId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      })
+      .catch(() => toast.error("Couldn't load vendor preview."));
+  }, [previewId, loading, vendors, fetchGmb]);
 
   function toggleDetails(vendorId: string) {
     if (expandedId === vendorId) {
@@ -605,7 +644,7 @@ function FeaturedCard({
   const photo = gmbState && gmbState !== "loading" && gmbState !== "error" ? gmbState.photoUrl : null;
 
   return (
-    <div className="card-summary overflow-hidden">
+    <div id={`vendor-${vendor.id}`} className="card-summary overflow-hidden">
       {/* Photo */}
       {photo && (
         <div className="relative w-full h-36">
@@ -682,7 +721,7 @@ function VendorRow({
   const photo = gmbState && gmbState !== "loading" && gmbState !== "error" ? gmbState.photoUrl : null;
 
   return (
-    <div ref={rowRef} className="rounded-[16px] border border-border bg-white overflow-hidden">
+    <div id={`vendor-${vendor.id}`} ref={rowRef} className="rounded-[16px] border border-border bg-white overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-3">
         {/* Thumbnail */}
         {photo ? (

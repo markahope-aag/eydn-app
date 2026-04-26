@@ -180,7 +180,27 @@ export function VendorEditModal({ vendor, onClose, onSaved, onDeleted }: Props) 
               {vendor.seed_source && <> · source: <code className="bg-lavender px-1 rounded">{vendor.seed_source}</code></>}
             </p>
           </div>
-          <button onClick={onClose} className="btn-ghost btn-sm">Close</button>
+          <div className="flex items-center gap-2 shrink-0">
+            {vendor.active ? (
+              <a
+                href={`/dashboard/vendors/directory?expand=${vendor.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-ghost btn-sm"
+                title="Open the public directory in a new tab and auto-expand this vendor"
+              >
+                Preview as couple ↗
+              </a>
+            ) : (
+              <span
+                className="btn-ghost btn-sm opacity-50 cursor-not-allowed"
+                title="Inactive vendors aren't visible to couples — toggle Active first"
+              >
+                Preview as couple ↗
+              </span>
+            )}
+            <button onClick={onClose} className="btn-ghost btn-sm">Close</button>
+          </div>
         </div>
 
         <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
