@@ -102,6 +102,35 @@ export default function AdminVendorsPage() {
     errors?: string[];
   } | null>(null);
   const [importing, setImporting] = useState(false);
+  const [pulling, setPulling] = useState(false);
+
+  async function pullFromScraper() {
+    setPulling(true);
+    try {
+      const res = await fetch("/api/admin/scraper-import", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Pull failed");
+        return;
+      }
+      const { scannedFromScraper = 0, alreadySeen = 0, inserted = 0, rejected = 0, errors = [] } = data;
+      if (errors.length > 0) {
+        toast.error(`Pulled with errors: ${errors[0]}`);
+      } else if (inserted > 0) {
+        toast.success(`Pulled ${inserted} new · ${rejected} rejected · ${alreadySeen} already seen (scanned ${scannedFromScraper})`);
+      } else {
+        toast(`No new vendors. Scanned ${scannedFromScraper} · ${alreadySeen} already seen · ${rejected} rejected`);
+      }
+      if (inserted > 0) {
+        const r = await fetch("/api/admin/suggested-vendors");
+        if (r.ok) setVendors(await r.json());
+      }
+    } catch {
+      toast.error("Pull request failed");
+    } finally {
+      setPulling(false);
+    }
+  }
 
   useEffect(() => {
     Promise.all([
@@ -277,6 +306,9 @@ export default function AdminVendorsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <button onClick={pullFromScraper} disabled={pulling} className="btn-secondary">
+            {pulling ? "Pulling…" : "Pull from Scraper"}
+          </button>
           <button onClick={() => { setShowImport(!showImport); setShowAdd(false); }} className="btn-secondary">
             Import from Supabase
           </button>
