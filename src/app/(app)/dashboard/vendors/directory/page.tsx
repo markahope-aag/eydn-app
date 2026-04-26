@@ -21,7 +21,39 @@ type SuggestedVendor = {
   state: string;
   price_range: string | null;
   featured: boolean;
+  /** Persisted photos from suggested_vendors.photos. First entry is the hero;
+   *  remaining entries shown in the expanded Details panel. May be a direct
+   *  URL or a `places/...` ref that needs proxying through /api/places-photo. */
+  photos: string[];
 };
+
+/** Convert a stored photo entry to a renderable URL. Google Places refs come
+ *  in as `places/.../photos/...` and must be proxied to keep the API key
+ *  server-side; everything else is already a URL. */
+function photoSrc(entry: string | null | undefined): string | null {
+  if (!entry) return null;
+  if (entry.startsWith("places/")) {
+    return `/api/places-photo?ref=${encodeURIComponent(entry)}`;
+  }
+  return entry;
+}
+
+/** Hero image with explicit precedence:
+ *   1. The persisted hero on suggested_vendors.photos[0] (instant render).
+ *   2. The lazy-loaded GMB photo (only useful for older rows that have no
+ *      persisted photos yet — newer scraper imports always populate).
+ *   Returns null when neither exists; caller renders a placeholder. */
+function heroPhoto(
+  vendor: { photos: string[] },
+  gmbState: PlaceData | "loading" | "error" | undefined
+): string | null {
+  const fromVendor = photoSrc(vendor.photos?.[0]);
+  if (fromVendor) return fromVendor;
+  if (gmbState && gmbState !== "loading" && gmbState !== "error") {
+    return gmbState.photoUrl ?? null;
+  }
+  return null;
+}
 
 type PlaceData = {
   placeId: string;
@@ -642,16 +674,21 @@ function FeaturedCard({
   gmbState: PlaceData | "loading" | "error" | undefined;
   onToggle: () => void;
 }) {
-  const photo = gmbState && gmbState !== "loading" && gmbState !== "error" ? gmbState.photoUrl : null;
+  const photo = heroPhoto(vendor, gmbState);
 
   return (
     <div id={`vendor-${vendor.id}`} className="card-summary overflow-hidden">
-      {/* Photo */}
-      {photo && (
-        <div className="relative w-full h-36">
+      {/* Hero — always rendered. Falls through to a lavender placeholder
+       *  when the vendor has neither a persisted photo nor GMB enrichment. */}
+      <div className="relative w-full h-36">
+        {photo ? (
           <Image src={photo} alt={vendor.name} fill unoptimized className="object-cover" />
-        </div>
-      )}
+        ) : (
+          <div className="w-full h-full bg-lavender flex items-center justify-center">
+            <span className="text-[40px] font-semibold text-violet/60">{vendor.name.charAt(0)}</span>
+          </div>
+        )}
+      </div>
       <div className="p-4">
         <div className="flex items-start justify-between">
           <div>
@@ -676,7 +713,12 @@ function FeaturedCard({
             {expanded ? "Hide Details" : "Details"}
           </button>
         </div>
-        {expanded && <GmbHighlightCard state={gmbState} />}
+        {expanded && (
+          <>
+            <GmbHighlightCard state={gmbState} />
+            <AdditionalPhotos photos={vendor.photos} vendorName={vendor.name} />
+          </>
+        )}
       </div>
     </div>
   );
@@ -719,12 +761,13 @@ function VendorRow({
     return () => observer.disconnect();
   }, [gmbState, onVisible]);
 
-  const photo = gmbState && gmbState !== "loading" && gmbState !== "error" ? gmbState.photoUrl : null;
+  const photo = heroPhoto(vendor, gmbState);
 
   return (
     <div id={`vendor-${vendor.id}`} ref={rowRef} className="rounded-[16px] border border-border bg-white overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-3">
-        {/* Thumbnail */}
+        {/* Thumbnail — uses persisted hero so it renders instantly,
+         *  falls back to lavender placeholder when no photo is available. */}
         {photo ? (
           <div className="w-12 h-12 rounded-[10px] overflow-hidden relative flex-shrink-0">
             <Image src={photo} alt={vendor.name} fill unoptimized className="object-cover" />
@@ -753,8 +796,33 @@ function VendorRow({
       {expanded && (
         <div className="border-t border-border px-4 py-3 bg-lavender/10">
           <GmbHighlightCard state={gmbState} />
+          <AdditionalPhotos photos={vendor.photos} vendorName={vendor.name} />
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Additional Photos Strip (in expanded Details) ───────────────────────────
+function AdditionalPhotos({ photos, vendorName }: { photos: string[]; vendorName: string }) {
+  // photos[0] is the hero (already rendered as the card image), so we skip it
+  // and surface the rest as a small thumbnail strip — up to 5.
+  const extras = (photos || []).slice(1, 6);
+  if (extras.length === 0) return null;
+  return (
+    <div className="mt-3">
+      <p className="text-[12px] text-muted mb-2">More photos</p>
+      <div className="grid grid-cols-5 gap-2">
+        {extras.map((p, i) => {
+          const src = photoSrc(p);
+          if (!src) return null;
+          return (
+            <div key={i} className="relative aspect-square rounded-[8px] overflow-hidden">
+              <Image src={src} alt={`${vendorName} photo ${i + 2}`} fill unoptimized className="object-cover" />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
