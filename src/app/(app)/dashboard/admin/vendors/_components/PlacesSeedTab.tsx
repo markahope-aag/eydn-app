@@ -64,20 +64,33 @@ export function PlacesSeedTab({ onVendorsImported }: { onVendorsImported: () => 
 
   async function addConfig(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.city || !form.state) return;
+    if (!form.city.trim()) {
+      toast.error("Enter a city");
+      return;
+    }
+    if (!form.state) {
+      toast.error("Pick a state");
+      return;
+    }
     setAdding(true);
     try {
       const res = await fetch("/api/admin/places-seed-configs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, city: form.city.trim() }),
       });
-      if (!res.ok) throw new Error();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = (data as { error?: string }).error || `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
       toast.success("Seed config added");
       setForm({ category: VENDOR_CATEGORIES[0] as string, city: "", state: "", max_results: 20 });
       reload();
-    } catch {
-      toast.error("Failed to add config");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to add config";
+      console.error("[PlacesSeed] addConfig:", msg);
+      toast.error(`Failed to add config: ${msg}`);
     } finally {
       setAdding(false);
     }
