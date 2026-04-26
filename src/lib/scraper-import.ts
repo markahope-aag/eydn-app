@@ -21,6 +21,7 @@ import {
   normalizePriceRange,
 } from "@/lib/vendors/normalize";
 import { checkQuality, type VendorCandidate } from "@/lib/vendors/quality";
+import { applyFeaturedRule } from "@/lib/vendors/featured";
 
 type AdminSupabase = SupabaseClient<Database>;
 type SuggestedVendorInsert = Database["public"]["Tables"]["suggested_vendors"]["Insert"];
@@ -334,6 +335,24 @@ export async function runScraperImport(
     }
   }
 
+  // 6. Recompute featured for any category that received new rows. The
+  //    rule is an idempotent "top N% per category" computation — running
+  //    it after inserts keeps newly-arrived high-score vendors visible
+  //    immediately instead of waiting for the nightly safety-net cron.
+  if (result.inserted > 0) {
+    const touchedCategories = [
+      ...new Set(toInsert.map((r) => r.category).filter((c): c is string => typeof c === "string")),
+    ];
+    if (touchedCategories.length > 0) {
+      try {
+        await applyFeaturedRule(supabase, { categories: touchedCategories });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        result.errors.push(`featured rule failed: ${message}`);
+      }
+    }
+  }
+
   return result;
 }
 
@@ -423,6 +442,7 @@ export async function runScraperRefresh(
   result.notFoundInScraper = scraperIds.filter((id) => !foundIds.has(id)).length;
 
   const now = new Date().toISOString();
+  const touchedCategories = new Set<string>();
   for (const row of currentRows) {
     const eydnId = idToEydnRow.get(row.id);
     if (!eydnId) continue;
@@ -460,6 +480,10 @@ export async function runScraperRefresh(
     if (result.refreshedNames.length < 10 && row.name) {
       result.refreshedNames.push(row.name);
     }
+    if (row.category) {
+      const normalized = normalizeCategory(row.category) || row.category;
+      touchedCategories.add(normalized);
+    }
   }
 
   // For vendors we couldn't find in the scraper (deleted upstream), bump
@@ -471,6 +495,18 @@ export async function runScraperRefresh(
       .from("suggested_vendors")
       .update({ gmb_last_refreshed_at: now })
       .in("scraper_id", missing);
+  }
+
+  // Refresh can flip a vendor's active state (closed business) and shift
+  // quality_score — both invalidate the prior top-N% picks. Recompute for
+  // any category we touched.
+  if (touchedCategories.size > 0) {
+    try {
+      await applyFeaturedRule(supabase, { categories: [...touchedCategories] });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      result.errors.push(`featured rule failed: ${message}`);
+    }
   }
 
   return result;

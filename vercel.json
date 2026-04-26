@@ -51,6 +51,10 @@
     {
       "path": "/api/cron/refresh-vendors",
       "schedule": "0 3 * * 6"
+    },
+    {
+      "path": "/api/cron/recompute-featured",
+      "schedule": "30 4 * * *"
     }
   ]
 }

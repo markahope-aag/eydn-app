@@ -23,6 +23,7 @@ type SuggestedVendor = {
   price_range: string | null;
   quality_score: number | null;
   featured: boolean;
+  featured_locked: boolean;
   active: boolean;
   photos: string[] | null;
   // Audit / source metadata used by the edit modal

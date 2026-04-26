@@ -1758,6 +1758,7 @@ export type Database = {
           description: string | null
           email: string | null
           featured: boolean
+          featured_locked: boolean
           gmb_data: Json | null
           gmb_last_refreshed_at: string | null
           gmb_place_id: string | null
@@ -1789,6 +1790,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           featured?: boolean
+          featured_locked?: boolean
           gmb_data?: Json | null
           gmb_last_refreshed_at?: string | null
           gmb_place_id?: string | null
@@ -1820,6 +1822,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           featured?: boolean
+          featured_locked?: boolean
           gmb_data?: Json | null
           gmb_last_refreshed_at?: string | null
           gmb_place_id?: string | null

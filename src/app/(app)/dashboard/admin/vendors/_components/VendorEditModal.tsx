@@ -29,6 +29,7 @@ export type Vendor = {
   price_range: string | null;
   quality_score: number | null;
   featured: boolean;
+  featured_locked: boolean;
   active: boolean;
   photos: string[] | null;
   // Audit / source fields (read-only in the modal)
@@ -65,7 +66,7 @@ const EDITABLE_KEYS = [
   "name", "category", "description", "website", "phone", "email",
   "address", "city", "state", "zip", "country", "price_range",
   "quality_score",
-  "featured", "active",
+  "featured", "featured_locked", "active",
 ] as const;
 
 type EditableKey = typeof EDITABLE_KEYS[number];
@@ -341,7 +342,22 @@ export function VendorEditModal({ vendor, onClose, onSaved, onDeleted }: Props) 
                   onChange={(e) => setField("featured", e.target.checked)}
                   className="w-4 h-4"
                 />
-                Featured (sorts to top of search results)
+                Featured{" "}
+                <span className="text-muted text-[11px] font-normal">
+                  {form.featured_locked
+                    ? "(locked — auto-rule won't change this)"
+                    : "(auto-managed: top 10% by score per category)"}
+                </span>
+              </label>
+              <label className="inline-flex items-center gap-2 font-normal">
+                <input
+                  type="checkbox"
+                  checked={form.featured_locked}
+                  onChange={(e) => setField("featured_locked", e.target.checked)}
+                  className="w-4 h-4"
+                />
+                Lock featured value{" "}
+                <span className="text-muted text-[11px] font-normal">(opt out of the auto-rule)</span>
               </label>
               <label className="inline-flex items-center gap-2 font-normal">
                 <input
