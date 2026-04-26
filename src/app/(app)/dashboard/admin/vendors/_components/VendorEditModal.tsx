@@ -410,6 +410,14 @@ export function VendorEditModal({ vendor, onClose, onSaved, onDeleted }: Props) 
                 label="Social URLs"
                 value={renderSocial(vendor.scraper_extras)}
               />
+              <Field
+                label="Verified by scraper"
+                value={renderVerified(vendor.scraper_extras)}
+              />
+              <Field
+                label="Google Maps"
+                value={renderMapLink(vendor.scraper_extras)}
+              />
             </dl>
           </details>
 
@@ -516,6 +524,28 @@ function describeDescriptionStatus(extras: Record<string, unknown> | null): Reac
       ? "text-confirmed-text"
       : "text-declined-text";
   return <span className={colorClass}>{status}</span>;
+}
+
+function renderVerified(extras: Record<string, unknown> | null): React.ReactNode {
+  if (!extras || extras.verified !== true) return "—";
+  const method = typeof extras.verification_method === "string" ? extras.verification_method : null;
+  const at = typeof extras.verified_at === "string" ? extras.verified_at : null;
+  return (
+    <span className="text-confirmed-text">
+      ✓ {method || "verified"}
+      {at && <span className="text-muted"> · {fmtDate(at)}</span>}
+    </span>
+  );
+}
+
+function renderMapLink(extras: Record<string, unknown> | null): React.ReactNode {
+  const url = extras && typeof extras.google_maps_url === "string" ? extras.google_maps_url : null;
+  if (!url) return "—";
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="text-violet underline">
+      Open
+    </a>
+  );
 }
 
 function renderSocial(extras: Record<string, unknown> | null): React.ReactNode {

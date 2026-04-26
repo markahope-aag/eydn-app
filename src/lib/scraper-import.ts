@@ -42,7 +42,7 @@ type ScraperVendor = {
   description: string | null;
   description_status: string | null;
   eydn_score: number | null;
-  price_level: number | null;
+  price_level: string | null;
   market: string | null;
   instagram: string | null;
   facebook: string | null;
@@ -52,6 +52,10 @@ type ScraperVendor = {
   lat: number | null;
   lng: number | null;
   photos: string[] | null;
+  verified: boolean | null;
+  verified_at: string | null;
+  verification_method: string | null;
+  google_maps_url: string | null;
   _review_count: number | null;
   client_id: string | null;
   created_at: string;
@@ -68,6 +72,7 @@ const SCRAPER_SELECT =
   "id, name, category, street, city, state, zip, country, phone, website, email, " +
   "description, description_status, eydn_score, price_level, market, " +
   "instagram, facebook, pinterest, business_status, hours, lat, lng, _review_count, " +
+  "verified, verified_at, verification_method, google_maps_url, " +
   "client_id, created_at, updated_at";
 
 /** Business statuses that mean "don't surface to couples". Vendor stays in
@@ -92,6 +97,10 @@ function buildScraperExtras(row: ScraperVendor): Record<string, unknown> {
     lng: row.lng ?? undefined,
     description_status: row.description_status || undefined,
     review_count: row._review_count ?? undefined,
+    verified: row.verified ?? undefined,
+    verified_at: row.verified_at || undefined,
+    verification_method: row.verification_method || undefined,
+    google_maps_url: row.google_maps_url || undefined,
   };
 }
 
@@ -247,35 +256,80 @@ export async function runScraperImport(
       // Closed vendors land inactive — kept for admin audit but never shown.
       active: isOperational(row),
       seed_source: "scraper_auto",
+      import_source: "scraper_auto",
     });
   }
 
-  // 5. Bulk insert. Both writes are best-effort; partial success is fine.
+  // 5. Persist rejections first so they are recorded as "seen" even if the
+  //    happy-path insert fails. Try the bulk path; if a single bad row poisons
+  //    it, fall back to one-by-one so the rest still land.
   if (toReject.length > 0) {
     const { error: rejectError } = await supabase
       .from("vendor_import_rejections")
       .insert(toReject);
     if (rejectError) {
-      result.errors.push(`rejection log write failed: ${rejectError.message}`);
+      result.errors.push(
+        `rejection log batch failed (${rejectError.message}); falling back to per-row`
+      );
+      for (const r of toReject) {
+        const { error: oneErr } = await supabase
+          .from("vendor_import_rejections")
+          .insert(r);
+        if (oneErr) {
+          result.errors.push(
+            `rejection log failed for scraper_id=${r.scraper_id}: ${oneErr.message}`
+          );
+        }
+      }
     }
   }
 
   if (toInsert.length > 0) {
-    // Insert in batches of 100 so a single bad row doesn't block the whole
-    // batch (insert returns one error for the whole call by default).
     const batchSize = 100;
     for (let i = 0; i < toInsert.length; i += batchSize) {
       const batch = toInsert.slice(i, i + batchSize);
       const { error: insertError } = await supabase.from("suggested_vendors").insert(batch);
-      if (insertError) {
-        result.errors.push(`insert batch ${Math.floor(i / batchSize) + 1} failed: ${insertError.message}`);
-      } else {
+      if (!insertError) {
         result.inserted += batch.length;
         for (const row of batch) {
           if (result.insertedNames.length < 10 && typeof row.name === "string") {
             result.insertedNames.push(row.name);
           }
         }
+        continue;
+      }
+
+      // Bulk failed — one bad row aborted the whole batch. Retry one-by-one
+      // so the rest still land, and route the offender to vendor_import_rejections
+      // with the DB error as the failed_rule. Without this, the bad row keeps
+      // poisoning every future cron run because dedup never marks it as seen.
+      result.errors.push(
+        `insert batch ${Math.floor(i / batchSize) + 1} failed in bulk (${insertError.message}); retrying row-by-row`
+      );
+      for (const row of batch) {
+        const { error: oneErr } = await supabase
+          .from("suggested_vendors")
+          .insert(row);
+        if (!oneErr) {
+          result.inserted++;
+          if (result.insertedNames.length < 10 && typeof row.name === "string") {
+            result.insertedNames.push(row.name);
+          }
+          continue;
+        }
+        const ruleLabel = `db insert failed: ${oneErr.message}`;
+        const scraperId = typeof row.scraper_id === "string" ? row.scraper_id : null;
+        if (scraperId) {
+          await supabase.from("vendor_import_rejections").insert({
+            scraper_id: scraperId,
+            scraper_data: row as unknown as Database["public"]["Tables"]["vendor_import_rejections"]["Insert"]["scraper_data"],
+            failed_rules: [ruleLabel],
+          });
+        } else {
+          result.errors.push(`row insert failed (no scraper_id) name=${row.name}: ${oneErr.message}`);
+        }
+        result.rejected++;
+        tally(result.rejectionSummary, ruleLabel);
       }
     }
   }
