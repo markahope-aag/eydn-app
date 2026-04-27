@@ -25,6 +25,10 @@ type SuggestedVendor = {
    *  remaining entries shown in the expanded Details panel. May be a direct
    *  URL or a `places/...` ref that needs proxying through /api/places-photo. */
   photos: string[];
+  /** Cached Google enrichment from suggested_vendors.gmb_data. When present
+   *  on the row, the hero renders instantly without waiting on the lazy
+   *  /api/suggested-vendors/[id]/gmb call. */
+  gmb_data: { photoUrl?: string | null } | null;
 };
 
 /** Convert a stored photo entry to a renderable URL. Google Places refs come
@@ -40,15 +44,19 @@ function photoSrc(entry: string | null | undefined): string | null {
 
 /** Hero image with explicit precedence:
  *   1. The persisted hero on suggested_vendors.photos[0] (instant render).
- *   2. The lazy-loaded GMB photo (only useful for older rows that have no
- *      persisted photos yet — newer scraper imports always populate).
- *   Returns null when neither exists; caller renders a placeholder. */
+ *   2. The cached GMB photo on suggested_vendors.gmb_data.photoUrl (also
+ *      instant — populated by /api/suggested-vendors/[id]/gmb on first
+ *      open and persisted for 30 days).
+ *   3. The lazy in-flight GMB lookup (covers cards opened before the cache
+ *      backfill landed; harmless once every row has gmb_data persisted).
+ *   Returns null when none of the above exists; caller renders a placeholder. */
 function heroPhoto(
-  vendor: { photos: string[] },
+  vendor: { photos: string[]; gmb_data: { photoUrl?: string | null } | null },
   gmbState: PlaceData | "loading" | "error" | undefined
 ): string | null {
   const fromVendor = photoSrc(vendor.photos?.[0]);
   if (fromVendor) return fromVendor;
+  if (vendor.gmb_data?.photoUrl) return vendor.gmb_data.photoUrl;
   if (gmbState && gmbState !== "loading" && gmbState !== "error") {
     return gmbState.photoUrl ?? null;
   }
@@ -173,10 +181,26 @@ export default function VendorDirectoryPage() {
       .then((data: { vendors: SuggestedVendor[]; pagination: Pagination }) => {
         setVendors(data.vendors);
         setPagination(data.pagination);
+        seedGmbCacheFromRows(data.vendors);
       })
       .catch(() => toast.error("Couldn't load the directory. Try refreshing."))
       .finally(() => setLoading(false));
   }, [buildUrl]);
+
+  // Pre-populate gmbCache from rows that already have persisted gmb_data —
+  // avoids redundant /api/suggested-vendors/[id]/gmb calls and renders the
+  // expanded Details panel without a loading spinner.
+  function seedGmbCacheFromRows(rows: SuggestedVendor[]) {
+    setGmbCache((prev) => {
+      const next = { ...prev };
+      for (const v of rows) {
+        if (!next[v.id] && v.gmb_data && typeof v.gmb_data === "object") {
+          next[v.id] = v.gmb_data as PlaceData;
+        }
+      }
+      return next;
+    });
+  }
 
   // Load more (next page)
   const loadMore = useCallback(() => {
@@ -188,6 +212,7 @@ export default function VendorDirectoryPage() {
       .then((data: { vendors: SuggestedVendor[]; pagination: Pagination }) => {
         setVendors((prev) => [...prev, ...data.vendors]);
         setPagination(data.pagination);
+        seedGmbCacheFromRows(data.vendors);
       })
       .catch(() => toast.error("Couldn't load more vendors."))
       .finally(() => setLoadingMore(false));
