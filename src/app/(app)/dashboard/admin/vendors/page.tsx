@@ -25,7 +25,7 @@ type SuggestedVendor = {
   featured: boolean;
   featured_locked: boolean;
   active: boolean;
-  photos: string[] | null;
+  photos: Array<{ url: string; attribution?: string; source?: string }> | null;
   // Audit / source metadata used by the edit modal
   seed_source: string | null;
   gmb_place_id: string | null;

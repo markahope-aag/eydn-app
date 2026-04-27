@@ -31,7 +31,10 @@ export type Vendor = {
   featured: boolean;
   featured_locked: boolean;
   active: boolean;
-  photos: string[] | null;
+  /** suggested_vendors.photos (jsonb). Each entry: {url, source, width,
+   *  height, attribution, fetched_at}. Index 0 is the hero. May be null on
+   *  rows that haven't been enriched yet. */
+  photos: Array<{ url: string; attribution?: string; source?: string }> | null;
   // Audit / source fields (read-only in the modal)
   seed_source: string | null;
   gmb_place_id: string | null;
@@ -391,7 +394,7 @@ export function VendorEditModal({ vendor, onClose, onSaved, onDeleted }: Props) 
             </div>
           </div>
 
-          {/* Photos preview — surfaced from suggested_vendors.photos[]. */}
+          {/* Photos preview — surfaced from suggested_vendors.photos (jsonb). */}
           {vendor.photos && vendor.photos.length > 0 && (
             <div className="border border-border rounded-lg p-3">
               <p className="text-[14px] font-medium mb-2">
@@ -399,15 +402,15 @@ export function VendorEditModal({ vendor, onClose, onSaved, onDeleted }: Props) 
               </p>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                 {vendor.photos.slice(0, 6).map((p, i) => {
-                  const src = p.startsWith("places/")
-                    ? `/api/places-photo?ref=${encodeURIComponent(p)}`
-                    : p;
+                  const src = p.url;
+                  if (!src) return null;
                   return (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       key={i}
                       src={src}
                       alt={`${vendor.name} photo ${i + 1}`}
+                      title={p.attribution}
                       className="aspect-square object-cover rounded-md border border-border"
                     />
                   );

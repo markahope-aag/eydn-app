@@ -28,6 +28,18 @@ type AdminSupabase = SupabaseClient<Database>;
 type SuggestedVendorInsert = Database["public"]["Tables"]["suggested_vendors"]["Insert"];
 type RejectionInsert = Database["public"]["Tables"]["vendor_import_rejections"]["Insert"];
 
+/** Per-photo entry as shipped by the scraper. Stored verbatim into our
+ *  suggested_vendors.photos jsonb column so the public CDN URL, attribution,
+ *  and dimensions all flow through to the directory render. */
+export type ScraperPhoto = {
+  url: string;
+  source?: string;
+  width?: number;
+  height?: number;
+  attribution?: string;
+  fetched_at?: string;
+};
+
 /** Shape of a row in the scraper's `vendors` table (subset we care about). */
 type ScraperVendor = {
   id: string;
@@ -53,7 +65,11 @@ type ScraperVendor = {
   hours: string[] | null;
   lat: number | null;
   lng: number | null;
-  photos: string[] | null;
+  /** Ordered photo array shipped by the scraper team (commit 7242c1b on
+   *  their side). Each entry: {url, source, width, height, attribution,
+   *  fetched_at}. Index 0 is the hero. URLs point at their public Supabase
+   *  Storage bucket — no auth, no proxy needed. */
+  photos: ScraperPhoto[] | null;
   verified: boolean | null;
   verified_at: string | null;
   verification_method: string | null;
@@ -64,16 +80,11 @@ type ScraperVendor = {
   updated_at: string | null;
 };
 
-/** Columns we ask the scraper for. Kept in lock-step with ScraperVendor.
- *  NOTE: `photos` is intentionally omitted — the scraper team is adding
- *  that column but it hasn't shipped yet. Including it here causes the
- *  whole query to fail with "column vendors.photos does not exist".
- *  Add `photos` back once the scraper ships it. The receiving code is
- *  already defensive (`row.photos ?? []`) so no other change needed. */
+/** Columns we ask the scraper for. Kept in lock-step with ScraperVendor. */
 const SCRAPER_SELECT =
   "id, name, category, street, city, state, zip, country, phone, website, email, " +
   "description, description_status, eydn_score, price_level, market, " +
-  "instagram, facebook, pinterest, business_status, hours, lat, lng, _review_count, " +
+  "instagram, facebook, pinterest, business_status, hours, lat, lng, photos, _review_count, " +
   "verified, verified_at, verification_method, google_maps_url, " +
   "client_id, created_at, updated_at";
 
@@ -277,7 +288,7 @@ export async function runScraperImport(
       description: candidate.description,
       price_range: candidate.price_range,
       quality_score: candidate.quality_score,
-      photos: row.photos ?? [],
+      photos: (row.photos ?? []) as unknown as Database["public"]["Tables"]["suggested_vendors"]["Insert"]["photos"],
       scraper_extras: buildScraperExtras(row) as Database["public"]["Tables"]["suggested_vendors"]["Insert"]["scraper_extras"],
       gmb_last_refreshed_at: new Date().toISOString(),
       featured: false,
@@ -486,7 +497,7 @@ export async function runScraperRefresh(
       description: row.description?.trim() || null,
       price_range: row.price_level !== null ? normalizePriceRange(String(row.price_level)) : null,
       quality_score: row.eydn_score,
-      photos: row.photos ?? [],
+      photos: (row.photos ?? []) as unknown as Database["public"]["Tables"]["suggested_vendors"]["Insert"]["photos"],
       scraper_extras: buildScraperExtras(row) as Database["public"]["Tables"]["suggested_vendors"]["Insert"]["scraper_extras"],
       gmb_last_refreshed_at: now,
       // If the vendor closed since last refresh, hide it without deleting.

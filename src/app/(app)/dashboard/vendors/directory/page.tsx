@@ -21,37 +21,58 @@ type SuggestedVendor = {
   state: string;
   price_range: string | null;
   featured: boolean;
-  /** Persisted photos from suggested_vendors.photos. First entry is the hero;
-   *  remaining entries shown in the expanded Details panel. May be a direct
-   *  URL or a `places/...` ref that needs proxying through /api/places-photo. */
-  photos: string[];
+  /** Persisted photos from suggested_vendors.photos (jsonb). Each entry is
+   *  {url, source, width, height, attribution, fetched_at}. Index 0 is the
+   *  hero. URLs are public CDN URLs from the scraper's Supabase Storage —
+   *  no auth, no proxy needed. */
+  photos: Array<{
+    url: string;
+    source?: string;
+    width?: number;
+    height?: number;
+    attribution?: string;
+    fetched_at?: string;
+  }>;
   /** Cached Google enrichment from suggested_vendors.gmb_data. When present
    *  on the row, the hero renders instantly without waiting on the lazy
    *  /api/suggested-vendors/[id]/gmb call. */
   gmb_data: { photoUrl?: string | null } | null;
 };
 
-/** Convert a stored photo entry to a renderable URL. Google Places refs come
- *  in as `places/.../photos/...` and must be proxied to keep the API key
- *  server-side; everything else is already a URL. */
-function photoSrc(entry: string | null | undefined): string | null {
+type PhotoEntry = {
+  url: string;
+  source?: string;
+  width?: number;
+  height?: number;
+  attribution?: string;
+  fetched_at?: string;
+};
+
+/** Extract a renderable URL from a photo entry. The scraper now ships full
+ *  CDN URLs in entry.url — public bucket, no proxy needed. Legacy callers
+ *  may pass a string (Google Places ref) which we proxy through
+ *  /api/places-photo to keep the API key server-side. */
+function photoSrc(entry: PhotoEntry | string | null | undefined): string | null {
   if (!entry) return null;
-  if (entry.startsWith("places/")) {
-    return `/api/places-photo?ref=${encodeURIComponent(entry)}`;
+  if (typeof entry === "string") {
+    if (entry.startsWith("places/")) {
+      return `/api/places-photo?ref=${encodeURIComponent(entry)}`;
+    }
+    return entry;
   }
-  return entry;
+  return entry.url || null;
 }
 
 /** Hero image with explicit precedence:
- *   1. The persisted hero on suggested_vendors.photos[0] (instant render).
+ *   1. The persisted hero on suggested_vendors.photos[0].url (instant).
  *   2. The cached GMB photo on suggested_vendors.gmb_data.photoUrl (also
  *      instant — populated by /api/suggested-vendors/[id]/gmb on first
  *      open and persisted for 30 days).
  *   3. The lazy in-flight GMB lookup (covers cards opened before the cache
- *      backfill landed; harmless once every row has gmb_data persisted).
+ *      was warmed; harmless once every row has gmb_data persisted).
  *   Returns null when none of the above exists; caller renders a placeholder. */
 function heroPhoto(
-  vendor: { photos: string[]; gmb_data: { photoUrl?: string | null } | null },
+  vendor: { photos: PhotoEntry[]; gmb_data: { photoUrl?: string | null } | null },
   gmbState: PlaceData | "loading" | "error" | undefined
 ): string | null {
   const fromVendor = photoSrc(vendor.photos?.[0]);
@@ -700,6 +721,7 @@ function FeaturedCard({
   onToggle: () => void;
 }) {
   const photo = heroPhoto(vendor, gmbState);
+  const heroAttribution = vendor.photos?.[0]?.attribution;
 
   return (
     <div id={`vendor-${vendor.id}`} className="card-summary overflow-hidden">
@@ -707,7 +729,14 @@ function FeaturedCard({
        *  when the vendor has neither a persisted photo nor GMB enrichment. */}
       <div className="relative w-full h-36">
         {photo ? (
-          <Image src={photo} alt={vendor.name} fill unoptimized className="object-cover" />
+          <>
+            <Image src={photo} alt={vendor.name} fill unoptimized className="object-cover" />
+            {heroAttribution && (
+              <span className="absolute bottom-1 right-1 text-[9px] text-white/90 bg-black/40 px-1.5 py-0.5 rounded">
+                {heroAttribution}
+              </span>
+            )}
+          </>
         ) : (
           <div className="w-full h-full bg-lavender flex items-center justify-center">
             <span className="text-[40px] font-semibold text-violet/60">{vendor.name.charAt(0)}</span>
@@ -829,7 +858,7 @@ function VendorRow({
 }
 
 // ─── Additional Photos Strip (in expanded Details) ───────────────────────────
-function AdditionalPhotos({ photos, vendorName }: { photos: string[]; vendorName: string }) {
+function AdditionalPhotos({ photos, vendorName }: { photos: PhotoEntry[]; vendorName: string }) {
   // photos[0] is the hero (already rendered as the card image), so we skip it
   // and surface the rest as a small thumbnail strip — up to 5.
   const extras = (photos || []).slice(1, 6);
@@ -842,12 +871,18 @@ function AdditionalPhotos({ photos, vendorName }: { photos: string[]; vendorName
           const src = photoSrc(p);
           if (!src) return null;
           return (
-            <div key={i} className="relative aspect-square rounded-[8px] overflow-hidden">
+            <div key={i} className="relative aspect-square rounded-[8px] overflow-hidden" title={p.attribution}>
               <Image src={src} alt={`${vendorName} photo ${i + 2}`} fill unoptimized className="object-cover" />
             </div>
           );
         })}
       </div>
+      {/* Google ToS: render attribution string when their photos appear. */}
+      {extras.some((p) => p.attribution) && (
+        <p className="text-[10px] text-muted mt-1.5">
+          {extras.filter((p) => p.attribution).map((p) => p.attribution).join(" · ")}
+        </p>
+      )}
     </div>
   );
 }
