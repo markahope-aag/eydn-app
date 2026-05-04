@@ -23,14 +23,16 @@ export const QUALITY_RULES = {
    */
   minScore: 35,
 
-  /** Vendor must have a street address (city + state alone isn't enough). */
-  requireStreetAddress: true,
-
-  /** Vendor must have a phone number couples can call. */
-  requirePhone: true,
-
-  /** Vendor must have a website couples can review before reaching out. */
-  requireWebsite: true,
+  /**
+   * Vendor must have at least one way for couples to reach them
+   * (phone OR website). Google Places returns sparse data for small
+   * wedding vendors — many list only one channel. Requiring all of
+   * phone+website+street rejected ~90% of the auto-import pipeline,
+   * including most actual wedding boutiques (the survivors were
+   * mostly chains like Walmart Bakery and Cheesecake Factory). We
+   * still filter unreachable vendors, just less aggressively.
+   */
+  requireContactMethod: true,
 
   /**
    * Description must have been finalized — either AI-rewritten or
@@ -85,16 +87,8 @@ export function checkQuality(v: VendorCandidate): QualityCheck {
     failed.push(`quality_score below threshold: ${v.quality_score} < ${QUALITY_RULES.minScore}`);
   }
 
-  if (QUALITY_RULES.requireStreetAddress && !nonEmpty(v.address)) {
-    failed.push("missing street address");
-  }
-
-  if (QUALITY_RULES.requirePhone && !nonEmpty(v.phone)) {
-    failed.push("missing phone");
-  }
-
-  if (QUALITY_RULES.requireWebsite && !nonEmpty(v.website)) {
-    failed.push("missing website");
+  if (QUALITY_RULES.requireContactMethod && !nonEmpty(v.phone) && !nonEmpty(v.website)) {
+    failed.push("no contact method (need phone or website)");
   }
 
   if (QUALITY_RULES.requireFinishedDescription) {

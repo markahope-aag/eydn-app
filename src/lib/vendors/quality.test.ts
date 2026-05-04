@@ -37,28 +37,25 @@ describe("checkQuality", () => {
     expect(result.passed).toBe(true);
   });
 
-  it("fails when address is null", () => {
+  it("passes with no street address (kept as a soft signal, not a hard block)", () => {
     const result = checkQuality({ ...passingVendor, address: null });
-    expect(result.passed).toBe(false);
-    expect(result.failedRules).toContain("missing street address");
+    expect(result.passed).toBe(true);
   });
 
-  it("fails when address is just whitespace", () => {
-    const result = checkQuality({ ...passingVendor, address: "   " });
+  it("fails when both phone and website are missing", () => {
+    const result = checkQuality({ ...passingVendor, phone: null, website: null });
     expect(result.passed).toBe(false);
-    expect(result.failedRules).toContain("missing street address");
+    expect(result.failedRules).toContain("no contact method (need phone or website)");
   });
 
-  it("fails when phone is missing", () => {
-    const result = checkQuality({ ...passingVendor, phone: null });
-    expect(result.passed).toBe(false);
-    expect(result.failedRules).toContain("missing phone");
-  });
-
-  it("fails when website is missing", () => {
+  it("passes with phone only (website missing)", () => {
     const result = checkQuality({ ...passingVendor, website: "" });
-    expect(result.passed).toBe(false);
-    expect(result.failedRules).toContain("missing website");
+    expect(result.passed).toBe(true);
+  });
+
+  it("passes with website only (phone missing)", () => {
+    const result = checkQuality({ ...passingVendor, phone: null });
+    expect(result.passed).toBe(true);
   });
 
   it("reports every failed rule, not just the first", () => {
@@ -71,8 +68,9 @@ describe("checkQuality", () => {
       description_status: "pending",
     });
     expect(result.passed).toBe(false);
-    // 5 failures: low score + missing address + phone + website + bad status.
-    expect(result.failedRules.length).toBe(5);
+    // 3 failures: low score + no contact method + bad description status.
+    // (address is now a soft signal — no longer counted.)
+    expect(result.failedRules.length).toBe(3);
   });
 
   it("manually_approved overrides every rule", () => {
