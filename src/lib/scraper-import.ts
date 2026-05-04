@@ -118,9 +118,10 @@ function buildScraperExtras(row: ScraperVendor): Record<string, unknown> {
 }
 
 /** Cap per cron run — keeps any single run bounded and predictable. */
-const MAX_BATCH = 3000;
+const MAX_BATCH = 500;
 /** PostgREST hard-caps responses at 1000 rows; paginate via .range() to scan
- *  past that. Each page is one HTTP round-trip to the scraper Supabase. */
+ *  past that. Each page is one HTTP round-trip to the scraper Supabase. With
+ *  MAX_BATCH=500 the loop runs once and behaves like a single .limit() call. */
 const SCRAPER_PAGE_SIZE = 1000;
 
 export type ScraperImportResult = {
