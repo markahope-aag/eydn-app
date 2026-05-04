@@ -118,7 +118,10 @@ function buildScraperExtras(row: ScraperVendor): Record<string, unknown> {
 }
 
 /** Cap per cron run — keeps any single run bounded and predictable. */
-const MAX_BATCH = 500;
+const MAX_BATCH = 3000;
+/** PostgREST hard-caps responses at 1000 rows; paginate via .range() to scan
+ *  past that. Each page is one HTTP round-trip to the scraper Supabase. */
+const SCRAPER_PAGE_SIZE = 1000;
 
 export type ScraperImportResult = {
   scannedFromScraper: number;
@@ -175,29 +178,38 @@ export async function runScraperImport(
     ...(existingRejected || []).map((r) => r.scraper_id as string).filter(Boolean),
   ]);
 
-  // 3. Pull a batch from the scraper. We sort by created_at desc so that
-  //    if there are more rows than MAX_BATCH, we always process the newest
-  //    first; older rows catch up on subsequent cron runs.
-  const { data: scraperRows, error: scraperError } = await scraperSupabase
-    .from("vendors")
-    .select(SCRAPER_SELECT)
-    .eq("client_id", clientId)
-    .order("created_at", { ascending: false })
-    .limit(MAX_BATCH);
+  // 3. Pull up to MAX_BATCH rows from the scraper, paginating around the
+  //    PostgREST 1000-row response cap. We sort by created_at desc so the
+  //    newest vendors are seen first; older rows catch up on subsequent
+  //    cron runs.
+  const scraperRows: ScraperVendor[] = [];
+  for (let from = 0; from < MAX_BATCH; from += SCRAPER_PAGE_SIZE) {
+    const to = Math.min(from + SCRAPER_PAGE_SIZE - 1, MAX_BATCH - 1);
+    const { data, error } = await scraperSupabase
+      .from("vendors")
+      .select(SCRAPER_SELECT)
+      .eq("client_id", clientId)
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
-  if (scraperError) {
-    result.errors.push(`scraper query failed: ${scraperError.message}`);
-    return result;
+    if (error) {
+      result.errors.push(`scraper query failed: ${error.message}`);
+      return result;
+    }
+
+    const batch = (data || []) as unknown as ScraperVendor[];
+    scraperRows.push(...batch);
+    if (batch.length < SCRAPER_PAGE_SIZE) break;
   }
 
-  result.scannedFromScraper = (scraperRows || []).length;
+  result.scannedFromScraper = scraperRows.length;
 
   // 4. Process each row. Skip already-seen, normalize, quality-check,
   //    insert into the appropriate destination table.
   const toInsert: SuggestedVendorInsert[] = [];
   const toReject: RejectionInsert[] = [];
 
-  for (const row of (scraperRows || []) as unknown as ScraperVendor[]) {
+  for (const row of scraperRows) {
     if (seen.has(row.id)) {
       result.alreadySeen++;
       continue;
