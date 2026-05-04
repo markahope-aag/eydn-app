@@ -54,7 +54,7 @@ async function stripeRevenueLast7Days(): Promise<number> {
  * Schedule: 0 13 * * 1 (Mondays 9 AM ET / 13:00 UTC)
  * Auth: Bearer BACKUP_SECRET
  */
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   const unauthorized = requireCronAuth(request);
   if (unauthorized) return unauthorized;
 
@@ -155,3 +155,7 @@ export async function POST(request: Request) {
     revenue,
   });
 }
+
+// Vercel cron always sends GET; admin manual-trigger UI POSTs internally.
+// Re-export so both work.
+export const POST = GET;

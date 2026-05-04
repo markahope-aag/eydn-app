@@ -10,6 +10,8 @@ import { requireCronAuth } from "@/lib/cron-auth";
  * Rejected rows are logged to vendor_import_rejections for admin review.
  *
  * Schedule: 0 * * * * (every hour)
+ * Method: GET (Vercel cron always sends GET); POST is re-exported as an
+ *   alias so the admin manual-trigger UI and existing tests keep working.
  * Auth: Bearer CRON_SECRET or BACKUP_SECRET (shared helper)
  *
  * Env vars required (configured in Vercel):
@@ -22,7 +24,7 @@ import { requireCronAuth } from "@/lib/cron-auth";
  * note) rather than failing — this lets the schedule remain enabled while
  * the operator wires up credentials.
  */
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   const unauthorized = requireCronAuth(request);
   if (unauthorized) return unauthorized;
 
@@ -86,3 +88,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+// Backward-compat: admin manual-trigger UI and existing tests POST to this
+// route. Re-exporting as the same handler keeps both call sites working.
+export const POST = GET;

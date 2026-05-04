@@ -17,7 +17,7 @@ const MAX_RETRIES = 1;
  * Schedule: 0 * * * * (hourly)
  * Auth: Bearer BACKUP_SECRET
  */
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   const unauthorized = requireCronAuth(request);
   if (unauthorized) return unauthorized;
 
@@ -142,3 +142,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ ok: true, ...results });
 }
+
+// Vercel cron always sends GET; admin manual-trigger UI POSTs internally.
+// Re-export so both work.
+export const POST = GET;

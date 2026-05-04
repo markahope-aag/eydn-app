@@ -19,7 +19,7 @@ import { requireCronAuth } from "@/lib/cron-auth";
  * the cron frequency rather than the batch size — keeps any single Supabase
  * round-trip predictable.
  */
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   const unauthorized = requireCronAuth(request);
   if (unauthorized) return unauthorized;
 
@@ -80,3 +80,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+// Vercel cron always sends GET; admin manual-trigger UI POSTs internally.
+// Re-export so both work.
+export const POST = GET;

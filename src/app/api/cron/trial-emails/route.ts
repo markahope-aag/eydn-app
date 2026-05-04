@@ -42,7 +42,7 @@ const STEP_TO_LEGACY_TYPE: Record<number, string> = {
  * Schedule: 0 14 * * * (daily 14:00 UTC / 10 AM ET)
  * Auth: Bearer CRON_SECRET or BACKUP_SECRET (shared helper)
  */
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   const unauthorized = requireCronAuth(request);
   if (unauthorized) return unauthorized;
 
@@ -259,3 +259,7 @@ export async function POST(request: Request) {
     errors: errors.length ? errors : undefined,
   });
 }
+
+// Vercel cron always sends GET; admin manual-trigger UI POSTs internally.
+// Re-export so both work.
+export const POST = GET;

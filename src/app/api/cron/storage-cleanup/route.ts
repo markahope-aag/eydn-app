@@ -12,7 +12,7 @@ const BUCKET = "attachments";
  *
  * Only deletes files older than 24 hours to avoid racing with in-progress uploads.
  */
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   const unauthorized = requireCronAuth(request);
   if (unauthorized) return unauthorized;
 
@@ -163,3 +163,7 @@ async function listAllFiles(
 
   return results;
 }
+
+// Vercel cron always sends GET; admin manual-trigger UI POSTs internally.
+// Re-export so both work.
+export const POST = GET;

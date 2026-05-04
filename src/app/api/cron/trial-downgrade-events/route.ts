@@ -15,7 +15,7 @@ const TRIAL_DAYS = 14;
  * Schedule: 0 6 * * * (daily at 6 AM UTC)
  * Auth: Bearer CRON_SECRET or BACKUP_SECRET (shared helper)
  */
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   const unauthorized = requireCronAuth(request);
   if (unauthorized) return unauthorized;
 
@@ -61,3 +61,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ ok: true, emitted });
 }
+
+// Vercel cron always sends GET; admin manual-trigger UI POSTs internally.
+// Re-export so both work.
+export const POST = GET;

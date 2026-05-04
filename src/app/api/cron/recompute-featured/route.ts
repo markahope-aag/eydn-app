@@ -16,7 +16,7 @@ import { requireCronAuth } from "@/lib/cron-auth";
  * Schedule: 0 4 * * * (daily 04:30 UTC — runs after the import-vendors hour
  * tick completes, before the morning traffic).
  */
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   const unauthorized = requireCronAuth(request);
   if (unauthorized) return unauthorized;
 
@@ -48,3 +48,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+// Vercel cron always sends GET; admin manual-trigger UI POSTs internally.
+// Re-export so both work.
+export const POST = GET;

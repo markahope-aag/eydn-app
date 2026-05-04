@@ -37,7 +37,7 @@ const STEP_TO_LIFECYCLE_TYPE: Record<number, string> = {
  * Auth: Bearer CRON_SECRET or BACKUP_SECRET (shared helper).
  * Schedule: 0 4 * * * (daily at 4 AM UTC)
  */
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   const unauthorized = requireCronAuth(request);
   if (unauthorized) return unauthorized;
 
@@ -337,3 +337,7 @@ async function softDeleteWeddingData(
     }
   }
 }
+
+// Vercel cron always sends GET; admin manual-trigger UI POSTs internally.
+// Re-export so both work.
+export const POST = GET;
