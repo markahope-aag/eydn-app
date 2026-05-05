@@ -140,7 +140,15 @@ export async function POST(request: Request) {
   // Upload to Supabase Storage
   // Convert File to ArrayBuffer for reliable server-side upload
   const fileBuffer = Buffer.from(await file.arrayBuffer());
-  const fileName = `${wedding.id}/${entityType}/${entityId}/${Date.now()}_${file.name}`;
+  // Supabase Storage rejects keys with characters outside a narrow safe set.
+  // Strip diacritics, drop everything that isn't a-z/0-9/._-, collapse repeats.
+  const safeName = file.name
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^[._-]+|[._-]+$/g, "") || "file";
+  const fileName = `${wedding.id}/${entityType}/${entityId}/${Date.now()}_${safeName}`;
 
   let { error: uploadError } = await supabase.storage
     .from("attachments")
