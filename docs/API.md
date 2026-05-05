@@ -424,6 +424,113 @@ Get guest seating assignments.
 #### `POST /api/seating/assignments`
 Create or update seating assignments.
 
+## Tools & Lead Generation
+
+### Wedding Budget Calculator
+
+#### `POST /api/tools/calculator-save`
+Save budget calculator results and capture lead information.
+
+**Access:** Public (rate limited)
+
+**Request Body:**
+```json
+{
+  "budget": 50000,
+  "location": "New York, NY",
+  "guestCount": 100,
+  "email": "couple@example.com",
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "phone": "+1234567890"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "shortCode": "abc123",
+  "allocations": [
+    {
+      "label": "Venue",
+      "amount": 11900,
+      "percentage": 23.8
+    }
+  ]
+}
+```
+
+### Planning Quizzes
+
+#### `POST /api/tools/quiz-complete`
+Complete a planning style or planner assessment quiz.
+
+**Access:** Public (rate limited)
+
+**Request Body:**
+```json
+{
+  "quizId": "planning_style",
+  "answers": [
+    {
+      "questionId": "timeline",
+      "selectedOption": "12_plus"
+    }
+  ],
+  "email": "couple@example.com",
+  "firstName": "Jane"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "result": {
+    "type": "organized_planner",
+    "description": "You're a detailed, timeline-focused planner...",
+    "recommendations": ["Start with venue booking", "Create detailed timeline"]
+  }
+}
+```
+
+### Beta Program
+
+#### `POST /api/beta/claim`
+Claim a beta access slot (limited to 50 users).
+
+**Access:** Authenticated users
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Beta access granted",
+  "slotsRemaining": 23
+}
+```
+
+### Push Notifications
+
+#### `POST /api/push-subscription`
+Subscribe to push notifications.
+
+**Access:** Authenticated users
+
+**Request Body:**
+```json
+{
+  "subscription": {
+    "endpoint": "https://fcm.googleapis.com/...",
+    "keys": {
+      "p256dh": "key_data",
+      "auth": "auth_key"
+    }
+  }
+}
+```
+
 ## AI & Chat
 
 ### Catch-up plans

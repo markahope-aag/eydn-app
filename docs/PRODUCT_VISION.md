@@ -91,10 +91,19 @@
 
 ### ✅ 12. Notification System
 - Automated deadline reminders (1 week before due dates)
+- Push notifications for browser alerts
+- SMS notifications via Twilio integration
 - Task completion celebrations and next step suggestions
 - Vendor follow-up reminders
 - RSVP deadline notifications
 - System-wide announcement capabilities
+
+### ✅ 13. Wedding Planning Tools
+- **Interactive Budget Calculator**: Real-time budget breakdown with visual charts
+- **Planning Style Quiz**: Personalized planning approach assessment
+- **Planner Need Assessment**: Professional planner recommendation engine
+- **Lead Generation System**: Tool-based lead capture and nurturing
+- **Embeddable Tools**: Widgets for external website integration
 
 ## Advanced Features (Implemented)
 
@@ -177,14 +186,22 @@
 1. **User Subscriptions**
    - 14-day free trial
    - $79 one-time purchase for lifetime access
+   - Monthly subscription option for flexible payment
    - Premium features behind paywall
+   - Beta program for early access users
 
-2. **Vendor Marketplace**
+2. **Lead Generation & Tools**
+   - Wedding budget calculator with lead capture
+   - Planning style and planner assessment quizzes
+   - Email marketing and automation
+   - Business development through valuable tools
+
+3. **Vendor Marketplace**
    - Tiered placement fees for vendor visibility
    - Commission on vendor referrals (planned)
    - Featured listing upgrades
 
-3. **Enterprise Partnerships**
+4. **Enterprise Partnerships**
    - White-label solutions for wedding planners (planned)
    - API licensing for integration partners (planned)
 

@@ -20,23 +20,32 @@
 - **Mood Board**: Pinterest-style inspiration board with categorized images
 - **Vendor Marketplace**: Tiered vendor placements and discovery system
 - **Admin Dashboard**: Platform management and analytics
-- **Subscription System**: 14-day trial + $79 one-time purchase via Stripe
+- **Beta Program**: Limited beta access for early users
 - **Premium Enforcement**: Server-side protection for AI chat and file uploads
 - **Rate Limiting**: API protection with Upstash Redis
-- **Notification System**: Automated deadline reminders and updates
+- **Push Notifications**: Browser push notifications for important updates
 - **Mobile-Responsive**: Optimized for all devices
+
+### Planning Tools
+- **Wedding Budget Calculator**: Interactive budget planning with breakdown visualization
+- **Planning Style Quiz**: Personalized planning approach assessment
+- **Planner Need Assessment**: Quiz to determine if couples need professional help
+- **Lead Generation Tools**: Calculator saves and quiz completions for business development
 
 ## 🛠 Tech Stack
 
-- **Framework**: Next.js 16.2.0 with App Router
+- **Framework**: Next.js 16.2.3 with App Router
 - **Frontend**: React 19.2.4, TypeScript 5, Tailwind CSS 4
 - **Authentication**: Clerk 7.0.5 with Next.js 16 proxy pattern
 - **Database**: Supabase 2.99.2 (PostgreSQL) with Row Level Security
 - **AI**: Anthropic Claude SDK 0.80.0 for wedding planning assistance
 - **Payments**: Stripe 20.4.1 with webhook integration
+- **Analytics**: PostHog 1.368.0 for user behavior tracking
+- **Communications**: Twilio 5.13.1 for SMS notifications
+- **Push Notifications**: Web Push 3.6.7 for browser notifications
 - **File Storage**: Supabase Storage for images and documents
 - **Rate Limiting**: Upstash Redis for API protection
-- **Testing**: Vitest 4.1.0 + React Testing Library 16.3.2
+- **Testing**: Vitest 4.1.0 + React Testing Library 16.3.2 + Playwright 1.59.1
 - **Deployment**: Vercel with edge functions and cron jobs
 
 ## 🚀 Quick Start
@@ -166,8 +175,11 @@ docs/                   # Product and technical documentation
 - Context-aware responses based on user's wedding data
 
 ### Subscription Model
-- 14-day free trial for all users
-- $79 one-time purchase for full access
+- **14-day reverse trial**: Full Pro access, then downgrade to free tier
+- **Pro Lifetime**: $79 one-time purchase for lifetime access
+- **Pro Monthly**: $14.99/month subscription option
+- **Memory Plan**: $29/year for post-wedding website maintenance
+- **Beta Program**: Permanent full access via `/beta/claim`
 - Stripe webhooks handle payment processing
 - `Paywall` component gates premium features
 
@@ -193,8 +205,9 @@ npm run security-check # Run security audit + TypeScript + ESLint
 - **[Task Timeline](docs/TASK_TIMELINE.md)** - Complete 12-month wedding planning timeline with AI guidance
 - **[Wedding Collaboration](docs/COLLABORATION.md)** - Partner and coordinator collaboration system
 - **[Mood Board](docs/MOOD_BOARD.md)** - Visual inspiration board and organization tools
+- **[Wedding Planning Tools](docs/TOOLS.md)** - Interactive budget calculator, planning quizzes, and lead generation
 - **[Wedding Websites](docs/WEDDING_WEBSITES.md)** - Public wedding site features, RSVP system, and customization
-- **[Subscription Model](docs/SUBSCRIPTION_MODEL.md)** - Pricing strategy, trial system, and revenue model
+- **[Subscription Model](docs/SUBSCRIPTION_MODEL.md)** - Pricing strategy, reverse trial system, and revenue model
 
 ### Technical Documentation
 - **[System Architecture](docs/ARCHITECTURE.md)** - Technical architecture, database schema, and infrastructure

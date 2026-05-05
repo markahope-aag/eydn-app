@@ -43,12 +43,16 @@ eydn follows a modern, serverless architecture built on Next.js 16 with a focus 
 - **Anthropic Claude 0.80.0**: AI-powered chat and planning assistance
 - **Upstash Redis**: Rate limiting and caching layer
 
-### Infrastructure
+### Infrastructure & Integrations
 - **Vercel**: Hosting platform with edge functions, CDN, and cron jobs
 - **Stripe 20.4.1**: Payment processing with webhook integration
+- **PostHog 1.368.0**: User behavior analytics and feature flagging
+- **Twilio 5.13.1**: SMS notifications and communication
+- **Web Push 3.6.7**: Browser push notifications
 - **DND Kit 6.3.1**: Drag-and-drop functionality for seating charts
 - **React PDF 4.3.2**: PDF generation for day-of planning documents
 - **ExcelJS 4.4.0**: Excel file generation for guest list exports
+- **Recharts 3.8.1**: Interactive charts for budget visualization
 
 ## Database Architecture
 
