@@ -2,8 +2,21 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { toast } from "sonner";
 import { trackOnboardingComplete } from "@/lib/analytics";
+import { Confetti, triggerConfetti } from "@/components/Confetti";
+
+// Soft bouquet shot used as the celebratory background after onboarding
+// completes. Picked once via scripts/fetch-celebration-image.mjs (which also
+// fired Unsplash's required download_location ping).
+const CELEBRATION_PHOTO = {
+  url: "https://images.unsplash.com/photo-1769251296969-a4c7aa0b4478?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5MzQyMDF8MHwxfHNlYXJjaHwxfHx3ZWRkaW5nJTIwZmxvcmFscyUyMHNvZnQlMjBldmVuaW5nfGVufDF8MHx8fDE3NzgwMTk1NDl8MA&ixlib=rb-4.1.0&q=80&w=1920",
+  alt: "A soft bouquet of light pink and white flowers",
+  photographer: "Cuvii",
+  photographerUrl: "https://unsplash.com/@cuvii?utm_source=eydn-app&utm_medium=referral",
+  unsplashUrl: "https://unsplash.com/?utm_source=eydn-app&utm_medium=referral",
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -555,9 +568,15 @@ function AIScreen({
       <button
         onClick={onGoToDashboard}
         disabled={submitting}
-        className="btn-primary mt-6 w-full disabled:opacity-50"
+        className="btn-primary mt-6 w-full disabled:opacity-70 flex items-center justify-center gap-2"
       >
-        {submitting ? "Setting up..." : "Go to my dashboard"}
+        {submitting && (
+          <span
+            aria-hidden="true"
+            className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"
+          />
+        )}
+        {submitting ? "Setting up your wedding..." : "Go to my dashboard"}
       </button>
     </div>
   );
@@ -808,6 +827,8 @@ export default function OnboardingPage() {
           }).catch(() => {});
         }
         setShowSnapshot(true);
+        // Fire confetti just after the screen mounts so it overlays the celebration
+        setTimeout(() => triggerConfetti(), 200);
       } else {
         toast.error("Setup didn't save. Try once more — if it keeps happening, reach out to support@eydn.app.");
       }
@@ -833,33 +854,95 @@ export default function OnboardingPage() {
     if (form.budget) details.push(`$${Number(form.budget).toLocaleString()} budget`);
 
     return (
-      <div className="fixed inset-0 z-[999] flex items-center justify-center bg-[#2C3E2D] px-6">
-        <div className="max-w-lg text-center">
-          <p className="text-[14px] tracking-widest uppercase text-[#C9A84C]/60">
+      <div className="fixed inset-0 z-[999] flex items-center justify-center px-6 overflow-hidden">
+        {/* Soft bouquet backdrop with deep-forest tint to keep type readable */}
+        <Image
+          src={CELEBRATION_PHOTO.url}
+          alt={CELEBRATION_PHOTO.alt}
+          fill
+          priority
+          unoptimized
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(44,62,45,0.86) 0%, rgba(44,62,45,0.92) 60%, rgba(20,30,21,0.95) 100%)",
+          }}
+        />
+        <Confetti />
+        <div className="relative max-w-lg text-center">
+          <p
+            className="text-[14px] tracking-widest uppercase"
+            style={{ color: "rgba(201, 168, 76, 0.7)" }}
+          >
             Your wedding
           </p>
-          <h1 className="mt-4 text-[44px] md:text-[56px] font-semibold text-[#FAF6F1] leading-tight">
+          <h1
+            className="mt-4 leading-tight"
+            style={{
+              color: "#FAF6F1",
+              fontSize: "clamp(2.5rem, 7vw, 3.5rem)",
+              fontWeight: 600,
+              letterSpacing: "-0.5px",
+            }}
+          >
             {coupleNames}
           </h1>
           {dateStr && (
-            <p className="mt-4 text-[20px] text-[#FAF6F1]/80">{dateStr}</p>
+            <p className="mt-4 text-[20px]" style={{ color: "rgba(250, 246, 241, 0.85)" }}>
+              {dateStr}
+            </p>
           )}
           {details.length > 0 && (
-            <p className="mt-2 text-[15px] text-[#FAF6F1]/50">
+            <p
+              className="mt-2 text-[15px]"
+              style={{ color: "rgba(250, 246, 241, 0.6)" }}
+            >
               {details.join(" \u00B7 ")}
             </p>
           )}
-          <div className="mt-10 mx-auto w-16 h-px bg-[#C9A84C]/30" />
-          <p className="mt-10 text-[18px] text-[#FAF6F1]/70 leading-relaxed max-w-md mx-auto italic">
+          <div className="mt-10 mx-auto w-16 h-px" style={{ background: "rgba(201, 168, 76, 0.4)" }} />
+          <p
+            className="mt-10 text-[18px] leading-relaxed max-w-md mx-auto italic"
+            style={{ color: "rgba(250, 246, 241, 0.8)" }}
+          >
             Let&rsquo;s build something beautiful.
           </p>
           <button
             onClick={() => router.push("/dashboard")}
-            className="mt-10 inline-block rounded-full px-10 py-4 text-[15px] font-semibold text-[#2C3E2D] bg-[#FAF6F1] hover:bg-white transition"
+            className="mt-10 inline-block rounded-full px-10 py-4 text-[15px] font-semibold transition"
+            style={{ color: "#2C3E2D", background: "#FAF6F1" }}
           >
             Start Planning
           </button>
         </div>
+        <p
+          className="absolute bottom-3 right-4 text-[10px]"
+          style={{ color: "rgba(250, 246, 241, 0.4)" }}
+        >
+          Photo by{" "}
+          <a
+            href={CELEBRATION_PHOTO.photographerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
+            {CELEBRATION_PHOTO.photographer}
+          </a>{" "}
+          on{" "}
+          <a
+            href={CELEBRATION_PHOTO.unsplashUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
+            Unsplash
+          </a>
+        </p>
       </div>
     );
   }
