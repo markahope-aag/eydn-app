@@ -32,7 +32,7 @@ type Vendor = {
   amount: number | null;
   amount_paid: number | null;
   arrival_time: string | null;
-  meal_needed: boolean;
+  meal_count: number;
   insurance_submitted: boolean;
 };
 
@@ -318,17 +318,25 @@ export default function VendorDetailPage({
             )}
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Meal Needed? <Tooltip text="Let your caterer know if this vendor needs a meal. Vendor meals are typically a reduced rate." /></label>
-            <div className="mt-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={vendor.meal_needed}
-                  onChange={(e) => updateField("meal_needed", e.target.checked)}
-                  className="accent-violet"
-                />
-                <span className="text-[14px] text-plum">Yes, needs a meal</span>
-              </label>
+            <label className="text-[12px] font-semibold text-muted">Vendor Meals Needed <Tooltip text="How many meals does this vendor need on the day? Bands and photographers often bring assistants — count everyone who'll eat. Vendor meals are typically a reduced rate." /></label>
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={vendor.meal_count}
+                onChange={(e) =>
+                  updateField("meal_count", Math.max(0, parseInt(e.target.value, 10) || 0))
+                }
+                className="w-20 rounded-[8px] border border-whisper bg-white px-3 py-1.5 text-[14px] text-plum accent-violet"
+              />
+              <span className="text-[13px] text-muted">
+                {vendor.meal_count === 0
+                  ? "no meals"
+                  : vendor.meal_count === 1
+                  ? "meal"
+                  : "meals"}
+              </span>
             </div>
           </div>
           <div>

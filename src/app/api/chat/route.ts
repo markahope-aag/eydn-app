@@ -35,7 +35,7 @@ type VendorRow = {
   amount_paid: number | null;
   notes: string | null;
   arrival_time: string | null;
-  meal_needed: boolean;
+  meal_count: number;
 };
 type GuestRow = {
   name: string;
@@ -171,7 +171,7 @@ export async function POST(request: Request) {
     supabase.from("expenses").select("amount_paid").eq("wedding_id", wedding.id).is("deleted_at", null),
     supabase.from("guide_responses").select("guide_slug, responses, completed").eq("wedding_id", wedding.id).eq("completed", true),
     supabase.from("tasks").select("title, due_date, completed, category, notes").eq("wedding_id", wedding.id).is("deleted_at", null).order("due_date", { ascending: true }).limit(50),
-    supabase.from("vendors").select("name, category, status, poc_name, poc_email, poc_phone, amount, amount_paid, notes, arrival_time, meal_needed").eq("wedding_id", wedding.id).is("deleted_at", null),
+    supabase.from("vendors").select("name, category, status, poc_name, poc_email, poc_phone, amount, amount_paid, notes, arrival_time, meal_count").eq("wedding_id", wedding.id).is("deleted_at", null),
     supabase.from("guests").select("name, rsvp_status, meal_preference, role, group_name, plus_one_name").eq("wedding_id", wedding.id).is("deleted_at", null).order("name").limit(100),
     supabase.from("wedding_party").select("name, role, job_assignment, attire").eq("wedding_id", wedding.id).is("deleted_at", null).order("sort_order"),
     supabase.from("expenses").select("description, category, estimated, amount_paid, final_cost, paid").eq("wedding_id", wedding.id).is("deleted_at", null).order("category"),

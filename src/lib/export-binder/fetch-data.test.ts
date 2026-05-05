@@ -160,7 +160,7 @@ describe("fetchBinderData", () => {
   it("populates vendor list from API response", async () => {
     mockFetchResponses({
       "/api/vendors": [
-        { id: "v1", category: "Photography", name: "SnapShot Studio", poc_name: "Jane", poc_email: null, poc_phone: null, notes: null, amount: 3000, amount_paid: 500, arrival_time: null, meal_needed: false },
+        { id: "v1", category: "Photography", name: "SnapShot Studio", poc_name: "Jane", poc_email: null, poc_phone: null, notes: null, amount: 3000, amount_paid: 500, arrival_time: null, meal_count: 0 },
       ],
     });
 

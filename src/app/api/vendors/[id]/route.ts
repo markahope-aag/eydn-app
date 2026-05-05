@@ -6,7 +6,7 @@ import { supabaseError } from "@/lib/api-error";
 
 const ALLOWED_FIELDS = [
   "name", "category", "status", "poc_name", "poc_email", "poc_phone",
-  "notes", "amount", "amount_paid", "arrival_time", "meal_needed", "insurance_submitted",
+  "notes", "amount", "amount_paid", "arrival_time", "meal_count", "insurance_submitted",
 ];
 
 export async function PATCH(

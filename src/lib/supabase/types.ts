@@ -2136,7 +2136,7 @@ export type Database = {
           gmb_place_id: string | null
           id: string
           insurance_submitted: boolean | null
-          meal_needed: boolean | null
+          meal_count: number
           name: string
           notes: string | null
           poc_email: string | null
@@ -2158,7 +2158,7 @@ export type Database = {
           gmb_place_id?: string | null
           id?: string
           insurance_submitted?: boolean | null
-          meal_needed?: boolean | null
+          meal_count?: number
           name: string
           notes?: string | null
           poc_email?: string | null
@@ -2180,7 +2180,7 @@ export type Database = {
           gmb_place_id?: string | null
           id?: string
           insurance_submitted?: boolean | null
-          meal_needed?: boolean | null
+          meal_count?: number
           name?: string
           notes?: string | null
           poc_email?: string | null

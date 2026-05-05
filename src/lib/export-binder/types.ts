@@ -32,7 +32,7 @@ export type Vendor = {
   amount: number | null;
   amount_paid: number | null;
   arrival_time: string | null;
-  meal_needed: boolean;
+  meal_count: number;
 };
 
 export type WeddingPartyMember = {

@@ -41,22 +41,24 @@ export function VendorsPage({ vendorList, s, PdfPage, Text, View }: VendorsProps
         )}
 
         {/* Vendor arrival & meal info */}
-        {vendorList.some((v) => v.arrival_time || v.meal_needed) && (
+        {vendorList.some((v) => v.arrival_time || v.meal_count > 0) && (
           <>
             <Text style={s.subheading}>Arrival Times & Meals</Text>
             <View style={s.tableContainer}>
               <View style={s.tableHeaderRow}>
                 <Text style={[s.tableHeaderCell, { width: 120 }]}>Vendor</Text>
                 <Text style={[s.tableHeaderCell, { width: 100 }]}>Arrival Time</Text>
-                <Text style={[s.tableHeaderCell, { flex: 1 }]}>Meal Needed</Text>
+                <Text style={[s.tableHeaderCell, { flex: 1 }]}>Meals Needed</Text>
               </View>
               {vendorList
-                .filter((v) => v.arrival_time || v.meal_needed)
+                .filter((v) => v.arrival_time || v.meal_count > 0)
                 .map((v, i) => (
                   <View key={i} style={rowStyle(s, i)} wrap={false}>
                     <Text style={[s.tableCellBold, { width: 120 }]}>{v.name}</Text>
                     <Text style={[s.tableCell, { width: 100 }]}>{v.arrival_time || "\u2014"}</Text>
-                    <Text style={[s.tableCell, { flex: 1 }]}>{v.meal_needed ? "Yes" : "No"}</Text>
+                    <Text style={[s.tableCell, { flex: 1 }]}>
+                      {v.meal_count > 0 ? String(v.meal_count) : "\u2014"}
+                    </Text>
                   </View>
                 ))}
             </View>
