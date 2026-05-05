@@ -208,14 +208,12 @@ function SortableTaskItem({
             {dueDateInfo.formatted} · {dueDateInfo.relative}
           </span>
         )}
-        {!task.is_system_generated && (
-          <button
-            onClick={() => onDelete(task.id)}
-            className="text-[12px] text-error hover:opacity-80 flex-shrink-0"
-          >
-            Delete
-          </button>
-        )}
+        <button
+          onClick={() => onDelete(task.id)}
+          className="text-[12px] text-error hover:opacity-80 flex-shrink-0"
+        >
+          Delete
+        </button>
       </div>
     </div>
   );

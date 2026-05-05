@@ -77,11 +77,20 @@ export default function DayOfPage() {
 
   async function savePlan(updated: DayOfPlan) {
     setPlan(updated);
-    await fetch("/api/day-of", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: updated }),
-    }).catch(() => toast.error("Changes didn't save. Try again."));
+    try {
+      const res = await fetch("/api/day-of", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: updated }),
+      });
+      // fetch only throws on network errors, not non-2xx — explicitly check.
+      // Without this, server-side rejections (constraint violations, validation
+      // failures) silently fail and the UI keeps the optimistic state until
+      // the next reload reveals the data was never persisted.
+      if (!res.ok) throw new Error(`save failed (${res.status})`);
+    } catch {
+      toast.error("Changes didn't save. Try again.");
+    }
   }
 
   function updateTimeline(index: number, field: keyof TimelineItem, value: string) {

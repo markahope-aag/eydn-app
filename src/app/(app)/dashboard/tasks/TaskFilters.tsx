@@ -2,16 +2,26 @@
 
 import { useState } from "react";
 
+const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "not_started", label: "Not Started" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "done", label: "Done" },
+  { value: "overdue", label: "Overdue" },
+];
+
 type Props = {
   categories: string[];
   phases: string[];
   selectedCategory: string;
   selectedPhase: string;
-  selectedStatus: string;
+  // Multi-select: empty array = all statuses. Couples often want "show me
+  // not-started AND in-progress" together, so this is a toggle list rather
+  // than a dropdown.
+  selectedStatuses: string[];
   selectedPriority: string;
   onCategoryChange: (_v: string) => void;
   onPhaseChange: (_v: string) => void;
-  onStatusChange: (_v: string) => void;
+  onStatusesChange: (_v: string[]) => void;
   onPriorityChange: (_v: string) => void;
 };
 
@@ -20,21 +30,31 @@ export function TaskFilters({
   phases,
   selectedCategory,
   selectedPhase,
-  selectedStatus,
+  selectedStatuses,
   selectedPriority,
   onCategoryChange,
   onPhaseChange,
-  onStatusChange,
+  onStatusesChange,
   onPriorityChange,
 }: Props) {
-  const activeCount = [selectedCategory, selectedPhase, selectedStatus, selectedPriority].filter(Boolean).length;
+  const activeCount =
+    [selectedCategory, selectedPhase, selectedPriority].filter(Boolean).length +
+    (selectedStatuses.length > 0 ? 1 : 0);
   const [open, setOpen] = useState(activeCount > 0);
 
   function clearAll() {
     onCategoryChange("");
     onPhaseChange("");
-    onStatusChange("");
+    onStatusesChange([]);
     onPriorityChange("");
+  }
+
+  function toggleStatus(value: string) {
+    if (selectedStatuses.includes(value)) {
+      onStatusesChange(selectedStatuses.filter((s) => s !== value));
+    } else {
+      onStatusesChange([...selectedStatuses, value]);
+    }
   }
 
   return (
@@ -95,17 +115,26 @@ export function TaskFilters({
               </option>
             ))}
           </select>
-          <select
-            value={selectedStatus}
-            onChange={(e) => onStatusChange(e.target.value)}
-            className="rounded-[10px] border-border px-3 py-1.5 text-[14px]"
-          >
-            <option value="">All Status</option>
-            <option value="not_started">Not Started</option>
-            <option value="in_progress">In Progress</option>
-            <option value="done">Done</option>
-            <option value="overdue">Overdue</option>
-          </select>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {STATUS_OPTIONS.map((opt) => {
+              const active = selectedStatuses.includes(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => toggleStatus(opt.value)}
+                  aria-pressed={active}
+                  className={`rounded-full px-3 py-1.5 text-[13px] transition border ${
+                    active
+                      ? "bg-violet/10 text-violet border-violet/30 font-semibold"
+                      : "bg-white text-muted border-border hover:text-plum hover:border-plum/40"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
           <select
             value={selectedPriority}
             onChange={(e) => onPriorityChange(e.target.value)}

@@ -264,7 +264,7 @@ export function SetupTab({
 
       <div>
         <label className="text-[13px] font-semibold text-muted block mb-1">
-          Hero Layout
+          Website Header Image
         </label>
         <div className="flex gap-2">
           <button

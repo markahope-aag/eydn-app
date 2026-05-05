@@ -90,70 +90,142 @@ export default function MoodBoardPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  /**
+   * Build the shared form payload that every item in a batch carries.
+   * caption/category/location/vendor are intentionally applied to every
+   * item — couples typically batch-add things that share the same
+   * tagging ("20 ceremony arch ideas") and editing each one after the
+   * fact is busywork.
+   */
+  function buildSharedPayload() {
+    return {
+      caption: caption.trim() || null,
+      category: showCustomCat && customCategory.trim() ? customCategory.trim() : category,
+      location: location || null,
+      vendor_id: vendorId || null,
+    };
+  }
+
+  function clearAddForm() {
+    setImageUrl("");
+    setCaption("");
+    setLocation("");
+    setVendorId("");
+    setShowCustomCat(false);
+    setCustomCategory("");
+    setShowAdd(false);
+  }
+
+  /**
+   * Save one image_url into mood-board. Returns the saved item or throws.
+   * Centralizes the per-item POST so both the URL and upload paths reuse it.
+   */
+  async function saveOneItem(image_url: string) {
+    const res = await fetch("/api/mood-board", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image_url, ...buildSharedPayload() }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Image didn't save");
+    return data;
+  }
+
   async function addFromUrl() {
-    if (!imageUrl.trim()) return;
+    // Multi-URL: accept newline-separated URLs so couples can paste a list
+    // of pin links at once. Filter out blank lines and trim whitespace.
+    const urls = imageUrl
+      .split(/\r?\n/)
+      .map((u) => u.trim())
+      .filter(Boolean);
+    if (urls.length === 0) return;
+
     setUploading(true);
+    let successes = 0;
+    let failures = 0;
+    const toastId = urls.length > 1 ? toast.loading(`Saving 1 of ${urls.length}…`) : undefined;
+
     try {
-      const res = await fetch("/api/mood-board", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image_url: imageUrl.trim(), caption: caption.trim() || null, category: showCustomCat && customCategory.trim() ? customCategory.trim() : category, location: location || null, vendor_id: vendorId || null }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Image didn't save. Try again.");
-      setItems((prev) => [data, ...prev]);
-      setImageUrl("");
-      setCaption("");
-      setLocation("");
-      setVendorId("");
-      setShowCustomCat(false);
-      setCustomCategory("");
-      setShowAdd(false);
-      trackMoodBoardAdd();
-      toast.success("Saved to vision board");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Image didn't save. Try again.");
+      for (let i = 0; i < urls.length; i++) {
+        if (toastId !== undefined) {
+          toast.loading(`Saving ${i + 1} of ${urls.length}…`, { id: toastId });
+        }
+        try {
+          const saved = await saveOneItem(urls[i]);
+          setItems((prev) => [saved, ...prev]);
+          trackMoodBoardAdd();
+          successes++;
+        } catch {
+          failures++;
+        }
+      }
+
+      if (toastId !== undefined) toast.dismiss(toastId);
+
+      if (successes > 0 && failures === 0) {
+        toast.success(
+          successes === 1 ? "Saved to vision board" : `${successes} images added`
+        );
+        clearAddForm();
+      } else if (successes > 0 && failures > 0) {
+        toast(`${successes} added · ${failures} couldn't be saved`);
+        clearAddForm();
+      } else {
+        toast.error("Couldn't save those URLs. Check the links and try again.");
+      }
     } finally {
       setUploading(false);
     }
   }
 
   async function addFromUpload() {
-    const file = fileRef.current?.files?.[0];
-    if (!file) return;
+    const files = Array.from(fileRef.current?.files ?? []);
+    if (files.length === 0) return;
     setUploading(true);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("entity_type", "task");
-    formData.append("entity_id", "mood-board");
+    let successes = 0;
+    let failures = 0;
+    const toastId = files.length > 1 ? toast.loading(`Uploading 1 of ${files.length}…`) : undefined;
 
     try {
-      const uploadRes = await fetch("/api/attachments", { method: "POST", body: formData });
-      if (!uploadRes.ok) {
-        const errData = await uploadRes.json().catch(() => ({}));
-        throw new Error(errData.error || `Upload failed (${uploadRes.status})`);
-      }
-      const { file_url } = await uploadRes.json();
+      for (let i = 0; i < files.length; i++) {
+        if (toastId !== undefined) {
+          toast.loading(`Uploading ${i + 1} of ${files.length}…`, { id: toastId });
+        }
+        try {
+          const formData = new FormData();
+          formData.append("file", files[i]);
+          formData.append("entity_type", "task");
+          formData.append("entity_id", "mood-board");
 
-      const res = await fetch("/api/mood-board", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image_url: file_url, caption: caption.trim() || null, category: showCustomCat && customCategory.trim() ? customCategory.trim() : category, location: location || null, vendor_id: vendorId || null }),
-      });
-      if (!res.ok) throw new Error();
-      const saved = await res.json();
-      setItems((prev) => [saved, ...prev]);
-      setCaption("");
-      setLocation("");
-      setVendorId("");
-      setShowCustomCat(false);
-      setCustomCategory("");
-      setShowAdd(false);
-      trackMoodBoardAdd();
-      toast.success("Saved to vision board");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Image didn't upload. Try again.");
+          const uploadRes = await fetch("/api/attachments", { method: "POST", body: formData });
+          if (!uploadRes.ok) {
+            const errData = await uploadRes.json().catch(() => ({}));
+            throw new Error(errData.error || `Upload failed (${uploadRes.status})`);
+          }
+          const { file_url } = await uploadRes.json();
+          const saved = await saveOneItem(file_url);
+          setItems((prev) => [saved, ...prev]);
+          trackMoodBoardAdd();
+          successes++;
+        } catch {
+          failures++;
+        }
+      }
+
+      if (toastId !== undefined) toast.dismiss(toastId);
+
+      if (successes > 0 && failures === 0) {
+        toast.success(
+          successes === 1 ? "Saved to vision board" : `${successes} images added`
+        );
+        clearAddForm();
+      } else if (successes > 0 && failures > 0) {
+        toast(`${successes} uploaded · ${failures} couldn't be saved`);
+        clearAddForm();
+      } else {
+        toast.error("Upload failed. Try again.");
+      }
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -226,14 +298,15 @@ export default function MoodBoardPage() {
   function handleFileDrop(e: React.DragEvent) {
     e.preventDefault();
     setDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith("image/")) {
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      if (fileRef.current) {
-        fileRef.current.files = dt.files;
-        addFromUpload();
-      }
+    const dropped = Array.from(e.dataTransfer.files).filter((f) =>
+      f.type.startsWith("image/")
+    );
+    if (dropped.length === 0) return;
+    const dt = new DataTransfer();
+    for (const f of dropped) dt.items.add(f);
+    if (fileRef.current) {
+      fileRef.current.files = dt.files;
+      addFromUpload();
     }
   }
 
@@ -296,15 +369,15 @@ export default function MoodBoardPage() {
 
           {addMode === "url" && (
             <div>
-              <label className="text-[12px] font-semibold text-muted">Image URL</label>
-              <input
-                type="url"
+              <label className="text-[12px] font-semibold text-muted">Image URLs</label>
+              <textarea
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://..."
-                className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                placeholder={"https://...\nPaste one URL per line to add several at once"}
+                rows={3}
+                className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-y"
               />
-              <p className="text-[11px] text-muted mt-1">Works with Pinterest, Instagram, and most image links. For best results, right-click an image and copy the image address.</p>
+              <p className="text-[11px] text-muted mt-1">Works with Pinterest, Instagram, and most image links. For best results, right-click an image and copy the image address. One URL per line to add several at once.</p>
             </div>
           )}
 
@@ -314,6 +387,7 @@ export default function MoodBoardPage() {
                 ref={fileRef}
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
                 onChange={addFromUpload}
               />
@@ -331,8 +405,8 @@ export default function MoodBoardPage() {
                   <circle cx="12" cy="14" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M4 22L11 16L15 20L21 13L28 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <p className="text-[13px] font-semibold text-plum">Drop an image here or click to browse</p>
-                <p className="text-[11px] text-muted mt-1">JPG, PNG, WebP up to 5MB</p>
+                <p className="text-[13px] font-semibold text-plum">Drop images here or click to browse</p>
+                <p className="text-[11px] text-muted mt-1">JPG, PNG, WebP up to 5MB · select or drop several at once</p>
               </div>
             </div>
           )}

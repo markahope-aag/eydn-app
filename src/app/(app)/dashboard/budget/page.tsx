@@ -228,6 +228,31 @@ export default function BudgetPage() {
     }
   }
 
+  async function unlinkVendor(expenseId: string) {
+    const prev = expenses;
+    // Keep the estimated/amount_paid as-is — the couple may have edited them
+    // after the link, and zeroing them out on unlink would silently destroy
+    // data. They can clear the cells directly if they want.
+    setExpenses((e) =>
+      e.map((x) =>
+        x.id === expenseId ? { ...x, vendor_id: null, vendor_name: null } : x
+      )
+    );
+
+    try {
+      const res = await fetch(`/api/expenses/${expenseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vendor_id: null }),
+      });
+      if (!res.ok) throw new Error();
+      toast("Vendor unlinked");
+    } catch {
+      setExpenses(prev);
+      toast.error("Couldn't unlink that vendor. Try again.");
+    }
+  }
+
   // Group expenses by category
   const grouped = new Map<string, Expense[]>();
   for (const exp of expenses) {
@@ -603,7 +628,18 @@ export default function BudgetPage() {
                     <div>
                       <span className="text-[15px] text-plum">{exp.description}</span>
                       {exp.vendor_name && (
-                        <span className="ml-2 badge badge-booked">{exp.vendor_name}</span>
+                        <span className="ml-2 inline-flex items-center gap-1 badge badge-booked">
+                          {exp.vendor_name}
+                          <button
+                            type="button"
+                            onClick={() => unlinkVendor(exp.id)}
+                            aria-label={`Unlink ${exp.vendor_name}`}
+                            title="Unlink vendor"
+                            className="-mr-0.5 leading-none opacity-60 hover:opacity-100"
+                          >
+                            &times;
+                          </button>
+                        </span>
                       )}
                       {!exp.vendor_id && vendors.length > 0 && (
                         <select

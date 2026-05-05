@@ -105,6 +105,15 @@ export function TaskDetail({
   const dueDateInfo = task.due_date ? formatDueDate(task.due_date) : null;
   const isOverdue = dueDateInfo?.isOverdue && task.status !== "done";
 
+  // Close on Escape — matches the modal-on-backdrop-click affordance below.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   async function fetchResources() {
     try {
       const res = await fetch(`/api/tasks/${task.id}/resources`);
@@ -200,10 +209,20 @@ export function TaskDetail({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="bg-white rounded-[16px] shadow-xl w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto">
-        <div className="p-6">
-          {/* Header */}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="bg-white rounded-[16px] shadow-xl w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Sticky header — keeps the close X reachable on long scroll. The
+            white backdrop + soft border avoids content bleeding through as
+            the body scrolls beneath it. */}
+        <div className="sticky top-0 z-10 bg-white border-b border-whisper px-6 pt-6 pb-4 rounded-t-[16px]">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <h2 className="text-lg font-semibold text-plum">{task.title}</h2>
@@ -227,11 +246,15 @@ export function TaskDetail({
             </div>
             <button
               onClick={onClose}
+              aria-label="Close"
               className="text-muted hover:text-plum text-xl leading-none"
             >
               &times;
             </button>
           </div>
+        </div>
+
+        <div className="p-6 pt-4">
 
           {/* Due date */}
           {dueDateInfo && (

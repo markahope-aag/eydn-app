@@ -65,7 +65,7 @@ export default function TasksPage() {
   // Filters
   const [filterCategory, setFilterCategory] = useState("");
   const [filterPhase, setFilterPhase] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterStatuses, setFilterStatuses] = useState<string[]>([]);
   const [filterPriority, setFilterPriority] = useState("");
 
   useEffect(() => {
@@ -95,17 +95,22 @@ export default function TasksPage() {
       if (filterCategory && t.category !== filterCategory) return false;
       if (filterPhase && t.timeline_phase !== filterPhase) return false;
       if (filterPriority && t.priority !== filterPriority) return false;
-      if (filterStatus === "done" && t.status !== "done") return false;
-      if (filterStatus === "in_progress" && t.status !== "in_progress") return false;
-      if (filterStatus === "not_started" && t.status !== "not_started") return false;
-      if (filterStatus === "overdue") {
-        if (t.status === "done") return false;
-        if (!t.due_date) return false;
-        if (new Date(t.due_date) >= new Date()) return false;
+      if (filterStatuses.length > 0) {
+        // Match if the task's actual status is one of the selected ones, OR
+        // "overdue" is selected and the task is overdue (overdue is a derived
+        // state, not a real status — keep it OR-ed with the literal matches).
+        const isOverdue =
+          t.status !== "done" &&
+          !!t.due_date &&
+          new Date(t.due_date) < new Date();
+        const matchesStatus =
+          filterStatuses.includes(t.status) ||
+          (filterStatuses.includes("overdue") && isOverdue);
+        if (!matchesStatus) return false;
       }
       return true;
     });
-  }, [tasks, filterCategory, filterPhase, filterStatus, filterPriority]);
+  }, [tasks, filterCategory, filterPhase, filterStatuses, filterPriority]);
 
   const completed = tasks.filter((t) => t.status === "done" && !t.parent_task_id).length;
   const total = tasks.filter((t) => !t.parent_task_id).length;
@@ -514,11 +519,11 @@ export default function TasksPage() {
           phases={allPhases}
           selectedCategory={filterCategory}
           selectedPhase={filterPhase}
-          selectedStatus={filterStatus}
+          selectedStatuses={filterStatuses}
           selectedPriority={filterPriority}
           onCategoryChange={setFilterCategory}
           onPhaseChange={setFilterPhase}
-          onStatusChange={setFilterStatus}
+          onStatusesChange={setFilterStatuses}
           onPriorityChange={setFilterPriority}
         />
         <button

@@ -63,7 +63,7 @@ export function TimelineTab({
                 type="text"
                 defaultValue={item.time}
                 onBlur={(e) => updateTimeline(i, "time", e.target.value)}
-                className="w-24 text-[15px] font-semibold text-violet border-0 bg-transparent flex-shrink-0"
+                className="w-28 text-[15px] font-semibold text-violet border-0 bg-transparent flex-shrink-0"
                 placeholder="Time"
               />
               <input
@@ -73,27 +73,36 @@ export function TimelineTab({
                 className="flex-1 text-[15px] text-plum border-0 bg-transparent min-w-0"
                 placeholder="Event name"
               />
-              {item.duration ? (
-                <span className="text-[11px] text-muted bg-lavender px-2 py-0.5 rounded-full flex-shrink-0">{item.duration}m</span>
-              ) : null}
-              <input
-                type="number"
-                defaultValue={item.duration || ""}
-                onBlur={(e) => updateTimeline(i, "duration" as keyof TimelineItem, e.target.value)}
-                placeholder="Min"
-                min="0"
-                className="w-14 text-[11px] text-muted border-0 bg-transparent text-right opacity-0 group-hover/row:opacity-100 transition-opacity flex-shrink-0"
-                title="Duration (minutes)"
-              />
-              <button
-                onClick={() => removeTimelineItem(i)}
-                aria-label="Remove event"
-                className="opacity-0 group-hover/row:opacity-100 transition-opacity text-muted hover:text-error flex-shrink-0"
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                  <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </button>
+              {/* Right cluster: duration display + on-hover edit + delete.
+                  Showing the badge and the edit input at the same slot
+                  (badge collapses when the input is shown on hover) keeps
+                  the row width steady and stops the duration text from
+                  getting clipped on narrower viewports. */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {item.duration ? (
+                  <span className="text-[11px] text-muted bg-lavender px-2 py-0.5 rounded-full group-hover/row:hidden">
+                    {item.duration}m
+                  </span>
+                ) : null}
+                <input
+                  type="number"
+                  defaultValue={item.duration || ""}
+                  onBlur={(e) => updateTimeline(i, "duration" as keyof TimelineItem, e.target.value)}
+                  placeholder="Min"
+                  min="0"
+                  className="w-16 text-[11px] text-muted border-0 bg-transparent text-right opacity-0 group-hover/row:opacity-100 transition-opacity"
+                  title="Duration (minutes)"
+                />
+                <button
+                  onClick={() => removeTimelineItem(i)}
+                  aria-label="Remove event"
+                  className="opacity-0 group-hover/row:opacity-100 transition-opacity text-muted hover:text-error"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
             </div>
             {/* Expanded details row */}
             <div className="px-4 pb-2 flex items-center gap-2 flex-wrap">

@@ -47,11 +47,18 @@ export async function PUT(request: Request) {
 
   const { data, error } = await supabase
     .from("day_of_plans")
-    .upsert({
-      wedding_id: wedding.id,
-      content: body.content as import("@/lib/supabase/types").Json,
-      edited_at: new Date().toISOString(),
-    })
+    .upsert(
+      {
+        wedding_id: wedding.id,
+        content: body.content as import("@/lib/supabase/types").Json,
+        edited_at: new Date().toISOString(),
+      },
+      // wedding_id is unique on this table, but PostgREST defaults to the
+      // primary key (id) for conflict resolution — without this, every save
+      // becomes an INSERT and trips the unique constraint, silently
+      // rejecting edits like timeline deletes.
+      { onConflict: "wedding_id" }
+    )
     .select()
     .single();
 
@@ -137,11 +144,14 @@ async function generateDayOfPlan(
 
   const { data } = await supabase
     .from("day_of_plans")
-    .upsert({
-      wedding_id: wedding.id,
-      content,
-      generated_at: new Date().toISOString(),
-    })
+    .upsert(
+      {
+        wedding_id: wedding.id,
+        content,
+        generated_at: new Date().toISOString(),
+      },
+      { onConflict: "wedding_id" }
+    )
     .select()
     .single();
 

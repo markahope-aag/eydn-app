@@ -245,6 +245,7 @@ export default function VendorDetailPage({
             <input
               type="number"
               defaultValue={vendor.amount ?? ""}
+              onFocus={(e) => e.target.select()}
               onBlur={(e) =>
                 updateField(
                   "amount",
@@ -267,6 +268,7 @@ export default function VendorDetailPage({
             <input
               type="number"
               defaultValue={vendor.amount_paid ?? ""}
+              onFocus={(e) => e.target.select()}
               onBlur={(e) =>
                 updateField(
                   "amount_paid",
