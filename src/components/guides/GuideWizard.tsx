@@ -51,6 +51,7 @@ export function GuideWizard({ guide }: Props) {
   const [inspirationImages, setInspirationImages] = useState<InspirationImage[]>([]);
   const [inspirationLoading, setInspirationLoading] = useState(false);
   const [inspirationLoaded, setInspirationLoaded] = useState(false);
+  const [inspirationSource, setInspirationSource] = useState<"live" | "fallback" | null>(null);
   const [savedImageIds, setSavedImageIds] = useState<Set<string>>(new Set());
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
@@ -123,14 +124,16 @@ export function GuideWizard({ guide }: Props) {
     // Seed with fallback so the gallery is never empty while the fetch runs.
     if (inspirationImages.length === 0) {
       setInspirationImages(INSPIRATION_FALLBACK);
+      setInspirationSource("fallback");
     }
 
     setInspirationLoading(true);
     fetch("/api/guides/colors-theme/inspiration", { method: "POST" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((data: { images: InspirationImage[] } | null) => {
+      .then((data: { images: InspirationImage[]; source?: "live" | "fallback" } | null) => {
         if (data?.images && data.images.length > 0) {
           setInspirationImages(data.images);
+          if (data.source) setInspirationSource(data.source);
         }
         setInspirationLoaded(true);
       })
@@ -611,18 +614,32 @@ export function GuideWizard({ guide }: Props) {
                   );
                 })}
               </div>
-              <p className="mt-3 text-[12px] text-muted/80">
-                Tap an image to save it to your mood board. Photos from{" "}
-                <a
-                  href="https://unsplash.com/?utm_source=eydn-app&utm_medium=referral"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-violet underline"
-                >
-                  Unsplash
-                </a>
-                .
-              </p>
+              <div className="mt-3 flex items-center justify-between text-[12px] text-muted/80">
+                <span>
+                  Tap an image to save it to your mood board. Photos from{" "}
+                  <a
+                    href="https://unsplash.com/?utm_source=eydn-app&utm_medium=referral"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-violet underline"
+                  >
+                    Unsplash
+                  </a>
+                  .
+                </span>
+                {inspirationSource && (
+                  <span
+                    className={`text-[11px] ${inspirationSource === "live" ? "text-violet" : "text-muted/60"}`}
+                    title={
+                      inspirationSource === "live"
+                        ? "Personalized from your answers via the live Unsplash API"
+                        : "Showing the bundled starter set — live search did not return results"
+                    }
+                  >
+                    {inspirationSource === "live" ? "Personalized for you" : "Sample set"}
+                  </span>
+                )}
+              </div>
             </>
           )}
         </div>
