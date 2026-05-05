@@ -33,12 +33,12 @@ export function EmptyState({
   return (
     <div className="flex flex-col items-center justify-center py-10">
       {photo ? (
-        <div className="relative w-56 sm:w-64 aspect-[4/3] rounded-[16px] overflow-hidden border border-border/60">
+        <div className="relative w-full max-w-xl aspect-[16/9] rounded-[20px] overflow-hidden border border-border/60 shadow-sm">
           <Image
-            src={photo.thumb}
+            src={photo.url}
             alt={photo.alt}
             fill
-            sizes="(min-width: 640px) 256px, 224px"
+            sizes="(min-width: 768px) 576px, 100vw"
             className="object-cover"
             unoptimized
           />
