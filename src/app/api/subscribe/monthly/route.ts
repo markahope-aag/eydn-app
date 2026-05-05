@@ -47,35 +47,40 @@ export async function POST(request: Request) {
     .eq("user_id", userId)
     .maybeSingle();
 
-  const stripe = getStripe();
-
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://eydn.app";
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    line_items: [
-      {
-        price: priceId,
-        quantity: 1,
+  try {
+    const stripe = getStripe();
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      allow_promotion_codes: true,
+      subscription_data: {
+        metadata: {
+          user_id: userId,
+          wedding_id: wedding?.id || "",
+          type: "pro_monthly_subscription",
+        },
       },
-    ],
-    allow_promotion_codes: true,
-    subscription_data: {
       metadata: {
         user_id: userId,
         wedding_id: wedding?.id || "",
         type: "pro_monthly_subscription",
       },
-    },
-    metadata: {
-      user_id: userId,
-      wedding_id: wedding?.id || "",
-      type: "pro_monthly_subscription",
-    },
-    client_reference_id: userId,
-    success_url: `${appUrl}/dashboard?subscribed=monthly`,
-    cancel_url: `${appUrl}/dashboard/pricing`,
-  });
+      client_reference_id: userId,
+      success_url: `${appUrl}/dashboard?subscribed=monthly`,
+      cancel_url: `${appUrl}/dashboard/pricing`,
+    });
 
-  return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Stripe checkout failed";
+    console.error("[SUBSCRIBE MONTHLY]", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }

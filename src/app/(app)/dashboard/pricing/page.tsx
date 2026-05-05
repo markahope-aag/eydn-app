@@ -66,23 +66,26 @@ export default function PricingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json();
         if (data.error === "Already purchased" || data.error === "You already have an active plan") {
           toast.success("You already have full access.");
           return;
         }
-        throw new Error(data.error);
+        throw new Error(data.error || `Subscribe failed (${res.status})`);
       }
-      const data = await res.json();
       trackPurchase(lifetimeFinalPrice);
       if (data.purchased) {
         window.location.href = data.url || "/dashboard?purchased=true";
       } else if (data.url) {
         window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
       }
-    } catch {
-      toast.error("That didn't go through. Try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      console.error("[SUBSCRIBE LIFETIME]", msg);
+      toast.error(`Couldn't start checkout: ${msg}`);
     } finally {
       setLoadingPlan(null);
     }
@@ -92,20 +95,23 @@ export default function PricingPage() {
     setLoadingPlan("monthly");
     try {
       const res = await fetch("/api/subscribe/monthly", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json();
         if (data.error === "You already have an active plan") {
           toast.success("You already have full access.");
           return;
         }
-        throw new Error(data.error);
+        throw new Error(data.error || `Subscribe failed (${res.status})`);
       }
-      const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
       }
-    } catch {
-      toast.error("That didn't go through. Try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      console.error("[SUBSCRIBE MONTHLY]", msg);
+      toast.error(`Couldn't start checkout: ${msg}`);
     } finally {
       setLoadingPlan(null);
     }
