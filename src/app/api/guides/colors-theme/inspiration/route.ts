@@ -1,5 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { INSPIRATION_FALLBACK } from "@/lib/inspiration-fallback";
 
 /**
  * Build a curated Unsplash inspiration board from the Colors & Theme guide
@@ -90,10 +91,19 @@ async function searchUnsplash(query: string, perPage: number, key: string): Prom
   u.searchParams.set("orientation", "portrait");
   u.searchParams.set("content_filter", "high");
   u.searchParams.set("per_page", String(perPage));
-  const res = await fetch(u, { headers: { Authorization: `Client-ID ${key}` } });
-  if (!res.ok) return [];
-  const data = (await res.json()) as { results: UnsplashPhoto[] };
-  return data.results || [];
+  try {
+    const res = await fetch(u, { headers: { Authorization: `Client-ID ${key}` } });
+    if (!res.ok) {
+      console.warn(`[inspiration] Unsplash returned ${res.status} for "${query}"`);
+      return [];
+    }
+    const data = (await res.json()) as { results: UnsplashPhoto[] };
+    return data.results || [];
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "unknown";
+    console.warn(`[inspiration] Unsplash fetch threw for "${query}": ${msg}`);
+    return [];
+  }
 }
 
 function toImage(p: UnsplashPhoto, query: string): InspirationImage {
@@ -116,8 +126,13 @@ export async function POST() {
   const { wedding, supabase } = result;
 
   const key = process.env.UNSPLASH_ACCESS_KEY;
+
+  // No key in this runtime — degrade gracefully to the static fallback set
+  // instead of returning a 500 that the client can't recover from. Logged
+  // server-side so the missing-env case is visible in Vercel logs.
   if (!key) {
-    return NextResponse.json({ error: "Inspiration board is not configured" }, { status: 500 });
+    console.warn("[inspiration] UNSPLASH_ACCESS_KEY missing, returning static fallback");
+    return NextResponse.json({ images: INSPIRATION_FALLBACK, source: "fallback" });
   }
 
   const { data: guide } = await supabase
@@ -168,5 +183,21 @@ export async function POST() {
     })
   );
 
-  return NextResponse.json({ images: all.slice(0, 12) });
+  // If Unsplash returned nothing for every query (rate limit, network, key
+  // issue), fill the gallery from the static fallback rather than showing an
+  // empty board.
+  if (all.length === 0) {
+    console.warn("[inspiration] All Unsplash queries returned 0 results, using fallback");
+    return NextResponse.json({ images: INSPIRATION_FALLBACK, source: "fallback" });
+  }
+
+  // Top up with fallback images if the dynamic board came back light.
+  for (const fb of INSPIRATION_FALLBACK) {
+    if (all.length >= 12) break;
+    if (seen.has(fb.id)) continue;
+    seen.add(fb.id);
+    all.push(fb);
+  }
+
+  return NextResponse.json({ images: all.slice(0, 12), source: "live" });
 }
