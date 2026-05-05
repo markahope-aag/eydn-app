@@ -92,19 +92,34 @@ export default function VendorsPage() {
     const timeout = setTimeout(() => {
       fetch(`/api/suggested-vendors?q=${encodeURIComponent(q)}&limit=5`)
         .then((r) => (r.ok ? r.json() : Promise.reject()))
-        .then((data: { vendors: Array<{ id: string; name: string; category: string; city: string; state: string; gmb_data?: { photoUrl?: string } | null }> }) => {
-          if (cancelled) return;
-          setDirMatches(
-            data.vendors.map((v) => ({
-              id: v.id,
-              name: v.name,
-              category: v.category,
-              city: v.city,
-              state: v.state,
-              photoUrl: v.gmb_data?.photoUrl ?? null,
-            }))
-          );
-        })
+        .then(
+          (data: {
+            vendors: Array<{
+              id: string;
+              name: string;
+              category: string;
+              city: string;
+              state: string;
+              // User-added rows that came in via Google Places lookup carry
+              // a proxied URL on gmb_data.photoUrl; scraper-imported rows
+              // (the bulk of the directory) carry the photo on photos[0].url.
+              gmb_data?: { photoUrl?: string } | null;
+              photos?: Array<{ url?: string }> | null;
+            }>;
+          }) => {
+            if (cancelled) return;
+            setDirMatches(
+              data.vendors.map((v) => ({
+                id: v.id,
+                name: v.name,
+                category: v.category,
+                city: v.city,
+                state: v.state,
+                photoUrl: v.gmb_data?.photoUrl ?? v.photos?.[0]?.url ?? null,
+              }))
+            );
+          }
+        )
         .catch(() => {
           if (!cancelled) setDirMatches([]);
         })
@@ -349,20 +364,34 @@ export default function VendorsPage() {
     }
   }
 
-  // Count unique categories that have at least one vendor, and how many are booked
+  // Count unique categories that have at least one vendor, how many are booked,
+  // and how many are fully paid off. A category counts as "paid in full" only
+  // when every vendor in it is paid_in_full (otherwise there's still a balance
+  // somewhere) — that's the slice we want to render distinctly so couples see
+  // "actually done done" vs "booked but still owed".
   const activeCategories = new Set(vendors.map((v) => v.category));
   const bookedCategories = new Set(
     vendors
       .filter((v) => v.status === "booked" || v.status === "deposit_paid" || v.status === "paid_in_full")
       .map((v) => v.category)
   );
+  const paidInFullCategories = new Set(
+    Array.from(activeCategories).filter((cat) => {
+      const inCat = vendors.filter((v) => v.category === cat);
+      return inCat.length > 0 && inCat.every((v) => v.status === "paid_in_full");
+    })
+  );
   const totalCategories = activeCategories.size;
   const bookedCount = bookedCategories.size;
+  const paidInFullCount = paidInFullCategories.size;
   const bookedPct = totalCategories > 0 ? Math.round((bookedCount / totalCategories) * 100) : 0;
+  const paidInFullPct = totalCategories > 0 ? Math.round((paidInFullCount / totalCategories) * 100) : 0;
 
   function getVendorProgressLabel(): string {
     if (totalCategories === 0) return "Add your first vendor to get started";
     if (bookedCount === 0) return "Your vendor search begins — exciting things ahead 🌿";
+    if (paidInFullPct === 100) return "Every vendor paid in full. You're done — go enjoy the day! 💛";
+    if (bookedPct === 100 && paidInFullPct >= 50) return "All booked, balances coming due — home stretch ✨";
     if (bookedPct === 100) return "Every vendor is locked in. You're fully booked! 💛";
     if (bookedPct >= 75) return "Almost there — just a few more to lock in ✨";
     if (bookedPct >= 50) return "Over halfway booked — great momentum! 💪";
@@ -398,25 +427,40 @@ export default function VendorsPage() {
         </div>
       </div>
 
-      {/* Vendor booking progress bar */}
+      {/* Vendor booking progress bar — two-tone: emerald for paid-in-full,
+          violet for booked-but-balance-owed, lavender track for not-yet-booked. */}
       {totalCategories > 0 && (
         <div className="mt-4">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[13px] font-semibold text-plum">
               {bookedCount}/{totalCategories} booked
+              {paidInFullCount > 0 && (
+                <span className="ml-2 font-normal text-emerald-700">
+                  · {paidInFullCount} paid in full
+                </span>
+              )}
             </span>
             <span className="text-[12px] text-muted">{bookedPct}%</span>
           </div>
-          <div className="h-2.5 rounded-full overflow-hidden bg-lavender">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${bookedPct}%`,
-                background: bookedPct === 100
-                  ? "var(--success, #2E7D4F)"
-                  : "linear-gradient(90deg, var(--violet), var(--soft-violet))",
-              }}
-            />
+          <div className="flex h-2.5 rounded-full overflow-hidden bg-lavender">
+            {paidInFullPct > 0 && (
+              <div
+                className="h-full transition-all duration-500"
+                style={{
+                  width: `${paidInFullPct}%`,
+                  background: "var(--success, #2E7D4F)",
+                }}
+              />
+            )}
+            {bookedPct > paidInFullPct && (
+              <div
+                className="h-full transition-all duration-500"
+                style={{
+                  width: `${bookedPct - paidInFullPct}%`,
+                  background: "linear-gradient(90deg, var(--violet), var(--soft-violet))",
+                }}
+              />
+            )}
           </div>
           <p className="mt-1.5 text-[12px] text-muted">{getVendorProgressLabel()}</p>
         </div>
