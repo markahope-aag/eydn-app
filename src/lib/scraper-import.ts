@@ -165,19 +165,39 @@ export async function runScraperImport(
   });
 
   // 2. Find what we've already processed (positive or negative outcome) so
-  //    we don't re-fetch + re-process.
-  const { data: existingInDirectory } = await supabase
-    .from("suggested_vendors")
-    .select("scraper_id")
-    .not("scraper_id", "is", null);
-  const { data: existingRejected } = await supabase
-    .from("vendor_import_rejections")
-    .select("scraper_id");
+  //    we don't re-fetch + re-process. Both tables grow without bound — the
+  //    PostgREST default 1000-row cap is way too small (suggested_vendors
+  //    crossed it in May 2026, causing duplicate-key insert errors when the
+  //    seen check missed rows 1001+). Paginate explicitly via .range().
+  const seen = new Set<string>();
+  const SEEN_PAGE = 1000;
 
-  const seen = new Set<string>([
-    ...(existingInDirectory || []).map((r) => r.scraper_id as string).filter(Boolean),
-    ...(existingRejected || []).map((r) => r.scraper_id as string).filter(Boolean),
-  ]);
+  async function loadSeen(
+    table: "suggested_vendors" | "vendor_import_rejections"
+  ): Promise<void> {
+    let offset = 0;
+    for (;;) {
+      let q = supabase
+        .from(table)
+        .select("scraper_id")
+        .order("scraper_id", { ascending: true })
+        .range(offset, offset + SEEN_PAGE - 1);
+      // Only suggested_vendors has the IS NOT NULL guard — rejections always
+      // carry a scraper_id by construction.
+      if (table === "suggested_vendors") q = q.not("scraper_id", "is", null);
+      const { data, error } = await q;
+      if (error || !data) break;
+      for (const r of data) {
+        const sid = (r as { scraper_id: string | null }).scraper_id;
+        if (sid) seen.add(sid);
+      }
+      if (data.length < SEEN_PAGE) break;
+      offset += SEEN_PAGE;
+    }
+  }
+
+  await loadSeen("suggested_vendors");
+  await loadSeen("vendor_import_rejections");
 
   // 3. Pull up to MAX_BATCH rows from the scraper, paginating around the
   //    PostgREST 1000-row response cap. We sort by created_at desc so the
