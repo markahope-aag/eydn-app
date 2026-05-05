@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { GuideDefinition } from "@/lib/guides/types";
 import { FieldRenderer } from "./FieldRenderer";
 import { trackGuideComplete, trackVendorBriefGenerated } from "@/lib/analytics";
+import { INSPIRATION_FALLBACK } from "@/lib/inspiration-fallback";
 
 type SavedGuide = {
   section_index: number;
@@ -110,24 +111,32 @@ export function GuideWizard({ guide }: Props) {
   }
 
   // For the Colors & Theme guide, fetch inspiration images when the user
-  // reaches the "Inspiration Images" section. Lazy so we only hit Unsplash
-  // (and use a search quota slot) when the user actually needs them.
+  // reaches the "Inspiration Images" section. We seed the gallery with the
+  // shipped static fallback set IMMEDIATELY so the user always sees images,
+  // then upgrade to the personalized live results when they arrive.
   useEffect(() => {
     if (guide.slug !== "colors-theme") return;
     const currentSection = guide.sections[sectionIndex];
     if (!currentSection || currentSection.title !== "Inspiration Images") return;
     if (inspirationLoaded || inspirationLoading) return;
 
+    // Seed with fallback so the gallery is never empty while the fetch runs.
+    if (inspirationImages.length === 0) {
+      setInspirationImages(INSPIRATION_FALLBACK);
+    }
+
     setInspirationLoading(true);
     fetch("/api/guides/colors-theme/inspiration", { method: "POST" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { images: InspirationImage[] } | null) => {
-        if (data?.images) setInspirationImages(data.images);
+        if (data?.images && data.images.length > 0) {
+          setInspirationImages(data.images);
+        }
         setInspirationLoaded(true);
       })
       .catch(() => setInspirationLoaded(true))
       .finally(() => setInspirationLoading(false));
-  }, [guide.slug, guide.sections, sectionIndex, inspirationLoaded, inspirationLoading]);
+  }, [guide.slug, guide.sections, sectionIndex, inspirationLoaded, inspirationLoading, inspirationImages.length]);
 
   async function saveInspirationImage(image: InspirationImage) {
     if (savedImageIds.has(image.id)) return;
@@ -552,21 +561,17 @@ export function GuideWizard({ guide }: Props) {
 
       {/* Inspiration Images gallery — only on the colors-theme guide's
           Inspiration Images section. Replaces the q15 Save/Skip dropdown
-          with a real grid of Unsplash picks the user can save individually. */}
+          with a real grid of Unsplash picks the user can save individually.
+          Seeded with the static fallback set on mount so the gallery is
+          never empty even if Unsplash is unreachable. */}
       {guide.slug === "colors-theme" && section.title === "Inspiration Images" && (
         <div className="mt-6">
-          {inspirationLoading && (
+          {inspirationImages.length === 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="aspect-[3/4] rounded-[12px] bg-lavender/40 animate-pulse" />
               ))}
             </div>
-          )}
-          {!inspirationLoading && inspirationImages.length === 0 && inspirationLoaded && (
-            <p className="text-[14px] text-muted py-6 text-center">
-              We couldn&apos;t pull a board this time. Skip ahead — your saved answers will still
-              shape your other guides.
-            </p>
           )}
           {inspirationImages.length > 0 && (
             <>
