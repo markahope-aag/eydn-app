@@ -13,67 +13,47 @@ const passingVendor: VendorCandidate = {
   description_status: "ai_generated",
 };
 
-describe("checkQuality", () => {
-  it("passes a vendor that meets all rules", () => {
+// As of 2026-05-05 the scraper is the source of truth for quality. The three
+// optional rules in QUALITY_RULES are all disabled by default — checkQuality
+// only fails on hard structural issues plus any rule an admin re-enables.
+describe("checkQuality (rules disabled — scraper is the gate)", () => {
+  it("passes a fully-populated vendor", () => {
     const result = checkQuality(passingVendor);
     expect(result.passed).toBe(true);
     expect(result.failedRules).toEqual([]);
   });
 
-  it("fails when score is null", () => {
+  it("passes when quality_score is null (rule disabled)", () => {
     const result = checkQuality({ ...passingVendor, quality_score: null });
-    expect(result.passed).toBe(false);
-    expect(result.failedRules.some((r) => r.includes("missing quality_score"))).toBe(true);
-  });
-
-  it("fails when score is below the threshold", () => {
-    const result = checkQuality({ ...passingVendor, quality_score: QUALITY_RULES.minScore - 1 });
-    expect(result.passed).toBe(false);
-    expect(result.failedRules.some((r) => r.includes("below threshold"))).toBe(true);
-  });
-
-  it("passes at exactly the threshold", () => {
-    const result = checkQuality({ ...passingVendor, quality_score: QUALITY_RULES.minScore });
     expect(result.passed).toBe(true);
   });
 
-  it("passes with no street address (kept as a soft signal, not a hard block)", () => {
-    const result = checkQuality({ ...passingVendor, address: null });
+  it("passes when quality_score is far below the historical threshold", () => {
+    const result = checkQuality({ ...passingVendor, quality_score: 5 });
     expect(result.passed).toBe(true);
   });
 
-  it("fails when both phone and website are missing", () => {
+  it("passes when both phone and website are missing (rule disabled)", () => {
     const result = checkQuality({ ...passingVendor, phone: null, website: null });
-    expect(result.passed).toBe(false);
-    expect(result.failedRules).toContain("no contact method (need phone or website)");
-  });
-
-  it("passes with phone only (website missing)", () => {
-    const result = checkQuality({ ...passingVendor, website: "" });
     expect(result.passed).toBe(true);
   });
 
-  it("passes with website only (phone missing)", () => {
-    const result = checkQuality({ ...passingVendor, phone: null });
+  it("passes when description_status is 'pending' (rule disabled)", () => {
+    const result = checkQuality({ ...passingVendor, description_status: "pending" });
     expect(result.passed).toBe(true);
   });
 
-  it("reports every failed rule, not just the first", () => {
-    const result = checkQuality({
-      ...passingVendor,
-      address: null,
-      phone: null,
-      website: null,
-      quality_score: 10,
-      description_status: "pending",
-    });
-    expect(result.passed).toBe(false);
-    // 3 failures: low score + no contact method + bad description status.
-    // (address is now a soft signal — no longer counted.)
-    expect(result.failedRules.length).toBe(3);
+  it("passes when description_status is 'needs_review' (rule disabled)", () => {
+    const result = checkQuality({ ...passingVendor, description_status: "needs_review" });
+    expect(result.passed).toBe(true);
   });
 
-  it("manually_approved overrides every rule", () => {
+  it("passes when description_status is missing entirely", () => {
+    const result = checkQuality({ ...passingVendor, description_status: null });
+    expect(result.passed).toBe(true);
+  });
+
+  it("manually_approved still overrides every rule", () => {
     const result = checkQuality({
       ...passingVendor,
       manually_approved: true,
@@ -87,26 +67,9 @@ describe("checkQuality", () => {
     expect(result.failedRules).toEqual([]);
   });
 
-  it("fails when description_status is 'pending'", () => {
-    const result = checkQuality({ ...passingVendor, description_status: "pending" });
-    expect(result.passed).toBe(false);
-    expect(result.failedRules.some((r) => r.includes("not finalized: pending"))).toBe(true);
-  });
-
-  it("fails when description_status is 'needs_review'", () => {
-    const result = checkQuality({ ...passingVendor, description_status: "needs_review" });
-    expect(result.passed).toBe(false);
-    expect(result.failedRules.some((r) => r.includes("not finalized: needs_review"))).toBe(true);
-  });
-
-  it("passes when description_status is 'manually_written'", () => {
-    const result = checkQuality({ ...passingVendor, description_status: "manually_written" });
-    expect(result.passed).toBe(true);
-  });
-
-  it("fails when description_status is missing entirely", () => {
-    const result = checkQuality({ ...passingVendor, description_status: null });
-    expect(result.passed).toBe(false);
-    expect(result.failedRules).toContain("description_status missing");
+  it("QUALITY_RULES exports the disabled defaults", () => {
+    expect(QUALITY_RULES.minScore).toBe(0);
+    expect(QUALITY_RULES.requireContactMethod).toBe(false);
+    expect(QUALITY_RULES.requireFinishedDescription).toBe(false);
   });
 });

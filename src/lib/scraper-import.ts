@@ -190,6 +190,11 @@ export async function runScraperImport(
       .from("vendors")
       .select(SCRAPER_SELECT)
       .eq("client_id", clientId)
+      // Active-only — the scraper archives anything that fails its post-scrape
+      // gates (score, etc.). Without this filter, archived vendors slip
+      // through Eydn's import since the local quality rules (quality.ts) are
+      // disabled in favor of trusting the scraper.
+      .is("archived_at", null)
       .order("created_at", { ascending: false })
       .range(from, to);
 

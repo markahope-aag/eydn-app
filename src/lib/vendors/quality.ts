@@ -1,46 +1,40 @@
 /**
  * Quality rules for the auto-imported vendor pipeline.
  *
- * Applied by /api/cron/import-vendors after a normalized scraper row has
- * been mapped to Eydn's schema, before insertion into suggested_vendors.
- * Rows that fail any rule are written to vendor_import_rejections instead,
- * where an admin can review + override (which sets manually_approved=true
- * on the inserted suggested_vendors row, telling future re-runs to skip
- * the quality check).
+ * As of 2026-05-05 the scraper is the source of truth for quality. Its
+ * post-scrape phase chain (enrichment → rewrite_drain → archive_low_score
+ * → socials → photos → webhook) archives vendors that fail its gates,
+ * and runScraperImport now filters to `archived_at IS NULL` — so anything
+ * Eydn pulls has already cleared the scraper's bar.
  *
- * Rules are intentionally hardcoded here rather than DB-backed: the
- * thresholds are product decisions tied to Eydn's brand position, change
- * rarely, and benefit from being version-controlled with the code that
- * enforces them. If thresholds start changing weekly, move them to a
- * `quality_rules` config table later.
+ * The rules below are kept (rather than deleted) so an admin can re-enable
+ * a defense-in-depth check here if the scraper's gates ever get loosened.
+ * `manually_approved` overrides still bypass these checks; structural
+ * hard-fails (missing name/category/city/state) remain in scraper-import
+ * because the schema can't store them as null.
  */
 
 export const QUALITY_RULES = {
   /**
-   * Minimum quality_score (0–100 scale) the scraper must have given the
-   * row. Below this we don't surface the vendor to couples — too risky
-   * for our brand position.
+   * 0 = disabled. Set to a number > 0 to re-impose a score floor on
+   * Eydn's side (the scraper already enforces score >= 35 via the
+   * archive_low_score post-phase).
    */
-  minScore: 35,
+  minScore: 0,
 
   /**
-   * Vendor must have at least one way for couples to reach them
-   * (phone OR website). Google Places returns sparse data for small
-   * wedding vendors — many list only one channel. Requiring all of
-   * phone+website+street rejected ~90% of the auto-import pipeline,
-   * including most actual wedding boutiques (the survivors were
-   * mostly chains like Walmart Bakery and Cheesecake Factory). We
-   * still filter unreachable vendors, just less aggressively.
+   * false = disabled. The scraper's archive_low_score phase doesn't
+   * archive on missing contact today — flip this to true to require
+   * phone-or-website until the scraper grows that gate.
    */
-  requireContactMethod: true,
+  requireContactMethod: false,
 
   /**
-   * Description must have been finalized — either AI-rewritten or
-   * human-written. 'pending' or 'needs_review' descriptions usually mean
-   * the source data was thin and Claude couldn't confidently rewrite,
-   * so we don't want them in front of couples.
+   * false = disabled. Vendors with description_status='pending' will
+   * be imported. The scraper's rewrite_drain phase aims to leave none
+   * pending; flip true to defend against the cap getting hit.
    */
-  requireFinishedDescription: true,
+  requireFinishedDescription: false,
 } as const;
 
 const ACCEPTABLE_DESCRIPTION_STATUSES = new Set(["ai_generated", "manually_written"]);
@@ -80,11 +74,15 @@ export function checkQuality(v: VendorCandidate): QualityCheck {
 
   const failed: string[] = [];
 
-  // Score: must exist and meet threshold.
-  if (v.quality_score === null || v.quality_score === undefined) {
-    failed.push(`missing quality_score (min: ${QUALITY_RULES.minScore})`);
-  } else if (v.quality_score < QUALITY_RULES.minScore) {
-    failed.push(`quality_score below threshold: ${v.quality_score} < ${QUALITY_RULES.minScore}`);
+  // Score: must exist and meet threshold. Skip entirely when minScore is 0 —
+  // disabled means we don't care about the score column at all (otherwise a
+  // null score would still fail despite the rule being "off").
+  if (QUALITY_RULES.minScore > 0) {
+    if (v.quality_score === null || v.quality_score === undefined) {
+      failed.push(`missing quality_score (min: ${QUALITY_RULES.minScore})`);
+    } else if (v.quality_score < QUALITY_RULES.minScore) {
+      failed.push(`quality_score below threshold: ${v.quality_score} < ${QUALITY_RULES.minScore}`);
+    }
   }
 
   if (QUALITY_RULES.requireContactMethod && !nonEmpty(v.phone) && !nonEmpty(v.website)) {
