@@ -60,6 +60,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
     '<p style="margin:0 0 16px;padding:8px 12px;background:#FFF3CC;color:#8A5200;border-radius:8px;font-size:12px;text-align:center;">[TEST EMAIL — sample data, sent from the admin panel]</p>';
   const html = emailWrap(previewBanner + body_, footer);
 
-  const sendResult = await sendEmail({ to, subject, html });
+  // Admin test send — always go through, regardless of cap.
+  const sendResult = await sendEmail({ to, subject, html, category: "transactional" });
   return NextResponse.json({ success: sendResult.success, error: sendResult.error });
 }

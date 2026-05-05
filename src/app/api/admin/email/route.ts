@@ -233,6 +233,7 @@ export async function POST(request: Request) {
     if (templateType === "deadline_reminder") {
       const result = await sendEmail({
         to,
+        category: "transactional",
         subject: "Test: Task Deadline Reminder",
         html: `
           <div style="max-width: 560px; margin: 0 auto; background: #FAF6F1; border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
@@ -266,6 +267,12 @@ export async function POST(request: Request) {
     `<p style="margin-top: 16px; text-align: center; color: #6B6B6B; font-size: 12px;">[TEST EMAIL — This is a preview from the admin panel]</p></div>\n      </div>`
   );
 
-  const sendResult = await sendEmail({ to, subject: testSubject, html: testHtml });
+  // Admin test send — always go through, regardless of cap.
+  const sendResult = await sendEmail({
+    to,
+    category: "transactional",
+    subject: testSubject,
+    html: testHtml,
+  });
   return NextResponse.json({ success: sendResult.success, error: sendResult.error });
 }

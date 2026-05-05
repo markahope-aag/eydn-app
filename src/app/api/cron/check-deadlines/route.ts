@@ -172,8 +172,15 @@ export async function GET(request: Request) {
         if (weddingOverdue.length > 0) subjectParts.push(`${weddingOverdue.length} overdue`);
         if (weddingUpcoming.length > 0) subjectParts.push(`${weddingUpcoming.length} due this week`);
 
-        await sendEmail({
+        // Per-recipient daily cap is enforced inside sendEmail. If a couple
+        // already received a non-transactional email today, this digest is
+        // dropped (not queued) — the in-app notifications above are the
+        // durable record, and tomorrow's pass will pick up any newly
+        // overdue/upcoming tasks anyway.
+        const sendResult = await sendEmail({
           to: userEmail,
+          category: "lifecycle",
+          userId: wedding.user_id,
           subject: `${wedding.partner1_name} & ${wedding.partner2_name} — ${subjectParts.join(", ")}`,
           html: `
             <div style="max-width: 560px; margin: 0 auto; background: #FAF6F1; border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
@@ -193,7 +200,7 @@ export async function GET(request: Request) {
             </div>
           `,
         });
-        emailsSent++;
+        if (sendResult.success) emailsSent++;
       } catch {
         // Don't fail the whole cron if one email fails
       }

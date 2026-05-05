@@ -85,6 +85,7 @@ export async function POST(request: Request) {
   try {
     await sendEmail({
       to: email,
+      category: "transactional",
       subject: "You're on the Eydn waitlist — here's 20% off",
       html: `
         <div style="max-width: 560px; margin: 0 auto; background: #FAF6F1; border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">

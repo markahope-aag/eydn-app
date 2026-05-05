@@ -69,6 +69,11 @@ describe("getDueSteps", () => {
     ...over,
   });
 
+  // The hard "one email per recipient per 24h" guarantee lives in
+  // sendEmail (against email_send_log), not here. getDueSteps still applies
+  // a "too stale to bother" filter so an absurdly overdue step doesn't fire.
+  const uncapped = { maxOverdueDays: Infinity };
+
   it("returns only steps whose offset has elapsed", () => {
     const now = new Date("2026-04-15T00:00:00Z"); // 14 days after anchor
     const due = getDueSteps(
@@ -79,7 +84,8 @@ describe("getDueSteps", () => {
       ],
       anchor,
       new Set(),
-      now
+      now,
+      uncapped
     );
     expect(due.map((s) => s.step_order)).toEqual([1, 2]);
   });
@@ -90,7 +96,8 @@ describe("getDueSteps", () => {
       [baseStep({ step_order: 1, offset_days: 5 }), baseStep({ step_order: 2, offset_days: 10 })],
       anchor,
       new Set([1]),
-      now
+      now,
+      uncapped
     );
     expect(due.map((s) => s.step_order)).toEqual([2]);
   });
@@ -104,14 +111,15 @@ describe("getDueSteps", () => {
       ],
       anchor,
       new Set(),
-      now
+      now,
+      uncapped
     );
     expect(due.map((s) => s.step_order)).toEqual([2]);
   });
 
   it("returns nothing when anchor is in the future", () => {
     const now = new Date("2026-03-01T00:00:00Z"); // before anchor
-    const due = getDueSteps([baseStep({ offset_days: 0 })], anchor, new Set(), now);
+    const due = getDueSteps([baseStep({ offset_days: 0 })], anchor, new Set(), now, uncapped);
     expect(due).toEqual([]);
   });
 
@@ -125,9 +133,43 @@ describe("getDueSteps", () => {
       ],
       anchor,
       new Set(),
-      now
+      now,
+      uncapped
     );
     expect(due.map((s) => s.step_order)).toEqual([1, 3, 5]);
+  });
+
+  it("drops steps overdue by more than maxOverdueDays", () => {
+    // Step 1 due Apr 2 (~30 days overdue), step 2 due Apr 28 (4 days overdue).
+    const now = new Date("2026-05-02T00:00:00Z");
+    const due = getDueSteps(
+      [
+        baseStep({ step_order: 1, offset_days: 1 }),
+        baseStep({ step_order: 2, offset_days: 27 }),
+      ],
+      anchor,
+      new Set(),
+      now,
+      { maxOverdueDays: 7 }
+    );
+    expect(due.map((s) => s.step_order)).toEqual([2]);
+  });
+
+  it("uses the default maxOverdueDays of 7", () => {
+    // Step at offset 1 is due Apr 2; on May 2 that's 30 days overdue and
+    // should be dropped under the default. Step at offset 27 is due Apr 28
+    // (4 days overdue) and should still fire.
+    const now = new Date("2026-05-02T00:00:00Z");
+    const due = getDueSteps(
+      [
+        baseStep({ step_order: 1, offset_days: 1 }),
+        baseStep({ step_order: 2, offset_days: 27 }),
+      ],
+      anchor,
+      new Set(),
+      now
+    );
+    expect(due.map((s) => s.step_order)).toEqual([2]);
   });
 });
 

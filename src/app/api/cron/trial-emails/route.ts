@@ -58,6 +58,7 @@ export async function GET(request: Request) {
 
   let totalSent = 0;
   let totalSkipped = 0;
+  let totalDeferredDailyCap = 0;
   const errors: string[] = [];
 
   for (const w of weddings || []) {
@@ -122,6 +123,7 @@ export async function GET(request: Request) {
 
     totalSent += trialExpiryResult.sent;
     totalSkipped += trialExpiryResult.skippedAudience + trialExpiryResult.skippedUnsubscribed;
+    totalDeferredDailyCap += trialExpiryResult.skippedDailyCap;
     errors.push(...trialExpiryResult.errors);
 
     // Mirror successful trial_expiry sends to legacy table for backward compat.
@@ -159,6 +161,7 @@ export async function GET(request: Request) {
 
       totalSent += nurtureResult.sent;
       totalSkipped += nurtureResult.skippedAudience + nurtureResult.skippedUnsubscribed;
+      totalDeferredDailyCap += nurtureResult.skippedDailyCap;
       errors.push(...nurtureResult.errors);
 
       for (const step of nurtureResult.sentSteps) {
@@ -242,6 +245,7 @@ export async function GET(request: Request) {
 
     totalSent += calcResult.sent;
     totalSkipped += calcResult.skippedAudience + calcResult.skippedUnsubscribed;
+    totalDeferredDailyCap += calcResult.skippedDailyCap;
     errors.push(...calcResult.errors);
 
     for (const step of calcResult.sentSteps) {
@@ -256,6 +260,9 @@ export async function GET(request: Request) {
     ok: true,
     sent: totalSent,
     skipped: totalSkipped,
+    // Eligible-but-deferred-by-daily-cap. These remain "due" and will be
+    // retried on the next cron pass.
+    deferredDailyCap: totalDeferredDailyCap,
     errors: errors.length ? errors : undefined,
   });
 }

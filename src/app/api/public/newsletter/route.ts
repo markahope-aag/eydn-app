@@ -70,7 +70,12 @@ export async function POST(request: Request) {
 
   // Fire-and-forget side effects — never block the response.
   const template = getNewsletterWelcomeEmail();
-  void sendEmail({ to: email, subject: template.subject, html: template.html });
+  void sendEmail({
+    to: email,
+    category: "transactional",
+    subject: template.subject,
+    html: template.html,
+  });
   void syncNewsletterToCadence(email);
 
   logRequest("POST", "/api/public/newsletter", 200, Date.now() - start);

@@ -51,6 +51,7 @@ vi.mock("@/lib/email-sequences", () => ({
     skippedAudience: 0,
     skippedAlreadySent: 0,
     skippedUnsubscribed: 0,
+    skippedDailyCap: 0,
     errors: [],
   }),
 }));

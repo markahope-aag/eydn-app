@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.4"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       activity_log: {
@@ -693,6 +668,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      email_send_log: {
+        Row: {
+          category: string
+          id: string
+          recipient_email: string
+          resend_email_id: string | null
+          sent_at: string
+          sequence_slug: string | null
+          step_order: number | null
+          template_slug: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          id?: string
+          recipient_email: string
+          resend_email_id?: string | null
+          sent_at?: string
+          sequence_slug?: string | null
+          step_order?: number | null
+          template_slug?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          id?: string
+          recipient_email?: string
+          resend_email_id?: string | null
+          sent_at?: string
+          sequence_slug?: string | null
+          step_order?: number | null
+          template_slug?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       email_sequence_steps: {
         Row: {
@@ -2635,9 +2646,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { escapeHtml } from "@/lib/validation";
 import { emailFooterHtml } from "@/lib/email-preferences";
+import { createSupabaseAdmin } from "@/lib/supabase/server";
 
 let client: Resend | null = null;
 
@@ -13,16 +14,101 @@ function getResend(): Resend {
 
 const FROM = process.env.RESEND_FROM_EMAIL || "Eydn <hello@eydn.app>";
 
-type EmailParams = {
+export type EmailCategory = "transactional" | "lifecycle" | "marketing" | "nurture";
+
+const DAILY_CAP_HOURS = 24;
+
+export type EmailParams = {
   to: string;
   subject: string;
   html: string;
+  // CAN-SPAM-style category. transactional bypasses the daily cap; everything
+  // else (lifecycle/marketing/nurture) is rate-limited to one per recipient
+  // per 24h. Defaults to 'transactional' as a fail-safe for callers that
+  // haven't been migrated yet, but every automated/sequence sender should
+  // pass an explicit non-transactional category.
+  category?: EmailCategory;
+  // Optional metadata, written to email_send_log for audit + analytics.
+  userId?: string;
+  sequenceSlug?: string;
+  stepOrder?: number;
+  templateSlug?: string;
 };
 
-export async function sendEmail(params: EmailParams): Promise<{ success: boolean; error?: string; emailId?: string }> {
+export type SendResult = {
+  success: boolean;
+  error?: string;
+  emailId?: string;
+  // Set when the send was suppressed by the daily cap. The caller should
+  // treat this as "try again tomorrow", not as a failure to retry now.
+  skipped?: "daily_cap";
+};
+
+/**
+ * Returns true if `recipientEmail` has received a non-transactional email
+ * within the last `DAILY_CAP_HOURS` hours.
+ */
+async function hasRecentNonTransactionalSend(recipientEmail: string): Promise<boolean> {
+  const supabase = createSupabaseAdmin();
+  const cutoff = new Date(Date.now() - DAILY_CAP_HOURS * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from("email_send_log")
+    .select("id")
+    .eq("recipient_email", recipientEmail)
+    .neq("category", "transactional")
+    .gte("sent_at", cutoff)
+    .limit(1);
+
+  if (error) {
+    // If we can't read the log we'd rather over-send than block legitimate
+    // mail, so don't apply the cap on DB error. The miss is logged for ops.
+    console.warn("[email] daily-cap check failed, allowing send:", error.message);
+    return false;
+  }
+  return (data?.length ?? 0) > 0;
+}
+
+async function recordSend(params: {
+  recipientEmail: string;
+  userId?: string;
+  category: EmailCategory;
+  sequenceSlug?: string;
+  stepOrder?: number;
+  templateSlug?: string;
+  resendEmailId?: string;
+}): Promise<void> {
+  const supabase = createSupabaseAdmin();
+  const { error } = await supabase.from("email_send_log").insert({
+    recipient_email: params.recipientEmail,
+    user_id: params.userId ?? null,
+    category: params.category,
+    sequence_slug: params.sequenceSlug ?? null,
+    step_order: params.stepOrder ?? null,
+    template_slug: params.templateSlug ?? null,
+    resend_email_id: params.resendEmailId ?? null,
+  });
+  if (error) {
+    // Logging failure shouldn't fail the user-visible send, but it does
+    // mean the daily cap won't see this send — flag loudly.
+    console.error("[email] failed to record send in email_send_log:", error.message);
+  }
+}
+
+export async function sendEmail(params: EmailParams): Promise<SendResult> {
   if (!process.env.RESEND_API_KEY) {
     console.warn("[email] Email service not configured, skipping");
     return { success: false, error: "Email service not configured" };
+  }
+
+  const category: EmailCategory = params.category ?? "transactional";
+
+  // Daily cap: at most one non-transactional email per recipient per 24h.
+  // Transactional bypasses (password reset, invitations, payment receipts).
+  if (category !== "transactional") {
+    const recentlySent = await hasRecentNonTransactionalSend(params.to);
+    if (recentlySent) {
+      return { success: false, skipped: "daily_cap" };
+    }
   }
 
   try {
@@ -33,7 +119,19 @@ export async function sendEmail(params: EmailParams): Promise<{ success: boolean
       subject: params.subject,
       html: params.html,
     });
-    return { success: true, emailId: result.data?.id };
+    const emailId = result.data?.id;
+
+    await recordSend({
+      recipientEmail: params.to,
+      userId: params.userId,
+      category,
+      sequenceSlug: params.sequenceSlug,
+      stepOrder: params.stepOrder,
+      templateSlug: params.templateSlug,
+      resendEmailId: emailId,
+    });
+
+    return { success: true, emailId };
   } catch (error) {
     console.error("[EMAIL] Send failed:", error instanceof Error ? error.message : error);
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
@@ -239,6 +337,7 @@ export async function sendCollaboratorInvite(
 
   return sendEmail({
     to: email,
+    category: "transactional",
     subject: `You've been invited to help plan a wedding on Eydn`,
     html: `
       <div style="max-width: 560px; margin: 0 auto; background: #FAF6F1; border-radius: 16px; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">

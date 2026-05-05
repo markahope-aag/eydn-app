@@ -49,24 +49,36 @@ export function renderTemplate(input: string, ctx: TemplateContext): string {
   });
 }
 
+// Steps whose due date is more than this many days in the past are silently
+// dropped. Sending a "30 days before your wedding" reminder six weeks late is
+// worse than not sending it at all. The hard rate-limiting (one email per
+// recipient per 24h, queued drain) is enforced in `sendEmail` against
+// `email_send_log`; this filter is only for "too stale to bother."
+const DEFAULT_MAX_OVERDUE_DAYS = 7;
+
 /**
  * Given the anchor date for a recipient and their already-sent step orders,
  * return the steps that are due to send now.
  *
- * A step is due when `now >= anchor + offset_days` and it has not yet been sent.
+ * A step is due when `now >= anchor + offset_days` AND it isn't more than
+ * `maxOverdueDays` past due AND it hasn't already been sent.
  */
 export function getDueSteps(
   steps: SequenceStep[],
   anchor: Date,
   alreadySentOrders: Set<number>,
-  now: Date = new Date()
+  now: Date = new Date(),
+  options: { maxOverdueDays?: number } = {}
 ): SequenceStep[] {
+  const { maxOverdueDays = DEFAULT_MAX_OVERDUE_DAYS } = options;
+  const cutoffMs = now.getTime() - maxOverdueDays * DAY_MS;
+
   return steps
     .filter((s) => s.enabled)
     .filter((s) => !alreadySentOrders.has(s.step_order))
     .filter((s) => {
-      const due = new Date(anchor.getTime() + s.offset_days * DAY_MS);
-      return now.getTime() >= due.getTime();
+      const dueMs = anchor.getTime() + s.offset_days * DAY_MS;
+      return dueMs <= now.getTime() && dueMs >= cutoffMs;
     })
     .sort((a, b) => a.step_order - b.step_order);
 }
@@ -154,6 +166,10 @@ export type RunResult = {
   skippedAudience: number;
   skippedAlreadySent: number;
   skippedUnsubscribed: number;
+  // Steps that were eligible but suppressed by the per-recipient daily cap.
+  // These remain "due" — they'll be retried on the next cron pass once the
+  // 24h window elapses.
+  skippedDailyCap: number;
   errors: string[];
 };
 
@@ -172,6 +188,7 @@ export async function runSequenceForRecipient(
     skippedAudience: 0,
     skippedAlreadySent: 0,
     skippedUnsubscribed: 0,
+    skippedDailyCap: 0,
     errors: [],
   };
 
@@ -222,7 +239,26 @@ export async function runSequenceForRecipient(
     const footer = pickFooter(template.category, typeof token === "string" ? token : undefined);
     const html = emailWrap(body, footer);
 
-    const sendResult = await sendEmail({ to: recipient.email, subject, html });
+    const sendResult = await sendEmail({
+      to: recipient.email,
+      subject,
+      html,
+      category: template.category,
+      userId: recipient.userId,
+      sequenceSlug,
+      stepOrder: step.step_order,
+      templateSlug: step.template_slug,
+    });
+
+    // Daily cap: recipient already received a non-transactional email in
+    // the last 24h. Don't log to sequence_send_log so this step stays "due"
+    // and fires on a future cron pass — that's the queue draining at 1/day.
+    // Stop processing further due steps in this sequence too: any send we'd
+    // try after this one would also hit the cap (and waste the lookup).
+    if (sendResult.skipped === "daily_cap") {
+      result.skippedDailyCap++;
+      break;
+    }
 
     if (!sendResult.success) {
       result.errors.push(`send failed for ${sequenceSlug}/${step.step_order}: ${sendResult.error}`);
@@ -254,6 +290,11 @@ export async function runSequenceForRecipient(
       templateSlug: step.template_slug,
       resendEmailId: sendResult.emailId,
     });
+
+    // Hard one-per-recipient-per-cron-pass guarantee: after we send one,
+    // any further due step in this same sequence run would itself hit the
+    // daily cap on the next sendEmail call. Skip the round-trip.
+    break;
   }
 
   return result;

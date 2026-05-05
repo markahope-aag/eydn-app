@@ -63,6 +63,10 @@ export async function GET(request: Request) {
       phaseChanges: [] as Array<{ weddingId: string; from: string; to: string }>,
       emailsRecorded: [] as Array<{ weddingId: string; emailType: string }>,
       sunsetted: [] as string[],
+      // Eligible sequence steps that were deferred because the recipient
+      // already received a non-transactional email in the last 24h. These
+      // remain "due" and will retry on the next cron pass.
+      deferredDailyCap: 0,
       errors: [] as string[],
     };
 
@@ -152,6 +156,7 @@ export async function GET(request: Request) {
                   results.emailsRecorded.push({ weddingId: wedding.id, emailType: legacyType });
                   console.info(`[LIFECYCLE] Sent ${legacyType} → ${wedding.id}`);
                 }
+                results.deferredDailyCap += lifecycleRun.skippedDailyCap;
                 for (const err of lifecycleRun.errors) {
                   results.errors.push(`Lifecycle send failed for ${wedding.id}: ${err}`);
                 }
@@ -179,6 +184,7 @@ export async function GET(request: Request) {
                     `[LIFECYCLE] Sent milestone step ${step.stepOrder} (${step.templateSlug}) → ${wedding.id}`
                   );
                 }
+                results.deferredDailyCap += milestonesRun.skippedDailyCap;
                 for (const err of milestonesRun.errors) {
                   results.errors.push(`Milestone send failed for ${wedding.id}: ${err}`);
                 }
@@ -212,7 +218,7 @@ export async function GET(request: Request) {
     }
 
     console.info(
-      `[LIFECYCLE] Complete: ${results.processed} processed, ${results.phaseChanges.length} phase changes, ${results.emailsRecorded.length} emails, ${results.sunsetted.length} sunsetted, ${results.errors.length} errors`
+      `[LIFECYCLE] Complete: ${results.processed} processed, ${results.phaseChanges.length} phase changes, ${results.emailsRecorded.length} emails, ${results.deferredDailyCap} deferred (daily cap), ${results.sunsetted.length} sunsetted, ${results.errors.length} errors`
     );
 
     await logCronExecution({

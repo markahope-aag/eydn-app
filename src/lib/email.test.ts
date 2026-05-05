@@ -22,6 +22,46 @@ vi.mock("@/lib/email-preferences", () => ({
     `<footer data-token="${token}" data-type="${type}">unsubscribe</footer>`,
 }));
 
+// In-memory stand-in for email_send_log + the no-op rows the runner queries.
+// Each test resets the array via vi.clearAllMocks + manually below.
+const sentLogRows: Array<{ recipient_email: string; category: string; sent_at: string }> = [];
+const mockInsert = vi.fn(async (row: { recipient_email: string; category: string }) => {
+  sentLogRows.push({ ...row, sent_at: new Date().toISOString() });
+  return { error: null };
+});
+
+vi.mock("@/lib/supabase/server", () => ({
+  createSupabaseAdmin: () => ({
+    from: (table: string) => {
+      if (table !== "email_send_log") {
+        throw new Error(`unexpected table in test: ${table}`);
+      }
+      return {
+        // Cap-check: select(...).eq.neq.gte.limit
+        select: () => ({
+          eq: (_col: string, recipientEmail: string) => ({
+            neq: () => ({
+              gte: (_c: string, cutoffIso: string) => ({
+                limit: async () => {
+                  const cutoff = new Date(cutoffIso).getTime();
+                  const matches = sentLogRows.filter(
+                    (r) =>
+                      r.recipient_email === recipientEmail &&
+                      r.category !== "transactional" &&
+                      new Date(r.sent_at).getTime() >= cutoff
+                  );
+                  return { data: matches, error: null };
+                },
+              }),
+            }),
+          }),
+        }),
+        insert: (row: { recipient_email: string; category: string }) => mockInsert(row),
+      };
+    },
+  }),
+}));
+
 import { sendEmail, getLifecycleEmail, sendCollaboratorInvite } from "./email";
 
 describe("sendEmail", () => {
@@ -30,6 +70,7 @@ describe("sendEmail", () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
     vi.clearAllMocks();
+    sentLogRows.length = 0;
   });
 
   afterEach(() => {
@@ -103,6 +144,96 @@ describe("sendEmail", () => {
 
     expect(result.success).toBe(true);
     expect(result.emailId).toBeUndefined();
+  });
+
+  describe("daily-cap behavior", () => {
+    beforeEach(() => {
+      process.env.RESEND_API_KEY = "re_test_key";
+      mockSend.mockResolvedValue({ data: { id: "email-id" }, error: null });
+    });
+
+    it("skips a non-transactional send when one already happened in the last 24h", async () => {
+      // First non-transactional send for this recipient — should go through.
+      const first = await sendEmail({
+        to: "spammed@example.com",
+        category: "lifecycle",
+        subject: "First",
+        html: "<p>First</p>",
+      });
+      expect(first.success).toBe(true);
+      expect(mockSend).toHaveBeenCalledTimes(1);
+
+      // Second non-transactional send within the 24h window — capped.
+      const second = await sendEmail({
+        to: "spammed@example.com",
+        category: "marketing",
+        subject: "Second",
+        html: "<p>Second</p>",
+      });
+      expect(second.success).toBe(false);
+      expect(second.skipped).toBe("daily_cap");
+      expect(second.error).toBeUndefined();
+      // Resend was not called for the capped attempt.
+      expect(mockSend).toHaveBeenCalledTimes(1);
+    });
+
+    it("transactional sends are exempt from the cap", async () => {
+      // Non-transactional send burns the recipient's daily slot.
+      await sendEmail({
+        to: "user@example.com",
+        category: "lifecycle",
+        subject: "Lifecycle",
+        html: "<p>x</p>",
+      });
+
+      // A transactional follow-up still goes through (password reset,
+      // payment receipt, etc. should never be queued or dropped).
+      const transactional = await sendEmail({
+        to: "user@example.com",
+        category: "transactional",
+        subject: "Receipt",
+        html: "<p>x</p>",
+      });
+      expect(transactional.success).toBe(true);
+      expect(mockSend).toHaveBeenCalledTimes(2);
+    });
+
+    it("the cap is per recipient — two different recipients can both send", async () => {
+      const a = await sendEmail({
+        to: "a@example.com",
+        category: "marketing",
+        subject: "A",
+        html: "<p>A</p>",
+      });
+      const b = await sendEmail({
+        to: "b@example.com",
+        category: "marketing",
+        subject: "B",
+        html: "<p>B</p>",
+      });
+      expect(a.success).toBe(true);
+      expect(b.success).toBe(true);
+      expect(mockSend).toHaveBeenCalledTimes(2);
+    });
+
+    it("transactional sends do not block a later non-transactional send to the same recipient", async () => {
+      // Inbound user action triggers a transactional email.
+      await sendEmail({
+        to: "user@example.com",
+        category: "transactional",
+        subject: "Welcome",
+        html: "<p>x</p>",
+      });
+      // A scheduled marketing email later the same day should still go through.
+      const marketing = await sendEmail({
+        to: "user@example.com",
+        category: "marketing",
+        subject: "Newsletter",
+        html: "<p>x</p>",
+      });
+      expect(marketing.success).toBe(true);
+      expect(mockSend).toHaveBeenCalledTimes(2);
+    });
   });
 });
 

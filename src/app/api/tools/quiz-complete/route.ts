@@ -104,7 +104,12 @@ export async function POST(request: Request) {
 
   // Fire-and-forget side effects
   const template = getQuizResultEmail(quiz.title, result, firstName, score);
-  void sendEmail({ to: email, subject: template.subject, html: template.html });
+  void sendEmail({
+    to: email,
+    category: "transactional",
+    subject: template.subject,
+    html: template.html,
+  });
   void syncToCadence(email, firstName, quizId);
   void captureServer(email, "quiz_completed", {
     quiz_id: quizId,

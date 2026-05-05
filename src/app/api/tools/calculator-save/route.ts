@@ -193,8 +193,12 @@ export async function POST(request: NextRequest) {
     signInUrl: handoff?.signInUrl || null,
     isNewUser: handoff?.isNewUser ?? true,
   });
+  // Transactional: immediate response/receipt for the user's calculator save.
+  // The recurring follow-up nurture is driven separately by the calculator
+  // sequence cron (which runs through the daily-cap path).
   void sendEmail({
     to: normalizedEmail,
+    category: "transactional",
     subject: template.subject,
     html: template.html,
   });

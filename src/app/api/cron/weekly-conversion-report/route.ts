@@ -144,7 +144,9 @@ export async function GET(request: Request) {
     </div>
   `;
 
-  const result = await sendEmail({ to: recipient, subject, html });
+  // Internal admin report — bypass the per-recipient daily cap so it always
+  // sends, even on weeks that overlap with the recipient's lifecycle mail.
+  const result = await sendEmail({ to: recipient, subject, html, category: "transactional" });
 
   return NextResponse.json({
     ok: result.success,

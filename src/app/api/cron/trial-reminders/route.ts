@@ -97,6 +97,7 @@ export async function GET(request: Request) {
   let skippedPrivileged = 0;
   let skippedUnsubscribed = 0;
   let skippedNoEmail = 0;
+  let skippedDailyCap = 0;
   let errors = 0;
 
   try {
@@ -196,7 +197,22 @@ export async function GET(request: Request) {
         unsubscribeToken: prefs.unsubscribe_token,
       });
 
-      const sendResult = await sendEmail({ to: email, subject, html });
+      const sendResult = await sendEmail({
+        to: email,
+        subject,
+        html,
+        category: "lifecycle",
+        userId: wedding.user_id,
+      });
+
+      // Daily cap hit — leave trial_reminder_sent_at null so we retry the
+      // candidate on the next cron pass once the recipient's 24h window has
+      // elapsed. Counts as deferred, not an error.
+      if (sendResult.skipped === "daily_cap") {
+        skippedDailyCap++;
+        continue;
+      }
+
       if (!sendResult.success) {
         errors++;
         continue;
@@ -224,6 +240,7 @@ export async function GET(request: Request) {
         skippedPrivileged,
         skippedUnsubscribed,
         skippedNoEmail,
+        skippedDailyCap,
       },
     });
 
@@ -235,6 +252,7 @@ export async function GET(request: Request) {
       skippedPrivileged,
       skippedUnsubscribed,
       skippedNoEmail,
+      skippedDailyCap,
       errors,
     });
   } catch (err) {
