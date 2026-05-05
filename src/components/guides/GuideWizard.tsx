@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { toast } from "sonner";
 import type { GuideDefinition } from "@/lib/guides/types";
 import { FieldRenderer } from "./FieldRenderer";
@@ -20,6 +21,18 @@ type ColorPalette = {
   colors: { hex: string; name: string }[];
 };
 
+type InspirationImage = {
+  id: string;
+  url: string;
+  thumb: string;
+  alt: string;
+  photographer: string;
+  photographer_url: string;
+  unsplash_url: string;
+  track_url: string;
+  query: string;
+};
+
 type Props = {
   guide: GuideDefinition;
 };
@@ -34,6 +47,10 @@ export function GuideWizard({ guide }: Props) {
   const [briefLoading, setBriefLoading] = useState(false);
   const [palettes, setPalettes] = useState<ColorPalette[]>([]);
   const [palettesLoading, setPalettesLoading] = useState(false);
+  const [inspirationImages, setInspirationImages] = useState<InspirationImage[]>([]);
+  const [inspirationLoading, setInspirationLoading] = useState(false);
+  const [inspirationLoaded, setInspirationLoaded] = useState(false);
+  const [savedImageIds, setSavedImageIds] = useState<Set<string>>(new Set());
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
   // Load saved progress
@@ -90,6 +107,60 @@ export function GuideWizard({ guide }: Props) {
     const updated = { ...responses, [questionId]: value };
     setResponses(updated);
     saveProgress(updated, sectionIndex, false);
+  }
+
+  // For the Colors & Theme guide, fetch inspiration images when the user
+  // reaches the "Inspiration Images" section. Lazy so we only hit Unsplash
+  // (and use a search quota slot) when the user actually needs them.
+  useEffect(() => {
+    if (guide.slug !== "colors-theme") return;
+    const currentSection = guide.sections[sectionIndex];
+    if (!currentSection || currentSection.title !== "Inspiration Images") return;
+    if (inspirationLoaded || inspirationLoading) return;
+
+    setInspirationLoading(true);
+    fetch("/api/guides/colors-theme/inspiration", { method: "POST" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { images: InspirationImage[] } | null) => {
+        if (data?.images) setInspirationImages(data.images);
+        setInspirationLoaded(true);
+      })
+      .catch(() => setInspirationLoaded(true))
+      .finally(() => setInspirationLoading(false));
+  }, [guide.slug, guide.sections, sectionIndex, inspirationLoaded, inspirationLoading]);
+
+  async function saveInspirationImage(image: InspirationImage) {
+    if (savedImageIds.has(image.id)) return;
+    setSavedImageIds((prev) => new Set(prev).add(image.id));
+
+    // Fire the Unsplash download tracking ping in parallel with the save —
+    // both are best-effort, neither blocks the user.
+    fetch("/api/unsplash/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ track_url: image.track_url }),
+    }).catch(() => {});
+
+    try {
+      const res = await fetch("/api/mood-board", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image_url: image.url,
+          caption: image.alt,
+          category: "Colors & Palette",
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Saved to mood board");
+    } catch {
+      toast.error("Couldn't save that image. Try again.");
+      setSavedImageIds((prev) => {
+        const next = new Set(prev);
+        next.delete(image.id);
+        return next;
+      });
+    }
   }
 
   async function goNext() {
@@ -479,24 +550,104 @@ export function GuideWizard({ guide }: Props) {
         <p className="mt-2 text-[14px] text-muted leading-relaxed">{section.description}</p>
       )}
 
+      {/* Inspiration Images gallery — only on the colors-theme guide's
+          Inspiration Images section. Replaces the q15 Save/Skip dropdown
+          with a real grid of Unsplash picks the user can save individually. */}
+      {guide.slug === "colors-theme" && section.title === "Inspiration Images" && (
+        <div className="mt-6">
+          {inspirationLoading && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="aspect-[3/4] rounded-[12px] bg-lavender/40 animate-pulse" />
+              ))}
+            </div>
+          )}
+          {!inspirationLoading && inspirationImages.length === 0 && inspirationLoaded && (
+            <p className="text-[14px] text-muted py-6 text-center">
+              We couldn&apos;t pull a board this time. Skip ahead — your saved answers will still
+              shape your other guides.
+            </p>
+          )}
+          {inspirationImages.length > 0 && (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {inspirationImages.map((img) => {
+                  const saved = savedImageIds.has(img.id);
+                  return (
+                    <button
+                      key={img.id}
+                      type="button"
+                      onClick={() => saveInspirationImage(img)}
+                      disabled={saved}
+                      aria-label={saved ? "Saved to mood board" : `Save ${img.alt}`}
+                      className={`group relative aspect-[3/4] rounded-[12px] overflow-hidden border transition ${
+                        saved ? "border-violet ring-2 ring-violet/30" : "border-border hover:border-violet/50"
+                      }`}
+                    >
+                      <Image
+                        src={img.thumb}
+                        alt={img.alt}
+                        fill
+                        sizes="(min-width: 640px) 220px, 50vw"
+                        className="object-cover"
+                        unoptimized
+                      />
+                      <div className={`absolute inset-0 transition ${saved ? "bg-violet/30" : "bg-black/0 group-hover:bg-black/15"}`} />
+                      <span
+                        className={`absolute top-2 right-2 inline-flex items-center justify-center w-7 h-7 rounded-full text-[12px] font-semibold transition ${
+                          saved
+                            ? "bg-violet text-white"
+                            : "bg-white/90 text-plum opacity-0 group-hover:opacity-100"
+                        }`}
+                      >
+                        {saved ? "✓" : "+"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-3 text-[12px] text-muted/80">
+                Tap an image to save it to your mood board. Photos from{" "}
+                <a
+                  href="https://unsplash.com/?utm_source=eydn-app&utm_medium=referral"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-violet underline"
+                >
+                  Unsplash
+                </a>
+                .
+              </p>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Questions */}
       <div className="mt-6 space-y-6">
-        {section.questions.map((q) => (
-          <div key={q.id}>
-            <label className="text-[14px] font-semibold text-plum block mb-2">
-              {q.label}
-              {q.required && <span className="text-error ml-1">*</span>}
-            </label>
-            <FieldRenderer
-              field={q.field}
-              value={responses[q.id]}
-              onChange={(v) => updateResponse(q.id, v)}
-            />
-            {q.tip && (
-              <p className="mt-1.5 text-[12px] text-violet italic">{q.tip}</p>
-            )}
-          </div>
-        ))}
+        {section.questions.map((q) => {
+          // Hide the redundant q15 Save/Skip select when the inspiration
+          // gallery is in play — saving is now per-image.
+          if (guide.slug === "colors-theme" && section.title === "Inspiration Images" && q.id === "q15") {
+            return null;
+          }
+          return (
+            <div key={q.id}>
+              <label className="text-[14px] font-semibold text-plum block mb-2">
+                {q.label}
+                {q.required && <span className="text-error ml-1">*</span>}
+              </label>
+              <FieldRenderer
+                field={q.field}
+                value={responses[q.id]}
+                onChange={(v) => updateResponse(q.id, v)}
+              />
+              {q.tip && (
+                <p className="mt-1.5 text-[12px] text-violet italic">{q.tip}</p>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Navigation */}
