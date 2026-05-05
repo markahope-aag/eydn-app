@@ -122,9 +122,9 @@ export default function PricingPage() {
 
       <div className="mt-10 grid gap-6 md:grid-cols-2 md:items-start">
         {/* Lifetime — featured */}
-        <div className="card-summary relative p-6 sm:p-8 border-2 border-violet md:order-1 order-1">
+        <div className="card-summary relative p-6 sm:p-8 border-2 border-violet md:order-1 order-1" style={{ overflow: "visible" }}>
           <div
-            className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide text-white"
+            className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide text-white whitespace-nowrap"
             style={{ background: "linear-gradient(135deg, var(--violet), var(--soft-violet))" }}
           >
             Best value
