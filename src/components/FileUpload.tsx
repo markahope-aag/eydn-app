@@ -31,7 +31,7 @@ export function FileUpload({ entityType, entityId, onUpload }: Props) {
       if (res.status === 403) {
         toast.error("File attachments require a paid plan.", {
           action: {
-            label: "Upgrade — $79",
+            label: "Upgrade — from $14.99/mo",
             onClick: () => { window.location.href = "/dashboard/pricing"; },
           },
         });

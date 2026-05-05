@@ -113,7 +113,7 @@ export default function CatchUpBanner() {
             href="/dashboard/pricing"
             className="rounded-full bg-brand-gradient px-5 py-2 text-[13px] font-semibold text-white shadow hover:opacity-90 transition text-center flex-shrink-0"
           >
-            Upgrade — $79
+            Upgrade — from $14.99/mo
           </Link>
         </div>
       </div>

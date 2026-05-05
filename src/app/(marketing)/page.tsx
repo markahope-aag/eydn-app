@@ -181,7 +181,7 @@ export default function HomePage() {
               <p style={{ marginTop: 24, fontFamily: "var(--font-body)", fontSize: 13, color: "#6B5E50", letterSpacing: "0.02em" }}>
                 <span style={{ color: "#8B6D14" }}>&#10022;</span> 50+ Tasks &middot;{" "}
                 <span style={{ color: "#8B6D14" }}>&#10022;</span> AI That Knows You &middot;{" "}
-                <span style={{ color: "#8B6D14" }}>&#10022;</span> $79 One-Time
+                <span style={{ color: "#8B6D14" }}>&#10022;</span> $79 lifetime &middot; $14.99/mo
               </p>
             </ScrollReveal>
           </div>
@@ -650,6 +650,40 @@ export default function HomePage() {
                 <div style={{ marginTop: 44 }}>
                   <AuthCTA variant="pricing" />
                 </div>
+              </div>
+            </div>
+
+            {/* Pro Monthly alternative — softer card so the lifetime stays
+                the recommended pick, but couples who want flexibility see
+                the option without leaving the page. */}
+            <div
+              style={{
+                marginTop: 24,
+                background: "#FAF6F1",
+                border: "1px solid #E8D5B7",
+                borderRadius: 14,
+                padding: "20px 28px",
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 12,
+              }}
+            >
+              <div>
+                <p style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: "#2A2018" }}>
+                  Or pay monthly
+                </p>
+                <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#6B5E50", marginTop: 4, lineHeight: 1.5 }}>
+                  Same Pro features &middot; cancel any time &middot; six months costs more than Lifetime, so switch if you pass month five.
+                </p>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <span style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 600, color: "#2A2018" }}>
+                  $14.99
+                </span>
+                <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#6B5E50", marginLeft: 4 }}>/month</span>
               </div>
             </div>
 

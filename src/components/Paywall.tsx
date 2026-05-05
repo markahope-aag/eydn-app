@@ -30,7 +30,7 @@ export function Paywall({
               Free trial: {status.trialDaysLeft} {status.trialDaysLeft === 1 ? "day" : "days"} left
             </p>
             <a href="/dashboard/pricing" className="text-[13px] font-semibold text-violet hover:text-soft-violet">
-              Unlock now — $79
+              See plans
             </a>
           </div>
         )}
@@ -46,10 +46,10 @@ export function Paywall({
       </div>
       <h2 className="mt-4 text-plum">{feature} is part of the full plan</h2>
       <p className="mt-2 text-[15px] text-muted max-w-md mx-auto">
-        Your free trial has ended. Unlock everything for $79 — one payment, yours forever.
+        Your free trial has ended. Pick the plan that fits — $79 once for Lifetime, or $14.99/mo, cancel any time.
       </p>
       <a href="/dashboard/pricing" className="btn-primary mt-6 inline-flex">
-        Unlock Eydn — $79
+        See plans
       </a>
     </div>
   );

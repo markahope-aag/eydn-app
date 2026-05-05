@@ -422,7 +422,7 @@ export default function WeddingBudgetCalculator() {
           href="/sign-up"
           className="whitespace-nowrap text-[14px] font-semibold bg-[#D4A5A5] text-white rounded-full px-6 py-2.5 hover:bg-[#C08080] transition"
         >
-          Start free — $79 one-time
+          Start free — $79 or $14.99/mo
         </Link>
       </div>
 
