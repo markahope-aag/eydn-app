@@ -372,32 +372,52 @@ export async function runScraperImport(
     const batchSize = 100;
     for (let i = 0; i < toInsert.length; i += batchSize) {
       const batch = toInsert.slice(i, i + batchSize);
-      const { error: insertError } = await supabase.from("suggested_vendors").insert(batch);
+      // upsert + ignoreDuplicates handles the race where a concurrent webhook
+      // and cron run both pull the same unseen scraper_id (the seen set is
+      // built once at the start of each run; if another import inserts the
+      // row between then and our INSERT, we'd hit uq_suggested_vendors_scraper_id).
+      // ON CONFLICT DO NOTHING silently skips, returning only newly-inserted
+      // rows via .select() so the count stays accurate.
+      const { data: insertedRows, error: insertError } = await supabase
+        .from("suggested_vendors")
+        .upsert(batch, { onConflict: "scraper_id", ignoreDuplicates: true })
+        .select("name");
       if (!insertError) {
-        result.inserted += batch.length;
-        for (const row of batch) {
-          if (result.insertedNames.length < 10 && typeof row.name === "string") {
-            result.insertedNames.push(row.name);
+        const newRows = insertedRows ?? [];
+        result.inserted += newRows.length;
+        for (const row of newRows) {
+          const name = (row as { name: string | null }).name;
+          if (result.insertedNames.length < 10 && typeof name === "string") {
+            result.insertedNames.push(name);
           }
         }
         continue;
       }
 
-      // Bulk failed — one bad row aborted the whole batch. Retry one-by-one
-      // so the rest still land, and route the offender to vendor_import_rejections
-      // with the DB error as the failed_rule. Without this, the bad row keeps
-      // poisoning every future cron run because dedup never marks it as seen.
+      // Bulk failed for a non-duplicate reason (NULL violation, type mismatch,
+      // etc.). Retry one-by-one so the rest still land, and route the offender
+      // to vendor_import_rejections with the DB error as the failed_rule.
+      // Without this, the bad row keeps poisoning every future cron run
+      // because dedup never marks it as seen.
       result.errors.push(
         `insert batch ${Math.floor(i / batchSize) + 1} failed in bulk (${insertError.message}); retrying row-by-row`
       );
       for (const row of batch) {
-        const { error: oneErr } = await supabase
+        const { data: oneInserted, error: oneErr } = await supabase
           .from("suggested_vendors")
-          .insert(row);
+          .upsert(row, { onConflict: "scraper_id", ignoreDuplicates: true })
+          .select("name")
+          .maybeSingle();
         if (!oneErr) {
-          result.inserted++;
-          if (result.insertedNames.length < 10 && typeof row.name === "string") {
-            result.insertedNames.push(row.name);
+          // oneInserted is null when the row was a duplicate (skipped). The
+          // existing suggested_vendors row will mark this scraper_id as seen
+          // on the next run, so we don't need a rejection entry.
+          if (oneInserted) {
+            result.inserted++;
+            const name = (oneInserted as { name: string | null }).name;
+            if (result.insertedNames.length < 10 && typeof name === "string") {
+              result.insertedNames.push(name);
+            }
           }
           continue;
         }
