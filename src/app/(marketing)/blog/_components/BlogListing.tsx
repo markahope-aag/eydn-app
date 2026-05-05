@@ -256,6 +256,27 @@ export function BlogListing({
         >
           &larr; Back to eydn.app
         </Link>
+        {/* Unsplash API guideline: when photos are displayed without per-image
+            attribution, a site-wide credit line is required. Some Playbook
+            covers use Unsplash photography; this satisfies that attribution. */}
+        <p
+          style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 11,
+            color: "rgba(250,246,241,0.35)",
+            marginTop: 12,
+          }}
+        >
+          Cover photos via{" "}
+          <a
+            href="https://unsplash.com/?utm_source=eydn-blog&utm_medium=referral"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "rgba(250,246,241,0.5)", textDecoration: "underline" }}
+          >
+            Unsplash
+          </a>
+        </p>
       </footer>
     </main>
   );
