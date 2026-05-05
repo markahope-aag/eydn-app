@@ -117,11 +117,18 @@ function buildScraperExtras(row: ScraperVendor): Record<string, unknown> {
   };
 }
 
-/** Cap per cron run — keeps any single run bounded and predictable. */
-const MAX_BATCH = 500;
+/** Cap per cron run. Bumped 500 -> 5000 in May 2026 because the previous
+ *  cap interacted badly with the ORDER BY created_at DESC + dedup-via-seen
+ *  pattern: once the 500 most-recent scraper rows were all in the seen set,
+ *  any UN-seen rows older than that cohort were unreachable forever. With
+ *  the ceiling at 5000, every cron run pulls the entire active scraper
+ *  vendor pool, dedups in memory, and processes only the unseen rows.
+ *  Memory cost is trivial (a few MB); AI category normalization runs only
+ *  on unseen rows so per-run cost is bounded by the unseen pool, not by
+ *  MAX_BATCH itself. */
+const MAX_BATCH = 5000;
 /** PostgREST hard-caps responses at 1000 rows; paginate via .range() to scan
- *  past that. Each page is one HTTP round-trip to the scraper Supabase. With
- *  MAX_BATCH=500 the loop runs once and behaves like a single .limit() call. */
+ *  past that. Each page is one HTTP round-trip to the scraper Supabase. */
 const SCRAPER_PAGE_SIZE = 1000;
 
 export type ScraperImportResult = {
