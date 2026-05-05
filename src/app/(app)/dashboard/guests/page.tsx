@@ -843,6 +843,7 @@ export default function GuestsPage() {
       {guests.length === 0 && (
         <EmptyState
           icon="👥"
+          image="guests_empty"
           title="No guests yet"
           message="Add your first guest above to start building your list."
         />

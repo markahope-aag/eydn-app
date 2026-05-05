@@ -726,6 +726,7 @@ export default function VendorsPage() {
         {vendors.length === 0 && (
           <EmptyState
             icon="🏪"
+            image="vendors_empty"
             title="Your vendor list is empty"
             message="Browse the directory or add vendors you've already found."
             actionLabel="Browse Directory"

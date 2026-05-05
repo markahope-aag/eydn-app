@@ -634,6 +634,7 @@ export default function TasksPage() {
           ) : tasks.length === 0 ? (
             <EmptyState
               icon="✓"
+              image="tasks_empty"
               title="No tasks yet"
               message="Tasks will be generated when you complete onboarding with a wedding date."
             />

@@ -541,6 +541,7 @@ export default function WeddingPartyPage() {
         {members.length === 0 && (
           <EmptyState
             icon="👗"
+            image="party_empty"
             title="No wedding party members yet"
             message="Add the people who'll be standing with you on the day."
           />
