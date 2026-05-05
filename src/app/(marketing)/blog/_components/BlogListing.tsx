@@ -43,10 +43,34 @@ export function BlogListing({
       <section
         style={{
           background: "linear-gradient(165deg, #2C3E2D 0%, #1E2E1F 100%)",
-          padding: "120px 24px 80px",
+          padding: "32px 24px 80px",
           textAlign: "center",
+          position: "relative",
         }}
       >
+        {/* Home link — sits above the hero, left-aligned for return-to-home */}
+        <div
+          style={{
+            maxWidth: 1100,
+            margin: "0 auto 64px",
+            display: "flex",
+            justifyContent: "flex-start",
+          }}
+        >
+          <Link
+            href="/"
+            aria-label="Back to Eydn home"
+            style={{ display: "inline-flex", alignItems: "center", gap: 8, textDecoration: "none" }}
+          >
+            <Image
+              src="/logo-white.png"
+              alt="Eydn"
+              width={104}
+              height={26}
+              style={{ height: 26, width: "auto", opacity: 0.85 }}
+            />
+          </Link>
+        </div>
         <p
           style={{
             fontFamily: "var(--font-serif, 'Cormorant Garamond', serif)",

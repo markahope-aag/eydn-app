@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import WeddingBudgetCalculator from "@/components/tools/WeddingBudgetCalculator";
 
 export const metadata: Metadata = {
@@ -36,16 +37,32 @@ export default function WeddingBudgetCalculatorPage() {
       <section
         style={{
           background: "linear-gradient(165deg, #2C3E2D 0%, #1E2E1F 100%)",
-          padding: "100px 24px 72px",
+          padding: "32px 24px 72px",
           textAlign: "center",
         }}
       >
-        <Link
-          href="/"
-          style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "rgba(250,246,241,0.5)", textDecoration: "none" }}
+        <div
+          style={{
+            maxWidth: 1100,
+            margin: "0 auto 56px",
+            display: "flex",
+            justifyContent: "flex-start",
+          }}
         >
-          &larr; eydn.app
-        </Link>
+          <Link
+            href="/"
+            aria-label="Back to Eydn home"
+            style={{ display: "inline-flex", alignItems: "center", gap: 8, textDecoration: "none" }}
+          >
+            <Image
+              src="/logo-white.png"
+              alt="Eydn"
+              width={104}
+              height={26}
+              style={{ height: 26, width: "auto", opacity: 0.85 }}
+            />
+          </Link>
+        </div>
         <p
           style={{
             fontFamily: "var(--font-serif)",
@@ -53,7 +70,6 @@ export default function WeddingBudgetCalculatorPage() {
             letterSpacing: "0.15em",
             textTransform: "uppercase",
             color: "rgba(250,246,241,0.5)",
-            marginTop: 32,
           }}
         >
           free planning tool
