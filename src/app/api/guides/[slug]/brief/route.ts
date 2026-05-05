@@ -39,12 +39,28 @@ export async function POST(
     crossData[row.guide_slug] = row.responses;
   }
 
+  // Pull saved mood board images so visual-style briefs (florist, decor,
+  // hair-makeup) include direct links to the imagery the couple has pinned.
+  // Capped at 10 to keep the brief copy-paste friendly.
+  const { data: pins } = await supabase
+    .from("mood_board_items")
+    .select("image_url, caption")
+    .eq("wedding_id", wedding.id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  const moodBoardImages = (pins || []).map((p) => ({
+    url: (p as { image_url: string }).image_url,
+    caption: (p as { caption: string | null }).caption ?? null,
+  }));
+
   const brief = generateVendorBrief(slug, responses, crossData, {
     partner1: wedding.partner1_name,
     partner2: wedding.partner2_name,
     date: wedding.date,
     venue: wedding.venue,
-  });
+  }, moodBoardImages);
 
   if (!brief) {
     return NextResponse.json({ error: "This guide does not generate a vendor brief" }, { status: 400 });

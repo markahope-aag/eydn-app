@@ -10,10 +10,32 @@ type WeddingInfo = {
   venue: string | null;
 };
 
+type MoodBoardImage = {
+  url: string;
+  caption: string | null;
+};
+
 type BriefResult = {
   text: string;
   sections: { title: string; content: string }[];
 };
+
+/**
+ * Build a "Visual references" section from saved mood board images. Renders
+ * as a numbered list of URLs with captions — copy-paste friendly so vendors
+ * can click each link directly from the email body.
+ */
+function buildVisualReferencesSection(images: MoodBoardImage[]): { title: string; content: string } | null {
+  if (!images || images.length === 0) return null;
+  const lines = images.slice(0, 10).map((img, i) => {
+    const caption = img.caption?.trim();
+    return caption ? `${i + 1}. ${img.url} — ${caption}` : `${i + 1}. ${img.url}`;
+  });
+  return {
+    title: "Visual references",
+    content: `Pinned to our mood board (open each link to see the image):\n${lines.join("\n")}`,
+  };
+}
 
 function formatDate(iso: string | null): string {
   if (!iso) return "TBD";
@@ -45,7 +67,8 @@ export function generateVendorBrief(
   slug: string,
   responses: Record<string, unknown>,
   crossData: Record<string, Record<string, unknown>>,
-  wedding: WeddingInfo
+  wedding: WeddingInfo,
+  moodBoardImages: MoodBoardImage[] = []
 ): BriefResult | null {
   const header = `${wedding.partner1} & ${wedding.partner2}\nWedding Date: ${formatDate(wedding.date)}\nVenue: ${wedding.venue || "TBD"}\n`;
   const colors = crossData["colors-theme"];
@@ -53,21 +76,21 @@ export function generateVendorBrief(
 
   switch (slug) {
     case "florist":
-      return buildFloristBrief(responses, header, palette);
+      return buildFloristBrief(responses, header, palette, moodBoardImages);
     case "rentals":
       return buildRentalsBrief(responses, header);
     case "hair-makeup":
-      return buildHairMakeupBrief(responses, header, wedding);
+      return buildHairMakeupBrief(responses, header, wedding, moodBoardImages);
     case "music":
       return buildMusicBrief(responses, header);
     case "decor":
-      return buildDecorBrief(responses, header, palette);
+      return buildDecorBrief(responses, header, palette, moodBoardImages);
     default:
       return null;
   }
 }
 
-function buildFloristBrief(r: Record<string, unknown>, header: string, palette: string): BriefResult {
+function buildFloristBrief(r: Record<string, unknown>, header: string, palette: string, images: MoodBoardImage[]): BriefResult {
   const sections = [
     { title: "Overview", content: `Budget: ${money(r, "q1")}\nPreferred florist: ${val(r, "q2")}\nCeremony setting: ${val(r, "q3")}` },
     { title: "Ceremony Florals", content: `Needs: ${val(r, "q4")}\nArch fullness: ${val(r, "q5")}` },
@@ -75,6 +98,8 @@ function buildFloristBrief(r: Record<string, unknown>, header: string, palette: 
     { title: "Reception", content: `Guest tables: ${val(r, "q10")}\nCenterpiece style: ${val(r, "q11")}\nOther areas: ${val(r, "q12")}` },
     { title: "Style & Preferences", content: `Color palette: ${palette}\nFlowers loved: ${val(r, "q14")}\nFlowers to avoid: ${val(r, "q15")}\nVenue restrictions: ${val(r, "q16")}` },
   ];
+  const visualSection = buildVisualReferencesSection(images);
+  if (visualSection) sections.push(visualSection);
   const text = `FLORIST BRIEF\n${header}\n${sections.map((s) => `${s.title}\n${s.content}`).join("\n\n")}`;
   return { text, sections };
 }
@@ -91,13 +116,15 @@ function buildRentalsBrief(r: Record<string, unknown>, header: string): BriefRes
   return { text, sections };
 }
 
-function buildHairMakeupBrief(r: Record<string, unknown>, header: string, wedding: WeddingInfo): BriefResult {
+function buildHairMakeupBrief(r: Record<string, unknown>, header: string, wedding: WeddingInfo, images: MoodBoardImage[]): BriefResult {
   const sections = [
     { title: "Overview", content: `Date: ${formatDate(wedding.date)}\nCeremony time: ${val(r, "q2")}\nPeople needing services: ${val(r, "q3")}\nBudget: ${money(r, "q4")}\nBooked: Hair — ${val(r, "q5")}` },
     { title: "Trials", content: `Hair trial: ${val(r, "q6")}\nMakeup trial: ${val(r, "q7")}\nTrial timing: ${val(r, "q8")}` },
     { title: "Hair", content: `Hair type: ${val(r, "q9")}\nLength: ${val(r, "q10")}\nUp/down: ${val(r, "q11")}\nAccessories: ${val(r, "q12")}\nStyles to love/avoid: ${val(r, "q13")}` },
     { title: "Makeup", content: `Skin tone: ${val(r, "q14")}\nSkin type: ${val(r, "q15")}\nLook: ${val(r, "q16")}\nEmphasis: ${val(r, "q17")}\nAllergies: ${val(r, "q18")}\nLooks to love/avoid: ${val(r, "q19")}` },
   ];
+  const visualSection = buildVisualReferencesSection(images);
+  if (visualSection) sections.push(visualSection);
   const text = `HAIR & MAKEUP BRIEF\n${header}\n${sections.map((s) => `${s.title}\n${s.content}`).join("\n\n")}`;
   return { text, sections };
 }
@@ -113,13 +140,15 @@ function buildMusicBrief(r: Record<string, unknown>, header: string): BriefResul
   return { text, sections };
 }
 
-function buildDecorBrief(r: Record<string, unknown>, header: string, palette: string): BriefResult {
+function buildDecorBrief(r: Record<string, unknown>, header: string, palette: string, images: MoodBoardImage[]): BriefResult {
   const sections = [
     { title: "Overview", content: `Budget: ${money(r, "q1")}\nDIY elements: ${val(r, "q2")}\nDecorator/stylist: ${val(r, "q3")}\nIndoors/outdoors: ${val(r, "q4")}\nVenue restrictions: ${val(r, "q5")}` },
     { title: "Ceremony Decor", content: `Needs: ${val(r, "q6")}\nWeather contingency: ${val(r, "q7")}` },
     { title: "Reception", content: `Tablescape vision: ${val(r, "q8")}\nLighting: ${val(r, "q9")}\nBackdrop: ${val(r, "q10")}\nSignage: ${val(r, "q11")}` },
     { title: "Style", content: `Three words: ${val(r, "q12")}\nColor palette: ${palette}\nDo not want: ${val(r, "q14")}` },
   ];
+  const visualSection = buildVisualReferencesSection(images);
+  if (visualSection) sections.push(visualSection);
   const text = `DECOR BRIEF\n${header}\n${sections.map((s) => `${s.title}\n${s.content}`).join("\n\n")}`;
   return { text, sections };
 }
