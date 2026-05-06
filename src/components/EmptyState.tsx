@@ -63,13 +63,13 @@ export function EmptyState({
         </button>
       )}
       {photo && (
-        <p className="mt-3 text-[11px] text-muted/80">
+        <p className="mt-3 text-[12px] text-muted">
           Photo by{" "}
           <a
             href={photo.photographerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-violet"
+            className="text-muted underline hover:text-violet"
           >
             {photo.photographer}
           </a>{" "}
@@ -78,7 +78,7 @@ export function EmptyState({
             href={photo.unsplashUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-violet"
+            className="text-muted underline hover:text-violet"
           >
             Unsplash
           </a>
