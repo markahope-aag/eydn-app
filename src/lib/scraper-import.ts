@@ -70,9 +70,6 @@ type ScraperVendor = {
    *  fetched_at}. Index 0 is the hero. URLs point at their public Supabase
    *  Storage bucket — no auth, no proxy needed. */
   photos: ScraperPhoto[] | null;
-  verified: boolean | null;
-  verified_at: string | null;
-  verification_method: string | null;
   google_maps_url: string | null;
   _review_count: number | null;
   client_id: string | null;
@@ -85,8 +82,7 @@ const SCRAPER_SELECT =
   "id, name, category, street, city, state, zip, country, phone, website, email, " +
   "description, description_status, eydn_score, price_level, market, " +
   "instagram, facebook, pinterest, business_status, hours, lat, lng, photos, _review_count, " +
-  "verified, verified_at, verification_method, google_maps_url, " +
-  "client_id, created_at, updated_at";
+  "google_maps_url, client_id, created_at, updated_at";
 
 /** Business statuses that mean "don't surface to couples". Vendor stays in
  *  the directory for admin audit but with active=false so it's hidden. */
@@ -110,9 +106,6 @@ function buildScraperExtras(row: ScraperVendor): Record<string, unknown> {
     lng: row.lng ?? undefined,
     description_status: row.description_status || undefined,
     review_count: row._review_count ?? undefined,
-    verified: row.verified ?? undefined,
-    verified_at: row.verified_at || undefined,
-    verification_method: row.verification_method || undefined,
     google_maps_url: row.google_maps_url || undefined,
   };
 }
