@@ -77,7 +77,7 @@ export function BlogListing({
             fontSize: 18,
             letterSpacing: "0.15em",
             textTransform: "uppercase",
-            color: "rgba(250,246,241,0.5)",
+            color: "rgba(250,246,241,0.78)",
           }}
         >
           eydn
@@ -101,7 +101,7 @@ export function BlogListing({
           style={{
             fontFamily: "'DM Sans', sans-serif",
             fontSize: 17,
-            color: "rgba(250,246,241,0.6)",
+            color: "rgba(250,246,241,0.85)",
             marginTop: 16,
             maxWidth: 520,
             marginInline: "auto",
@@ -274,7 +274,7 @@ export function BlogListing({
           style={{
             fontFamily: "'DM Sans', sans-serif",
             fontSize: 13,
-            color: "rgba(250,246,241,0.5)",
+            color: "rgba(250,246,241,0.78)",
             textDecoration: "none",
           }}
         >
@@ -287,7 +287,7 @@ export function BlogListing({
           style={{
             fontFamily: "'DM Sans', sans-serif",
             fontSize: 11,
-            color: "rgba(250,246,241,0.35)",
+            color: "rgba(250,246,241,0.7)",
             marginTop: 12,
           }}
         >
@@ -296,7 +296,7 @@ export function BlogListing({
             href="https://unsplash.com/?utm_source=eydn-blog&utm_medium=referral"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: "rgba(250,246,241,0.5)", textDecoration: "underline" }}
+            style={{ color: "rgba(250,246,241,0.85)", textDecoration: "underline" }}
           >
             Unsplash
           </a>
