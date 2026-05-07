@@ -93,7 +93,9 @@ function isOperational(row: ScraperVendor): boolean {
   return !CLOSED_BUSINESS_STATUSES.has(row.business_status);
 }
 
-/** Build the scraper_extras JSONB blob: scraper-only fields with no first-class column in suggested_vendors. */
+/** Build the scraper_extras JSONB blob: scraper-only fields with no first-class column in suggested_vendors.
+ *  lat/lng are promoted to top-level columns (added 2026-05-07 with the
+ *  geo-search migration) and don't need to live in extras anymore. */
 function buildScraperExtras(row: ScraperVendor): Record<string, unknown> {
   return {
     market: row.market || undefined,
@@ -102,8 +104,6 @@ function buildScraperExtras(row: ScraperVendor): Record<string, unknown> {
     pinterest: row.pinterest || undefined,
     business_status: row.business_status || undefined,
     hours: row.hours || undefined,
-    lat: row.lat ?? undefined,
-    lng: row.lng ?? undefined,
     description_status: row.description_status || undefined,
     review_count: row._review_count ?? undefined,
     google_maps_url: row.google_maps_url || undefined,
@@ -328,6 +328,14 @@ export async function runScraperImport(
       quality_score: candidate.quality_score,
       photos: (row.photos ?? []) as unknown as Database["public"]["Tables"]["suggested_vendors"]["Insert"]["photos"],
       scraper_extras: buildScraperExtras(row) as Database["public"]["Tables"]["suggested_vendors"]["Insert"]["scraper_extras"],
+      // Coords from the scraper (Google Places enrichment populated them).
+      // Stamping geocoded_at here means the hourly geocode-vendors cron
+      // skips this row instead of re-geocoding what we already know.
+      lat: row.lat,
+      lng: row.lng,
+      geocoded_at: row.lat != null && row.lng != null
+        ? new Date().toISOString()
+        : null,
       gmb_last_refreshed_at: new Date().toISOString(),
       featured: false,
       // Closed vendors land inactive — kept for admin audit but never shown.

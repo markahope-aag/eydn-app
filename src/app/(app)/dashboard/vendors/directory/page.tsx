@@ -536,6 +536,30 @@ export default function VendorDirectoryPage() {
         </div>
       )}
 
+      {/* Category pills — primary navigation. Visible by default so couples
+          aren't dropped into an undifferentiated wall of vendors. */}
+      <div className="mt-5">
+        <div
+          className="flex gap-2 overflow-x-auto sm:flex-wrap pb-1 -mx-1 px-1"
+          role="tablist"
+          aria-label="Vendor category"
+        >
+          <CategoryPill
+            label="All"
+            active={!filterCategory}
+            onClick={() => setFilterCategory("")}
+          />
+          {VENDOR_CATEGORIES.map((c) => (
+            <CategoryPill
+              key={c}
+              label={categoryLabel(c)}
+              active={filterCategory === c}
+              onClick={() => setFilterCategory(c)}
+            />
+          ))}
+        </div>
+      </div>
+
       {/* Search + filter button */}
       <div className="mt-4 flex flex-col sm:flex-row gap-3">
         <input
@@ -566,19 +590,11 @@ export default function VendorDirectoryPage() {
         </button>
       </div>
 
-      {/* Expandable filters */}
+      {/* Expandable filters — category lives in the pills above; remaining
+          knobs (price, location override, sort) stay tucked behind the
+          Filter button to keep the directory uncluttered. */}
       {showFilters && (
         <div className="mt-2 grid grid-cols-2 sm:flex sm:flex-wrap gap-3 items-center">
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="rounded-[10px] border-border px-3 py-1.5 text-[14px] w-full sm:w-auto"
-          >
-            <option value="">All Categories</option>
-            {VENDOR_CATEGORIES.map((c) => (
-              <option key={c} value={c}>{categoryLabel(c)}</option>
-            ))}
-          </select>
           <select
             value={filterPrice}
             onChange={(e) => setFilterPrice(e.target.value)}
@@ -1009,5 +1025,33 @@ function AdditionalPhotos({ photos, vendorName }: { photos: PhotoEntry[]; vendor
         </p>
       )}
     </div>
+  );
+}
+
+// ─── Category Pill ──────────────────────────────────────────────────────────
+
+function CategoryPill({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      role="tab"
+      aria-selected={active}
+      className={`flex-shrink-0 rounded-full border px-4 py-1.5 text-[13px] font-medium transition whitespace-nowrap ${
+        active
+          ? "bg-violet text-white border-violet"
+          : "bg-white text-plum border-border hover:border-violet/50 hover:text-violet"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
