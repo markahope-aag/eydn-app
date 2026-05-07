@@ -5,7 +5,11 @@
 // Idempotent: only touches rows where lat IS NULL OR lng IS NULL.
 // Throttled: 10 req/sec to stay well under Google's 50 QPS limit.
 //
-// Run with:  node scripts/backfill-vendor-geocodes.mjs [--limit=500]
+// Pages internally until the source is exhausted. PostgREST caps any single
+// fetch at ~1,000 rows regardless of the `limit` we request, so we just loop
+// the fetch+process until we get a short page back.
+//
+// Run with:  node scripts/backfill-vendor-geocodes.mjs [--max=10000]
 
 import { readFileSync } from "node:fs";
 
@@ -38,15 +42,17 @@ const args = Object.fromEntries(
     return [k, v ?? "true"];
   })
 );
-const LIMIT = Number(args.limit || 500);
+const MAX_TOTAL = Number(args.max || args.limit || 100000); // hard cap across pages
+const PAGE_SIZE = 1000; // PostgREST default max
 const THROTTLE_MS = 100; // 10 req/sec
 
-async function fetchVendorsToGeocode() {
+async function fetchVendorPage() {
   const u = new URL(`${SUPABASE_URL}/rest/v1/suggested_vendors`);
   u.searchParams.set("select", "id,name,address,city,state,zip,country");
   u.searchParams.set("active", "eq.true");
   u.searchParams.set("lat", "is.null");
-  u.searchParams.set("limit", String(LIMIT));
+  u.searchParams.set("order", "created_at.asc");
+  u.searchParams.set("limit", String(PAGE_SIZE));
   const res = await fetch(u, {
     headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
   });
@@ -100,28 +106,42 @@ async function patchVendor(id, lat, lng) {
 }
 
 (async () => {
-  const vendors = await fetchVendorsToGeocode();
-  console.log(`Geocoding ${vendors.length} vendors (limit ${LIMIT})...`);
   let ok = 0;
   let skip = 0;
-  for (const v of vendors) {
-    const address = buildAddress(v);
-    if (!address) {
-      skip++;
-      continue;
+  let pageNum = 0;
+
+  while (ok + skip < MAX_TOTAL) {
+    pageNum++;
+    const vendors = await fetchVendorPage();
+    if (vendors.length === 0) {
+      console.log(`No more ungeocoded vendors. Stopping.`);
+      break;
     }
-    const result = await geocodeOne(address);
-    if (result) {
-      await patchVendor(v.id, result.lat, result.lng);
-      ok++;
-      if (ok % 50 === 0) console.log(`  ✓ ${ok} geocoded so far`);
-    } else {
-      skip++;
+    console.log(`\nPage ${pageNum}: processing ${vendors.length} vendors...`);
+
+    for (const v of vendors) {
+      if (ok + skip >= MAX_TOTAL) break;
+      const address = buildAddress(v);
+      if (!address) {
+        skip++;
+        continue;
+      }
+      const result = await geocodeOne(address);
+      if (result) {
+        await patchVendor(v.id, result.lat, result.lng);
+        ok++;
+        if (ok % 100 === 0) console.log(`  ✓ ${ok} total geocoded`);
+      } else {
+        skip++;
+      }
+      await new Promise((r) => setTimeout(r, THROTTLE_MS));
     }
-    await new Promise((r) => setTimeout(r, THROTTLE_MS));
+
+    // Short page? PostgREST exhausted the source.
+    if (vendors.length < PAGE_SIZE) {
+      console.log(`Final page (received ${vendors.length} < ${PAGE_SIZE}). Done.`);
+      break;
+    }
   }
-  console.log(`\nDone. ${ok} geocoded, ${skip} skipped.`);
-  if (vendors.length === LIMIT) {
-    console.log("Hit the page limit — re-run to continue with the next batch.");
-  }
+  console.log(`\nFinished. ${ok} geocoded, ${skip} skipped, across ${pageNum} page(s).`);
 })();
