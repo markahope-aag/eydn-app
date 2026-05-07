@@ -10,6 +10,12 @@ type Props = {
   weddingId: string | null;
   /** Notify the parent so it can sync the directory's location filter. */
   onCityChange: (city: string) => void;
+  /** True when the wedding has lat/lng and the directory is using radius search. */
+  geoActive?: boolean;
+  /** Current radius in miles (only meaningful when geoActive). */
+  radiusMiles?: number;
+  /** Notify the parent of a radius change. */
+  onRadiusChange?: (miles: number) => void;
 };
 
 /**
@@ -21,7 +27,14 @@ type Props = {
  *   - When empty: "Add your wedding location to focus the search"
  *                 with an inline input + Save button.
  */
-export function LocationBanner({ city, weddingId, onCityChange }: Props) {
+export function LocationBanner({
+  city,
+  weddingId,
+  onCityChange,
+  geoActive = false,
+  radiusMiles = 50,
+  onRadiusChange,
+}: Props) {
   const hasCity = !!city && city.trim().length > 0;
   const [editing, setEditing] = useState(!hasCity);
   const [draft, setDraft] = useState(city ?? "");
@@ -160,20 +173,39 @@ export function LocationBanner({ city, weddingId, onCityChange }: Props) {
 
   // Set + collapsed — summary line
   return (
-    <div className="rounded-[12px] border border-border bg-whisper px-4 py-2.5 flex items-center justify-between gap-3">
+    <div className="rounded-[12px] border border-border bg-whisper px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap">
       <div className="flex items-center gap-2 min-w-0">
         <PinIcon className="text-violet flex-shrink-0" />
         <p className="text-[13px] text-plum truncate">
-          Showing vendors near <span className="font-semibold">{city}</span>
+          Showing vendors{geoActive ? ` within ${radiusMiles} mi of ` : " near "}
+          <span className="font-semibold">{city}</span>
         </p>
       </div>
-      <button
-        type="button"
-        onClick={() => setEditing(true)}
-        className="text-[12px] font-semibold text-violet hover:text-soft-violet flex-shrink-0"
-      >
-        Change
-      </button>
+      <div className="flex items-center gap-3 flex-shrink-0">
+        {geoActive && onRadiusChange && (
+          <label className="text-[12px] text-muted flex items-center gap-1.5">
+            Radius:
+            <select
+              value={radiusMiles}
+              onChange={(e) => onRadiusChange(Number(e.target.value))}
+              className="rounded-[8px] border border-border bg-white px-2 py-1 text-[12px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+              aria-label="Search radius"
+            >
+              <option value={25}>25 mi</option>
+              <option value={50}>50 mi</option>
+              <option value={100}>100 mi</option>
+              <option value={250}>250 mi</option>
+            </select>
+          </label>
+        )}
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="text-[12px] font-semibold text-violet hover:text-soft-violet"
+        >
+          Change
+        </button>
+      </div>
     </div>
   );
 }

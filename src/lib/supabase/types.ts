@@ -1812,12 +1812,15 @@ export type Database = {
           email: string | null
           featured: boolean
           featured_locked: boolean
+          geocoded_at: string | null
           gmb_data: Json | null
           gmb_last_refreshed_at: string | null
           gmb_place_id: string | null
           id: string
           import_source: string | null
           imported_at: string | null
+          lat: number | null
+          lng: number | null
           manually_approved: boolean
           name: string
           phone: string | null
@@ -1844,12 +1847,15 @@ export type Database = {
           email?: string | null
           featured?: boolean
           featured_locked?: boolean
+          geocoded_at?: string | null
           gmb_data?: Json | null
           gmb_last_refreshed_at?: string | null
           gmb_place_id?: string | null
           id?: string
           import_source?: string | null
           imported_at?: string | null
+          lat?: number | null
+          lng?: number | null
           manually_approved?: boolean
           name: string
           phone?: string | null
@@ -1876,12 +1882,15 @@ export type Database = {
           email?: string | null
           featured?: boolean
           featured_locked?: boolean
+          geocoded_at?: string | null
           gmb_data?: Json | null
           gmb_last_refreshed_at?: string | null
           gmb_place_id?: string | null
           id?: string
           import_source?: string | null
           imported_at?: string | null
+          lat?: number | null
+          lng?: number | null
           manually_approved?: boolean
           name?: string
           phone?: string | null
@@ -2386,6 +2395,8 @@ export type Database = {
           ceremony_time: string | null
           created_at: string
           date: string | null
+          geocoded_address: string | null
+          geocoded_at: string | null
           guest_count_estimate: number | null
           has_honeymoon: boolean | null
           has_pre_wedding_events: boolean | null
@@ -2393,6 +2404,8 @@ export type Database = {
           id: string
           inferred_date: string | null
           key_decisions: string | null
+          lat: number | null
+          lng: number | null
           meal_options: Json | null
           memory_plan_active: boolean
           memory_plan_expires_at: string | null
@@ -2429,6 +2442,8 @@ export type Database = {
           ceremony_time?: string | null
           created_at?: string
           date?: string | null
+          geocoded_address?: string | null
+          geocoded_at?: string | null
           guest_count_estimate?: number | null
           has_honeymoon?: boolean | null
           has_pre_wedding_events?: boolean | null
@@ -2436,6 +2451,8 @@ export type Database = {
           id?: string
           inferred_date?: string | null
           key_decisions?: string | null
+          lat?: number | null
+          lng?: number | null
           meal_options?: Json | null
           memory_plan_active?: boolean
           memory_plan_expires_at?: string | null
@@ -2472,6 +2489,8 @@ export type Database = {
           ceremony_time?: string | null
           created_at?: string
           date?: string | null
+          geocoded_address?: string | null
+          geocoded_at?: string | null
           guest_count_estimate?: number | null
           has_honeymoon?: boolean | null
           has_pre_wedding_events?: boolean | null
@@ -2479,6 +2498,8 @@ export type Database = {
           id?: string
           inferred_date?: string | null
           key_decisions?: string | null
+          lat?: number | null
+          lng?: number | null
           meal_options?: Json | null
           memory_plan_active?: boolean
           memory_plan_expires_at?: string | null

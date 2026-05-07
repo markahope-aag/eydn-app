@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { pickFields, safeParseJSON, isParseError, MAX_MONETARY_AMOUNT, MAX_GUEST_COUNT } from "@/lib/validation";
 import { TASK_TIMELINE } from "@/lib/tasks/task-timeline";
 import { supabaseError } from "@/lib/api-error";
+import { geocodeAddress } from "@/lib/geocoding";
 
 const ALLOWED_FIELDS = [
   "partner1_name", "partner2_name", "date", "venue", "venue_city", "budget",
@@ -48,10 +49,31 @@ export async function PATCH(
     if (v > MAX_GUEST_COUNT) return NextResponse.json({ error: `Guest count cannot exceed ${MAX_GUEST_COUNT.toLocaleString()}` }, { status: 400 });
   }
 
+  // Geocode venue_city when it changes so vendor relevance is distance-based.
+  // Done before the update so the lat/lng land in the same write.
+  let extraUpdates: Record<string, unknown> = {};
+  if (
+    typeof updates.venue_city !== "undefined" &&
+    updates.venue_city !== null &&
+    String(updates.venue_city).trim() &&
+    String(updates.venue_city).trim() !== (wedding as { venue_city: string | null }).venue_city
+  ) {
+    const geo = await geocodeAddress(String(updates.venue_city).trim());
+    if (geo) {
+      extraUpdates = {
+        lat: geo.lat,
+        lng: geo.lng,
+        geocoded_address: geo.formattedAddress,
+        geocoded_at: new Date().toISOString(),
+      };
+    }
+  }
+
   const { data, error } = await supabase
     .from("weddings")
     .update({
       ...updates,
+      ...extraUpdates,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)

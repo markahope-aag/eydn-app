@@ -156,6 +156,47 @@ function priceRank(range: string | null): number {
   return PRICE_ORDER[range] ?? 99;
 }
 
+// ─── Location parser ────────────────────────────────────────────────────────
+
+const US_STATE_CODES = new Set([
+  "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
+  "KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ",
+  "NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
+  "VA","WA","WV","WI","WY","DC",
+]);
+
+/** Parse a free-text location string ("Charleston, SC", "Austin TX", "SC")
+ *  into city + state for the API. State must be the 2-letter postal code to
+ *  avoid false positives ("Austin" alone is a city, not a state). */
+function parseLocation(raw: string): { city?: string; state?: string } {
+  const trimmed = raw.trim();
+  if (!trimmed) return {};
+  // "Charleston, SC" → ["Charleston", "SC"]
+  const commaParts = trimmed.split(",").map((s) => s.trim()).filter(Boolean);
+  if (commaParts.length >= 2) {
+    const stateGuess = commaParts[1].split(/\s+/)[0].toUpperCase();
+    return {
+      city: commaParts[0],
+      state: US_STATE_CODES.has(stateGuess) ? stateGuess : undefined,
+    };
+  }
+  // Single token. If it's exactly a state code, treat as state; otherwise city.
+  const upper = trimmed.toUpperCase();
+  if (US_STATE_CODES.has(upper)) return { state: upper };
+  // "Austin TX" with no comma — split last whitespace token
+  const spaceParts = trimmed.split(/\s+/);
+  if (spaceParts.length >= 2) {
+    const tail = spaceParts[spaceParts.length - 1].toUpperCase();
+    if (US_STATE_CODES.has(tail)) {
+      return {
+        city: spaceParts.slice(0, -1).join(" "),
+        state: tail,
+      };
+    }
+  }
+  return { city: trimmed };
+}
+
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function VendorDirectoryPage() {
@@ -169,6 +210,9 @@ export default function VendorDirectoryPage() {
   const [weddingId, setWeddingId] = useState<string | null>(null);
   const [weddingCity, setWeddingCity] = useState<string | null>(null);
   const [weddingLoaded, setWeddingLoaded] = useState(false);
+  const [weddingLat, setWeddingLat] = useState<number | null>(null);
+  const [weddingLng, setWeddingLng] = useState<number | null>(null);
+  const [radiusMiles, setRadiusMiles] = useState<number>(50);
   const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -182,12 +226,21 @@ export default function VendorDirectoryPage() {
     if (weddingLoaded) return;
     fetch("/api/weddings")
       .then((r) => (r.ok ? r.json() : null))
-      .then((w: { id?: string; venue_city?: string | null } | null) => {
+      .then((w: {
+        id?: string;
+        venue_city?: string | null;
+        lat?: number | null;
+        lng?: number | null;
+      } | null) => {
         if (w?.id) setWeddingId(w.id);
         if (w?.venue_city && w.venue_city.trim()) {
           const city = w.venue_city.trim();
           setWeddingCity(city);
           setFilterLocation(city);
+        }
+        if (typeof w?.lat === "number" && typeof w?.lng === "number") {
+          setWeddingLat(w.lat);
+          setWeddingLng(w.lng);
         }
         setWeddingLoaded(true);
       })
@@ -195,10 +248,23 @@ export default function VendorDirectoryPage() {
   }, [weddingLoaded]);
 
   // When the user updates their location via the banner, sync the directory's
-  // location filter so results refilter immediately.
+  // location filter so results refilter immediately. The PATCH wedding route
+  // re-geocodes server-side, so we re-fetch the wedding to pick up new lat/lng.
   function handleLocationChange(city: string) {
     setWeddingCity(city);
     setFilterLocation(city);
+    fetch("/api/weddings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((w: { lat?: number | null; lng?: number | null } | null) => {
+        if (typeof w?.lat === "number" && typeof w?.lng === "number") {
+          setWeddingLat(w.lat);
+          setWeddingLng(w.lng);
+        } else {
+          setWeddingLat(null);
+          setWeddingLng(null);
+        }
+      })
+      .catch(() => {});
   }
 
   // Admin "Preview as couple" deep link: /dashboard/vendors/directory?expand=<id>
@@ -207,18 +273,36 @@ export default function VendorDirectoryPage() {
   const previewId = searchParams.get("expand");
 
   const debouncedSearch = useDebounce(search, 300);
+  const debouncedLocation = useDebounce(filterLocation, 300);
 
   const activeFilterCount = [filterCategory, filterPrice, filterLocation].filter(Boolean).length;
 
-  // Build API URL from current filters
+  // Build API URL from current filters. Location is sent as lat/lng/radius
+  // when the wedding has geocoded coordinates (real distance ranking) and
+  // falls back to city/state ILIKE otherwise.
   const buildUrl = useCallback((page: number) => {
     const params = new URLSearchParams();
     params.set("page", String(page));
     params.set("limit", "25");
     if (filterCategory) params.set("category", filterCategory);
     if (debouncedSearch.trim()) params.set("q", debouncedSearch.trim());
+
+    // Prefer geocoded radius search when the wedding has lat/lng AND the
+    // user hasn't manually overridden the location field.
+    const usingWeddingLocation =
+      weddingCity !== null && debouncedLocation.trim() === weddingCity.trim();
+
+    if (usingWeddingLocation && weddingLat !== null && weddingLng !== null) {
+      params.set("lat", String(weddingLat));
+      params.set("lng", String(weddingLng));
+      params.set("radius", String(radiusMiles));
+    } else {
+      const { city, state } = parseLocation(debouncedLocation);
+      if (city) params.set("city", city);
+      if (state) params.set("state", state);
+    }
     return `/api/suggested-vendors?${params.toString()}`;
-  }, [filterCategory, debouncedSearch]);
+  }, [filterCategory, debouncedSearch, debouncedLocation, weddingCity, weddingLat, weddingLng, radiusMiles]);
 
   // Fetch first page when filters change
   useEffect(() => {
@@ -375,16 +459,12 @@ export default function VendorDirectoryPage() {
     }
   }
 
-  // Client-side filtering & sorting
+  // Client-side filtering & sorting. Location is now applied server-side
+  // via the city/state params on /api/suggested-vendors, so we only need
+  // to handle price here (price isn't queryable on the server yet).
   let filtered = vendors;
   if (filterPrice) {
     filtered = filtered.filter((v) => v.price_range === filterPrice);
-  }
-  if (filterLocation) {
-    const loc = filterLocation.toLowerCase();
-    filtered = filtered.filter((v) =>
-      v.city.toLowerCase().includes(loc) || v.state.toLowerCase().includes(loc)
-    );
   }
 
   const sorted = [...filtered].sort((a, b) => {
@@ -449,6 +529,9 @@ export default function VendorDirectoryPage() {
             city={weddingCity}
             weddingId={weddingId}
             onCityChange={handleLocationChange}
+            geoActive={weddingLat !== null && weddingLng !== null}
+            radiusMiles={radiusMiles}
+            onRadiusChange={setRadiusMiles}
           />
         </div>
       )}
