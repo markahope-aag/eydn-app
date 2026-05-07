@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { VENDOR_CATEGORIES, categoryLabel } from "@/lib/vendors/categories";
+import { LocationBanner } from "./_components/LocationBanner";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -165,7 +166,9 @@ export default function VendorDirectoryPage() {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterPrice, setFilterPrice] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
-  const [locationPrefilledFromWedding, setLocationPrefilledFromWedding] = useState(false);
+  const [weddingId, setWeddingId] = useState<string | null>(null);
+  const [weddingCity, setWeddingCity] = useState<string | null>(null);
+  const [weddingLoaded, setWeddingLoaded] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -173,22 +176,30 @@ export default function VendorDirectoryPage() {
   const [gmbCache, setGmbCache] = useState<Record<string, PlaceData | "loading" | "error">>({});
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Prefill the location filter with the couple's venue_city so the directory
-  // defaults to vendors near them on first load. The user can clear or override
-  // it; we only seed once (subsequent edits stay sticky).
+  // Load the couple's wedding so we can show the location banner and prefill
+  // the directory's location filter with venue_city.
   useEffect(() => {
-    if (locationPrefilledFromWedding) return;
+    if (weddingLoaded) return;
     fetch("/api/weddings")
       .then((r) => (r.ok ? r.json() : null))
-      .then((w: { venue_city?: string | null } | null) => {
+      .then((w: { id?: string; venue_city?: string | null } | null) => {
+        if (w?.id) setWeddingId(w.id);
         if (w?.venue_city && w.venue_city.trim()) {
-          setFilterLocation(w.venue_city.trim());
-          setShowFilters(true);
+          const city = w.venue_city.trim();
+          setWeddingCity(city);
+          setFilterLocation(city);
         }
-        setLocationPrefilledFromWedding(true);
+        setWeddingLoaded(true);
       })
-      .catch(() => setLocationPrefilledFromWedding(true));
-  }, [locationPrefilledFromWedding]);
+      .catch(() => setWeddingLoaded(true));
+  }, [weddingLoaded]);
+
+  // When the user updates their location via the banner, sync the directory's
+  // location filter so results refilter immediately.
+  function handleLocationChange(city: string) {
+    setWeddingCity(city);
+    setFilterLocation(city);
+  }
 
   // Admin "Preview as couple" deep link: /dashboard/vendors/directory?expand=<id>
   // pins the requested vendor to the top of the list and auto-expands it.
@@ -428,6 +439,19 @@ export default function VendorDirectoryPage() {
           My Vendors
         </Link>
       </div>
+
+      {/* Location-aware banner — communicates that searches are location-filtered
+          and lets the user set or change their wedding city without leaving
+          the page. */}
+      {weddingLoaded && (
+        <div className="mt-4">
+          <LocationBanner
+            city={weddingCity}
+            weddingId={weddingId}
+            onCityChange={handleLocationChange}
+          />
+        </div>
+      )}
 
       {/* Search + filter button */}
       <div className="mt-4 flex flex-col sm:flex-row gap-3">
