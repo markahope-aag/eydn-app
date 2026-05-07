@@ -53,6 +53,10 @@
       "schedule": "5 * * * *"
     },
     {
+      "path": "/api/cron/sync-vendor-photos",
+      "schedule": "10 * * * *"
+    },
+    {
       "path": "/api/cron/refresh-vendors",
       "schedule": "0 3 * * 6"
     },
