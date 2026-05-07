@@ -76,6 +76,26 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
   }
 }
 
+// ─── Vendor helpers ─────────────────────────────────────────────────────────
+
+type VendorAddressFields = {
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  country?: string | null;
+};
+
+/** Build a single-line address from the structured vendor columns for
+ *  geocoding. Returns "" if there's nothing usable. */
+export function buildVendorAddress(v: VendorAddressFields): string {
+  const stateZip = v.state ? `${v.state}${v.zip ? ` ${v.zip}` : ""}` : v.zip ?? "";
+  const parts = [v.address, v.city, stateZip, v.country]
+    .map((p) => (p ? String(p).trim() : ""))
+    .filter(Boolean);
+  return parts.join(", ");
+}
+
 // ─── Geographic math (haversine + bounding box) ──────────────────────────────
 
 const EARTH_RADIUS_MILES = 3958.756;

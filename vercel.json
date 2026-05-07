@@ -49,6 +49,10 @@
       "schedule": "0 * * * *"
     },
     {
+      "path": "/api/cron/geocode-vendors",
+      "schedule": "5 * * * *"
+    },
+    {
       "path": "/api/cron/refresh-vendors",
       "schedule": "0 3 * * 6"
     },
