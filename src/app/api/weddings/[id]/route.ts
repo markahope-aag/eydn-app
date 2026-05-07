@@ -5,7 +5,7 @@ import { TASK_TIMELINE } from "@/lib/tasks/task-timeline";
 import { supabaseError } from "@/lib/api-error";
 
 const ALLOWED_FIELDS = [
-  "partner1_name", "partner2_name", "date", "venue", "budget",
+  "partner1_name", "partner2_name", "date", "venue", "venue_city", "budget",
   "guest_count_estimate", "style_description",
   "has_wedding_party", "wedding_party_count",
   "has_pre_wedding_events", "has_honeymoon", "key_decisions",

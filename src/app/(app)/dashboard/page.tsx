@@ -9,6 +9,7 @@ import Image from "next/image";
 import { MilestoneCelebration } from "@/components/MilestoneCelebration";
 import { DayOfReveal } from "@/components/DayOfReveal";
 import CatchUpBanner from "@/components/CatchUpBanner";
+import { WeddingLocation } from "@/components/WeddingLocation";
 
 function buildGreeting(ctx: { name: string; both: string; days: number | null; totalTasks: number; doneTasks: number; taskPct: number }): string {
   const { name, both, days, totalTasks, doneTasks, taskPct } = ctx;
@@ -498,6 +499,10 @@ export default async function DashboardPage() {
           <h1>
             {wedding.partner1_name} & {wedding.partner2_name}
           </h1>
+          <WeddingLocation
+            weddingId={wedding.id}
+            initialCity={(wedding as { venue_city: string | null }).venue_city}
+          />
           {wedding.date && (
             <div className="mt-2">
               <p className="text-[15px] text-muted">

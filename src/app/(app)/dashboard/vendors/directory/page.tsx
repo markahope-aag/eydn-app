@@ -165,12 +165,30 @@ export default function VendorDirectoryPage() {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterPrice, setFilterPrice] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
+  const [locationPrefilledFromWedding, setLocationPrefilledFromWedding] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [gmbCache, setGmbCache] = useState<Record<string, PlaceData | "loading" | "error">>({});
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Prefill the location filter with the couple's venue_city so the directory
+  // defaults to vendors near them on first load. The user can clear or override
+  // it; we only seed once (subsequent edits stay sticky).
+  useEffect(() => {
+    if (locationPrefilledFromWedding) return;
+    fetch("/api/weddings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((w: { venue_city?: string | null } | null) => {
+        if (w?.venue_city && w.venue_city.trim()) {
+          setFilterLocation(w.venue_city.trim());
+          setShowFilters(true);
+        }
+        setLocationPrefilledFromWedding(true);
+      })
+      .catch(() => setLocationPrefilledFromWedding(true));
+  }, [locationPrefilledFromWedding]);
 
   // Admin "Preview as couple" deep link: /dashboard/vendors/directory?expand=<id>
   // pins the requested vendor to the top of the list and auto-expands it.
