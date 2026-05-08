@@ -42,6 +42,7 @@ const FEATURES_FREE = {
   attachments: false,
   catchUpPlans: false,
   budgetOptimizer: false,
+  vendorLookup: false,
 };
 const FEATURES_ON = {
   chat: true,
@@ -51,6 +52,7 @@ const FEATURES_ON = {
   attachments: true,
   catchUpPlans: true,
   budgetOptimizer: true,
+  vendorLookup: true,
 };
 
 function buildMockSupabase(overrides?: {

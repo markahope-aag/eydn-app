@@ -57,7 +57,7 @@ const TRIALING_STATUS = {
   tier: "trialing" as const,
   features: {
     chat: true, webSearch: true, exportBinder: true, emailTemplates: true,
-    attachments: true, catchUpPlans: true, budgetOptimizer: true,
+    attachments: true, catchUpPlans: true, budgetOptimizer: true, vendorLookup: true,
   },
   hasAccess: true,
   isPaid: false,
@@ -71,7 +71,7 @@ const FREE_STATUS_NO_CHAT = {
   tier: "free" as const,
   features: {
     chat: false, webSearch: false, exportBinder: false, emailTemplates: false,
-    attachments: false, catchUpPlans: false, budgetOptimizer: false,
+    attachments: false, catchUpPlans: false, budgetOptimizer: false, vendorLookup: false,
   },
   hasAccess: false,
   isPaid: false,

@@ -21,7 +21,11 @@ export type FeatureKey =
   | "emailTemplates" // Vendor email templates
   | "attachments"    // Attachments on real entities (tasks, vendors)
   | "catchUpPlans"   // AI catch-up plans (task #7)
-  | "budgetOptimizer"; // AI budget optimizer (task #8)
+  | "budgetOptimizer" // AI budget optimizer (task #8)
+  | "vendorLookup"; // POST /api/vendors/places-search — Google Places lookup
+                    // for couples adding vendors not in the directory.
+                    // Each call costs ~$0.052; daily cap is enforced via
+                    // vendor_seed_lookups (see vendor-seed-quota.ts).
 
 export type Features = Record<FeatureKey, boolean>;
 
@@ -51,6 +55,7 @@ const ALL_ON: Features = {
   attachments: true,
   catchUpPlans: true,
   budgetOptimizer: true,
+  vendorLookup: true,
 };
 
 const FREE_FEATURES: Features = {
@@ -61,6 +66,7 @@ const FREE_FEATURES: Features = {
   attachments: false,
   catchUpPlans: false,
   budgetOptimizer: false,
+  vendorLookup: false,
 };
 
 const TIER_FEATURES: Record<Tier, Features> = {

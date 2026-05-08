@@ -11,6 +11,7 @@ import {
 } from "@/lib/vendors/normalize";
 import { checkQuality } from "@/lib/vendors/quality";
 import { applyFeaturedRule } from "@/lib/vendors/featured";
+import { sendSeedToScraper } from "@/lib/scraper-seed";
 import type { PlaceData } from "@/lib/google-places";
 import type { Database, Json } from "@/lib/supabase/types";
 
@@ -84,6 +85,28 @@ export async function POST(request: Request) {
   const privateErrResp = supabaseError(privateErr, "vendors/from-place");
   if (privateErrResp) return privateErrResp;
 
+  // Parse city/state up front so both directory paths and the scraper
+  // write-back can use them. couple's hints win; falls back to address parse.
+  const cityHint = typeof body.cityHint === "string" ? body.cityHint.trim() : "";
+  const stateHint = typeof body.stateHint === "string" ? body.stateHint.trim() : "";
+  const parsed_city = cityHint ? normalizeCity(cityHint) : extractCityFromAddress(place.formattedAddress);
+  const parsed_state = stateHint
+    ? (normalizeState(stateHint) || stateHint.toUpperCase().slice(0, 2))
+    : extractStateFromAddress(place.formattedAddress);
+
+  // Helper: fire the scraper write-back when we have a clean city/state pair.
+  // Idempotent server-side, so it's safe to call from both directory paths.
+  // Errors are swallowed — the couple's row is already saved.
+  async function maybeSeedScraper() {
+    if (!parsed_city || !parsed_state || parsed_state.length !== 2) return;
+    await sendSeedToScraper({
+      place: place as PlaceData,
+      category: category!,
+      city: parsed_city,
+      state: parsed_state,
+    });
+  }
+
   // ── 2. Directory contribution: dedup by gmb_place_id ─────────────────────
   // Use the admin client so RLS doesn't block lookups/writes against the
   // public directory tables. The couple is allowed to see and contribute.
@@ -95,20 +118,13 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (existing) {
+    await maybeSeedScraper();
     return NextResponse.json({
       vendorId: privateVendor!.id,
       directoryAction: "already_exists",
       suggestedVendorId: existing.id,
     });
   }
-
-  // Build the candidate row from place data + the couple's hints.
-  const cityHint = typeof body.cityHint === "string" ? body.cityHint.trim() : "";
-  const stateHint = typeof body.stateHint === "string" ? body.stateHint.trim() : "";
-  const parsed_city = cityHint ? normalizeCity(cityHint) : extractCityFromAddress(place.formattedAddress);
-  const parsed_state = stateHint
-    ? (normalizeState(stateHint) || stateHint.toUpperCase().slice(0, 2))
-    : extractStateFromAddress(place.formattedAddress);
 
   const phone = place.nationalPhoneNumber ? normalizePhone(place.nationalPhoneNumber) : null;
   const website = place.websiteUri ? normalizeWebsite(place.websiteUri) : null;
@@ -171,6 +187,8 @@ export async function POST(request: Request) {
     } catch {
       // Non-fatal — nightly safety-net cron will reconcile.
     }
+
+    await maybeSeedScraper();
 
     return NextResponse.json({
       vendorId: privateVendor!.id,

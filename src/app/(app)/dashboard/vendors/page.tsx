@@ -77,6 +77,10 @@ export default function VendorsPage() {
   const [placeResult, setPlaceResult] = useState<PlaceMatch | null>(null);
   const [placeLoading, setPlaceLoading] = useState(false);
   const [addingFromPlace, setAddingFromPlace] = useState(false);
+  // Daily Google Places lookup quota (subscribers only; 20/day). Updated
+  // from the response of every /api/vendors/places-search call so the user
+  // can see what they've spent today.
+  const [lookupUsage, setLookupUsage] = useState<{ used: number; remaining: number; cap: number } | null>(null);
 
   // Debounced typeahead against the directory whenever the user types a
   // vendor name in the Add form.
@@ -178,10 +182,30 @@ export default function VendorsPage() {
         body: JSON.stringify({ name, category: newCategory, location: location || undefined }),
       });
       const data = await res.json();
+
+      // Subscription gate — free tier can't use this feature.
+      if (res.status === 403) {
+        toast.error(
+          data.feature === "vendorLookup"
+            ? "Google Places lookup is a Pro feature. Upgrade to search and import vendor data automatically."
+            : data.error || "Premium feature"
+        );
+        return;
+      }
+      // Daily cap exhausted.
+      if (res.status === 429) {
+        if (data.usage) setLookupUsage(data.usage);
+        toast.error(data.error || "Daily lookup limit reached. Resets at midnight UTC.");
+        return;
+      }
       if (!res.ok) {
         toast.error(data.error || "Lookup failed");
         return;
       }
+
+      // Success path — track quota for the badge.
+      if (data.usage) setLookupUsage(data.usage);
+
       if (!data.place) {
         toast(`No Google match for "${name}". You can still add manually.`);
         return;
@@ -556,7 +580,7 @@ export default function VendorsPage() {
 
           {/* Google Places lookup — visible once the user has typed a name. */}
           {newName.trim().length >= 3 && !placeResult && (
-            <div className="text-[13px] text-muted flex items-center gap-2">
+            <div className="text-[13px] text-muted flex items-center gap-2 flex-wrap">
               {dirLoading
                 ? "Searching directory…"
                 : dirMatches.length === 0
@@ -565,11 +589,21 @@ export default function VendorsPage() {
               <button
                 type="button"
                 onClick={searchGooglePlaces}
-                disabled={placeLoading}
+                disabled={placeLoading || (lookupUsage !== null && lookupUsage.remaining <= 0)}
                 className="btn-ghost btn-sm"
               >
                 {placeLoading ? "Searching Google…" : "Search Google Places"}
               </button>
+              {lookupUsage && (
+                <span
+                  className={`text-[11px] ${
+                    lookupUsage.remaining <= 3 ? "text-amber-700" : "text-muted"
+                  }`}
+                  title={`Daily Google Places lookups: ${lookupUsage.used}/${lookupUsage.cap} used today. Resets at midnight UTC.`}
+                >
+                  {lookupUsage.used}/{lookupUsage.cap} today
+                </span>
+              )}
             </div>
           )}
 
