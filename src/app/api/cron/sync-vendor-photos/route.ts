@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { logCronExecution } from "@/lib/cron-logger";
 import { requireCronAuth } from "@/lib/cron-auth";
+import type { Database } from "@/lib/supabase/types";
 
 /**
  * Hourly cron: copy photos from the external scraper into suggested_vendors
@@ -127,7 +128,9 @@ export async function GET(request: Request) {
 
     const { error: updateErr } = await eydn
       .from("suggested_vendors")
-      .update({ photos })
+      .update({
+        photos: photos as unknown as Database["public"]["Tables"]["suggested_vendors"]["Update"]["photos"],
+      })
       .eq("id", row.id);
     if (updateErr) {
       failed++;
