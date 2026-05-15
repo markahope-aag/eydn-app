@@ -143,33 +143,45 @@ export async function POST(request: Request) {
     });
   }
 
+  const lifetimePriceId = process.env.STRIPE_PRO_LIFETIME_PRICE_ID;
+  if (!lifetimePriceId) {
+    return NextResponse.json(
+      { error: "Lifetime plan is not configured" },
+      { status: 500 }
+    );
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://eydn.app";
+
   try {
     const stripe = getStripe();
+
+    let discounts: Array<{ coupon: string }> | undefined;
+    if (promoId && discountAmount > 0) {
+      const coupon = await stripe.coupons.create({
+        amount_off: Math.round(discountAmount * 100),
+        currency: "usd",
+        duration: "once",
+        name: `${promoCode} (Eydn promo)`,
+        max_redemptions: 1,
+        metadata: { promo_code_id: promoId, user_id: userId },
+      });
+      discounts = [{ coupon: coupon.id }];
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: "Eydn Wedding Planner",
-              description: promoId
-                ? `Full access — ${promoCode} applied (saved $${discountAmount.toFixed(2)})`
-                : "Full access to all features for 1 wedding — AI chat, PDF exports, file attachments, and more.",
-            },
-            unit_amount: Math.round(finalAmount * 100),
-          },
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: lifetimePriceId, quantity: 1 }],
+      ...(discounts ? { discounts } : {}),
+      client_reference_id: userId,
       metadata: {
         user_id: userId,
         wedding_id: wedding?.id || "",
         type: "subscriber_purchase",
         ...(promoId ? { promo_code_id: promoId, promo_code: promoCode!, discount_amount: String(discountAmount) } : {}),
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://eydn.app"}/dashboard?purchased=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://eydn.app"}/dashboard/pricing`,
+      success_url: `${appUrl}/dashboard?purchased=true`,
+      cancel_url: `${appUrl}/dashboard/pricing`,
     });
 
     return NextResponse.json({ url: session.url });

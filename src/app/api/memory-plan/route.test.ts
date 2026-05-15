@@ -34,8 +34,13 @@ vi.mock("@/lib/stripe", () => ({
 
 import { GET, POST } from "./route";
 
+const ORIGINAL_ENV = process.env;
+
 beforeEach(() => {
   vi.clearAllMocks();
+  process.env = { ...ORIGINAL_ENV };
+  process.env.STRIPE_MEMORY_PLAN_PRICE_ID = "price_test_memory";
+  process.env.NEXT_PUBLIC_APP_URL = "https://eydn.app";
   mockAuth.mockResolvedValue({ userId: "user_123" });
   mockWeddingLookup.mockResolvedValue({
     data: {
@@ -112,12 +117,24 @@ describe("POST /api/memory-plan", () => {
 
     const params = mockCreateSession.mock.calls[0][0];
     expect(params.mode).toBe("subscription");
-    expect(params.line_items[0].price_data.unit_amount).toBe(2900);
-    expect(params.line_items[0].price_data.recurring.interval).toBe("year");
+    expect(params.line_items).toEqual([{ price: "price_test_memory", quantity: 1 }]);
+    expect(params.client_reference_id).toBe("user_123");
     expect(params.metadata).toMatchObject({
       user_id: "user_123",
       wedding_id: "wed_1",
       type: "memory_plan",
     });
+    expect(params.subscription_data.metadata).toMatchObject({
+      user_id: "user_123",
+      wedding_id: "wed_1",
+      type: "memory_plan",
+    });
+  });
+
+  it("returns 500 when STRIPE_MEMORY_PLAN_PRICE_ID is unset", async () => {
+    delete process.env.STRIPE_MEMORY_PLAN_PRICE_ID;
+    const res = await POST();
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toMatch(/not configured/i);
   });
 });

@@ -64,34 +64,36 @@ export async function POST() {
     return NextResponse.json({ error: "Memory Plan already active" }, { status: 400 });
   }
 
+  const memoryPlanPriceId = process.env.STRIPE_MEMORY_PLAN_PRICE_ID;
+  if (!memoryPlanPriceId) {
+    return NextResponse.json(
+      { error: "Memory Plan is not configured" },
+      { status: 500 }
+    );
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://eydn.app";
+
   const stripe = getStripe();
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: "Eydn Memory Plan",
-            description:
-              "Keep your wedding website live and your data accessible after the wedding. Renews annually.",
-          },
-          unit_amount: 2900,
-          recurring: {
-            interval: "year",
-          },
-        },
-        quantity: 1,
+    line_items: [{ price: memoryPlanPriceId, quantity: 1 }],
+    client_reference_id: userId,
+    subscription_data: {
+      metadata: {
+        user_id: userId,
+        wedding_id: w.id,
+        type: "memory_plan",
       },
-    ],
+    },
     metadata: {
       user_id: userId,
       wedding_id: w.id,
       type: "memory_plan",
     },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://eydn.app"}/dashboard/settings?memory=success`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://eydn.app"}/dashboard/settings`,
+    success_url: `${appUrl}/dashboard/settings?memory=success`,
+    cancel_url: `${appUrl}/dashboard/settings`,
   });
 
   return NextResponse.json({ url: session.url });
