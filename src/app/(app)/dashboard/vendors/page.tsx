@@ -13,7 +13,7 @@ import { VENDOR_CATEGORIES, VENDOR_STATUSES, categoryLabel } from "@/lib/vendors
 import { Tooltip } from "@/components/Tooltip";
 import { EmailTemplate } from "./EmailTemplate";
 import { usePremium } from "@/components/PremiumGate";
-import { trackVendorAdded } from "@/lib/analytics";
+import { trackVendorAdded, trackVendorPlacement } from "@/lib/analytics";
 
 type Vendor = {
   id: string;
@@ -350,6 +350,7 @@ export default function VendorsPage() {
       if (!res.ok) throw new Error();
 
       if (status === "booked" && vendor) {
+        trackVendorPlacement(vendor.category);
         triggerConfetti();
         const name = vendor.name || vendor.category;
         const category = vendor.category;

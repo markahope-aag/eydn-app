@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
-import { trackOnboardingComplete } from "@/lib/analytics";
+import { trackOnboardingComplete, trackSignUp, trackTrialStart } from "@/lib/analytics";
 import { Confetti, triggerConfetti } from "@/components/Confetti";
 
 // Soft bouquet shot used as the celebratory background after onboarding
@@ -653,6 +654,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isReview = searchParams.get("review") === "true";
+  const { user, isLoaded: userLoaded } = useUser();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -663,6 +665,26 @@ export default function OnboardingPage() {
   const [aiInput, setAIInput] = useState("");
   const [ready, setReady] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Fire the GTM sign_up event the first time a freshly-created Clerk user
+  // lands on onboarding. We dedupe per Clerk userId via sessionStorage so a
+  // refresh during the same session doesn't double-fire. The 10-minute
+  // freshness check filters out existing users who hit /onboarding later via
+  // ?review=true or by direct navigation.
+  useEffect(() => {
+    if (!userLoaded || !user || isReview) return;
+    const createdAtMs = user.createdAt instanceof Date
+      ? user.createdAt.getTime()
+      : typeof user.createdAt === "string"
+        ? new Date(user.createdAt).getTime()
+        : 0;
+    const isFreshSignup = createdAtMs > 0 && Date.now() - createdAtMs < 10 * 60 * 1000;
+    if (!isFreshSignup) return;
+    const key = `eydn:sign_up_tracked:${user.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    trackSignUp();
+  }, [userLoaded, user, isReview]);
 
   // Check if already onboarded → redirect (unless reviewing)
   useEffect(() => {
@@ -809,6 +831,12 @@ export default function OnboardingPage() {
 
       if (res.ok) {
         trackOnboardingComplete();
+        // Trial begins the moment the wedding row exists (server stamps
+        // trial_started_at). Only fire on initial submit, not when reviewing
+        // an existing wedding.
+        if (!isReview) {
+          trackTrialStart();
+        }
 
         // Send partner invite now that the wedding exists
         if (form.partner_invite_email.trim()) {

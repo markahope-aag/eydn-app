@@ -65,6 +65,11 @@ export function trackVendorAdded(category: string) {
   push({ event: "vendor_added", vendor_category: category });
 }
 
+/** User books a vendor (status → booked) — a primary Google Ads goal */
+export function trackVendorPlacement(category: string) {
+  push({ event: "vendor_placement", vendor_category: category });
+}
+
 /** User completes a planning guide */
 export function trackGuideComplete(guideSlug: string) {
   push({ event: "guide_complete", guide_name: guideSlug });

@@ -8,6 +8,7 @@ import {
   trackGuestAdded,
   trackGuestImport,
   trackVendorAdded,
+  trackVendorPlacement,
   trackGuideComplete,
   trackVendorBriefGenerated,
   trackWebsitePublished,
@@ -74,6 +75,11 @@ describe("analytics tracking", () => {
   it("trackVendorAdded pushes vendor_added with category", () => {
     trackVendorAdded("florist");
     expect(window.dataLayer).toEqual([{ event: "vendor_added", vendor_category: "florist" }]);
+  });
+
+  it("trackVendorPlacement pushes vendor_placement with category", () => {
+    trackVendorPlacement("Venue");
+    expect(window.dataLayer).toEqual([{ event: "vendor_placement", vendor_category: "Venue" }]);
   });
 
   it("trackGuideComplete pushes guide_complete with slug", () => {
