@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { VENDOR_STATUSES } from "@/lib/vendors/categories";
+import { VENDOR_STATUSES, VENDOR_CATEGORIES, categoryLabel } from "@/lib/vendors/categories";
 import { EmailTemplate } from "../EmailTemplate";
 import { usePremium } from "@/components/PremiumGate";
 import { Comments } from "@/components/Comments";
@@ -161,8 +161,23 @@ export default function VendorDetailPage({
       </div>
 
       <h1>{vendor.name}</h1>
-      <p className="mt-1 text-[15px] text-muted">{vendor.category}</p>
-      <p className="mt-1 text-[11px] text-muted">
+      <div className="mt-1.5">
+        <label className="text-[12px] font-semibold text-muted">Category</label>
+        <select
+          value={vendor.category}
+          onChange={(e) => updateField("category", e.target.value)}
+          aria-label="Vendor category"
+          className="mt-0.5 block rounded-[8px] border border-border px-2.5 py-1 text-[14px] text-plum hover:border-violet/40 focus:outline-none focus:ring-2 focus:ring-violet/30"
+        >
+          {!(VENDOR_CATEGORIES as readonly string[]).includes(vendor.category) && (
+            <option value={vendor.category}>{vendor.category}</option>
+          )}
+          {VENDOR_CATEGORIES.map((c) => (
+            <option key={c} value={c}>{categoryLabel(c)}</option>
+          ))}
+        </select>
+      </div>
+      <p className="mt-2 text-[11px] text-muted">
         Changes save automatically when you leave a field.
       </p>
 

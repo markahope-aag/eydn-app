@@ -143,6 +143,7 @@ export default function MoodBoardPage() {
     setUploading(true);
     let successes = 0;
     let failures = 0;
+    let lastError = "";
     const toastId = urls.length > 1 ? toast.loading(`Saving 1 of ${urls.length}…`) : undefined;
 
     try {
@@ -155,7 +156,8 @@ export default function MoodBoardPage() {
           setItems((prev) => [saved, ...prev]);
           trackMoodBoardAdd();
           successes++;
-        } catch {
+        } catch (err) {
+          lastError = err instanceof Error ? err.message : "";
           failures++;
         }
       }
@@ -171,7 +173,7 @@ export default function MoodBoardPage() {
         toast(`${successes} added · ${failures} couldn't be saved`);
         clearAddForm();
       } else {
-        toast.error("Couldn't save those URLs. Check the links and try again.");
+        toast.error(lastError || "Couldn't save those URLs. Check the links and try again.");
       }
     } finally {
       setUploading(false);
@@ -185,6 +187,7 @@ export default function MoodBoardPage() {
 
     let successes = 0;
     let failures = 0;
+    let lastError = "";
     const toastId = files.length > 1 ? toast.loading(`Uploading 1 of ${files.length}…`) : undefined;
 
     try {
@@ -208,7 +211,8 @@ export default function MoodBoardPage() {
           setItems((prev) => [saved, ...prev]);
           trackMoodBoardAdd();
           successes++;
-        } catch {
+        } catch (err) {
+          lastError = err instanceof Error ? err.message : "";
           failures++;
         }
       }
@@ -224,7 +228,7 @@ export default function MoodBoardPage() {
         toast(`${successes} uploaded · ${failures} couldn't be saved`);
         clearAddForm();
       } else {
-        toast.error("Upload failed. Try again.");
+        toast.error(lastError || "Upload failed. Try again.");
       }
     } finally {
       setUploading(false);
@@ -406,7 +410,7 @@ export default function MoodBoardPage() {
                   <path d="M4 22L11 16L15 20L21 13L28 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 <p className="text-[13px] font-semibold text-plum">Drop images here or click to browse</p>
-                <p className="text-[11px] text-muted mt-1">JPG, PNG, WebP up to 5MB · select or drop several at once</p>
+                <p className="text-[11px] text-muted mt-1">JPG, PNG, WebP up to 10MB · select or drop several at once</p>
               </div>
             </div>
           )}
@@ -434,21 +438,31 @@ export default function MoodBoardPage() {
                     className="flex-1 rounded-[10px] border-border px-3 py-2 text-[15px]"
                     autoFocus
                   />
-                  <button type="button" onClick={() => setShowCustomCat(false)} className="text-[11px] text-muted hover:text-plum px-2">Cancel</button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowCustomCat(false); setCustomCategory(""); }}
+                    className="text-[12px] text-muted hover:text-plum px-2"
+                  >
+                    Cancel
+                  </button>
                 </div>
               ) : (
-                <div className="mt-1 flex gap-1">
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="flex-1 rounded-[10px] border-border px-3 py-2 text-[15px]"
-                  >
-                    {allCategories.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                  <button type="button" onClick={() => setShowCustomCat(true)} className="text-[11px] text-violet font-semibold hover:text-plum px-2 whitespace-nowrap" title="Create a new board">+ New</button>
-                </div>
+                <select
+                  value={category}
+                  onChange={(e) => {
+                    if (e.target.value === "__custom__") {
+                      setShowCustomCat(true);
+                    } else {
+                      setCategory(e.target.value);
+                    }
+                  }}
+                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                >
+                  {allCategories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                  <option value="__custom__">+ Add your own…</option>
+                </select>
               )}
             </div>
             <div>
@@ -673,6 +687,23 @@ export default function MoodBoardPage() {
                       <option key={v.id} value={v.id}>{v.name}</option>
                     ))}
                   </select>
+                  {lightbox.vendor_id && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          `${window.location.origin}/board/${lightbox.vendor_id}`
+                        );
+                        toast.success("Vendor link copied — they'll see every post tagged to them, no login needed");
+                      }}
+                      className="mt-1.5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-violet hover:text-soft-violet transition"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M6 10l4-4M7 4l1-1a3 3 0 014 4l-1 1M9 12l-1 1a3 3 0 01-4-4l1-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Copy this vendor&apos;s inspiration link
+                    </button>
+                  )}
                 </div>
               )}
               <div className="flex justify-between items-center pt-1">

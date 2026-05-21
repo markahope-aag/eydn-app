@@ -515,7 +515,10 @@ export default function VendorDirectoryPage() {
             {pagination ? `${pagination.total.toLocaleString()} vendors` : "Browse recommended vendors in your area"}
           </p>
         </div>
-        <Link href="/dashboard/vendors" className="btn-secondary">
+        <Link
+          href="/dashboard/vendors"
+          className="inline-flex items-center justify-center rounded-[12px] px-4 py-2 text-[14px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+        >
           My Vendors
         </Link>
       </div>

@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { EmptyState } from "@/components/EmptyState";
 import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { VENDOR_CATEGORIES, VENDOR_STATUSES, categoryLabel } from "@/lib/vendors/categories";
 import { Tooltip } from "@/components/Tooltip";
@@ -48,7 +47,7 @@ export default function VendorsPage() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   // Add form
   const [newName, setNewName] = useState("");
-  const [newCategory, setNewCategory] = useState<string>(VENDOR_CATEGORIES[0]);
+  const [newCategory, setNewCategory] = useState<string>("");
   const [newWebsite, setNewWebsite] = useState("");
   const [newCity, setNewCity] = useState("");
   const [newState, setNewState] = useState("");
@@ -220,6 +219,10 @@ export default function VendorsPage() {
 
   async function addFromPlace() {
     if (!placeResult) return;
+    if (!newCategory) {
+      toast.error("Choose a vendor category first");
+      return;
+    }
     setAddingFromPlace(true);
     try {
       const res = await fetch("/api/vendors/from-place", {
@@ -278,6 +281,10 @@ export default function VendorsPage() {
   async function addVendor(e: React.FormEvent) {
     e.preventDefault();
     if (!newName.trim()) return;
+    if (!newCategory) {
+      toast.error("Choose a vendor category first");
+      return;
+    }
 
     const tempId = crypto.randomUUID();
     const vendor: Vendor = {
@@ -446,7 +453,10 @@ export default function VendorsPage() {
           >
             Add Your Own
           </button>
-          <Link href="/dashboard/vendors/directory" className="btn-primary text-[13px] sm:text-[15px]">
+          <Link
+            href="/dashboard/vendors/directory"
+            className="inline-flex items-center justify-center rounded-[12px] px-4 py-2 text-[13px] sm:text-[15px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+          >
             Browse Directory
           </Link>
         </div>
@@ -492,7 +502,18 @@ export default function VendorsPage() {
       )}
 
       {showAdd && (
-        <form onSubmit={addVendor} className="mt-4 card p-4 space-y-3">
+        <form
+          onSubmit={addVendor}
+          onKeyDown={(e) => {
+            // Enter in a field must NOT create the vendor — only the
+            // explicit "Add Vendor" button does. (The name field handles
+            // Enter itself to trigger a Google Places search.)
+            if (e.key === "Enter" && e.target instanceof HTMLInputElement) {
+              e.preventDefault();
+            }
+          }}
+          className="mt-4 card p-4 space-y-3"
+        >
           <p className="text-[13px] text-muted">
             Add a vendor you&apos;ve found or been recommended.
             <Tooltip text="Type a name to search the Eydn directory first; if it isn't there, click 'Search Google Places' to pull in real address, phone, and reviews. Or just type and click Add Vendor for a manual entry." wide />
@@ -503,6 +524,12 @@ export default function VendorsPage() {
               placeholder="Vendor name"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  searchGooglePlaces();
+                }
+              }}
               aria-label="Vendor name"
               className="rounded-[10px] border-border px-3 py-2 text-[15px]"
               required
@@ -514,6 +541,7 @@ export default function VendorsPage() {
               aria-label="Vendor category"
               className="rounded-[10px] border-border px-3 py-2 text-[15px]"
             >
+              <option value="" disabled>Choose vendor category…</option>
               {VENDOR_CATEGORIES.map((c) => (
                 <option key={c} value={c}>{categoryLabel(c)}</option>
               ))}
@@ -731,13 +759,13 @@ export default function VendorsPage() {
                     <button
                       onClick={() => guardFeature("emailTemplates", () => setEmailCategory(vendor.category))}
                       className="btn-ghost btn-sm text-[12px] flex items-center gap-1"
-                      title="Email template"
+                      title="Open a ready-to-send vendor request email"
                     >
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="1" y="3" width="12" height="9" rx="1.5" />
                         <path d="M1 4.5L7 8.5L13 4.5" />
                       </svg>
-                      Email
+                      Request Template
                     </button>
                     <a
                       href={`/dashboard/vendors/${vendor.id}`}
@@ -759,14 +787,31 @@ export default function VendorsPage() {
         ))}
 
         {vendors.length === 0 && (
-          <EmptyState
-            icon="🏪"
-            image="vendors_empty"
-            title="Your vendor list is empty"
-            message="Browse the directory or add vendors you've already found."
-            actionLabel="Browse Directory"
-            actionHref="/dashboard/vendors/directory"
-          />
+          <div className="card p-5">
+            <h2 className="text-[16px] font-semibold text-plum">Vendors you&apos;ll likely need</h2>
+            <p className="mt-1 text-[13px] text-muted">
+              A starting checklist for most weddings — tap any category to add a vendor for it.
+              Skip the ones that don&apos;t apply.
+            </p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {VENDOR_CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => { setNewCategory(c); setShowAdd(true); }}
+                  className="flex items-center justify-between rounded-[10px] border border-border px-3 py-2.5 text-left hover:border-violet/40 hover:bg-lavender/20 transition"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" aria-hidden="true" />
+                    <span className="text-[14px] text-plum">{categoryLabel(c)}</span>
+                  </span>
+                  <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full flex-shrink-0">
+                    Still needed
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 
