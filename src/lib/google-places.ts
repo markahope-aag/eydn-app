@@ -26,13 +26,27 @@ export type PlaceData = {
   }>;
 };
 
+/** Reduce a URL or bare domain to a comparable host (lowercase, no www). */
+function domainOf(url: string | null | undefined): string {
+  if (!url) return "";
+  try {
+    const u = new URL(url.startsWith("http") ? url : `https://${url}`);
+    return u.hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
 /**
  * Search for a business by name and optional location.
- * Returns the top match's place ID.
+ * Returns the best match's place ID. When a website is supplied, the
+ * result whose domain matches it is preferred over Google's top text
+ * match — this stops a different business being pulled in by accident.
  */
 export async function searchPlace(
   query: string,
-  location?: string
+  location?: string,
+  website?: string
 ): Promise<{ placeId: string; name: string } | null> {
   if (!API_KEY) return null;
 
@@ -44,19 +58,30 @@ export async function searchPlace(
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": API_KEY,
-        "X-Goog-FieldMask": "places.id,places.displayName",
+        "X-Goog-FieldMask": "places.id,places.displayName,places.websiteUri",
       },
-      body: JSON.stringify({ textQuery: searchQuery, maxResultCount: 1 }),
+      body: JSON.stringify({ textQuery: searchQuery, maxResultCount: 5 }),
     });
 
     if (!res.ok) return null;
     const data = await res.json();
-    const place = data.places?.[0];
-    if (!place) return null;
+    const places: Array<{
+      id: string;
+      displayName?: { text?: string };
+      websiteUri?: string;
+    }> = data.places || [];
+    if (places.length === 0) return null;
+
+    // Prefer the candidate whose website domain matches the one the user
+    // entered; otherwise fall back to Google's top text match.
+    const wantedDomain = domainOf(website);
+    const chosen =
+      (wantedDomain && places.find((p) => domainOf(p.websiteUri) === wantedDomain)) ||
+      places[0];
 
     return {
-      placeId: place.id,
-      name: place.displayName?.text || query,
+      placeId: chosen.id,
+      name: chosen.displayName?.text || query,
     };
   } catch {
     return null;
@@ -129,13 +154,14 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceData | null
 export async function enrichVendor(
   vendorName: string,
   vendorCategory?: string,
-  location?: string
+  location?: string,
+  website?: string
 ): Promise<PlaceData | null> {
   const query = vendorCategory
     ? `${vendorName} ${vendorCategory}`
     : vendorName;
 
-  const searchResult = await searchPlace(query, location);
+  const searchResult = await searchPlace(query, location, website);
   if (!searchResult) return null;
 
   return getPlaceDetails(searchResult.placeId);

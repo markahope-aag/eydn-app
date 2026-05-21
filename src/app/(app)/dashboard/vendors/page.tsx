@@ -51,6 +51,7 @@ export default function VendorsPage() {
   const [newWebsite, setNewWebsite] = useState("");
   const [newCity, setNewCity] = useState("");
   const [newState, setNewState] = useState("");
+  const [weddingCity, setWeddingCity] = useState<string>("");
 
   // Lookup state — typeahead against the directory + Google Places fallback
   type DirMatch = {
@@ -136,14 +137,18 @@ export default function VendorsPage() {
     };
   }, [newName, showAdd]);
 
-  // Reset lookup state when the form is closed or reopened.
+  // Reset lookup state when the form closes; default the location to the
+  // couple's wedding city when it opens so the Google Places search is
+  // scoped to their area instead of the whole US.
   useEffect(() => {
     if (!showAdd) {
       setDirMatches([]);
       setPlaceResult(null);
       setPlaceLoading(false);
+    } else if (weddingCity) {
+      setNewCity((c) => c || weddingCity);
     }
-  }, [showAdd]);
+  }, [showAdd, weddingCity]);
 
   async function pickFromDirectory(match: DirMatch) {
     try {
@@ -174,11 +179,19 @@ export default function VendorsPage() {
     setPlaceLoading(true);
     setPlaceResult(null);
     try {
-      const location = [newCity.trim(), newState.trim()].filter(Boolean).join(", ");
+      const location =
+        [newCity.trim(), newState.trim()].filter(Boolean).join(", ") ||
+        weddingCity ||
+        undefined;
       const res = await fetch("/api/vendors/places-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, category: newCategory, location: location || undefined }),
+        body: JSON.stringify({
+          name,
+          category: newCategory,
+          location,
+          website: newWebsite.trim() || undefined,
+        }),
       });
       const data = await res.json();
 
@@ -276,6 +289,16 @@ export default function VendorsPage() {
       .then(setVendors)
       .catch(() => toast.error("Couldn't load your vendors. Try refreshing the page."))
       .finally(() => setLoading(false));
+  }, []);
+
+  // The wedding's city scopes the Google Places search to the couple's area.
+  useEffect(() => {
+    fetch("/api/weddings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((w: { venue_city?: string | null } | null) => {
+        if (w?.venue_city?.trim()) setWeddingCity(w.venue_city.trim());
+      })
+      .catch(() => {});
   }, []);
 
   async function addVendor(e: React.FormEvent) {

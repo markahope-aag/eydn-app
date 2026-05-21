@@ -47,7 +47,12 @@ export async function POST(request: Request) {
 
   const parsed = await safeParseJSON(request);
   if (isParseError(parsed)) return parsed;
-  const body = parsed as { name?: unknown; category?: unknown; location?: unknown };
+  const body = parsed as {
+    name?: unknown;
+    category?: unknown;
+    location?: unknown;
+    website?: unknown;
+  };
 
   const name = typeof body.name === "string" ? body.name.trim() : "";
   if (!name || name.length < 2) {
@@ -56,6 +61,8 @@ export async function POST(request: Request) {
   const category = typeof body.category === "string" ? body.category : undefined;
   const location =
     typeof body.location === "string" ? body.location.trim() || undefined : undefined;
+  const website =
+    typeof body.website === "string" ? body.website.trim() || undefined : undefined;
 
   // 1. Cache lookup. Match the cache_key the same way for both `match` and
   //    `no_match` results — repeated null lookups should also short-circuit.
@@ -89,7 +96,7 @@ export async function POST(request: Request) {
   // 3. Live Google Places call. Two SKUs (search + details).
   let place;
   try {
-    place = await enrichVendor(name, category, location);
+    place = await enrichVendor(name, category, location, website);
   } catch (err) {
     await logLookup({
       userId,

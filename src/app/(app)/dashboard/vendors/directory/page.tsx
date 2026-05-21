@@ -679,9 +679,22 @@ export default function VendorDirectoryPage() {
         </div>
 
         {sorted.length === 0 && (
-          <p className="text-[15px] text-muted text-center py-8">
-            No vendors found. Try a different search or category.
-          </p>
+          <div className="text-center py-10">
+            <p className="text-[15px] font-semibold text-plum">
+              No directory vendors found
+            </p>
+            <p className="mt-1 text-[14px] text-muted max-w-md mx-auto">
+              {weddingCity
+                ? `Our directory doesn't have listings within ${radiusMiles} miles of ${weddingCity} yet. Try widening the radius above, searching a nearby city, or adding vendors you've found yourself.`
+                : "Try a different search or category — or add vendors you've found yourself."}
+            </p>
+            <Link
+              href="/dashboard/vendors"
+              className="mt-4 inline-flex items-center justify-center rounded-[12px] px-4 py-2 text-[14px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+            >
+              Add your own vendors
+            </Link>
+          </div>
         )}
 
         {/* Infinite scroll sentinel */}
