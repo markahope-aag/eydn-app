@@ -25,7 +25,8 @@ const navSections: NavSection[] = [
   {
     label: "Vendors",
     items: [
-      { href: "/dashboard/vendors", label: "Vendors" },
+      { href: "/dashboard/vendors", label: "My Vendors" },
+      { href: "/dashboard/vendors/directory", label: "Vendor Directory" },
     ],
   },
   {
@@ -57,6 +58,14 @@ const navSections: NavSection[] = [
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard";
+  // "My Vendors" covers the list and vendor detail pages, but not the
+  // separate "Vendor Directory" sub-route.
+  if (href === "/dashboard/vendors") {
+    return (
+      pathname.startsWith("/dashboard/vendors") &&
+      !pathname.startsWith("/dashboard/vendors/directory")
+    );
+  }
   return pathname.startsWith(href);
 }
 

@@ -379,15 +379,15 @@ export default function VendorsPage() {
       });
       if (!res.ok) throw new Error();
 
-      if (status === "booked" && vendor) {
-        trackVendorPlacement(vendor.category);
+      if ((status === "booked" || status === "paid_in_full") && vendor) {
+        const wasBooked = ["booked", "deposit_paid", "paid_in_full"].includes(vendor.status);
+        if (!wasBooked) trackVendorPlacement(vendor.category);
         triggerConfetti();
         const name = vendor.name || vendor.category;
-        const category = vendor.category;
-        const bigOnes = ["Venue", "Photographer", "Caterer", "DJ or Band", "Florist", "Officiant"];
-        const message = bigOnes.includes(category)
-          ? `${name} locked in! 🎉 That's one of the biggest ones done.`
-          : `${name} is booked! 🎉 Another piece of the puzzle in place.`;
+        const message =
+          status === "paid_in_full"
+            ? `${name} is paid in full! 💛 One step closer to the best day ever.`
+            : `${name} is booked! 🎉 One step closer to the best day ever.`;
         toast(message, { icon: "✨", duration: 4000 });
       }
     } catch {

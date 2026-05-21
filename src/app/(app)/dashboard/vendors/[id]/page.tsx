@@ -10,6 +10,7 @@ import { Comments } from "@/components/Comments";
 import { VendorCard } from "@/components/VendorCard";
 import { FileUpload } from "@/components/FileUpload";
 import { Tooltip } from "@/components/Tooltip";
+import { Confetti, triggerConfetti } from "@/components/Confetti";
 
 type Attachment = {
   id: string;
@@ -115,6 +116,20 @@ export default function VendorDetailPage({
         body: JSON.stringify({ [field]: value }),
       });
       if (!res.ok) throw new Error();
+
+      if (
+        field === "status" &&
+        value !== prev?.status &&
+        (value === "booked" || value === "paid_in_full")
+      ) {
+        triggerConfetti();
+        toast(
+          `${prev?.name || "This vendor"} is ${
+            value === "paid_in_full" ? "paid in full" : "booked"
+          }! 🎉 One step closer to the best day ever.`,
+          { icon: "✨", duration: 4000 }
+        );
+      }
     } catch {
       setVendor(prev);
       toast.error("Failed to update");
@@ -148,6 +163,7 @@ export default function VendorDetailPage({
 
   return (
     <div className="max-w-2xl">
+      <Confetti />
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => router.push("/dashboard/vendors")}
