@@ -51,35 +51,30 @@ const STEPS: TourStep[] = [
 ];
 
 export function OnboardingTour() {
-  // Check localStorage synchronously to avoid flicker for users who already completed the tour
-  const alreadyDone = typeof window !== "undefined" && localStorage.getItem("eydn_tour_complete") === "true";
   const [show, setShow] = useState(false);
   const [step, setStep] = useState(0);
 
+  // Tour-complete state is per-user and lives server-side (/api/tour-status).
+  // We deliberately do NOT cache it in localStorage: that key is per-browser,
+  // not per-user, so a tour completed on this device would suppress it for a
+  // different account that later signs up in the same browser.
   useEffect(() => {
-    if (alreadyDone) return;
-
     fetch("/api/tour-status")
       .then((r) => r.json())
       .then((data) => {
-        if (data.tour_complete) {
-          localStorage.setItem("eydn_tour_complete", "true");
-        } else {
-          setShow(true);
-        }
+        if (!data.tour_complete) setShow(true);
       })
       .catch(() => {
         // If the API fails, don't block — skip the tour
       });
-  }, [alreadyDone]);
+  }, []);
 
   const complete = useCallback(() => {
     setShow(false);
-    localStorage.setItem("eydn_tour_complete", "true");
     fetch("/api/tour-status", { method: "PUT" }).catch(() => {});
   }, []);
 
-  if (alreadyDone || !show) return null;
+  if (!show) return null;
 
   const current = STEPS[step];
   const isFirst = step === 0;

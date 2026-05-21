@@ -553,15 +553,22 @@ function AIScreen({
         </div>
       </div>
 
-      {/* Text input */}
+      {/* Text input — Enter sends the question and opens the dashboard */}
       <div className="mt-5">
         <input
           type="text"
           value={aiInput}
           onChange={(e) => onAIInputChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !submitting) {
+              e.preventDefault();
+              onGoToDashboard();
+            }
+          }}
           placeholder="Ask anything, or head to your dashboard..."
-          className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
+          className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px] disabled:opacity-70"
           aria-label="Message Eydn"
+          disabled={submitting}
         />
       </div>
 
@@ -577,7 +584,11 @@ function AIScreen({
             className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"
           />
         )}
-        {submitting ? "Setting up your wedding..." : "Go to my dashboard"}
+        {submitting
+          ? "Setting up your wedding..."
+          : aiInput.trim()
+            ? "Ask Eydn & open dashboard"
+            : "Go to my dashboard"}
       </button>
     </div>
   );

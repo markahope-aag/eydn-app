@@ -10,6 +10,7 @@ import { MilestoneCelebration } from "@/components/MilestoneCelebration";
 import { DayOfReveal } from "@/components/DayOfReveal";
 import CatchUpBanner from "@/components/CatchUpBanner";
 import { WeddingLocation } from "@/components/WeddingLocation";
+import { AddCouplePhoto } from "@/components/AddCouplePhoto";
 
 function buildGreeting(ctx: { name: string; both: string; days: number | null; totalTasks: number; doneTasks: number; taskPct: number }): string {
   const { name, both, days, totalTasks, doneTasks, taskPct } = ctx;
@@ -481,18 +482,7 @@ export default async function DashboardPage() {
             <Image src={couplePhotoUrl} alt={`${wedding.partner1_name} & ${wedding.partner2_name}`} fill className="object-cover" unoptimized />
           </div>
         ) : (
-          <Link
-            href="/dashboard/website"
-            className="hidden sm:flex flex-shrink-0 w-24 h-24 rounded-full border-2 border-dashed border-border items-center justify-center hover:border-violet hover:bg-lavender/30 transition group"
-            title="Add a couple photo on your website page"
-          >
-            <div className="text-center">
-              <svg className="mx-auto text-muted group-hover:text-violet transition" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M10 4V16M4 10H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-              <span className="text-[9px] text-muted group-hover:text-violet transition mt-0.5 block">Add photo</span>
-            </div>
-          </Link>
+          <AddCouplePhoto />
         )}
 
         <div className="flex-1 min-w-0">
