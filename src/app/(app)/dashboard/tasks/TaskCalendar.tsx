@@ -74,6 +74,15 @@ export function TaskCalendar({ tasks, onSelectTask }: Props) {
     return "bg-violet";
   }
 
+  // Tinted pill style for the in-cell task previews.
+  function chipClass(task: Task): string {
+    if (task.status === "done") return "bg-[#2E8B57]/10 text-[#2E8B57] line-through";
+    if (task.due_date && new Date(task.due_date) < today) {
+      return "bg-error/10 text-error";
+    }
+    return "bg-lavender text-violet";
+  }
+
   const monthName = new Date(currentYear, currentMonth).toLocaleString("default", {
     month: "long",
   });
@@ -112,7 +121,7 @@ export function TaskCalendar({ tasks, onSelectTask }: Props) {
         {calendarDays.map((day, i) => {
           if (day === null) {
             return (
-              <div key={`empty-${i}`} className="bg-whisper min-h-[64px]" />
+              <div key={`empty-${i}`} className="bg-whisper min-h-[104px]" />
             );
           }
 
@@ -128,7 +137,7 @@ export function TaskCalendar({ tasks, onSelectTask }: Props) {
             <button
               key={ds}
               onClick={() => setSelectedDate(isSelected ? null : ds)}
-              className={`bg-white min-h-[64px] p-1 text-left hover:bg-lavender transition ${
+              className={`bg-white min-h-[104px] p-1.5 text-left hover:bg-lavender transition flex flex-col overflow-hidden ${
                 isSelected ? "ring-2 ring-violet" : ""
               }`}
             >
@@ -142,16 +151,19 @@ export function TaskCalendar({ tasks, onSelectTask }: Props) {
                 {day}
               </span>
               {dayTasks.length > 0 && (
-                <div className="mt-0.5 flex flex-wrap gap-0.5">
+                <div className="mt-1 flex flex-col gap-0.5 min-w-0">
                   {dayTasks.slice(0, 3).map((t) => (
                     <span
                       key={t.id}
-                      className={`w-2 h-2 rounded-full ${dotColor(t)}`}
-                    />
+                      title={t.title}
+                      className={`block truncate rounded px-1 py-0.5 text-[10px] leading-tight ${chipClass(t)}`}
+                    >
+                      {t.title}
+                    </span>
                   ))}
                   {dayTasks.length > 3 && (
-                    <span className="text-[10px] text-muted">
-                      +{dayTasks.length - 3}
+                    <span className="text-[10px] text-muted px-1 mt-0.5">
+                      +{dayTasks.length - 3} more
                     </span>
                   )}
                 </div>

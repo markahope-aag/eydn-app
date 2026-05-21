@@ -3,6 +3,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
 import { supabaseError } from "@/lib/api-error";
+import { getWeddingMembers } from "@/lib/wedding-members";
 
 export async function GET(request: Request) {
   const result = await getWeddingForUser();
@@ -72,6 +73,31 @@ export async function POST(request: Request) {
 
   const err = supabaseError(error, "comments");
   if (err) return err;
+
+  // Notify the wedding when someone is @mentioned in the comment.
+  const content = (body.content as string).trim();
+  if (content.includes("@")) {
+    try {
+      const members = await getWeddingMembers(wedding.user_id, wedding.id, supabase);
+      const mentioned = members.filter(
+        (m) => m.user_id !== userId && content.includes(`@${m.name}`)
+      );
+      if (mentioned.length > 0) {
+        const names = mentioned.map((m) => m.name).join(", ");
+        const snippet = content.length > 100 ? `${content.slice(0, 100)}…` : content;
+        await supabase.from("notifications").insert({
+          wedding_id: wedding.id,
+          type: "comment_mention",
+          title: `${userName} mentioned ${names} in a comment`,
+          body: snippet,
+          task_id: body.entity_type === "task" ? (body.entity_id as string) : null,
+          vendor_id: body.entity_type === "vendor" ? (body.entity_id as string) : null,
+        });
+      }
+    } catch (e) {
+      console.error("[comments] mention notification failed", e);
+    }
+  }
 
   return NextResponse.json(data, { status: 201 });
 }

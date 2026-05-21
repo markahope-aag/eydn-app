@@ -1,23 +1,33 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 type Props = {
   weddingId: string;
-  initialCity: string | null;
+  initialDate: string | null;
 };
 
+function formatDate(date: string): string {
+  // Noon avoids any timezone off-by-one when rendering a date-only value.
+  return new Date(date + "T12:00:00").toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 /**
- * Inline-editable wedding location. Shown on the dashboard hero so couples
- * can see the city their planning is anchored to and update it in place.
- * The same `venue_city` value also powers the auto-filter on the vendor
- * directory.
+ * Inline-editable wedding date on the dashboard hero. Saving refreshes the
+ * page so the countdown and the date-driven task timeline pick up the change.
  */
-export function WeddingLocation({ weddingId, initialCity }: Props) {
-  const [city, setCity] = useState<string>(initialCity ?? "");
+export function WeddingDateField({ weddingId, initialDate }: Props) {
+  const router = useRouter();
+  const [date, setDate] = useState<string>(initialDate ?? "");
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(city);
+  const [draft, setDraft] = useState(date);
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -26,9 +36,12 @@ export function WeddingLocation({ weddingId, initialCity }: Props) {
   }, [editing]);
 
   async function save() {
-    const next = draft.trim();
-    if (next === city) {
+    if (draft === date) {
       setEditing(false);
+      return;
+    }
+    if (!draft) {
+      toast.error("Pick a date first.");
       return;
     }
     setSaving(true);
@@ -36,31 +49,32 @@ export function WeddingLocation({ weddingId, initialCity }: Props) {
       const res = await fetch(`/api/weddings/${weddingId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ venue_city: next || null }),
+        body: JSON.stringify({ date: draft }),
       });
       if (!res.ok) throw new Error();
-      setCity(next);
-      toast.success(next ? "Location updated" : "Location cleared");
+      setDate(draft);
       setEditing(false);
+      toast.success("Wedding date updated");
+      // Countdown and the generated task timeline are server-rendered.
+      router.refresh();
     } catch {
-      toast.error("Couldn't save the location. Try again.");
+      toast.error("Couldn't save the date. Try again.");
     } finally {
       setSaving(false);
     }
   }
 
   function cancel() {
-    setDraft(city);
+    setDraft(date);
     setEditing(false);
   }
 
   if (editing) {
     return (
-      <div className="mt-2 flex items-center gap-2">
-        <PinIcon />
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <input
           ref={inputRef}
-          type="text"
+          type="date"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
@@ -70,22 +84,21 @@ export function WeddingLocation({ weddingId, initialCity }: Props) {
             }
             if (e.key === "Escape") cancel();
           }}
-          placeholder="e.g. Austin, TX"
-          aria-label="Wedding location"
+          aria-label="Wedding date"
           className="rounded-[8px] border border-border px-2 py-1 text-[14px] focus:outline-none focus:ring-2 focus:ring-violet/30"
         />
         <button
           type="button"
           onClick={save}
           disabled={saving}
-          className="text-[12px] font-semibold text-violet hover:text-soft-violet disabled:opacity-50"
+          className="text-[13px] font-semibold text-violet hover:text-soft-violet disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save"}
         </button>
         <button
           type="button"
           onClick={cancel}
-          className="text-[12px] text-muted hover:text-plum"
+          className="text-[13px] text-muted hover:text-plum"
         >
           Cancel
         </button>
@@ -97,24 +110,22 @@ export function WeddingLocation({ weddingId, initialCity }: Props) {
     <button
       type="button"
       onClick={() => {
-        setDraft(city);
+        setDraft(date);
         setEditing(true);
       }}
-      aria-label={city ? `Wedding location ${city}, click to edit` : "Add wedding location"}
+      aria-label={date ? `Wedding date ${formatDate(date)}, click to edit` : "Add wedding date"}
       className="mt-2 inline-flex items-center gap-1.5 text-[15px] text-muted hover:text-plum transition"
     >
-      <PinIcon />
-      <span className={city ? "" : "italic"}>
-        {city || "Add location"}
+      <CalendarIcon />
+      <span className={date ? "" : "italic"}>
+        {date ? formatDate(date) : "Add wedding date"}
       </span>
-      <span className="text-[12px] font-medium text-violet">
-        Edit
-      </span>
+      <span className="text-[12px] font-medium text-violet">Edit</span>
     </button>
   );
 }
 
-function PinIcon() {
+function CalendarIcon() {
   return (
     <svg
       width="14"
@@ -127,8 +138,8 @@ function PinIcon() {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="M7 12.5s-4.5-3.8-4.5-7A4.5 4.5 0 0 1 7 1a4.5 4.5 0 0 1 4.5 4.5c0 3.2-4.5 7-4.5 7Z" />
-      <circle cx="7" cy="5.5" r="1.5" />
+      <rect x="1.5" y="2.5" width="11" height="10" rx="1.5" />
+      <path d="M1.5 5.5h11M4.5 1v3M9.5 1v3" />
     </svg>
   );
 }

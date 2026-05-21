@@ -11,6 +11,8 @@ import { DayOfReveal } from "@/components/DayOfReveal";
 import CatchUpBanner from "@/components/CatchUpBanner";
 import { WeddingLocation } from "@/components/WeddingLocation";
 import { AddCouplePhoto } from "@/components/AddCouplePhoto";
+import { WeddingDateField } from "@/components/WeddingDateField";
+import { KeyDecisionsCard } from "@/components/KeyDecisionsCard";
 
 function buildGreeting(ctx: { name: string; both: string; days: number | null; totalTasks: number; doneTasks: number; taskPct: number }): string {
   const { name, both, days, totalTasks, doneTasks, taskPct } = ctx;
@@ -434,24 +436,24 @@ export default async function DashboardPage() {
 
       {/* Proactive nudges from Eydn */}
       {sortedNudges.length > 0 && (
-        <div className="mb-8 space-y-2">
+        <div className="mb-8 space-y-3">
           {sortedNudges.map((nudge, i) => (
-            <div key={i} className="flex gap-3 items-start">
-              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+            <div key={i} className="flex gap-4 items-start">
+              <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
                 nudge.type === "urgent" ? "bg-error/10" : nudge.type === "celebrate" ? "bg-violet/10" : "bg-brand-gradient"
               }`}>
-                <span className={`text-[13px] font-semibold ${
+                <span className={`text-[15px] font-semibold ${
                   nudge.type === "urgent" ? "text-error" : nudge.type === "celebrate" ? "text-violet" : "text-white"
                 }`}>
                   {nudge.type === "urgent" ? "!" : nudge.type === "celebrate" ? "★" : "e"}
                 </span>
               </div>
-              <div className={`rounded-[12px] rounded-tl-[4px] px-4 py-3 flex-1 ${
+              <div className={`rounded-[14px] rounded-tl-[4px] px-5 py-4 flex-1 ${
                 nudge.type === "urgent" ? "bg-error/5 border border-error/20" : "bg-lavender"
               }`}>
-                <p className="text-[14px] text-plum">{nudge.message}</p>
+                <p className="text-[16px] text-plum leading-relaxed">{nudge.message}</p>
                 {nudge.link && (
-                  <a href={nudge.link} className="text-[12px] font-semibold text-violet hover:text-soft-violet mt-1 inline-block">
+                  <a href={nudge.link} className="text-[14px] font-semibold text-violet hover:text-soft-violet mt-1.5 inline-block">
                     Take action →
                   </a>
                 )}
@@ -493,37 +495,26 @@ export default async function DashboardPage() {
             weddingId={wedding.id}
             initialCity={(wedding as { venue_city: string | null }).venue_city}
           />
-          {wedding.date && (
-            <div className="mt-2">
-              <p className="text-[15px] text-muted">
-                {new Date(wedding.date).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-              {daysUntilWedding !== null && daysUntilWedding > 0 && (
-                <div className="mt-3">
-                  <div
-                    className="inline-flex items-baseline gap-2"
-                    style={{
-                      background: "linear-gradient(135deg, var(--violet), var(--soft-violet))",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
-                    <span className="text-[48px] font-semibold leading-none" style={{ letterSpacing: "-1px" }}>
-                      {daysUntilWedding}
-                    </span>
-                    <span className="text-[18px] font-semibold">
-                      days to go
-                    </span>
-                  </div>
-                  <CountdownBar weddingDate={wedding.date} />
-                </div>
-              )}
+          <WeddingDateField weddingId={wedding.id} initialDate={wedding.date} />
+          {wedding.date && daysUntilWedding !== null && daysUntilWedding > 0 && (
+            <div className="mt-3">
+              <div
+                className="inline-flex items-baseline gap-2"
+                style={{
+                  background: "linear-gradient(135deg, var(--violet), var(--soft-violet))",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                <span className="text-[48px] font-semibold leading-none" style={{ letterSpacing: "-1px" }}>
+                  {daysUntilWedding}
+                </span>
+                <span className="text-[18px] font-semibold">
+                  days to go
+                </span>
+              </div>
+              <CountdownBar weddingDate={wedding.date} />
             </div>
           )}
         </div>
@@ -546,7 +537,7 @@ export default async function DashboardPage() {
           <div className="card-summary p-4">
             <div className="flex items-center justify-between">
               <p className="text-[13px] font-semibold text-muted">Budget</p>
-              <Link href="/dashboard/budget" className="text-[11px] text-violet hover:text-soft-violet font-semibold">View →</Link>
+              <Link href="/dashboard/budget" className="text-[13px] text-violet hover:text-soft-violet font-semibold">View →</Link>
             </div>
             <p className="mt-1 text-[22px] font-semibold text-plum">${budgetSpent.toLocaleString()}</p>
             <p className="text-[12px] text-muted">
@@ -580,22 +571,8 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* Things Eydn Should Know */}
-      <div className="card p-5 mt-6">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-[15px] font-semibold text-plum">Things Eydn Should Know</h2>
-          <Link href="/dashboard/settings" className="text-[12px] text-violet hover:text-plum transition">Edit</Link>
-        </div>
-        {wedding.key_decisions ? (
-          <p className="text-[13px] text-muted leading-relaxed line-clamp-3">{wedding.key_decisions}</p>
-        ) : (
-          <div className="text-center py-4">
-            <p className="text-[13px] text-muted">Tell Eydn about your wedding preferences, allergies, must-haves, and key decisions.</p>
-            <Link href="/dashboard/settings" className="text-[13px] text-violet font-semibold mt-2 inline-block">Add Notes &rarr;</Link>
-          </div>
-        )}
-        <p className="text-[11px] text-muted mt-2">These notes shape every conversation with your AI planning assistant.</p>
-      </div>
+      {/* Things Eydn Should Know — inline-editable */}
+      <KeyDecisionsCard weddingId={wedding.id} initialValue={wedding.key_decisions} />
 
       {/* Upcoming tasks — sorted by urgency with priority indicators */}
       {upcomingTasks && upcomingTasks.length > 0 && (
@@ -788,7 +765,7 @@ function StatCard({ label, value, href }: { label: string; value: string | numbe
     <>
       <div className="flex items-center justify-between">
         <p className="text-[13px] font-semibold text-muted">{label}</p>
-        {href && <span className="text-[11px] text-violet font-semibold">View →</span>}
+        {href && <span className="text-[13px] text-violet font-semibold">View →</span>}
       </div>
       <p className="mt-1 text-[26px] font-semibold text-plum">{value}</p>
     </>

@@ -67,6 +67,7 @@ type Props = {
   onUpdateNotes: (_id: string, _notes: string) => void;
   onUpdatePriority: (_id: string, _priority: "high" | "medium" | "low") => void;
   onUpdateStatus: (_id: string, _status: "not_started" | "in_progress" | "done") => void;
+  onUpdateDueDate: (_id: string, _dueDate: string | null) => void;
 };
 
 const STATUS_OPTIONS: { value: "not_started" | "in_progress" | "done"; label: string }[] = [
@@ -90,6 +91,7 @@ export function TaskDetail({
   onUpdateNotes,
   onUpdatePriority,
   onUpdateStatus,
+  onUpdateDueDate,
 }: Props) {
   const [resources, setResources] = useState<TaskResource[]>([]);
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
@@ -101,6 +103,8 @@ export function TaskDetail({
   const emailTemplate = getEmailTemplate(task.category, task.title);
   const followUpTemplate = VENDOR_EMAIL_TEMPLATES.find((t) => t.category === "Follow-Up");
   const [relatedTaskId, setRelatedTaskId] = useState("");
+  const [editingDue, setEditingDue] = useState(false);
+  const [dueDraft, setDueDraft] = useState(task.due_date || "");
 
   const dueDateInfo = task.due_date ? formatDueDate(task.due_date) : null;
   const isOverdue = dueDateInfo?.isOverdue && task.status !== "done";
@@ -170,13 +174,13 @@ export function TaskDetail({
     }
   }
 
-  async function addRelatedTask() {
-    if (!relatedTaskId) return;
+  async function linkRelatedTask(id: string) {
+    if (!id) return;
     try {
       const res = await fetch(`/api/tasks/${task.id}/related`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ related_task_id: relatedTaskId }),
+        body: JSON.stringify({ related_task_id: id }),
       });
       if (!res.ok) throw new Error();
       setRelatedTaskId("");
@@ -208,6 +212,15 @@ export function TaskDetail({
       !relatedTaskIds.has(t.id)
   );
 
+  // Eydn's suggestions: tasks sharing this task's category or timeline phase.
+  const suggestedTasks = availableTasks
+    .filter(
+      (t) =>
+        (!!task.category && t.category === task.category) ||
+        (!!task.timeline_phase && t.timeline_phase === task.timeline_phase)
+    )
+    .slice(0, 4);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
@@ -216,7 +229,7 @@ export function TaskDetail({
       aria-modal="true"
     >
       <div
-        className="bg-white rounded-[16px] shadow-xl w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto"
+        className="bg-white rounded-[16px] shadow-xl w-full max-w-3xl mx-4 max-h-[88vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sticky header — keeps the close X reachable on long scroll. The
@@ -256,39 +269,99 @@ export function TaskDetail({
 
         <div className="p-6 pt-4">
 
-          {/* Due date */}
-          {dueDateInfo && (
-            <div className="mt-4 flex items-center gap-3">
-              <span className={`text-[15px] ${isOverdue ? "text-error font-semibold" : dueDateInfo.isToday ? "text-violet font-semibold" : "text-muted"}`}>
-                Due: {dueDateInfo.formatted} &middot; {dueDateInfo.relative}
-              </span>
-              <button
-                onClick={async () => {
-                  try {
-                    const res = await fetch(`/api/tasks/${task.id}/ics`);
-                    if (!res.ok) throw new Error();
-                    const blob = await res.blob();
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `${task.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.ics`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                  } catch {
-                    toast.error("Couldn't generate calendar event.");
-                  }
-                }}
-                className="text-[12px] text-violet hover:text-soft-violet font-semibold transition flex items-center gap-1"
-              >
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M2 7h12" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-                Add to Calendar
-              </button>
-            </div>
-          )}
+          {/* Due date — editable, with a heads-up that the timeline is data-driven */}
+          <div className="mt-4">
+            {editingDue ? (
+              <div className="rounded-[12px] border border-amber-200 bg-amber-50 p-3">
+                <label className="text-[13px] font-medium text-plum">
+                  {task.due_date ? "Change due date" : "Set a due date"}
+                </label>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <input
+                    type="date"
+                    value={dueDraft}
+                    onChange={(e) => setDueDraft(e.target.value)}
+                    className="rounded-[8px] border-border px-2 py-1 text-[14px]"
+                  />
+                  <button
+                    onClick={() => {
+                      onUpdateDueDate(task.id, dueDraft || null);
+                      setEditingDue(false);
+                    }}
+                    className="btn-primary btn-sm"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDueDraft(task.due_date || "");
+                      setEditingDue(false);
+                    }}
+                    className="btn-ghost btn-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <p className="mt-2 text-[12px] text-amber-700 leading-relaxed">
+                  Heads up — your task timeline is built from real wedding-planning
+                  data, so this date is timed for a reason. You can move it, but
+                  changing it isn&apos;t usually recommended.
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 flex-wrap">
+                <span
+                  className={`text-[15px] ${
+                    isOverdue
+                      ? "text-error font-semibold"
+                      : dueDateInfo?.isToday
+                        ? "text-violet font-semibold"
+                        : "text-muted"
+                  }`}
+                >
+                  {dueDateInfo
+                    ? `Due: ${dueDateInfo.formatted} · ${dueDateInfo.relative}`
+                    : "No due date set"}
+                </span>
+                <button
+                  onClick={() => {
+                    setDueDraft(task.due_date || "");
+                    setEditingDue(true);
+                  }}
+                  className="text-[12px] text-violet hover:text-soft-violet font-semibold transition"
+                >
+                  {task.due_date ? "Change date" : "Add date"}
+                </button>
+                {dueDateInfo && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(`/api/tasks/${task.id}/ics`);
+                        if (!res.ok) throw new Error();
+                        const blob = await res.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `${task.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.ics`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      } catch {
+                        toast.error("Couldn't generate calendar event.");
+                      }
+                    }}
+                    className="text-[12px] text-violet hover:text-soft-violet font-semibold transition flex items-center gap-1"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M2 7h12" stroke="currentColor" strokeWidth="1.5" />
+                      <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                    Add to Calendar
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Status selector */}
           <div className="mt-4">
@@ -602,6 +675,27 @@ export function TaskDetail({
                 })}
               </div>
             )}
+            {suggestedTasks.length > 0 && (
+              <div className="mb-2">
+                <p className="text-[12px] text-muted mb-1">Suggested by Eydn</p>
+                <div className="space-y-1">
+                  {suggestedTasks.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex items-center gap-2 rounded-[10px] bg-lavender/30 px-3 py-2"
+                    >
+                      <span className="text-[14px] text-plum flex-1 truncate">{t.title}</span>
+                      <button
+                        onClick={() => linkRelatedTask(t.id)}
+                        className="text-[12px] font-semibold text-violet hover:text-soft-violet flex-shrink-0"
+                      >
+                        + Link
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {availableTasks.length > 0 && (
               <div className="flex gap-2">
                 <select
@@ -609,7 +703,7 @@ export function TaskDetail({
                   onChange={(e) => setRelatedTaskId(e.target.value)}
                   className="rounded-[10px] border-border px-3 py-1.5 text-[13px] flex-1"
                 >
-                  <option value="">Select a task...</option>
+                  <option value="">Link another task…</option>
                   {availableTasks.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.title}
@@ -617,7 +711,7 @@ export function TaskDetail({
                   ))}
                 </select>
                 <button
-                  onClick={addRelatedTask}
+                  onClick={() => linkRelatedTask(relatedTaskId)}
                   className="btn-secondary btn-sm"
                 >
                   Link

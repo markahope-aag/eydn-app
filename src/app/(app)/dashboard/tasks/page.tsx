@@ -325,6 +325,27 @@ export default function TasksPage() {
     }
   }
 
+  async function updateDueDate(id: string, dueDate: string | null) {
+    const prev = tasks;
+    setTasks((t) => t.map((x) => (x.id === id ? { ...x, due_date: dueDate } : x)));
+    if (selectedTask?.id === id) {
+      setSelectedTask((s) => (s ? { ...s, due_date: dueDate } : s));
+    }
+
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ due_date: dueDate }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Due date updated");
+    } catch {
+      setTasks(prev);
+      toast.error("Due date didn't save. Try again.");
+    }
+  }
+
   async function fetchCalendarToken() {
     setCalendarLoading(true);
     try {
@@ -662,6 +683,7 @@ export default function TasksPage() {
           onUpdateNotes={updateNotes}
           onUpdatePriority={updatePriority}
           onUpdateStatus={updateStatus}
+          onUpdateDueDate={updateDueDate}
         />
       )}
     </div>

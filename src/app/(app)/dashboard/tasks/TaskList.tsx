@@ -115,7 +115,17 @@ function SortableTaskItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="relative px-4 py-2.5 hover:bg-lavender transition bg-white"
+      onClick={() => onSelect(task)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(task);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Open task: ${task.title}`}
+      className="group relative px-4 py-2.5 hover:bg-lavender transition bg-white cursor-pointer focus:outline-none focus-visible:bg-lavender"
     >
       {justCompleted && (
         <div
@@ -127,12 +137,13 @@ function SortableTaskItem({
           </span>
         </div>
       )}
-      {/* Top row: drag handle, priority, status, title */}
+      {/* Top row: drag handle, priority, status, title, due date, open chevron */}
       <div className="flex items-center gap-2">
         {/* Drag handle — hidden on mobile */}
         <button
           {...attributes}
           {...listeners}
+          onClick={(e) => e.stopPropagation()}
           className="hidden sm:block flex-shrink-0 cursor-grab active:cursor-grabbing text-muted hover:text-plum p-0.5 touch-none"
           aria-label="Drag to reorder"
           title="Drag to reorder tasks"
@@ -157,33 +168,65 @@ function SortableTaskItem({
 
         {/* Status badge - click to cycle */}
         <button
-          onClick={handleToggle}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggle();
+          }}
           className={`rounded-full px-2 py-0.5 text-[12px] flex-shrink-0 ${STATUS_CLASSES[task.status]}`}
           title="Click to change status"
         >
           {STATUS_LABELS[task.status]}
         </button>
 
-        {/* Task title — click to view details */}
-        <button
-          onClick={() => onSelect(task)}
-          className={`flex-1 text-[15px] text-left truncate hover:underline decoration-violet/30 underline-offset-2 transition ${
+        {/* Task title */}
+        <span
+          className={`flex-1 text-[15px] truncate ${
             task.status === "done"
               ? "text-muted line-through"
               : task.status === "in_progress"
               ? "text-violet"
               : "text-plum"
           }`}
-          title="Click to view details, notes, and Eydn's suggestions"
         >
           {task.title}
           {(task.notes || task.edyn_message) && (
             <span className="inline-block ml-1.5 w-1.5 h-1.5 rounded-full bg-violet/40 align-middle" title="Has notes or tips" />
           )}
-        </button>
+        </span>
+
+        {/* Due date — right-aligned to use the row width */}
+        {dueDateInfo && (
+          <span
+            className={`flex-shrink-0 text-[12px] whitespace-nowrap ${
+              isOverdue
+                ? "text-error font-semibold"
+                : dueDateInfo.isToday
+                ? "text-violet font-semibold"
+                : "text-muted"
+            }`}
+          >
+            {dueDateInfo.formatted} · {dueDateInfo.relative}
+          </span>
+        )}
+
+        {/* Open indicator */}
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="flex-shrink-0 text-muted group-hover:text-violet transition"
+          aria-hidden="true"
+        >
+          <path d="M6 4l4 4-4 4" />
+        </svg>
       </div>
 
-      {/* Bottom row: category, guide, date, delete — wraps on mobile */}
+      {/* Bottom row: category, guide, delete — wraps on mobile */}
       <div className="flex items-center gap-2 mt-1 ml-[18px] sm:ml-[34px] flex-wrap">
         {task.category && (
           <span className="badge text-[11px]">
@@ -195,21 +238,11 @@ function SortableTaskItem({
             Guide
           </span>
         )}
-        {dueDateInfo && (
-          <span
-            className={`text-[12px] ${
-              isOverdue
-                ? "text-error font-semibold"
-                : dueDateInfo.isToday
-                ? "text-violet font-semibold"
-                : "text-muted"
-            }`}
-          >
-            {dueDateInfo.formatted} · {dueDateInfo.relative}
-          </span>
-        )}
         <button
-          onClick={() => onDelete(task.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(task.id);
+          }}
           className="text-[12px] text-error hover:opacity-80 flex-shrink-0"
         >
           Delete
