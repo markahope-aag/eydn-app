@@ -1,7 +1,7 @@
 import type Stripe from "stripe";
 import type { createSupabaseAdmin } from "@/lib/supabase/server";
 import { captureServer } from "@/lib/analytics-server";
-import { SUBSCRIPTION_PRICE } from "@/lib/subscription";
+import { SUBSCRIPTION_PRICE, PRO_MONTHLY_PRICE } from "@/lib/subscription";
 import { getStripe } from "@/lib/stripe";
 
 export type AdminSupabase = ReturnType<typeof createSupabaseAdmin>;
@@ -88,7 +88,13 @@ async function handleSetupModeCheckout(
   });
 }
 
-/** Pro Monthly subscription purchase via Stripe Checkout. */
+/** Pro Monthly subscription purchase via Stripe Checkout.
+ *
+ *  Idempotent fast-path: this writes the row as soon as the Checkout
+ *  session completes. The authoritative row-creation *and* the
+ *  `paid_conversion` analytics event live in `handleSubscriptionCreated`,
+ *  which also covers the cron trial-conversion path (no Checkout Session).
+ *  Both upsert on `stripe_subscription_id`, so running both is safe. */
 async function handleProMonthlyCheckout(
   supabase: AdminSupabase,
   session: Stripe.Checkout.Session,
@@ -106,7 +112,7 @@ async function handleProMonthlyCheckout(
       user_id: meta.user_id,
       wedding_id: meta.wedding_id || null,
       plan: "pro_monthly",
-      amount: 14.99,
+      amount: PRO_MONTHLY_PRICE,
       status: "active",
       stripe_session_id: session.id,
       stripe_subscription_id: subscription.id,
@@ -117,14 +123,6 @@ async function handleProMonthlyCheckout(
     },
     { onConflict: "stripe_subscription_id" }
   );
-
-  const window = await classifyWindow(supabase, meta.user_id);
-  await captureServer(meta.user_id, "paid_conversion", {
-    plan: "pro_monthly",
-    amount: 14.99,
-    window,
-    stripe_subscription_id: subscription.id,
-  });
 }
 
 /** One-time $79 Lifetime purchase (with optional promo code redemption). */
@@ -215,6 +213,56 @@ export async function handleCheckoutCompleted(
     await handleMemoryPlanCheckout(supabase, meta);
     return;
   }
+}
+
+/**
+ * customer.subscription.created — the authoritative row-creation path for
+ * Pro Monthly. Fires for BOTH the normal Checkout flow and the cron
+ * trial-conversion path (`stripe.subscriptions.create` in
+ * process-trial-conversions), the latter of which never produces a
+ * `checkout.session.completed` event. Without this handler a cron-converted
+ * subscriber is billed by Stripe but never granted Pro access.
+ *
+ * Idempotent via the `stripe_subscription_id` upsert conflict target.
+ */
+export async function handleSubscriptionCreated(
+  supabase: AdminSupabase,
+  event: Stripe.Event
+): Promise<void> {
+  const subscription = event.data.object as Stripe.Subscription;
+  const meta = subscription.metadata;
+  if (meta?.type !== "pro_monthly_subscription" || !meta.user_id) return;
+
+  const periodEnd = subscription.items.data[0]?.current_period_end;
+  const isActive =
+    subscription.status === "active" || subscription.status === "trialing";
+
+  await supabase.from("subscriber_purchases").upsert(
+    {
+      user_id: meta.user_id,
+      wedding_id: meta.wedding_id || null,
+      plan: "pro_monthly",
+      amount: PRO_MONTHLY_PRICE,
+      status: isActive ? "active" : "past_due",
+      stripe_subscription_id: subscription.id,
+      stripe_customer_id: (subscription.customer as string) || null,
+      current_period_end: periodEnd
+        ? new Date(periodEnd * 1000).toISOString()
+        : null,
+      cancel_at_period_end: subscription.cancel_at_period_end,
+      purchased_at: new Date().toISOString(),
+    },
+    { onConflict: "stripe_subscription_id" }
+  );
+
+  const window = await classifyWindow(supabase, meta.user_id);
+  await captureServer(meta.user_id, "paid_conversion", {
+    plan: "pro_monthly",
+    amount: PRO_MONTHLY_PRICE,
+    window,
+    stripe_subscription_id: subscription.id,
+    source: meta.source || "checkout",
+  });
 }
 
 export async function handleSubscriptionUpdated(
@@ -318,5 +366,64 @@ export async function handleSubscriptionDeleted(
       .from("weddings")
       .update({ memory_plan_active: false })
       .eq("id", cancelMeta.wedding_id);
+  }
+}
+
+/**
+ * charge.refunded — revoke access when a Lifetime ($79) purchase is fully
+ * refunded. Lifetime rows store `stripe_payment_intent_id`, so we match on
+ * it. Partial refunds keep access. Monthly refunds flow through the
+ * subscription lifecycle events instead.
+ */
+export async function handleChargeRefunded(
+  supabase: AdminSupabase,
+  event: Stripe.Event
+): Promise<void> {
+  const charge = event.data.object as Stripe.Charge;
+
+  // Only a full refund revokes access.
+  if (charge.amount_refunded < charge.amount) return;
+
+  const paymentIntentId =
+    typeof charge.payment_intent === "string" ? charge.payment_intent : null;
+  if (!paymentIntentId) return;
+
+  const { data: updated } = await supabase
+    .from("subscriber_purchases")
+    .update({ status: "refunded" })
+    .eq("stripe_payment_intent_id", paymentIntentId)
+    .eq("status", "active")
+    .select("user_id");
+
+  const userId = (updated as { user_id: string }[] | null)?.[0]?.user_id;
+  if (userId) {
+    await captureServer(userId, "purchase_refunded", { reason: "refund" });
+  }
+}
+
+/**
+ * charge.dispute.created — a chargeback was opened. Revoke access
+ * immediately (status `disputed`, distinct from a voluntary `refunded`).
+ */
+export async function handleDisputeCreated(
+  supabase: AdminSupabase,
+  event: Stripe.Event
+): Promise<void> {
+  const dispute = event.data.object as Stripe.Dispute;
+
+  const paymentIntentId =
+    typeof dispute.payment_intent === "string" ? dispute.payment_intent : null;
+  if (!paymentIntentId) return;
+
+  const { data: updated } = await supabase
+    .from("subscriber_purchases")
+    .update({ status: "disputed" })
+    .eq("stripe_payment_intent_id", paymentIntentId)
+    .neq("status", "refunded")
+    .select("user_id");
+
+  const userId = (updated as { user_id: string }[] | null)?.[0]?.user_id;
+  if (userId) {
+    await captureServer(userId, "purchase_disputed", { dispute_id: dispute.id });
   }
 }

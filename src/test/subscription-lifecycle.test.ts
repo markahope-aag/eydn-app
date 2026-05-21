@@ -5,6 +5,7 @@ import { getStripe } from '@/lib/stripe';
 // Mock dependencies
 vi.mock('@/lib/supabase/server', () => ({
   createSupabaseAdmin: vi.fn(),
+  untypedClient: (client: unknown) => client,
 }));
 
 vi.mock('@/lib/stripe', () => ({
@@ -63,9 +64,41 @@ const mockSupabase = {
   })),
 };
 
+// New Stripe behaviour shims:
+// - the webhook route claims each event id in `processed_stripe_events`
+//   before dispatch; auto-wrap every `from` impl so that table resolves.
+// - scheduled_subscriptions updates must support the cron's atomic-claim
+//   chain .eq().eq().select() as well as terminal single-.eq() updates.
+const dedupMock = () => ({
+  insert: vi.fn().mockResolvedValue({ error: null }),
+  delete: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+});
+
+function withDedup(impl: (table: string) => unknown): (table: string) => unknown {
+  return (table: string) =>
+    table === 'processed_stripe_events' ? dedupMock() : impl(table);
+}
+
+const rawFromImpl = mockSupabase.from.mockImplementation.bind(mockSupabase.from);
+mockSupabase.from.mockImplementation = ((impl: (table: string) => unknown) =>
+  rawFromImpl(withDedup(impl) as never)) as typeof mockSupabase.from.mockImplementation;
+
+function makeUpdateChain() {
+  const chain = {
+    eq: vi.fn(() => chain),
+    select: vi
+      .fn()
+      .mockResolvedValue({ data: [{ id: 'sched_claimed' }], error: null }),
+    then: (resolve: (v: { data: null; error: null }) => unknown) =>
+      resolve({ data: null, error: null }),
+  };
+  return chain;
+}
+
 describe('Subscription Lifecycle Integration Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
     vi.mocked(createSupabaseAdmin).mockReturnValue(mockSupabase as unknown as ReturnType<typeof createSupabaseAdmin>);
     vi.mocked(getStripe).mockReturnValue(mockStripe as unknown as ReturnType<typeof getStripe>);
   });
@@ -91,9 +124,7 @@ describe('Subscription Lifecycle Integration Tests', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -153,9 +184,7 @@ describe('Subscription Lifecycle Integration Tests', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -277,9 +306,7 @@ describe('Subscription Lifecycle Integration Tests', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -321,21 +348,24 @@ describe('Subscription Lifecycle Integration Tests', () => {
       expect(response.status).toBe(200);
       expect(data.processed).toBe(1);
 
-      // Verify payment intent was created for $79
-      expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith({
-        amount: 7900,
-        currency: 'usd',
-        customer: 'cus_456',
-        payment_method: 'pm_456',
-        off_session: true,
-        confirm: true,
-        metadata: {
-          user_id: 'user_456',
-          wedding_id: 'wedding_456',
-          type: 'subscriber_purchase',
-          source: 'trial_auto_convert',
+      // Verify payment intent was created for $79 (with idempotency key)
+      expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
+        {
+          amount: 7900,
+          currency: 'usd',
+          customer: 'cus_456',
+          payment_method: 'pm_456',
+          off_session: true,
+          confirm: true,
+          metadata: {
+            user_id: 'user_456',
+            wedding_id: 'wedding_456',
+            type: 'subscriber_purchase',
+            source: 'trial_auto_convert',
+          },
         },
-      });
+        { idempotencyKey: expect.any(String) }
+      );
 
       // Verify subscriber purchase record was created directly
       expect(mockSupabase.from).toHaveBeenCalledWith('subscriber_purchases');
@@ -361,9 +391,7 @@ describe('Subscription Lifecycle Integration Tests', () => {
       (mockSupabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
         if (table === 'weddings') {
           return {
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         return {};
@@ -431,9 +459,7 @@ describe('Subscription Lifecycle Integration Tests', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -527,9 +553,7 @@ describe('Subscription Lifecycle Integration Tests', () => {
       (mockSupabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
         if (table === 'subscriber_purchases') {
           return {
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         return {};
@@ -570,9 +594,7 @@ describe('Subscription Lifecycle Integration Tests', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {

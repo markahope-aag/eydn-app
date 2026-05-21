@@ -109,8 +109,35 @@ export async function POST(request: Request) {
     }
   }
 
-  // Handle $0 purchase (100% discount) — skip Stripe
+  // Handle $0 purchase (100% discount) — skip Stripe.
   if (finalAmount === 0 && promoId) {
+    // The redemption row is the atomic gate: a unique index on
+    // (promo_code_id, user_id) means a concurrent duplicate request fails
+    // here with 23505 rather than creating a second free purchase.
+    const { error: redemptionError } = await supabase
+      .from("promo_code_redemptions")
+      .insert({
+        promo_code_id: promoId,
+        user_id: userId,
+        original_amount: SUBSCRIPTION_PRICE,
+        discount_amount: discountAmount,
+        final_amount: 0,
+      });
+
+    if (redemptionError) {
+      if ((redemptionError as { code?: string }).code === "23505") {
+        return NextResponse.json(
+          { error: "This code has already been applied to your account." },
+          { status: 400 }
+        );
+      }
+      console.error("[SUBSCRIBE PROMO]", redemptionError);
+      return NextResponse.json(
+        { error: "Could not apply that code. Please try again." },
+        { status: 500 }
+      );
+    }
+
     const { data: purchase } = await supabase
       .from("subscriber_purchases")
       .insert({
@@ -124,17 +151,16 @@ export async function POST(request: Request) {
       .select("id")
       .single();
 
-    // Record redemption
-    await supabase.from("promo_code_redemptions").insert({
-      promo_code_id: promoId,
-      user_id: userId,
-      purchase_id: (purchase as { id: string } | null)?.id || null,
-      original_amount: SUBSCRIPTION_PRICE,
-      discount_amount: discountAmount,
-      final_amount: 0,
-    });
+    // Link the redemption to the purchase row now that it exists.
+    if (purchase) {
+      await supabase
+        .from("promo_code_redemptions")
+        .update({ purchase_id: (purchase as { id: string }).id })
+        .eq("promo_code_id", promoId)
+        .eq("user_id", userId);
+    }
 
-    // Atomic increment usage counter
+    // Increment usage counter (atomic, respects max_uses).
     await supabase.rpc("increment_promo_uses", { code_id: promoId });
 
     return NextResponse.json({
@@ -186,8 +212,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Stripe checkout failed";
-    console.error("[SUBSCRIBE LIFETIME]", msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[SUBSCRIBE LIFETIME]", err);
+    return NextResponse.json(
+      { error: "Checkout could not be started. Please try again." },
+      { status: 500 }
+    );
   }
 }

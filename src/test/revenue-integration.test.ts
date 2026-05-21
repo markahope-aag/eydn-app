@@ -10,6 +10,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 
 vi.mock('@/lib/supabase/server', () => ({
   createSupabaseAdmin: vi.fn(),
+  untypedClient: (client: unknown) => client,
 }));
 
 vi.mock('@/lib/stripe', () => ({
@@ -90,6 +91,37 @@ const mockSupabase = {
   rpc: vi.fn(),
 };
 
+// New Stripe behaviour shims:
+// - the webhook route claims each event id in `processed_stripe_events`
+//   before dispatch; auto-wrap every `from` impl so that table resolves.
+// - scheduled_subscriptions updates must support the cron's atomic-claim
+//   chain .eq().eq().select() as well as terminal .eq()/.eq().eq() updates.
+const dedupMock = () => ({
+  insert: vi.fn().mockResolvedValue({ error: null }),
+  delete: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+});
+
+function withDedup(impl: (table: string) => unknown): (table: string) => unknown {
+  return (table: string) =>
+    table === 'processed_stripe_events' ? dedupMock() : impl(table);
+}
+
+const rawFromImpl = mockSupabase.from.mockImplementation.bind(mockSupabase.from);
+mockSupabase.from.mockImplementation = ((impl: (table: string) => unknown) =>
+  rawFromImpl(withDedup(impl) as never)) as typeof mockSupabase.from.mockImplementation;
+
+function makeUpdateChain() {
+  const chain = {
+    eq: vi.fn(() => chain),
+    select: vi
+      .fn()
+      .mockResolvedValue({ data: [{ id: 'sched_claimed' }], error: null }),
+    then: (resolve: (v: { data: null; error: null }) => unknown) =>
+      resolve({ data: null, error: null }),
+  };
+  return chain;
+}
+
 describe('End-to-End Revenue Flow Integration Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -97,9 +129,10 @@ describe('End-to-End Revenue Flow Integration Tests', () => {
     vi.mocked(createSupabaseAdmin).mockReturnValue(mockSupabase as unknown as ReturnType<typeof createSupabaseAdmin>);
     vi.mocked(getStripe).mockReturnValue(mockStripe as unknown as ReturnType<typeof getStripe>);
     vi.mocked(requireCronAuth).mockReturnValue(null);
-    
+
     // Set up environment
     process.env.STRIPE_PRO_MONTHLY_PRICE_ID = 'price_test_monthly';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
   });
 
   describe('Calculator → Trial → Pro Monthly Conversion → Renewal', () => {
@@ -233,11 +266,7 @@ describe('End-to-End Revenue Flow Integration Tests', () => {
       (mockSupabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
         if (table === 'scheduled_subscriptions') {
           return {
-            update: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn().mockResolvedValue({ data: null }),
-              })),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
             insert: vi.fn((data) => {
               scheduledSubscription = { ...data, id: 'sched_revenue_123' };
               return Promise.resolve({ data: scheduledSubscription });
@@ -280,9 +309,7 @@ describe('End-to-End Revenue Flow Integration Tests', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -325,30 +352,40 @@ describe('End-to-End Revenue Flow Integration Tests', () => {
         skipped: 0,
       });
 
-      // Verify subscription was created with correct metadata
-      expect(mockStripe.subscriptions.create).toHaveBeenCalledWith({
-        customer: 'cus_revenue_123',
-        items: [{ price: 'price_test_monthly' }],
-        default_payment_method: 'pm_revenue_123',
-        off_session: true,
-        metadata: {
-          user_id: 'user_revenue_123',
-          wedding_id: 'wedding_revenue_123',
-          type: 'pro_monthly_subscription',
-          source: 'trial_auto_convert',
+      // Verify subscription was created with correct metadata (idempotency key)
+      expect(mockStripe.subscriptions.create).toHaveBeenCalledWith(
+        {
+          customer: 'cus_revenue_123',
+          items: [{ price: 'price_test_monthly' }],
+          default_payment_method: 'pm_revenue_123',
+          off_session: true,
+          metadata: {
+            user_id: 'user_revenue_123',
+            wedding_id: 'wedding_revenue_123',
+            type: 'pro_monthly_subscription',
+            source: 'trial_auto_convert',
+          },
         },
-      });
+        { idempotencyKey: expect.any(String) }
+      );
 
       // ============ STEP 4: Subscription Activation Webhook ============
       let subscriberPurchase: {user_id: string; wedding_id: string; plan: string; amount: number; status: string; stripe_subscription_id?: string; stripe_customer_id?: string} | null = null;
 
+      // Stripe emits customer.subscription.created when the subscription is
+      // created — this is the event that creates the subscriber_purchases
+      // row and fires paid_conversion (handleSubscriptionCreated).
       const subscriptionCreatedEvent = {
-        type: 'checkout.session.completed',
+        type: 'customer.subscription.created',
         data: {
           object: {
-            id: 'cs_subscription_123',
-            mode: 'subscription',
-            subscription: 'sub_revenue_123',
+            id: 'sub_revenue_123',
+            status: 'active',
+            customer: 'cus_revenue_123',
+            cancel_at_period_end: false,
+            items: {
+              data: [{ current_period_end: Math.floor(Date.now() / 1000) + 2592000 }], // 30 days
+            },
             metadata: {
               type: 'pro_monthly_subscription',
               user_id: 'user_revenue_123',
@@ -357,16 +394,6 @@ describe('End-to-End Revenue Flow Integration Tests', () => {
           },
         },
       };
-
-      mockStripe.subscriptions.retrieve.mockResolvedValue({
-        id: 'sub_revenue_123',
-        customer: 'cus_revenue_123',
-        status: 'active',
-        items: {
-          data: [{ current_period_end: Math.floor(Date.now() / 1000) + 2592000 }], // 30 days
-        },
-        cancel_at_period_end: false,
-      });
 
       // Mock classifyWindow for analytics
       (mockSupabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
@@ -436,9 +463,7 @@ describe('End-to-End Revenue Flow Integration Tests', () => {
       (mockSupabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
         if (table === 'subscriber_purchases') {
           return {
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         return {};
@@ -502,9 +527,7 @@ describe('End-to-End Revenue Flow Integration Tests', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -559,9 +582,7 @@ describe('End-to-End Revenue Flow Integration Tests', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -602,19 +623,22 @@ describe('End-to-End Revenue Flow Integration Tests', () => {
         skipped: 0,
       });
 
-      // Verify successful subscription creation
-      expect(mockStripe.subscriptions.create).toHaveBeenCalledWith({
-        customer: 'cus_recovery_789',
-        items: [{ price: 'price_test_monthly' }],
-        default_payment_method: 'pm_recovery_789',
-        off_session: true,
-        metadata: {
-          user_id: 'user_recovery_789',
-          wedding_id: 'wedding_recovery_789',
-          type: 'pro_monthly_subscription',
-          source: 'trial_auto_convert',
+      // Verify successful subscription creation (idempotency key)
+      expect(mockStripe.subscriptions.create).toHaveBeenCalledWith(
+        {
+          customer: 'cus_recovery_789',
+          items: [{ price: 'price_test_monthly' }],
+          default_payment_method: 'pm_recovery_789',
+          off_session: true,
+          metadata: {
+            user_id: 'user_recovery_789',
+            wedding_id: 'wedding_recovery_789',
+            type: 'pro_monthly_subscription',
+            source: 'trial_auto_convert',
+          },
         },
-      });
+        { idempotencyKey: expect.any(String) }
+      );
 
       // Verify success analytics (not failure analytics)
       expect(captureServer).toHaveBeenCalledWith(
@@ -645,9 +669,7 @@ describe('End-to-End Revenue Flow Integration Tests', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {

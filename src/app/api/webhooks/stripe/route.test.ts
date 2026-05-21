@@ -9,6 +9,7 @@ vi.mock('@/lib/stripe', () => ({
 
 vi.mock('@/lib/supabase/server', () => ({
   createSupabaseAdmin: vi.fn(),
+  untypedClient: (client: unknown) => client,
 }));
 
 vi.mock('@/lib/analytics-server', () => ({
@@ -63,9 +64,35 @@ const mockSupabase = {
   rpc: vi.fn(),
 };
 
+// ─── Webhook idempotency shim ─────────────────────────────────────
+// Every mapped event now claims its id in `processed_stripe_events`
+// before dispatch. `dedupClaimError` controls that claim: null = the
+// event is new (handler runs); { code: '23505' } = already processed
+// (handler skipped). Every per-test `from` implementation is auto-wrapped
+// so the dedup table always resolves, regardless of the test's own mock.
+let dedupClaimError: { code: string } | null = null;
+
+const dedupMock = () => ({
+  insert: vi.fn().mockResolvedValue({ error: dedupClaimError }),
+  delete: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+});
+
+function withDedup(impl: (table: string) => unknown): (table: string) => unknown {
+  return (table: string) =>
+    table === "processed_stripe_events" ? dedupMock() : impl(table);
+}
+
+const rawMockImplementation = mockSupabase.from.mockImplementation.bind(
+  mockSupabase.from
+);
+mockSupabase.from.mockImplementation = ((impl: (table: string) => unknown) =>
+  rawMockImplementation(withDedup(impl) as () => unknown)) as typeof mockSupabase.from.mockImplementation;
+
 describe('POST /api/webhooks/stripe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    dedupClaimError = null;
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';
     vi.mocked(getStripe).mockReturnValue(mockStripe as unknown as ReturnType<typeof getStripe>);
     vi.mocked(createSupabaseAdmin).mockReturnValue(mockSupabase as unknown as ReturnType<typeof createSupabaseAdmin>);
   });
@@ -755,6 +782,49 @@ describe('POST /api/webhooks/stripe', () => {
 
       expect(response.status).toBe(200);
       expect(data.received).toBe(true);
+    });
+  });
+
+  describe('event idempotency', () => {
+    const mockEvent = {
+      id: 'evt_dup',
+      object: 'event' as const,
+      api_version: '2020-08-27',
+      created: Date.now(),
+      data: {
+        object: {
+          id: 'cs_test',
+          object: 'checkout.session',
+          mode: 'payment',
+          metadata: { type: 'subscriber_purchase', user_id: 'user_123' },
+          amount_total: 7900,
+          payment_intent: 'pi_test',
+        } as unknown as Stripe.Checkout.Session,
+      },
+      livemode: false,
+      pending_webhooks: 1,
+      request: { id: null, idempotency_key: null },
+      type: 'checkout.session.completed' as Stripe.Event.Type,
+    } as unknown as Stripe.Event;
+
+    it('skips a duplicate event without running the handler', async () => {
+      mockStripe.webhooks.constructEvent.mockReturnValue(mockEvent);
+      // The dedup-table claim fails with a unique violation → already seen.
+      dedupClaimError = { code: '23505' };
+
+      const request = new Request('http://localhost/api/webhooks/stripe', {
+        method: 'POST',
+        body: JSON.stringify(mockEvent),
+        headers: { 'stripe-signature': 'valid_signature' },
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.duplicate).toBe(true);
+      // Handler never ran, so no analytics were captured.
+      expect(captureServer).not.toHaveBeenCalled();
     });
   });
 });

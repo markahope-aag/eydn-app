@@ -79,8 +79,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Stripe checkout failed";
-    console.error("[SUBSCRIBE MONTHLY]", msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[SUBSCRIBE MONTHLY]", err);
+    return NextResponse.json(
+      { error: "Checkout could not be started. Please try again." },
+      { status: 500 }
+    );
   }
 }

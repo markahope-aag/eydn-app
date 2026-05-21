@@ -46,6 +46,21 @@ const mockSupabase = {
   })),
 };
 
+// Chainable update mock for scheduled_subscriptions. The atomic claim uses
+// .update().eq().eq().select() and expects the claimed row back; the
+// processed / superseded / failure updates use a terminal single .eq().
+function makeUpdateChain() {
+  const chain = {
+    eq: vi.fn(() => chain),
+    select: vi
+      .fn()
+      .mockResolvedValue({ data: [{ id: "sched_claimed" }], error: null }),
+    then: (resolve: (v: { data: null; error: null }) => unknown) =>
+      resolve({ data: null, error: null }),
+  };
+  return chain;
+}
+
 // Mock environment variables
 const originalEnv = process.env;
 
@@ -126,9 +141,7 @@ describe('POST /api/cron/process-trial-conversions', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -170,19 +183,22 @@ describe('POST /api/cron/process-trial-conversions', () => {
         skipped: 0,
       });
 
-      // Verify Stripe subscription creation
-      expect(mockStripe.subscriptions.create).toHaveBeenCalledWith({
-        customer: 'cus_123',
-        items: [{ price: 'price_test_monthly' }],
-        default_payment_method: 'pm_123',
-        off_session: true,
-        metadata: {
-          user_id: 'user_123',
-          wedding_id: 'wedding_123',
-          type: 'pro_monthly_subscription',
-          source: 'trial_auto_convert',
+      // Verify Stripe subscription creation (with idempotency key)
+      expect(mockStripe.subscriptions.create).toHaveBeenCalledWith(
+        {
+          customer: 'cus_123',
+          items: [{ price: 'price_test_monthly' }],
+          default_payment_method: 'pm_123',
+          off_session: true,
+          metadata: {
+            user_id: 'user_123',
+            wedding_id: 'wedding_123',
+            type: 'pro_monthly_subscription',
+            source: 'trial_auto_convert',
+          },
         },
-      });
+        { idempotencyKey: expect.any(String) }
+      );
 
       // Verify scheduled subscription marked as processed
       expect(mockSupabase.from).toHaveBeenCalledWith('scheduled_subscriptions');
@@ -211,9 +227,7 @@ describe('POST /api/cron/process-trial-conversions', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -253,21 +267,24 @@ describe('POST /api/cron/process-trial-conversions', () => {
         skipped: 0,
       });
 
-      // Verify Stripe payment intent creation
-      expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith({
-        amount: 7900, // $79.00
-        currency: 'usd',
-        customer: 'cus_123',
-        payment_method: 'pm_123',
-        off_session: true,
-        confirm: true,
-        metadata: {
-          user_id: 'user_123',
-          wedding_id: 'wedding_123',
-          type: 'subscriber_purchase',
-          source: 'trial_auto_convert',
+      // Verify Stripe payment intent creation (with idempotency key)
+      expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
+        {
+          amount: 7900, // $79.00
+          currency: 'usd',
+          customer: 'cus_123',
+          payment_method: 'pm_123',
+          off_session: true,
+          confirm: true,
+          metadata: {
+            user_id: 'user_123',
+            wedding_id: 'wedding_123',
+            type: 'subscriber_purchase',
+            source: 'trial_auto_convert',
+          },
         },
-      });
+        { idempotencyKey: expect.any(String) }
+      );
 
       // Verify subscriber purchase record created
       expect(mockSupabase.from).toHaveBeenCalledWith('subscriber_purchases');
@@ -292,9 +309,7 @@ describe('POST /api/cron/process-trial-conversions', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -379,9 +394,7 @@ describe('POST /api/cron/process-trial-conversions', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -436,9 +449,7 @@ describe('POST /api/cron/process-trial-conversions', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -503,9 +514,7 @@ describe('POST /api/cron/process-trial-conversions', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -581,9 +590,7 @@ describe('POST /api/cron/process-trial-conversions', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -712,9 +719,7 @@ describe('POST /api/cron/process-trial-conversions', () => {
                 }),
               })),
             })),
-            update: vi.fn(() => ({
-              eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-            })),
+            update: vi.fn(() => makeUpdateChain()),
           };
         }
         if (table === 'subscriber_purchases') {
@@ -757,7 +762,8 @@ describe('POST /api/cron/process-trial-conversions', () => {
           metadata: expect.objectContaining({
             wedding_id: '', // Should convert null to empty string
           }),
-        })
+        }),
+        expect.objectContaining({ idempotencyKey: expect.any(String) })
       );
     });
   });

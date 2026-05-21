@@ -3,10 +3,13 @@ import type Stripe from "stripe";
 import {
   classifyWindow,
   handleCheckoutCompleted,
+  handleSubscriptionCreated,
   handleSubscriptionUpdated,
   handleInvoicePaymentSucceeded,
   handleInvoicePaymentFailed,
   handleSubscriptionDeleted,
+  handleChargeRefunded,
+  handleDisputeCreated,
   type AdminSupabase,
 } from "./handlers";
 
@@ -60,15 +63,25 @@ function createMockSupabase() {
         }),
         update: vi.fn((payload: unknown) => {
           calls.push({ table, method: "update", payload });
-          return {
+          const entry = calls[calls.length - 1];
+          // Chainable: supports terminal single-.eq() updates as well as
+          // the .eq().eq().select() / .eq().neq().select() chains used by
+          // the refund and dispute handlers.
+          const chain = {
             eq: vi.fn((_col: string, val: unknown) => {
               void _col;
-              // Track the match in the last entry
-              const last = calls[calls.length - 1];
-              if (last) last.match = val;
-              return Promise.resolve({ data: null, error: null });
+              if (entry) entry.match = val;
+              return chain;
             }),
+            neq: vi.fn(() => chain),
+            select: vi.fn(() =>
+              Promise.resolve({ data: [{ user_id: "user_1" }], error: null })
+            ),
+            // Awaitable for updates that never call .select().
+            then: (resolve: (v: { data: null; error: null }) => unknown) =>
+              resolve({ data: null, error: null }),
           };
+          return chain;
         }),
         upsert: vi.fn((payload: unknown) => {
           calls.push({ table, method: "upsert", payload });
@@ -173,6 +186,46 @@ function makeInvoiceEvent(
   } as unknown as Stripe.Event;
 }
 
+function makeChargeEvent(chargeOverrides: Partial<Stripe.Charge>): Stripe.Event {
+  return {
+    id: "evt_test",
+    object: "event",
+    api_version: "2020-08-27",
+    created: Date.now(),
+    data: {
+      object: {
+        id: "ch_test",
+        object: "charge",
+        ...chargeOverrides,
+      } as unknown as Stripe.Charge,
+    },
+    livemode: false,
+    pending_webhooks: 1,
+    request: { id: null, idempotency_key: null },
+    type: "charge.refunded",
+  } as unknown as Stripe.Event;
+}
+
+function makeDisputeEvent(disputeOverrides: Partial<Stripe.Dispute>): Stripe.Event {
+  return {
+    id: "evt_test",
+    object: "event",
+    api_version: "2020-08-27",
+    created: Date.now(),
+    data: {
+      object: {
+        id: "dp_test",
+        object: "dispute",
+        ...disputeOverrides,
+      } as unknown as Stripe.Dispute,
+    },
+    livemode: false,
+    pending_webhooks: 1,
+    request: { id: null, idempotency_key: null },
+    type: "charge.dispute.created",
+  } as unknown as Stripe.Event;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -233,7 +286,7 @@ describe("handleCheckoutCompleted", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it("handles pro_monthly_subscription checkout — upserts purchase and captures event", async () => {
+  it("handles pro_monthly_subscription checkout — upserts purchase (analytics handled by subscription.created)", async () => {
     const { supabase, calls } = createMockSupabase();
     mockStripe.subscriptions.retrieve.mockResolvedValue({
       id: "sub_pro_1",
@@ -252,11 +305,10 @@ describe("handleCheckoutCompleted", () => {
     const upsert = calls.find((c) => c.table === "subscriber_purchases" && c.method === "upsert");
     expect(upsert).toBeDefined();
     expect((upsert?.payload as { plan: string }).plan).toBe("pro_monthly");
-    expect(captureServer).toHaveBeenCalledWith(
-      "user_1",
-      "paid_conversion",
-      expect.objectContaining({ plan: "pro_monthly", amount: 14.99 })
-    );
+    // paid_conversion is fired by handleSubscriptionCreated, not here, so
+    // that the cron trial-conversion path (no Checkout Session) also emits
+    // exactly one paid_conversion event.
+    expect(captureServer).not.toHaveBeenCalled();
   });
 
   it("handles subscriber_purchase (lifetime) — inserts purchase and captures event", async () => {
@@ -492,5 +544,152 @@ describe("handleSubscriptionDeleted", () => {
 
     expect(calls).toHaveLength(0);
     expect(captureServer).not.toHaveBeenCalled();
+  });
+});
+
+// ─── handleSubscriptionCreated ───────────────────────────────────
+
+describe("handleSubscriptionCreated", () => {
+  it("ignores subscriptions without pro_monthly_subscription metadata", async () => {
+    const { supabase, calls } = createMockSupabase();
+    const event = makeSubscriptionEvent("customer.subscription.created", {
+      metadata: {},
+    });
+    await handleSubscriptionCreated(supabase, event);
+    expect(calls).toHaveLength(0);
+    expect(captureServer).not.toHaveBeenCalled();
+  });
+
+  it("upserts the purchase and fires paid_conversion (cron trial-conversion path)", async () => {
+    const { supabase, calls } = createMockSupabase();
+    const event = makeSubscriptionEvent("customer.subscription.created", {
+      id: "sub_cron_1",
+      status: "active",
+      customer: "cus_1",
+      cancel_at_period_end: false,
+      items: {
+        object: "list",
+        data: [{ current_period_end: 1800000000 } as Stripe.SubscriptionItem],
+        has_more: false,
+        url: "",
+      },
+      metadata: {
+        type: "pro_monthly_subscription",
+        user_id: "user_1",
+        wedding_id: "w_1",
+        source: "trial_auto_convert",
+      },
+    });
+
+    await handleSubscriptionCreated(supabase, event);
+
+    const upsert = calls.find(
+      (c) => c.table === "subscriber_purchases" && c.method === "upsert"
+    );
+    expect(upsert).toBeDefined();
+    expect((upsert?.payload as { plan: string; status: string }).plan).toBe("pro_monthly");
+    expect((upsert?.payload as { status: string }).status).toBe("active");
+    expect(captureServer).toHaveBeenCalledWith(
+      "user_1",
+      "paid_conversion",
+      expect.objectContaining({ plan: "pro_monthly", source: "trial_auto_convert" })
+    );
+  });
+
+  it("records status=past_due for an unpaid subscription", async () => {
+    const { supabase, calls } = createMockSupabase();
+    const event = makeSubscriptionEvent("customer.subscription.created", {
+      id: "sub_unpaid",
+      status: "incomplete",
+      customer: "cus_1",
+      cancel_at_period_end: false,
+      items: {
+        object: "list",
+        data: [{ current_period_end: 1800000000 } as Stripe.SubscriptionItem],
+        has_more: false,
+        url: "",
+      },
+      metadata: { type: "pro_monthly_subscription", user_id: "user_1" },
+    });
+
+    await handleSubscriptionCreated(supabase, event);
+
+    const upsert = calls.find(
+      (c) => c.table === "subscriber_purchases" && c.method === "upsert"
+    );
+    expect((upsert?.payload as { status: string }).status).toBe("past_due");
+  });
+});
+
+// ─── handleChargeRefunded ────────────────────────────────────────
+
+describe("handleChargeRefunded", () => {
+  it("ignores partial refunds", async () => {
+    const { supabase, calls } = createMockSupabase();
+    const event = makeChargeEvent({
+      amount: 7900,
+      amount_refunded: 4000,
+      payment_intent: "pi_1",
+    });
+    await handleChargeRefunded(supabase, event);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("revokes access by setting status=refunded on a full refund", async () => {
+    const { supabase, calls } = createMockSupabase();
+    const event = makeChargeEvent({
+      amount: 7900,
+      amount_refunded: 7900,
+      payment_intent: "pi_1",
+    });
+    await handleChargeRefunded(supabase, event);
+
+    const update = calls.find(
+      (c) => c.table === "subscriber_purchases" && c.method === "update"
+    );
+    expect((update?.payload as { status: string }).status).toBe("refunded");
+    expect(captureServer).toHaveBeenCalledWith(
+      "user_1",
+      "purchase_refunded",
+      expect.objectContaining({ reason: "refund" })
+    );
+  });
+
+  it("does nothing when the charge has no payment intent", async () => {
+    const { supabase, calls } = createMockSupabase();
+    const event = makeChargeEvent({
+      amount: 7900,
+      amount_refunded: 7900,
+      payment_intent: null,
+    });
+    await handleChargeRefunded(supabase, event);
+    expect(calls).toHaveLength(0);
+  });
+});
+
+// ─── handleDisputeCreated ────────────────────────────────────────
+
+describe("handleDisputeCreated", () => {
+  it("revokes access by setting status=disputed", async () => {
+    const { supabase, calls } = createMockSupabase();
+    const event = makeDisputeEvent({ id: "dp_1", payment_intent: "pi_1" });
+    await handleDisputeCreated(supabase, event);
+
+    const update = calls.find(
+      (c) => c.table === "subscriber_purchases" && c.method === "update"
+    );
+    expect((update?.payload as { status: string }).status).toBe("disputed");
+    expect(captureServer).toHaveBeenCalledWith(
+      "user_1",
+      "purchase_disputed",
+      expect.objectContaining({ dispute_id: "dp_1" })
+    );
+  });
+
+  it("does nothing when the dispute has no payment intent", async () => {
+    const { supabase, calls } = createMockSupabase();
+    const event = makeDisputeEvent({ id: "dp_2", payment_intent: null });
+    await handleDisputeCreated(supabase, event);
+    expect(calls).toHaveLength(0);
   });
 });
