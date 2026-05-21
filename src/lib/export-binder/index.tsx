@@ -22,7 +22,7 @@ import { NotesPage } from "./sections/notes";
 export async function exportWeddingBinder(): Promise<void> {
   // 1. Fetch all data
   const data = await fetchBinderData();
-  const { wedding, dayOf, vendorList, partyList, guestList, tableList, assignmentList, positionList, expenseList, rehearsal, registry } = data;
+  const { wedding, dayOf, vendorList, partyList, guestList, tableList, assignmentList, positionList, expenseList, rehearsal, registry, insuranceCerts } = data;
 
   // 2. Dynamic import of @react-pdf/renderer
   const {
@@ -63,9 +63,31 @@ export async function exportWeddingBinder(): Promise<void> {
     </Document>
   );
 
-  // 6. Generate and download
+  // 6. Generate the binder.
   const blob = await pdf(PdfDoc).toBlob();
-  const url = URL.createObjectURL(blob);
+
+  // 7. Append vendor insurance certificates (PDF merge) when present.
+  //    Falls back to the binder alone if the merge fails — the export
+  //    must never break over a certificate.
+  let finalBlob: Blob = blob;
+  if (insuranceCerts.length > 0) {
+    try {
+      const { appendCertificates } = await import("./append-certificates");
+      const certs = insuranceCerts.map((c) => ({
+        vendorName: vendorList.find((v) => v.id === c.vendorId)?.name || "Vendor",
+        fileName: c.fileName,
+        fileUrl: c.fileUrl,
+        mimeType: c.mimeType,
+      }));
+      const mergedBytes = await appendCertificates(await blob.arrayBuffer(), certs);
+      finalBlob = new Blob([mergedBytes as Uint8Array<ArrayBuffer>], { type: "application/pdf" });
+    } catch {
+      finalBlob = blob;
+    }
+  }
+
+  // 8. Download
+  const url = URL.createObjectURL(finalBlob);
   const a = document.createElement("a");
   a.href = url;
   a.download = `${wedding.partner1_name}-${wedding.partner2_name}-wedding-binder.pdf`;

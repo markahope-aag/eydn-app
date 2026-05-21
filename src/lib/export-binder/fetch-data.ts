@@ -36,6 +36,7 @@ export async function fetchBinderData(): Promise<BinderData> {
     expenses,
     rehearsalDinner,
     registryLinks,
+    insuranceRaw,
   ] = await Promise.all([
     fetchJSON<Wedding>("/api/weddings"),
     fetchJSON<{ content: DayOfPlan }>("/api/day-of"),
@@ -48,6 +49,9 @@ export async function fetchBinderData(): Promise<BinderData> {
     fetchJSON<Expense[]>("/api/expenses"),
     fetchJSON<RehearsalDinner>("/api/rehearsal-dinner"),
     fetchJSON<RegistryLink[]>("/api/wedding-website/registry"),
+    fetchJSON<Array<{ entity_id: string; file_name: string; file_url: string; mime_type: string | null }>>(
+      "/api/attachments?doc_type=insurance"
+    ),
   ]);
 
   const wedding = weddingData || {
@@ -95,5 +99,11 @@ export async function fetchBinderData(): Promise<BinderData> {
     expenseList: expenses || [],
     rehearsal: rehearsalDinner,
     registry: registryLinks || [],
+    insuranceCerts: (insuranceRaw || []).map((c) => ({
+      vendorId: c.entity_id,
+      fileName: c.file_name,
+      fileUrl: c.file_url,
+      mimeType: c.mime_type,
+    })),
   };
 }

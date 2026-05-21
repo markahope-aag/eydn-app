@@ -52,19 +52,21 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const entityType = url.searchParams.get("entity_type");
   const entityId = url.searchParams.get("entity_id");
+  const docType = url.searchParams.get("doc_type");
 
   if (entityType && entityId) {
     const err = await verifyEntityOwnership(supabase, entityType, entityId, wedding.id);
     if (err) return err;
   }
 
-  let query = supabase
+  let query = untypedClient(supabase)
     .from("attachments")
     .select()
     .eq("wedding_id", wedding.id);
 
-  if (entityType) query = query.eq("entity_type", entityType as "task" | "vendor");
+  if (entityType) query = query.eq("entity_type", entityType);
   if (entityId) query = query.eq("entity_id", entityId);
+  if (docType) query = query.eq("doc_type", docType);
 
   const { data, error } = await query.order("created_at", { ascending: false });
 
