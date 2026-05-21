@@ -7,9 +7,13 @@ type Props = {
   entityType: "task" | "vendor";
   entityId: string;
   onUpload?: () => void;
+  /** Optional sub-type tag, e.g. "insurance". */
+  docType?: string;
+  /** Button label — defaults to "Attach file". */
+  label?: string;
 };
 
-export function FileUpload({ entityType, entityId, onUpload }: Props) {
+export function FileUpload({ entityType, entityId, onUpload, docType, label }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -22,6 +26,7 @@ export function FileUpload({ entityType, entityId, onUpload }: Props) {
     formData.append("file", file);
     formData.append("entity_type", entityType);
     formData.append("entity_id", entityId);
+    if (docType) formData.append("doc_type", docType);
 
     try {
       const res = await fetch("/api/attachments", {
@@ -61,7 +66,7 @@ export function FileUpload({ entityType, entityId, onUpload }: Props) {
         disabled={uploading}
         className="text-[12px] text-violet hover:text-soft-violet disabled:opacity-50"
       >
-        {uploading ? "Uploading..." : "Attach file"}
+        {uploading ? "Uploading..." : label || "Attach file"}
       </button>
     </div>
   );

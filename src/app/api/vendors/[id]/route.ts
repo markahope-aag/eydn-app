@@ -9,6 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 const ALLOWED_FIELDS = [
   "name", "category", "status", "poc_name", "poc_email", "poc_phone",
   "notes", "amount", "amount_paid", "arrival_time", "meal_count", "insurance_submitted",
+  "insurance_status",
 ];
 
 // Vendor statuses that mean "this vendor is locked in." Used to detect the

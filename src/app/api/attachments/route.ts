@@ -1,4 +1,5 @@
 import { getWeddingForUser } from "@/lib/auth";
+import { untypedClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { requireFeature } from "@/lib/subscription";
 import { UPLOAD } from "@/lib/config";
@@ -95,6 +96,9 @@ export async function POST(request: Request) {
   const file = formData.get("file") as File;
   const entityType = formData.get("entity_type") as string;
   const entityId = formData.get("entity_id") as string;
+  // Optional sub-type, e.g. "insurance" — lets the day-of binder find
+  // insurance certificates separately from contracts and invoices.
+  const docType = formData.get("doc_type") as string | null;
 
   if (!file || !entityType || !entityId) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -177,16 +181,17 @@ export async function POST(request: Request) {
   // Store the storage path (not a public URL) — signed URLs are generated on demand
   const storagePath = fileName;
 
-  const { data, error } = await supabase
+  const { data, error } = await untypedClient(supabase)
     .from("attachments")
     .insert({
       wedding_id: wedding.id,
-      entity_type: entityType as "task" | "vendor",
+      entity_type: entityType,
       entity_id: entityId,
       file_name: file.name,
       file_url: storagePath,
       file_size: file.size,
       mime_type: file.type || null,
+      doc_type: docType || null,
     })
     .select()
     .single();

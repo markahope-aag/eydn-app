@@ -18,6 +18,7 @@ type Attachment = {
   file_url: string;
   file_size: number;
   mime_type: string | null;
+  doc_type: string | null;
   created_at: string;
 };
 
@@ -34,7 +35,7 @@ type Vendor = {
   amount_paid: number | null;
   arrival_time: string | null;
   meal_count: number;
-  insurance_submitted: boolean;
+  insurance_status: string;
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -160,6 +161,8 @@ export default function VendorDetailPage({
   const remaining = vendor.amount !== null && vendor.amount_paid !== null
     ? vendor.amount - vendor.amount_paid
     : null;
+  const insuranceDocs = attachments.filter((a) => a.doc_type === "insurance");
+  const generalDocs = attachments.filter((a) => a.doc_type !== "insurance");
 
   return (
     <div className="max-w-2xl">
@@ -336,7 +339,7 @@ export default function VendorDetailPage({
         <p className="text-[12px] text-muted mb-3">
           These details are included when you export your day-of binder.
         </p>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="text-[12px] font-semibold text-muted">Arrival Time <Tooltip text="When this vendor should arrive on the wedding day. This time appears in your Day-of Binder." /></label>
             <input
@@ -372,20 +375,56 @@ export default function VendorDetailPage({
               </span>
             </div>
           </div>
-          <div>
-            <label className="text-[12px] font-semibold text-muted">Insurance Submitted? <Tooltip text="Many venues require vendors to carry liability insurance. Check this once they've submitted proof to your venue." wide /></label>
-            <div className="mt-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={vendor.insurance_submitted}
-                  onChange={(e) => updateField("insurance_submitted", e.target.checked)}
-                  className="accent-violet"
-                />
-                <span className="text-[14px] text-plum">Yes, submitted</span>
-              </label>
-            </div>
+        </div>
+
+        {/* Insurance — status + certificate upload. Certificates are
+            collected onto the last page of the day-of binder. */}
+        <div className="mt-4 rounded-[12px] border border-border p-3">
+          <label className="text-[12px] font-semibold text-muted">
+            Insurance <Tooltip text="Many venues require vendors to carry liability insurance. Track the request and upload the certificate here — it's collected into your day-of binder." wide />
+          </label>
+          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+            <select
+              value={vendor.insurance_status}
+              onChange={(e) => updateField("insurance_status", e.target.value)}
+              aria-label="Insurance status"
+              className="rounded-[10px] border-border px-3 py-1.5 text-[14px]"
+            >
+              <option value="not_requested">Not requested</option>
+              <option value="requested">Requested</option>
+              <option value="received">Received</option>
+            </select>
+            <FileUpload
+              entityType="vendor"
+              entityId={vendor.id}
+              docType="insurance"
+              label="Upload certificate"
+              onUpload={() => loadAttachments(vendor.id)}
+            />
           </div>
+          {insuranceDocs.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {insuranceDocs.map((a) => (
+                <div key={a.id} className="flex items-center gap-3 px-3 py-2 rounded-[10px] bg-lavender/20 border border-border">
+                  <span className="text-[16px]">{"\u{1F4C4}"}</span>
+                  <a
+                    href={a.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[14px] font-semibold text-violet hover:text-soft-violet truncate flex-1"
+                  >
+                    {a.file_name}
+                  </a>
+                  <button
+                    onClick={() => deleteAttachment(a.id)}
+                    className="text-[12px] text-error hover:opacity-80"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -411,9 +450,9 @@ export default function VendorDetailPage({
             onUpload={() => loadAttachments(vendor.id)}
           />
         </div>
-        {attachments.length > 0 ? (
+        {generalDocs.length > 0 ? (
           <div className="mt-3 space-y-2">
-            {attachments.map((a) => (
+            {generalDocs.map((a) => (
               <div key={a.id} className="flex items-center gap-3 px-3 py-2 rounded-[10px] bg-lavender/20 border border-border">
                 <span className="text-[16px]">
                   {a.mime_type?.includes("pdf") ? "\u{1F4C4}" : a.mime_type?.startsWith("image/") ? "\u{1F5BC}" : "\u{1F4CE}"}
