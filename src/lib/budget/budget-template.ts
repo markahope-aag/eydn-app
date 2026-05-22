@@ -64,6 +64,7 @@ export const BUDGET_TEMPLATE: BudgetLineItem[] = [
   { category: "Honeymoon", description: "Excursions" },
 
   // Miscellaneous
+  { category: "Miscellaneous", description: "Decor" },
   { category: "Miscellaneous", description: "Tips" },
 ];
 

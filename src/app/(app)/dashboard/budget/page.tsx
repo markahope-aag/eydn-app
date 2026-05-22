@@ -311,7 +311,7 @@ export default function BudgetPage() {
         if (pctPaid === 0) return (
           <div className="mt-4 rounded-2xl bg-lavender/40 border border-violet/15 px-6 py-5">
             <p className="text-[15px] text-plum leading-relaxed">
-              ${budget.toLocaleString()} to create memories that last forever — let&rsquo;s make every dollar count.
+              {`$${budget.toLocaleString()} to create memories that last forever — let’s make every dollar count.`}{" "}
               Your budget is ready with {expenses.length} line items across {new Set(expenses.map((e) => e.category)).size} categories.
               Start by reviewing your estimates below.
             </p>
@@ -572,6 +572,10 @@ export default function BudgetPage() {
           const items = grouped.get(cat)!;
           const catEstimated = items.reduce((sum, e) => sum + (e.estimated || 0), 0);
           const catPaid = items.reduce((sum, e) => sum + (e.amount_paid || 0), 0);
+          const catLeft = items.reduce(
+            (sum, e) => sum + Math.max(0, (e.final_cost ?? e.estimated ?? 0) - (e.amount_paid || 0)),
+            0
+          );
           const catPct = budget > 0 ? Math.round((catEstimated / budget) * 100) : 0;
           const recommendedPct = BUDGET_ALLOCATIONS[cat] ?? 0;
           const recommendedAmt = budget > 0 ? Math.round(budget * recommendedPct / 100) : 0;
@@ -600,6 +604,9 @@ export default function BudgetPage() {
                     <span className="text-muted">
                       Paid: <span className="font-semibold text-violet">${catPaid.toLocaleString()}</span>
                     </span>
+                    <span className="text-muted">
+                      Left: <span className="font-semibold text-plum">${catLeft.toLocaleString()}</span>
+                    </span>
                   </div>
                 </div>
                 {budget > 0 && recommendedPct > 0 && (
@@ -613,18 +620,19 @@ export default function BudgetPage() {
               </div>
 
               {/* Column headers */}
-              <div className="hidden sm:grid grid-cols-[1fr_100px_100px_100px_60px] gap-2 px-4 py-2 border-b border-border text-[12px] font-semibold text-muted">
+              <div className="hidden sm:grid grid-cols-[1fr_90px_90px_90px_90px_56px] gap-2 px-4 py-2 border-b border-border text-[12px] font-semibold text-muted">
                 <span>Item</span>
                 <span className="text-right">Estimated <Tooltip text="Your best guess at the cost. Update as you get quotes." /></span>
                 <span className="text-right">Paid <Tooltip text="Amount paid so far — deposits, installments, or full payment." /></span>
                 <span className="text-right">Final Cost <Tooltip text="The actual final amount after the service. Leave blank until you have the final invoice." /></span>
+                <span className="text-right">Left <Tooltip text="How much is still owed on this item — its cost (final cost if set, otherwise estimated) minus what you've paid." wide /></span>
                 <span></span>
               </div>
 
               {/* Line items */}
               <div className="divide-y divide-border">
                 {items.map((exp) => (
-                  <div key={exp.id} className="group/row flex flex-col sm:grid sm:grid-cols-[1fr_100px_100px_100px_60px] gap-2 px-4 py-2 sm:items-center">
+                  <div key={exp.id} className="group/row flex flex-col sm:grid sm:grid-cols-[1fr_90px_90px_90px_90px_56px] gap-2 px-4 py-2 sm:items-center">
                     <div>
                       <span className="text-[15px] text-plum">{exp.description}</span>
                       {exp.vendor_name && (
@@ -694,6 +702,17 @@ export default function BudgetPage() {
                         aria-label={`Final cost for ${exp.description}`}
                         className="w-20 text-right text-[15px] font-semibold text-plum bg-transparent border-0 outline-none"
                       />
+                    </div>
+                    <div className="flex items-center justify-end">
+                      {(() => {
+                        const cost = exp.final_cost ?? exp.estimated ?? 0;
+                        const left = Math.max(0, cost - (exp.amount_paid || 0));
+                        return (
+                          <span className={`text-[15px] font-semibold ${left === 0 ? "text-emerald-600" : "text-plum"}`}>
+                            ${left.toLocaleString()}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <button
                       onClick={() => removeExpense(exp.id)}

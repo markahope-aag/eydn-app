@@ -194,13 +194,23 @@ export async function POST(request: Request) {
     .eq("wedding_id", weddingId);
 
   if (!existingExpenses || existingExpenses === 0) {
+    // A category's allocated amount is split evenly across its line items.
+    // Without this, every item in a category gets the full category total
+    // and the estimated budget balloons to several times the real budget.
+    const itemsPerCategory = new Map<string, number>();
+    for (const item of BUDGET_TEMPLATE) {
+      itemsPerCategory.set(item.category, (itemsPerCategory.get(item.category) ?? 0) + 1);
+    }
+
     const budgetItems = BUDGET_TEMPLATE.map((item) => {
-      // If budget allocations were provided, use them for estimated amounts
+      // If budget allocations were provided, split each category's amount
+      // evenly across that category's line items.
       const allocation = budget_allocations?.find((a) => a.category === item.category);
+      const count = itemsPerCategory.get(item.category) ?? 1;
       return {
         wedding_id: weddingId,
         description: item.description,
-        estimated: allocation?.allocated ?? 0,
+        estimated: allocation ? Math.round(allocation.allocated / count) : 0,
         category: item.category,
         paid: false,
       };
