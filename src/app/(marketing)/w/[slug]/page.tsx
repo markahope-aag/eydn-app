@@ -523,17 +523,21 @@ export default async function WeddingWebsitePage({
           </section>
         )}
 
-        {/* Photo Upload */}
-        <section className="text-center">
-          <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Share Your Photos</h2>
-          <SectionDivider />
-          <p className="mt-4 text-[16px] text-muted">
-            Upload your favorite moments from the celebration
-          </p>
-          <div className="mt-8 max-w-md mx-auto">
-            <PhotoUpload weddingSlug={slug} hasPhotos={photos.length > 0} />
-          </div>
-        </section>
+        {/* Photo Upload — only from the wedding day onward. Guest photo
+            sharing is for during and after the celebration; before then
+            the site should lead with the couple, schedule, and registry. */}
+        {daysUntil !== null && daysUntil <= 0 && (
+          <section className="text-center">
+            <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Share Your Photos</h2>
+            <SectionDivider />
+            <p className="mt-4 text-[16px] text-muted">
+              Upload your favorite moments from the celebration
+            </p>
+            <div className="mt-8 max-w-md mx-auto">
+              <PhotoUpload weddingSlug={slug} hasPhotos={photos.length > 0} />
+            </div>
+          </section>
+        )}
 
         {/* RSVP */}
         <section className="text-center" id="rsvp">
