@@ -13,6 +13,8 @@ import { WeddingLocation } from "@/components/WeddingLocation";
 import { AddCouplePhoto } from "@/components/AddCouplePhoto";
 import { WeddingDateField } from "@/components/WeddingDateField";
 import { KeyDecisionsCard } from "@/components/KeyDecisionsCard";
+import { WebsiteNudgeCard } from "@/components/WebsiteNudgeCard";
+import { getWebsiteProgress } from "@/lib/website-milestones";
 
 function buildGreeting(ctx: { name: string; both: string; days: number | null; totalTasks: number; doneTasks: number; taskPct: number }): string {
   const { name, both, days, totalTasks, doneTasks, taskPct } = ctx;
@@ -137,7 +139,7 @@ export default async function DashboardPage() {
     );
   }
 
-  const [{ count: guestCount }, { count: taskCount }, { count: completedTasks }, { data: upcomingTasks }, { data: allVendors }, { data: allGuests }, { data: overdueTasks }, { data: guidesCompleted }, { data: expensesData }, { data: dayOfPlan }] =
+  const [{ count: guestCount }, { count: taskCount }, { count: completedTasks }, { data: upcomingTasks }, { data: allVendors }, { data: allGuests }, { data: overdueTasks }, { data: guidesCompleted }, { data: expensesData }, { data: dayOfPlan }, { count: registryCount }] =
     await Promise.all([
       supabase
         .from("guests")
@@ -197,6 +199,10 @@ export default async function DashboardPage() {
         .select("id, generated_at")
         .eq("wedding_id", wedding.id)
         .maybeSingle(),
+      supabase
+        .from("registry_links")
+        .select("*", { count: "exact", head: true })
+        .eq("wedding_id", wedding.id),
     ]);
 
   const now = new Date();
@@ -205,6 +211,34 @@ export default async function DashboardPage() {
         (new Date(wedding.date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
       )
     : null;
+
+  // Wedding-website progress for the dashboard nudge. The website
+  // columns aren't on the narrow Wedding type, so read them directly.
+  const websiteData = wedding as unknown as {
+    website_enabled: boolean | null;
+    website_headline: string | null;
+    website_story: string | null;
+    website_cover_url: string | null;
+    website_couple_photo_url: string | null;
+    website_schedule: unknown[] | null;
+    website_travel_info: string | null;
+    website_accommodations: string | null;
+    website_faq: unknown[] | null;
+    rsvp_deadline: string | null;
+  };
+  const websiteProgress = getWebsiteProgress(daysUntilWedding, {
+    enabled: Boolean(websiteData.website_enabled),
+    headline: websiteData.website_headline ?? "",
+    story: websiteData.website_story ?? "",
+    coverUrl: websiteData.website_cover_url ?? "",
+    couplePhotoUrl: websiteData.website_couple_photo_url ?? "",
+    scheduleCount: Array.isArray(websiteData.website_schedule) ? websiteData.website_schedule.length : 0,
+    travel: websiteData.website_travel_info ?? "",
+    accommodations: websiteData.website_accommodations ?? "",
+    faqCount: Array.isArray(websiteData.website_faq) ? websiteData.website_faq.length : 0,
+    registryCount: registryCount ?? 0,
+    rsvpDeadline: websiteData.rsvp_deadline ?? "",
+  });
 
   // Auto-generate day-of plan when ≤14 days out
   let dayOfJustGenerated = false;
@@ -573,6 +607,9 @@ export default async function DashboardPage() {
 
       {/* Things Eydn Should Know — inline-editable */}
       <KeyDecisionsCard weddingId={wedding.id} initialValue={wedding.key_decisions} />
+
+      {/* Wedding website progress nudge */}
+      {!websiteProgress.isComplete && <WebsiteNudgeCard summary={websiteProgress} />}
 
       {/* Upcoming tasks — sorted by urgency with priority indicators */}
       {upcomingTasks && upcomingTasks.length > 0 && (
