@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 type TooltipProps = {
   /** The help text to display */
@@ -14,42 +15,61 @@ type TooltipProps = {
 /**
  * Contextual help tooltip. Shows a ? icon that reveals help text on hover/click.
  *
+ * The bubble is rendered through a portal with viewport-clamped positioning,
+ * so it never gets clipped by an `overflow: hidden` ancestor (cards, panels)
+ * and never overflows the left or right edge of the screen.
+ *
  * Usage:
  *   <Tooltip text="This is the total budget for your wedding." />
  *   <label>Budget <Tooltip text="Set your overall budget here." /></label>
  */
-type Align = "left" | "center" | "right";
+type Coords = {
+  left: number;
+  top?: number;
+  bottom?: number;
+  arrowLeft: number;
+  above: boolean;
+};
+
+const EDGE_PADDING = 8;
 
 export function Tooltip({ text, wide, children }: TooltipProps) {
   const [open, setOpen] = useState(false);
-  const [above, setAbove] = useState(true);
-  const [align, setAlign] = useState<Align>("center");
+  const [coords, setCoords] = useState<Coords | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  // Tooltip widths come from the `wide` prop's Tailwind classes (w-56 / w-72).
+  // Width comes from the `wide` prop's Tailwind class (w-56 / w-72).
   // Keep these in sync with the className below.
   const tooltipWidth = wide ? 288 : 224;
-  const edgePadding = 8;
 
   const reposition = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    // Show below if too close to top of viewport.
-    setAbove(rect.top > 120);
-
-    // Horizontal alignment: default center, but if the trigger is close enough
-    // to the right (or left) edge that a centered tooltip would clip, anchor
-    // its corresponding edge to the trigger so the help text stays readable.
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
     const triggerCenter = rect.left + rect.width / 2;
-    const halfTooltip = tooltipWidth / 2;
-    if (triggerCenter + halfTooltip > window.innerWidth - edgePadding) {
-      setAlign("right");
-    } else if (triggerCenter - halfTooltip < edgePadding) {
-      setAlign("left");
-    } else {
-      setAlign("center");
-    }
+
+    // Centre the bubble on the trigger, then clamp so it never overflows
+    // either edge of the viewport.
+    const maxLeft = window.innerWidth - tooltipWidth - EDGE_PADDING;
+    const left = Math.max(
+      EDGE_PADDING,
+      Math.min(triggerCenter - tooltipWidth / 2, maxLeft)
+    );
+
+    // Flip below the trigger when there isn't room above it.
+    const above = rect.top > 120;
+
+    // Arrow points back at the trigger, kept within the bubble's rounded ends.
+    const arrowLeft = Math.max(14, Math.min(triggerCenter - left, tooltipWidth - 14));
+
+    setCoords({
+      left,
+      top: above ? undefined : rect.bottom + 8,
+      bottom: above ? window.innerHeight - rect.top + 8 : undefined,
+      arrowLeft,
+      above,
+    });
   }, [tooltipWidth]);
 
   useEffect(() => {
@@ -73,19 +93,31 @@ export function Tooltip({ text, wide, children }: TooltipProps) {
 
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscape);
+    // The bubble is viewport-positioned, so re-place it as the page moves.
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
     };
   }, [open, reposition]);
 
   return (
-    <span className="relative inline-flex items-center">
+    <span className="inline-flex items-center">
       {children}
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (open) {
+            setOpen(false);
+          } else {
+            reposition();
+            setOpen(true);
+          }
+        }}
         onMouseEnter={() => { reposition(); setOpen(true); }}
         onMouseLeave={() => setOpen(false)}
         onFocus={() => { reposition(); setOpen(true); }}
@@ -95,33 +127,22 @@ export function Tooltip({ text, wide, children }: TooltipProps) {
       >
         ?
       </button>
-      {open && (
+      {open && coords && createPortal(
         <div
           ref={tooltipRef}
           role="tooltip"
-          className={`absolute z-50 ${wide ? "w-72" : "w-56"} px-3 py-2 text-[12px] leading-relaxed text-plum bg-white border border-border rounded-[10px] shadow-lg ${
-            above ? "bottom-full mb-2" : "top-full mt-2"
-          } ${
-            align === "center"
-              ? "left-1/2 -translate-x-1/2"
-              : align === "right"
-              ? "right-0"
-              : "left-0"
-          }`}
+          style={{ left: coords.left, top: coords.top, bottom: coords.bottom }}
+          className={`fixed z-[100] ${wide ? "w-72" : "w-56"} px-3 py-2 text-[12px] leading-relaxed text-plum bg-white border border-border rounded-[10px] shadow-lg`}
         >
           {text}
           <div
-            className={`absolute w-2 h-2 bg-white border-border rotate-45 ${
-              above ? "bottom-[-5px] border-r border-b" : "top-[-5px] border-l border-t"
-            } ${
-              align === "center"
-                ? "left-1/2 -translate-x-1/2"
-                : align === "right"
-                ? "right-2"
-                : "left-2"
+            style={{ left: coords.arrowLeft }}
+            className={`absolute w-2 h-2 -translate-x-1/2 bg-white border-border rotate-45 ${
+              coords.above ? "bottom-[-5px] border-r border-b" : "top-[-5px] border-l border-t"
             }`}
           />
-        </div>
+        </div>,
+        document.body
       )}
     </span>
   );
