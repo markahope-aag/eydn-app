@@ -42,6 +42,8 @@ export type WeddingPartyMember = {
   phone: string | null;
   job_assignment: string | null;
   attire: string | null;
+  /** Inlined as a data URL by fetch-data for the PDF; null when none. */
+  photo_url: string | null;
 };
 
 export type Guest = {

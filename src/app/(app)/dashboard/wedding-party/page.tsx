@@ -37,7 +37,10 @@ const DAY_OF_JOBS = [
   "Manage guest book",
 ];
 
-const ROLES = [
+// Base roles shared by every wedding. The two side-specific
+// "<name>'s Wedding Party" roles are prepended at runtime from the
+// couple's names.
+const BASE_ROLES = [
   "Honor Attendant",
   "Attendant",
   "Flower Girl",
@@ -64,6 +67,8 @@ export default function WeddingPartyPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null);
   const [sharedAttireNote, setSharedAttireNote] = useState("");
   const [weddingId, setWeddingId] = useState<string | null>(null);
+  // Two side-specific wedding-party roles, built from the couple's names.
+  const [partyRoles, setPartyRoles] = useState<string[]>([]);
   const photoRef = useRef<HTMLInputElement>(null);
   const photoTargetId = useRef<string | null>(null);
   const attireTimer = useRef<ReturnType<typeof setTimeout>>(null);
@@ -81,6 +86,12 @@ export default function WeddingPartyPage() {
         if (weddingData) {
           setWeddingId(weddingData.id);
           setSharedAttireNote(weddingData.shared_attire_note || "");
+          const p1 = (weddingData.partner1_name as string | null)?.trim();
+          const p2 = (weddingData.partner2_name as string | null)?.trim();
+          setPartyRoles([
+            `${p1 || "Partner 1"}'s Wedding Party`,
+            `${p2 || "Partner 2"}'s Wedding Party`,
+          ]);
         }
       })
       .catch(() => toast.error("Couldn't load your wedding party. Try refreshing."))
@@ -227,6 +238,9 @@ export default function WeddingPartyPage() {
       if (photoRef.current) photoRef.current.value = "";
     }
   }
+
+  // The two name-based roles, then the shared base roles.
+  const ROLES = [...partyRoles, ...BASE_ROLES];
 
   if (loading) {
     return <SkeletonList count={4} />;
@@ -437,6 +451,21 @@ export default function WeddingPartyPage() {
               return (
               <div className="border-t border-border px-4 py-4 bg-lavender/20">
                 <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <label className="text-[12px] font-semibold text-muted">Role</label>
+                    <select
+                      value={member.role}
+                      onChange={(e) => updateField(member.id, "role", e.target.value)}
+                      className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+                    >
+                      {!ROLES.includes(member.role) && (
+                        <option value={member.role}>{member.role}</option>
+                      )}
+                      {ROLES.map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div>
                     <label className="text-[12px] font-semibold text-muted">Email</label>
                     <input

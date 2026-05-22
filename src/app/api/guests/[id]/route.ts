@@ -41,6 +41,35 @@ export async function PATCH(
   const err = supabaseError(error, "guests");
   if (err) return err;
 
+  // Carry the guest over to the Wedding Party tab when their role is set
+  // to "wedding_party" (mirrors the create path). Deduped by name so a
+  // repeated update won't create duplicates.
+  const updatedGuest = data as {
+    name: string;
+    role: string | null;
+    email: string | null;
+    phone: string | null;
+  };
+  if (updatedGuest.role === "wedding_party") {
+    const { data: existingMember } = await supabase
+      .from("wedding_party")
+      .select("id")
+      .eq("wedding_id", wedding.id)
+      .eq("name", updatedGuest.name)
+      .is("deleted_at", null)
+      .limit(1)
+      .maybeSingle();
+    if (!existingMember) {
+      await supabase.from("wedding_party").insert({
+        wedding_id: wedding.id,
+        name: updatedGuest.name,
+        role: "Attendant",
+        email: updatedGuest.email,
+        phone: updatedGuest.phone,
+      });
+    }
+  }
+
   logActivity(supabase, { weddingId: wedding.id, userId, action: "update", entityType: "guests", entityId: id, entityName: (data as Record<string, unknown>).name as string });
 
   return NextResponse.json(data);

@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       await supabase.from("wedding_party").insert({
         wedding_id: wedding.id,
         name,
-        role: "Wedding Party",
+        role: "Attendant",
         email: (body.email as string) || null,
         phone: (body.phone as string) || null,
       });

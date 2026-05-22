@@ -23,6 +23,25 @@ async function fetchJSON<T>(url: string): Promise<T | null> {
   }
 }
 
+/** Fetch an image and inline it as a data URL so it embeds reliably in
+ *  the react-pdf binder. Returns null if the image can't be fetched. */
+async function imageToDataUrl(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string | null>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () =>
+        resolve(typeof reader.result === "string" ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchBinderData(): Promise<BinderData> {
   const [
     weddingData,
@@ -87,11 +106,19 @@ export async function fetchBinderData(): Promise<BinderData> {
     attire: rawDayOf.attire || [],
   };
 
+  // Inline wedding-party member photos as data URLs for the PDF.
+  const partyList = await Promise.all(
+    (weddingParty || []).map(async (m) => ({
+      ...m,
+      photo_url: m.photo_url ? await imageToDataUrl(m.photo_url) : null,
+    }))
+  );
+
   return {
     wedding,
     dayOf,
     vendorList: vendors || [],
-    partyList: weddingParty || [],
+    partyList,
     guestList: (guests || []).sort((a, b) => a.name.localeCompare(b.name)),
     tableList: tables || [],
     assignmentList: assignments || [],

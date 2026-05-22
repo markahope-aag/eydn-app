@@ -31,6 +31,7 @@ export async function exportWeddingBinder(): Promise<void> {
     Page: PdfPage,
     Text,
     View,
+    Image,
     StyleSheet,
   } = await import("@react-pdf/renderer");
 
@@ -51,7 +52,7 @@ export async function exportWeddingBinder(): Promise<void> {
       <MusicPage dayOf={dayOf} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <SpeechesPage dayOf={dayOf} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <SetupTasksPage dayOf={dayOf} s={s} PdfPage={PdfPage} Text={Text} View={View} />
-      <WeddingPartyPage partyList={partyList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
+      <WeddingPartyPage partyList={partyList} s={s} PdfPage={PdfPage} Text={Text} View={View} Image={Image} />
       <AttirePage dayOf={dayOf} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <SeatingPage tableList={tableList} assignmentList={assignmentList} guestList={guestList} positionList={positionList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <GuestsPage guestList={guestList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
