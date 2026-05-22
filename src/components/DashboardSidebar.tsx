@@ -45,11 +45,16 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    label: "Tools",
+    label: "Planning Tools",
     items: [
       { href: "/dashboard/budget", label: "Budget" },
       { href: "/dashboard/guides", label: "Planning Guides" },
       { href: "/dashboard/website", label: "Wedding Website" },
+    ],
+  },
+  {
+    label: "Settings",
+    items: [
       { href: "/dashboard/settings", label: "Settings" },
       { href: "/dashboard/help", label: "Help & Support" },
     ],
