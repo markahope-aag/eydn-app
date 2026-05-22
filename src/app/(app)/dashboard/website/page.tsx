@@ -9,6 +9,8 @@ import { ScheduleTab } from "./_components/ScheduleTab";
 import { RegistryTab } from "./_components/RegistryTab";
 import { RsvpTab } from "./_components/RsvpTab";
 import { GalleryTab } from "./_components/GalleryTab";
+import { WebsiteProgressPanel } from "./_components/WebsiteProgressPanel";
+import { getWebsiteProgress } from "@/lib/website-milestones";
 
 type Tab = "setup" | "schedule" | "registry" | "rsvp" | "gallery";
 type ScheduleItem = { time: string; event: string };
@@ -24,6 +26,7 @@ export default function WebsitePage() {
   const [tab, setTab] = useState<Tab>("setup");
   const [loading, setLoading] = useState(true);
   const [noWedding, setNoWedding] = useState(false);
+  const [weddingDate, setWeddingDate] = useState<string | null>(null);
 
   // Setup state
   const [slug, setSlug] = useState("");
@@ -103,6 +106,7 @@ export default function WebsitePage() {
 
   useEffect(() => {
     loadWebsite();
+    loadRegistry();
   }, []);
 
   useEffect(() => {
@@ -113,7 +117,10 @@ export default function WebsitePage() {
 
   async function loadWebsite() {
     try {
-      const res = await fetch("/api/wedding-website");
+      const [res, weddingRes] = await Promise.all([
+        fetch("/api/wedding-website"),
+        fetch("/api/weddings"),
+      ]);
       if (res.status === 404) { setNoWedding(true); return; }
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -133,6 +140,10 @@ export default function WebsitePage() {
       setMealOptions(data.meal_options || []);
       setPhotoApprovalRequired(data.photo_approval_required || false);
       setHeroLayout(data.website_theme?.heroLayout || "fullscreen");
+      if (weddingRes.ok) {
+        const weddingData = await weddingRes.json();
+        setWeddingDate(weddingData?.date || null);
+      }
     } catch {
       toast.error("Couldn't load website settings. Try refreshing.");
     } finally {
@@ -165,6 +176,24 @@ export default function WebsitePage() {
     { key: "rsvp", label: "RSVP" },
     { key: "gallery", label: "Gallery" },
   ];
+
+  const daysUntil = weddingDate
+    ? Math.ceil((new Date(weddingDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const websiteProgress = getWebsiteProgress(daysUntil, {
+    enabled,
+    headline,
+    story,
+    coverUrl,
+    couplePhotoUrl,
+    scheduleCount: schedule.length,
+    travel,
+    accommodations,
+    faqCount: faq.length,
+    registryCount: registryLinks.length,
+    rsvpDeadline,
+  });
 
   return (
     <div className={showPreview ? "flex gap-6" : ""}>
@@ -212,6 +241,11 @@ export default function WebsitePage() {
             </a>
           )}
         </div>
+      </div>
+
+      {/* Timeline-aware progress guidance */}
+      <div className="mt-6">
+        <WebsiteProgressPanel summary={websiteProgress} onJumpToTab={setTab} />
       </div>
 
       {/* Tabs */}
