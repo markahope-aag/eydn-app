@@ -36,4 +36,13 @@ export type CeremonyPosition = {
   position_order: number;
 };
 
+export type FloorObject = {
+  id: string;
+  label: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export type Tab = "reception" | "ceremony";

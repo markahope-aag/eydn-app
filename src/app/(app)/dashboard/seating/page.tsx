@@ -12,6 +12,7 @@ import type {
   Assignment,
   WeddingPartyMember,
   CeremonyPosition,
+  FloorObject,
   Tab,
 } from "./_types";
 import {
@@ -29,6 +30,9 @@ export default function SeatingPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [partyMembers, setPartyMembers] = useState<WeddingPartyMember[]>([]);
   const [ceremonyPositions, setCeremonyPositions] = useState<CeremonyPosition[]>([]);
+  const [floorObjects, setFloorObjects] = useState<FloorObject[]>([]);
+  const [draggingObject, setDraggingObject] = useState<string | null>(null);
+  const [resizingObject, setResizingObject] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [draggingGuest, setDraggingGuest] = useState<string | null>(null);
   const [draggingTable, setDraggingTable] = useState<string | null>(null);
@@ -37,6 +41,7 @@ export default function SeatingPage() {
   const [confirmDeleteTable, setConfirmDeleteTable] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [unassignedSearch, setUnassignedSearch] = useState("");
+  const [newGuestName, setNewGuestName] = useState("");
   const [partner1, setPartner1] = useState("Partner 1");
   const [partner2, setPartner2] = useState("Partner 2");
   const undoStack = useRef<{ type: "assign" | "unassign"; guestId: string; tableId?: string }[]>([]);
@@ -53,13 +58,15 @@ export default function SeatingPage() {
       fetch("/api/wedding-party").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/ceremony").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/weddings").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/seating/floor-objects").then((r) => (r.ok ? r.json() : [])),
     ])
-      .then(([t, g, a, p, c, w]) => {
+      .then(([t, g, a, p, c, w, fo]) => {
         setTables(t);
         setGuests(g);
         setAssignments(a);
         setPartyMembers(p);
         setCeremonyPositions(c);
+        setFloorObjects(fo);
         if (w) {
           if (w.partner1_name) setPartner1(w.partner1_name);
           if (w.partner2_name) setPartner2(w.partner2_name);
@@ -116,6 +123,140 @@ export default function SeatingPage() {
       window.removeEventListener("mouseup", onMouseUp);
     };
   }, [draggingTable]);
+
+  // --- Floor-plan object dragging & resizing ---
+  const handleObjectMouseDown = useCallback((e: React.MouseEvent, objId: string, ox: number, oy: number) => {
+    e.preventDefault();
+    setDraggingObject(objId);
+    const rect = canvasRef.current?.getBoundingClientRect();
+    dragOffset.current = {
+      x: e.clientX - (rect?.left || 0) - ox,
+      y: e.clientY - (rect?.top || 0) - oy,
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!draggingObject) return;
+    function onMouseMove(e: MouseEvent) {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const newX = Math.max(0, e.clientX - rect.left - dragOffset.current.x);
+      const newY = Math.max(0, e.clientY - rect.top - dragOffset.current.y);
+      setFloorObjects((prev) =>
+        prev.map((o) => (o.id === draggingObject ? { ...o, x: newX, y: newY } : o))
+      );
+    }
+    function onMouseUp() {
+      setFloorObjects((prev) => {
+        const o = prev.find((x) => x.id === draggingObject);
+        if (o) {
+          fetch(`/api/seating/floor-objects?id=${o.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ x: o.x, y: o.y }),
+          }).catch(() => toast.error("Couldn't save that position. Try again."));
+        }
+        return prev;
+      });
+      setDraggingObject(null);
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [draggingObject]);
+
+  useEffect(() => {
+    if (!resizingObject) return;
+    function onMouseMove(e: MouseEvent) {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setFloorObjects((prev) =>
+        prev.map((o) => {
+          if (o.id !== resizingObject) return o;
+          const width = Math.max(80, e.clientX - rect.left - o.x);
+          const height = Math.max(50, e.clientY - rect.top - o.y);
+          return { ...o, width, height };
+        })
+      );
+    }
+    function onMouseUp() {
+      setFloorObjects((prev) => {
+        const o = prev.find((x) => x.id === resizingObject);
+        if (o) {
+          fetch(`/api/seating/floor-objects?id=${o.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ width: o.width, height: o.height }),
+          }).catch(() => toast.error("Couldn't save that size. Try again."));
+        }
+        return prev;
+      });
+      setResizingObject(null);
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [resizingObject]);
+
+  function handleObjectResizeMouseDown(e: React.MouseEvent, objId: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingObject(objId);
+  }
+
+  async function addFloorObject() {
+    const offset = floorObjects.length % 5;
+    try {
+      const res = await fetch("/api/seating/floor-objects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: "New area",
+          x: 60 + offset * 40,
+          y: 60 + offset * 40,
+          width: 180,
+          height: 110,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const saved = await res.json();
+      setFloorObjects((prev) => [...prev, saved]);
+    } catch {
+      toast.error("Couldn't add that area. Try again.");
+    }
+  }
+
+  async function updateFloorObject(id: string, updates: Partial<FloorObject>) {
+    setFloorObjects((prev) => prev.map((o) => (o.id === id ? { ...o, ...updates } : o)));
+    try {
+      const res = await fetch(`/api/seating/floor-objects?id=${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      toast.error("Couldn't save that change. Try again.");
+    }
+  }
+
+  async function deleteFloorObject(id: string) {
+    const prev = floorObjects;
+    setFloorObjects((o) => o.filter((x) => x.id !== id));
+    try {
+      const res = await fetch(`/api/seating/floor-objects?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+    } catch {
+      setFloorObjects(prev);
+      toast.error("Couldn't remove that area. Try again.");
+    }
+  }
 
   // --- Reception functions ---
   async function addTable() {
@@ -354,6 +495,38 @@ export default function SeatingPage() {
     }
   }
 
+  // Close the table edit popover on any click outside it. The popover and
+  // its Edit/Done button stop their own mousedown, so a mousedown that
+  // reaches the document is by definition an outside click.
+  useEffect(() => {
+    if (!editingTable) return;
+    function closeOnOutside() {
+      setEditingTable(null);
+    }
+    document.addEventListener("mousedown", closeOnOutside);
+    return () => document.removeEventListener("mousedown", closeOnOutside);
+  }, [editingTable]);
+
+  // Quick-add a guest without leaving the seating chart.
+  async function addGuestFromSeating() {
+    const name = newGuestName.trim();
+    if (!name) return;
+    setNewGuestName("");
+    try {
+      const res = await fetch("/api/guests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, rsvp_status: "accepted" }),
+      });
+      if (!res.ok) throw new Error();
+      const saved = await res.json();
+      setGuests((prev) => [...prev, saved]);
+      toast.success(`${name} added`);
+    } catch {
+      toast.error("Couldn't add that guest. Try again.");
+    }
+  }
+
   const assignedGuestIds = new Set(assignments.map((a) => a.guest_id));
   const unassignedGuests = guests.filter((g) => !assignedGuestIds.has(g.id) && g.rsvp_status !== "declined");
 
@@ -427,7 +600,7 @@ export default function SeatingPage() {
           <div className="flex-1 flex flex-col">
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-3 gap-3">
-              <p className="text-[13px] text-muted flex-1">Drag tables to reposition. Drag guests onto tables.</p>
+              <p className="text-[13px] text-muted flex-1">Drag tables and areas to reposition. Drag guests onto tables.</p>
               <div className="flex items-center gap-2">
                 {/* Undo */}
                 <button
@@ -461,6 +634,7 @@ export default function SeatingPage() {
                     +
                   </button>
                 </div>
+                <button onClick={addFloorObject} className="btn-secondary btn-sm">Add Area</button>
                 <button onClick={addTable} className="btn-primary btn-sm">Add Table</button>
               </div>
             </div>
@@ -474,7 +648,69 @@ export default function SeatingPage() {
               style={{ minHeight: 500 }}
               onDragOver={(e) => e.preventDefault()}
             >
-              <div style={{ transform: `scale(${zoom})`, transformOrigin: "top left", minWidth: 900, minHeight: 600 }}>
+              <div
+                style={{
+                  transform: `scale(${zoom})`,
+                  transformOrigin: "top left",
+                  minWidth: 900,
+                  minHeight: 600,
+                  // Faint 40px grid as a spacing reference for placing tables.
+                  backgroundImage:
+                    "linear-gradient(to right, rgba(124,107,166,0.09) 1px, transparent 1px), linear-gradient(to bottom, rgba(124,107,166,0.09) 1px, transparent 1px)",
+                  backgroundSize: "40px 40px",
+                }}
+              >
+              {/* Floor-plan areas — labelled, draggable, resizable boxes
+                  rendered behind the tables. */}
+              {floorObjects.map((obj) => (
+                <div
+                  key={obj.id}
+                  className="absolute select-none rounded-[10px] border-2 border-dashed border-violet/40 bg-violet/5 flex items-center justify-center"
+                  style={{
+                    left: obj.x,
+                    top: obj.y,
+                    width: obj.width,
+                    height: obj.height,
+                    cursor: draggingObject === obj.id ? "grabbing" : "grab",
+                  }}
+                  onMouseDown={(e) => handleObjectMouseDown(e, obj.id, obj.x, obj.y)}
+                >
+                  <input
+                    type="text"
+                    value={obj.label}
+                    onChange={(e) =>
+                      setFloorObjects((prev) =>
+                        prev.map((o) => (o.id === obj.id ? { ...o, label: e.target.value } : o))
+                      )
+                    }
+                    onBlur={(e) => updateFloorObject(obj.id, { label: e.target.value.trim() || "New area" })}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    aria-label="Area label"
+                    className="bg-transparent text-center text-[12px] font-semibold text-violet/80 border-0 px-2 w-[88%] focus:outline-none focus:bg-white/70 rounded-[6px]"
+                  />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteFloorObject(obj.id); }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    aria-label={`Delete ${obj.label}`}
+                    className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-border text-muted hover:text-error hover:border-error rounded-full flex items-center justify-center transition"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                      <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                  <div
+                    onMouseDown={(e) => handleObjectResizeMouseDown(e, obj.id)}
+                    role="button"
+                    aria-label={`Resize ${obj.label}`}
+                    className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize flex items-end justify-end p-0.5"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <path d="M11 4L4 11M11 8L8 11" stroke="var(--violet, #7C6BA6)" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                </div>
+              ))}
+
               {tables.map((table) => {
                 const tableGuests = getTableGuests(table.id);
                 const seatMap = getSeatMap(table.id, table.capacity);
@@ -593,6 +829,7 @@ export default function SeatingPage() {
                     {/* Edit button */}
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditingTable(editingTable === table.id ? null : table.id); }}
+                      onMouseDown={(e) => e.stopPropagation()}
                       className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-muted hover:text-violet transition bg-white border border-border rounded-full px-2 py-0.5 z-10"
                     >
                       {editingTable === table.id ? "Done" : "Edit"}
@@ -775,6 +1012,21 @@ export default function SeatingPage() {
                 </div>
               )}
             </div>
+            {/* Quick-add a guest without leaving the seating chart */}
+            <form
+              onSubmit={(e) => { e.preventDefault(); addGuestFromSeating(); }}
+              className="mt-2 flex gap-1"
+            >
+              <input
+                type="text"
+                placeholder="Add a guest..."
+                value={newGuestName}
+                onChange={(e) => setNewGuestName(e.target.value)}
+                aria-label="Add a guest"
+                className="rounded-[10px] border-border px-2.5 py-1.5 text-[13px] flex-1 min-w-0"
+              />
+              <button type="submit" className="btn-primary btn-sm flex-shrink-0">Add</button>
+            </form>
           </div>
         </div>
       )}

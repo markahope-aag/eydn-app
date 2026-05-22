@@ -59,6 +59,27 @@ export async function POST(request: Request) {
   const err = supabaseError(error, "ceremony");
   if (err) return err;
 
+  // Carry a wedding-party person over to the Wedding Party tab. Deduped
+  // by name so re-adding them to the ceremony won't create duplicates.
+  if (body.person_type === "wedding_party") {
+    const personName = body.person_name as string;
+    const { data: existingMember } = await supabase
+      .from("wedding_party")
+      .select("id")
+      .eq("wedding_id", wedding.id)
+      .eq("name", personName)
+      .is("deleted_at", null)
+      .limit(1)
+      .maybeSingle();
+    if (!existingMember) {
+      await supabase.from("wedding_party").insert({
+        wedding_id: wedding.id,
+        name: personName,
+        role: (body.role as string) || "Attendant",
+      });
+    }
+  }
+
   return NextResponse.json(data, { status: 201 });
 }
 
