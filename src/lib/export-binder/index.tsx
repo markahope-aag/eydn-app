@@ -17,11 +17,13 @@ import { BudgetPage } from "./sections/budget";
 import { RehearsalDinnerPage } from "./sections/rehearsal-dinner";
 import { PackingPage } from "./sections/packing";
 import { NotesPage } from "./sections/notes";
+import { resetTocEntries, getTocEntries } from "./sections/shared";
+import type { TocEntry } from "./sections/shared";
 
 export async function exportWeddingBinder(): Promise<void> {
   // 1. Fetch all data
   const data = await fetchBinderData();
-  const { wedding, dayOf, vendorList, partyList, guestList, tableList, assignmentList, positionList, expenseList, rehearsal, insuranceCerts, vendorContracts } = data;
+  const { wedding, dayOf, vendorList, partyList, guestList, tableList, floorObjects, assignmentList, positionList, expenseList, rehearsal, insuranceCerts, vendorContracts } = data;
 
   // 2. Dynamic import of @react-pdf/renderer
   const {
@@ -40,11 +42,12 @@ export async function exportWeddingBinder(): Promise<void> {
   // 4. Prepare derived data
   const timelineByGroup = buildTimelineGroups(dayOf);
 
-  // 5. Build the PDF document
-  const PdfDoc = (
+  // 5. Build the PDF document. Rendered twice — pass one captures the
+  //    page each section starts on, pass two fills in the contents.
+  const buildDoc = (tocEntries: TocEntry[]) => (
     <Document>
       <CoverPage wedding={wedding} s={s} PdfPage={PdfPage} Text={Text} View={View} Image={Image} />
-      <TocPage s={s} PdfPage={PdfPage} Text={Text} View={View} />
+      <TocPage entries={tocEntries} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <VendorsPage vendorList={vendorList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <TimelinePages dayOf={dayOf} timelineByGroup={timelineByGroup} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <CeremonyPage dayOf={dayOf} positionList={positionList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
@@ -53,7 +56,7 @@ export async function exportWeddingBinder(): Promise<void> {
       <SetupTasksPage dayOf={dayOf} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <WeddingPartyPage partyList={partyList} s={s} PdfPage={PdfPage} Text={Text} View={View} Image={Image} />
       <AttirePage dayOf={dayOf} s={s} PdfPage={PdfPage} Text={Text} View={View} Image={Image} />
-      <SeatingPage tableList={tableList} assignmentList={assignmentList} guestList={guestList} positionList={positionList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
+      <SeatingPage tableList={tableList} floorObjects={floorObjects} assignmentList={assignmentList} guestList={guestList} positionList={positionList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <GuestsPage guestList={guestList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <BudgetPage wedding={wedding} expenseList={expenseList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <RehearsalDinnerPage rehearsal={rehearsal} s={s} PdfPage={PdfPage} Text={Text} View={View} />
@@ -62,8 +65,11 @@ export async function exportWeddingBinder(): Promise<void> {
     </Document>
   );
 
-  // 6. Generate the binder.
-  const blob = await pdf(PdfDoc).toBlob();
+  // 6. Render twice: pass one populates the table-of-contents page
+  //    numbers, pass two produces the final binder.
+  resetTocEntries();
+  await pdf(buildDoc([])).toBlob();
+  const blob = await pdf(buildDoc(getTocEntries())).toBlob();
 
   // 7. Append vendor contracts and insurance certificates (PDF merge)
   //    when present. Falls back to the binder alone if the merge fails —

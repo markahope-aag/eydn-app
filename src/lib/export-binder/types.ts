@@ -61,6 +61,17 @@ export type SeatingTable = {
   name: string | null;
   shape: string;
   capacity: number;
+  x: number;
+  y: number;
+};
+
+export type FloorObject = {
+  id: string;
+  label: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 };
 
 export type SeatAssignment = {
@@ -121,6 +132,7 @@ export type BinderData = {
   partyList: WeddingPartyMember[];
   guestList: Guest[];
   tableList: SeatingTable[];
+  floorObjects: FloorObject[];
   assignmentList: SeatAssignment[];
   positionList: CeremonyPosition[];
   expenseList: Expense[];
