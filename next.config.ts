@@ -40,7 +40,10 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: [
-          { key: "X-Frame-Options", value: "DENY" },
+          // SAMEORIGIN (not DENY) so the dashboard can show a live
+          // preview of the couple's own wedding website in an iframe.
+          // Cross-origin framing is still blocked (clickjacking).
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-DNS-Prefetch-Control", value: "on" },
@@ -66,6 +69,7 @@ const nextConfig: NextConfig = {
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
+              "frame-ancestors 'self'",
             ].join("; "),
           },
         ],
