@@ -95,8 +95,8 @@ describe("SECTIONS", () => {
     expect(SECTIONS).toContain("Notes");
   });
 
-  it("has 15 sections", () => {
-    expect(SECTIONS).toHaveLength(15);
+  it("has 14 sections", () => {
+    expect(SECTIONS).toHaveLength(14);
   });
 });
 

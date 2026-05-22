@@ -9,11 +9,14 @@ type CoverProps = {
   PdfPage: React.ElementType;
   Text: React.ElementType;
   View: React.ElementType;
+  Image: React.ElementType;
 };
 
-export function CoverPage({ wedding, s, PdfPage, Text, View }: CoverProps) {
+export function CoverPage({ wedding, s, PdfPage, Text, View, Image }: CoverProps) {
   return (
     <PdfPage size="A4" style={s.coverPage}>
+      {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image */}
+      <Image src="/logo.png" style={{ width: 120, height: 38, objectFit: "contain", marginBottom: 28 }} />
       <Text style={s.coverNames}>
         {wedding.partner1_name} & {wedding.partner2_name}
       </Text>

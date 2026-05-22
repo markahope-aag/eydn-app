@@ -3,7 +3,17 @@ import { toast } from "sonner";
 import { DayOfPlan } from "./types";
 
 export async function exportDayOfPDF(plan: DayOfPlan) {
-  const { pdf, Document, Page: PdfPage, Text, View, StyleSheet, Svg, Rect, Defs, LinearGradient, Stop, Circle } = await import("@react-pdf/renderer");
+  const { pdf, Document, Page: PdfPage, Text, View, Image, StyleSheet, Svg, Rect, Defs, LinearGradient, Stop, Circle } = await import("@react-pdf/renderer");
+
+  // Couple names for the header — fetched here so the export stays a
+  // single call from the page.
+  const wedding = await fetch("/api/weddings")
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+  const coupleName =
+    wedding?.partner1_name && wedding?.partner2_name
+      ? `${wedding.partner1_name} & ${wedding.partner2_name}`
+      : wedding?.partner1_name || "Your Wedding";
 
   // eydn brand colors
   const brand = {
@@ -54,8 +64,8 @@ export async function exportDayOfPDF(plan: DayOfPlan) {
     tableCellBold: { fontSize: 10, fontFamily: "Helvetica-Bold", color: brand.plum },
     tableCellMuted: { fontSize: 10, color: brand.muted },
     // Packing
-    checkRow: { flexDirection: "row", alignItems: "center", paddingVertical: 4, gap: 10 },
-    checkbox: { width: 12, height: 12, borderRadius: 2, borderWidth: 1.5, borderColor: brand.violet },
+    checkRow: { flexDirection: "row", alignItems: "flex-start", paddingVertical: 4, gap: 10 },
+    checkbox: { width: 12, height: 12, borderRadius: 2, borderWidth: 1.5, borderColor: brand.violet, marginTop: 1 },
     checkLabel: { fontSize: 10, color: brand.plum, flex: 1 },
     checkNotes: { fontSize: 8, color: brand.muted },
     // Footer
@@ -82,8 +92,12 @@ export async function exportDayOfPDF(plan: DayOfPlan) {
         <Circle cx="60" cy="90" r="50" fill={brand.blush} opacity="0.15" />
       </Svg>
       <View style={s.headerContent}>
-        <Text style={s.logoText}>Eydn</Text>
-        <Text style={s.tagline}>Your AI Wedding Planning Guide</Text>
+        {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image */}
+        <Image src="/logo-white.png" style={{ width: 64, height: 20, objectFit: "contain", marginBottom: 6 }} />
+        <Text style={{ fontSize: 22, fontFamily: "Helvetica-Bold", color: brand.white, letterSpacing: 1 }}>
+          {coupleName}
+        </Text>
+        <Text style={s.tagline}>Day-of Wedding Plan</Text>
       </View>
     </View>
   );
@@ -195,14 +209,22 @@ export async function exportDayOfPDF(plan: DayOfPlan) {
 
           {/* Packing Checklist */}
           <SectionHeader title="Packing Checklist" />
-          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-            {plan.packingChecklist.map((p, i) => (
-              <View key={i} style={[s.checkRow, { width: "50%" }]}>
-                <View style={s.checkbox} />
-                <View style={{ flex: 1 }}>
-                  <Text style={s.checkLabel}>{p.item}</Text>
-                  {p.notes ? <Text style={s.checkNotes}>{p.notes}</Text> : null}
-                </View>
+          {/* Two explicit columns — flex-wrap overlapped rows of
+              different heights, dropping notes onto the next item. */}
+          <View style={{ flexDirection: "row" }}>
+            {[0, 1].map((col) => (
+              <View key={col} style={{ width: "50%" }}>
+                {plan.packingChecklist
+                  .filter((_, i) => i % 2 === col)
+                  .map((p, i) => (
+                    <View key={i} style={s.checkRow}>
+                      <View style={s.checkbox} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={s.checkLabel}>{p.item}</Text>
+                        {p.notes ? <Text style={s.checkNotes}>{p.notes}</Text> : null}
+                      </View>
+                    </View>
+                  ))}
               </View>
             ))}
           </View>

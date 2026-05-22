@@ -22,7 +22,6 @@ export const SECTIONS = [
   "Guest List",
   "Budget Summary",
   "Rehearsal Dinner",
-  "Gift Registry",
   "Packing Checklist",
   "Notes",
 ];

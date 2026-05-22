@@ -15,14 +15,13 @@ import { SeatingPage } from "./sections/seating";
 import { GuestsPage } from "./sections/guests";
 import { BudgetPage } from "./sections/budget";
 import { RehearsalDinnerPage } from "./sections/rehearsal-dinner";
-import { RegistryPage } from "./sections/registry";
 import { PackingPage } from "./sections/packing";
 import { NotesPage } from "./sections/notes";
 
 export async function exportWeddingBinder(): Promise<void> {
   // 1. Fetch all data
   const data = await fetchBinderData();
-  const { wedding, dayOf, vendorList, partyList, guestList, tableList, assignmentList, positionList, expenseList, rehearsal, registry, insuranceCerts } = data;
+  const { wedding, dayOf, vendorList, partyList, guestList, tableList, assignmentList, positionList, expenseList, rehearsal, insuranceCerts } = data;
 
   // 2. Dynamic import of @react-pdf/renderer
   const {
@@ -44,7 +43,7 @@ export async function exportWeddingBinder(): Promise<void> {
   // 5. Build the PDF document
   const PdfDoc = (
     <Document>
-      <CoverPage wedding={wedding} s={s} PdfPage={PdfPage} Text={Text} View={View} />
+      <CoverPage wedding={wedding} s={s} PdfPage={PdfPage} Text={Text} View={View} Image={Image} />
       <TocPage s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <VendorsPage vendorList={vendorList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <TimelinePages dayOf={dayOf} timelineByGroup={timelineByGroup} s={s} PdfPage={PdfPage} Text={Text} View={View} />
@@ -58,7 +57,6 @@ export async function exportWeddingBinder(): Promise<void> {
       <GuestsPage guestList={guestList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <BudgetPage wedding={wedding} expenseList={expenseList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <RehearsalDinnerPage rehearsal={rehearsal} s={s} PdfPage={PdfPage} Text={Text} View={View} />
-      <RegistryPage registry={registry} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <PackingPage dayOf={dayOf} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <NotesPage s={s} PdfPage={PdfPage} Text={Text} View={View} />
     </Document>
