@@ -55,7 +55,7 @@ export async function fetchBinderData(): Promise<BinderData> {
     expenses,
     rehearsalDinner,
     registryLinks,
-    insuranceRaw,
+    vendorDocsRaw,
   ] = await Promise.all([
     fetchJSON<Wedding>("/api/weddings"),
     fetchJSON<{ content: DayOfPlan }>("/api/day-of"),
@@ -68,8 +68,8 @@ export async function fetchBinderData(): Promise<BinderData> {
     fetchJSON<Expense[]>("/api/expenses"),
     fetchJSON<RehearsalDinner>("/api/rehearsal-dinner"),
     fetchJSON<RegistryLink[]>("/api/wedding-website/registry"),
-    fetchJSON<Array<{ entity_id: string; file_name: string; file_url: string; mime_type: string | null }>>(
-      "/api/attachments?doc_type=insurance"
+    fetchJSON<Array<{ entity_id: string; file_name: string; file_url: string; mime_type: string | null; doc_type: string | null }>>(
+      "/api/attachments?entity_type=vendor"
     ),
   ]);
 
@@ -106,6 +106,14 @@ export async function fetchBinderData(): Promise<BinderData> {
     attire: rawDayOf.attire || [],
   };
 
+  // Inline attire photos as data URLs so they embed in the PDF.
+  dayOf.attire = await Promise.all(
+    dayOf.attire.map(async (a) => ({
+      ...a,
+      photoUrl: a.photoUrl ? await imageToDataUrl(a.photoUrl) : null,
+    }))
+  );
+
   // Inline wedding-party member photos as data URLs for the PDF.
   const partyList = await Promise.all(
     (weddingParty || []).map(async (m) => ({
@@ -126,11 +134,21 @@ export async function fetchBinderData(): Promise<BinderData> {
     expenseList: expenses || [],
     rehearsal: rehearsalDinner,
     registry: registryLinks || [],
-    insuranceCerts: (insuranceRaw || []).map((c) => ({
-      vendorId: c.entity_id,
-      fileName: c.file_name,
-      fileUrl: c.file_url,
-      mimeType: c.mime_type,
-    })),
+    insuranceCerts: (vendorDocsRaw || [])
+      .filter((a) => a.doc_type === "insurance")
+      .map((a) => ({
+        vendorId: a.entity_id,
+        fileName: a.file_name,
+        fileUrl: a.file_url,
+        mimeType: a.mime_type,
+      })),
+    vendorContracts: (vendorDocsRaw || [])
+      .filter((a) => a.doc_type !== "insurance")
+      .map((a) => ({
+        vendorId: a.entity_id,
+        fileName: a.file_name,
+        fileUrl: a.file_url,
+        mimeType: a.mime_type,
+      })),
   };
 }

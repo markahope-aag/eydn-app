@@ -107,7 +107,7 @@ export type RehearsalDinner = {
   guest_list: string[];
 };
 
-export type InsuranceCert = {
+export type VendorDoc = {
   vendorId: string;
   fileName: string;
   fileUrl: string;
@@ -126,7 +126,8 @@ export type BinderData = {
   expenseList: Expense[];
   rehearsal: RehearsalDinner | null;
   registry: RegistryLink[];
-  insuranceCerts: InsuranceCert[];
+  insuranceCerts: VendorDoc[];
+  vendorContracts: VendorDoc[];
 };
 
 export type TimelineGroup = {

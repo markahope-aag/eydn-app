@@ -10,9 +10,10 @@ type AttireProps = {
   PdfPage: React.ElementType;
   Text: React.ElementType;
   View: React.ElementType;
+  Image: React.ElementType;
 };
 
-export function AttirePage({ dayOf, s, PdfPage, Text, View }: AttireProps) {
+export function AttirePage({ dayOf, s, PdfPage, Text, View, Image }: AttireProps) {
   return (
     <PdfPage size="A4" style={s.page} wrap>
       <View style={s.body}>
@@ -22,13 +23,23 @@ export function AttirePage({ dayOf, s, PdfPage, Text, View }: AttireProps) {
         ) : (
           <View style={s.tableContainer}>
             <View style={s.tableHeaderRow}>
-              <Text style={[s.tableHeaderCell, { width: 160 }]}>Person</Text>
+              <Text style={[s.tableHeaderCell, { width: 50 }]}> </Text>
+              <Text style={[s.tableHeaderCell, { width: 140 }]}>Person</Text>
               <Text style={[s.tableHeaderCell, { flex: 1 }]}>Description</Text>
             </View>
             {dayOf.attire.map((a, i) => (
               <View key={i} style={rowStyle(s, i)} wrap={false}>
-                <Text style={[s.tableCellBold, { width: 160 }]}>{a.person}</Text>
-                <Text style={[s.tableCell, { flex: 1 }]}>{a.description || "\u2014"}</Text>
+                <View style={{ width: 50, justifyContent: "center" }}>
+                  {a.photoUrl ? (
+                    // eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image
+                    <Image
+                      src={a.photoUrl}
+                      style={{ width: 40, height: 40, borderRadius: 4, objectFit: "cover" }}
+                    />
+                  ) : null}
+                </View>
+                <Text style={[s.tableCellBold, { width: 140 }]}>{a.person}</Text>
+                <Text style={[s.tableCell, { flex: 1 }]}>{a.description || "—"}</Text>
               </View>
             ))}
           </View>

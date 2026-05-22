@@ -1,10 +1,16 @@
 import type { PDFImage } from "pdf-lib";
 
-export type CertFile = {
+export type VendorDocFile = {
   vendorName: string;
   fileName: string;
   fileUrl: string;
   mimeType: string | null;
+};
+
+export type DocSection = {
+  title: string;
+  description: string;
+  docs: VendorDocFile[];
 };
 
 // US Letter, in points.
@@ -13,14 +19,15 @@ const PAGE_H = 792;
 const MARGIN = 40;
 
 /**
- * Append vendor insurance certificates to the generated day-of binder.
- * PDF certificates are merged page-for-page; JPG/PNG certificates each
- * get their own page. Anything that can't be read is skipped so a single
- * bad file never breaks the binder export.
+ * Append vendor documents (contracts, insurance certificates) to the
+ * generated day-of binder. Each section gets a divider page listing its
+ * documents, then the documents themselves: PDFs merged page-for-page,
+ * JPG/PNG files one per page. Anything that can't be read is skipped so a
+ * single bad file never breaks the binder export.
  */
-export async function appendCertificates(
+export async function appendVendorDocuments(
   binderBytes: ArrayBuffer,
-  certs: CertFile[]
+  sections: DocSection[]
 ): Promise<Uint8Array> {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const merged = await PDFDocument.load(binderBytes);
@@ -49,67 +56,64 @@ export async function appendCertificates(
     });
   }
 
-  // Section divider page listing the certificates that follow.
-  const divider = merged.addPage([PAGE_W, PAGE_H]);
-  divider.drawText("Vendor Insurance Certificates", {
-    x: MARGIN,
-    y: PAGE_H - 110,
-    size: 22,
-    font: boldFont,
-    color: rgb(0.17, 0.24, 0.18),
-  });
-  divider.drawText("Many venues require proof of vendor liability insurance.", {
-    x: MARGIN,
-    y: PAGE_H - 140,
-    size: 11,
-    font,
-    color: rgb(0.42, 0.42, 0.42),
-  });
-  divider.drawText("The certificates on the following pages are ready for your venue.", {
-    x: MARGIN,
-    y: PAGE_H - 156,
-    size: 11,
-    font,
-    color: rgb(0.42, 0.42, 0.42),
-  });
-  let listY = PAGE_H - 200;
-  for (const c of certs) {
-    if (listY < MARGIN) break;
-    divider.drawText(`-  ${c.vendorName}: ${c.fileName}`, {
+  for (const section of sections) {
+    if (section.docs.length === 0) continue;
+
+    // Divider page listing the documents that follow.
+    const divider = merged.addPage([PAGE_W, PAGE_H]);
+    divider.drawText(section.title, {
       x: MARGIN,
-      y: listY,
-      size: 10,
-      font,
-      color: rgb(0.25, 0.25, 0.25),
+      y: PAGE_H - 110,
+      size: 22,
+      font: boldFont,
+      color: rgb(0.17, 0.24, 0.18),
     });
-    listY -= 18;
-  }
+    divider.drawText(section.description, {
+      x: MARGIN,
+      y: PAGE_H - 140,
+      size: 11,
+      font,
+      color: rgb(0.42, 0.42, 0.42),
+    });
+    let listY = PAGE_H - 180;
+    for (const d of section.docs) {
+      if (listY < MARGIN) break;
+      divider.drawText(`-  ${d.vendorName}: ${d.fileName}`, {
+        x: MARGIN,
+        y: listY,
+        size: 10,
+        font,
+        color: rgb(0.25, 0.25, 0.25),
+      });
+      listY -= 18;
+    }
 
-  for (const cert of certs) {
-    try {
-      const res = await fetch(cert.fileUrl);
-      if (!res.ok) continue;
-      const bytes = await res.arrayBuffer();
-      const mime = (cert.mimeType || "").toLowerCase();
-      const name = cert.fileName.toLowerCase();
+    for (const doc of section.docs) {
+      try {
+        const res = await fetch(doc.fileUrl);
+        if (!res.ok) continue;
+        const bytes = await res.arrayBuffer();
+        const mime = (doc.mimeType || "").toLowerCase();
+        const name = doc.fileName.toLowerCase();
 
-      if (mime.includes("pdf") || name.endsWith(".pdf")) {
-        const certDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
-        const pages = await merged.copyPages(certDoc, certDoc.getPageIndices());
-        for (const p of pages) merged.addPage(p);
-      } else if (mime.includes("png") || name.endsWith(".png")) {
-        addImagePage(await merged.embedPng(bytes), `${cert.vendorName} - insurance certificate`);
-      } else if (
-        mime.includes("jpeg") ||
-        mime.includes("jpg") ||
-        name.endsWith(".jpg") ||
-        name.endsWith(".jpeg")
-      ) {
-        addImagePage(await merged.embedJpg(bytes), `${cert.vendorName} - insurance certificate`);
+        if (mime.includes("pdf") || name.endsWith(".pdf")) {
+          const docPdf = await PDFDocument.load(bytes, { ignoreEncryption: true });
+          const pages = await merged.copyPages(docPdf, docPdf.getPageIndices());
+          for (const p of pages) merged.addPage(p);
+        } else if (mime.includes("png") || name.endsWith(".png")) {
+          addImagePage(await merged.embedPng(bytes), `${doc.vendorName} - ${doc.fileName}`);
+        } else if (
+          mime.includes("jpeg") ||
+          mime.includes("jpg") ||
+          name.endsWith(".jpg") ||
+          name.endsWith(".jpeg")
+        ) {
+          addImagePage(await merged.embedJpg(bytes), `${doc.vendorName} - ${doc.fileName}`);
+        }
+        // Other formats (webp, heic, …) can't be embedded — skipped.
+      } catch {
+        // Skip a document that fails to download or parse.
       }
-      // Other formats (webp, heic, …) can't be embedded — skipped.
-    } catch {
-      // Skip a certificate that fails to download or parse.
     }
   }
 

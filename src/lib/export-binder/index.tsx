@@ -21,7 +21,7 @@ import { NotesPage } from "./sections/notes";
 export async function exportWeddingBinder(): Promise<void> {
   // 1. Fetch all data
   const data = await fetchBinderData();
-  const { wedding, dayOf, vendorList, partyList, guestList, tableList, assignmentList, positionList, expenseList, rehearsal, insuranceCerts } = data;
+  const { wedding, dayOf, vendorList, partyList, guestList, tableList, assignmentList, positionList, expenseList, rehearsal, insuranceCerts, vendorContracts } = data;
 
   // 2. Dynamic import of @react-pdf/renderer
   const {
@@ -52,7 +52,7 @@ export async function exportWeddingBinder(): Promise<void> {
       <SpeechesPage dayOf={dayOf} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <SetupTasksPage dayOf={dayOf} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <WeddingPartyPage partyList={partyList} s={s} PdfPage={PdfPage} Text={Text} View={View} Image={Image} />
-      <AttirePage dayOf={dayOf} s={s} PdfPage={PdfPage} Text={Text} View={View} />
+      <AttirePage dayOf={dayOf} s={s} PdfPage={PdfPage} Text={Text} View={View} Image={Image} />
       <SeatingPage tableList={tableList} assignmentList={assignmentList} guestList={guestList} positionList={positionList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <GuestsPage guestList={guestList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
       <BudgetPage wedding={wedding} expenseList={expenseList} s={s} PdfPage={PdfPage} Text={Text} View={View} />
@@ -65,20 +65,36 @@ export async function exportWeddingBinder(): Promise<void> {
   // 6. Generate the binder.
   const blob = await pdf(PdfDoc).toBlob();
 
-  // 7. Append vendor insurance certificates (PDF merge) when present.
-  //    Falls back to the binder alone if the merge fails — the export
-  //    must never break over a certificate.
+  // 7. Append vendor contracts and insurance certificates (PDF merge)
+  //    when present. Falls back to the binder alone if the merge fails —
+  //    the export must never break over a document.
   let finalBlob: Blob = blob;
-  if (insuranceCerts.length > 0) {
+  if (insuranceCerts.length > 0 || vendorContracts.length > 0) {
     try {
-      const { appendCertificates } = await import("./append-certificates");
-      const certs = insuranceCerts.map((c) => ({
+      const { appendVendorDocuments } = await import("./append-certificates");
+      const toDoc = (c: {
+        vendorId: string;
+        fileName: string;
+        fileUrl: string;
+        mimeType: string | null;
+      }) => ({
         vendorName: vendorList.find((v) => v.id === c.vendorId)?.name || "Vendor",
         fileName: c.fileName,
         fileUrl: c.fileUrl,
         mimeType: c.mimeType,
-      }));
-      const mergedBytes = await appendCertificates(await blob.arrayBuffer(), certs);
+      });
+      const mergedBytes = await appendVendorDocuments(await blob.arrayBuffer(), [
+        {
+          title: "Vendor Contracts",
+          description: "Signed contracts and agreements for your vendors.",
+          docs: vendorContracts.map(toDoc),
+        },
+        {
+          title: "Vendor Insurance Certificates",
+          description: "Proof of vendor liability insurance — many venues require this on file.",
+          docs: insuranceCerts.map(toDoc),
+        },
+      ]);
       finalBlob = new Blob([mergedBytes as Uint8Array<ArrayBuffer>], { type: "application/pdf" });
     } catch {
       finalBlob = blob;
