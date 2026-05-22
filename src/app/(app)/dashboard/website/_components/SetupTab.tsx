@@ -176,6 +176,9 @@ export function SetupTab({
 
   return (
     <div className="max-w-lg space-y-6">
+      <p className="text-[13px] text-muted">
+        Pick a URL, add your details and photos below, then publish when you&apos;re ready. Everything saves automatically as you go.
+      </p>
       <div>
         <label className="text-[13px] font-semibold text-muted block mb-1">
           Website URL <Tooltip text="This is the public link to your wedding website. Share it with guests so they can view details, RSVP, and upload photos." wide />
@@ -211,31 +214,60 @@ export function SetupTab({
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            role="switch"
-            aria-label="Enable wedding website"
-            aria-checked={enabled}
-            checked={enabled}
-            onChange={(e) => {
-              const newVal = e.target.checked;
-              setEnabled(newVal);
-              if (newVal) {
-                trackWebsitePublished();
-                if (!wasEnabledOnLoad.current) setShowLaunchMoment(true);
-              }
-              autoSaveImmediate({ enabled: newVal });
+      {/* Publish */}
+      {enabled ? (
+        <div className="rounded-[14px] border border-emerald-200 bg-emerald-50/60 p-4">
+          <p className="text-[15px] font-semibold text-plum flex items-center gap-1.5">
+            <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+            Your website is live
+          </p>
+          <p className="text-[13px] text-muted mt-1">
+            Guests can visit it at{" "}
+            <span className="font-semibold text-plum">eydn.app/w/{slug || "your-url"}</span>. Keep
+            editing anytime — changes save and update automatically.
+          </p>
+          <button
+            onClick={() => {
+              setEnabled(false);
+              autoSaveImmediate({ enabled: false });
             }}
-            className="sr-only peer"
-          />
-          <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-violet transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5" />
-        </label>
-        <span className="text-[15px] text-plum font-semibold">
-          Website {enabled ? "Enabled" : "Disabled"} <Tooltip text="When enabled, your wedding website is publicly visible at the URL above. Guests can view the schedule, RSVP, and browse the photo gallery." wide />
-        </span>
-      </div>
+            className="mt-3 text-[13px] font-semibold text-muted hover:text-error transition"
+          >
+            Unpublish — hide from guests
+          </button>
+        </div>
+      ) : (
+        <div className="rounded-[14px] border border-violet/25 bg-lavender/40 p-4">
+          <p className="text-[15px] font-semibold text-plum">Ready to share your website?</p>
+          <p className="text-[13px] text-muted mt-1">
+            It&apos;s private while you build it. Add your details below, then publish to make it
+            visible to guests at your URL.
+          </p>
+          <button
+            onClick={() => {
+              if (!slug) {
+                toast.error("Choose a website URL above first");
+                return;
+              }
+              setEnabled(true);
+              trackWebsitePublished();
+              if (!wasEnabledOnLoad.current) setShowLaunchMoment(true);
+              autoSaveImmediate({ enabled: true });
+            }}
+            disabled={!slug}
+            className="btn-primary btn-sm mt-3 disabled:opacity-50"
+          >
+            Publish Website
+          </button>
+          {!slug && (
+            <p className="text-[11px] text-muted mt-1.5">
+              Choose a website URL above to enable publishing.
+            </p>
+          )}
+        </div>
+      )}
 
       <div>
         <label className="text-[13px] font-semibold text-muted block mb-1">
