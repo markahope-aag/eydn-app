@@ -51,6 +51,8 @@ function createMockSupabase(
                   if (last2) last2.inIds = ids;
                   return {
                     select: vi.fn(() => Promise.resolve({ data: updateData, error: updateError })),
+                    // Party-member cascade in DELETE: update→eq→in→is
+                    is: vi.fn(() => Promise.resolve({ data: [], error: null })),
                   };
                 }),
               };

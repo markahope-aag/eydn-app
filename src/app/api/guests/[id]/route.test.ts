@@ -19,6 +19,8 @@ function makeSupabase() {
             select: vi.fn(() => ({
               single: mockUpdateSingle,
             })),
+            // Party-member cascade in DELETE: update→eq→eq→is
+            is: vi.fn(() => Promise.resolve({ data: [], error: null })),
           })),
         })),
       })),

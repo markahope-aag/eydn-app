@@ -31,7 +31,6 @@ export default function GuestsPage() {
   const [newRole, setNewRole] = useState("friend");
   const [newPhone, setNewPhone] = useState("");
   const [newMeal, setNewMeal] = useState("");
-  const [newPlusOne, setNewPlusOne] = useState("");
   const [newGroup, setNewGroup] = useState("");
   const [newAddr1, setNewAddr1] = useState("");
   const [newAddr2, setNewAddr2] = useState("");
@@ -41,6 +40,8 @@ export default function GuestsPage() {
   const [showAddFields, setShowAddFields] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  // Draft "add a party member" name, keyed by head guest id.
+  const [companionDraft, setCompanionDraft] = useState<Record<string, string>>({});
   const [filterRole, setFilterRole] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -80,8 +81,8 @@ export default function GuestsPage() {
       rsvp_status: "not_invited",
       meal_preference: newMeal.trim() || null,
       role: newRole || "friend",
-      plus_one: !!newPlusOne.trim(),
-      plus_one_name: newPlusOne.trim() || null,
+      plus_one: false,
+      plus_one_name: null,
       address_line1: newAddr1.trim() || null,
       address_line2: newAddr2.trim() || null,
       city: newCity.trim() || null,
@@ -89,6 +90,7 @@ export default function GuestsPage() {
       zip: newZip.trim() || null,
       phone: newPhone.trim() || null,
       group_name: newGroup.trim() || null,
+      party_head_id: null,
     };
 
     setGuests((prev) => [...prev, newGuest]);
@@ -97,7 +99,6 @@ export default function GuestsPage() {
     setNewRole("friend");
     setNewPhone("");
     setNewMeal("");
-    setNewPlusOne("");
     setNewGroup("");
     setNewAddr1("");
     setNewAddr2("");
@@ -116,8 +117,6 @@ export default function GuestsPage() {
           rsvp_status: "not_invited",
           role: newGuest.role,
           meal_preference: newGuest.meal_preference,
-          plus_one: newGuest.plus_one,
-          plus_one_name: newGuest.plus_one_name,
           phone: newGuest.phone,
           group_name: newGuest.group_name,
           address_line1: newGuest.address_line1,
@@ -140,7 +139,8 @@ export default function GuestsPage() {
 
   async function removeGuest(id: string) {
     const prev = guests;
-    setGuests((g) => g.filter((x) => x.id !== id));
+    // Removing a head guest also removes their party members.
+    setGuests((g) => g.filter((x) => x.id !== id && x.party_head_id !== id));
 
     try {
       const res = await fetch(`/api/guests/${id}`, { method: "DELETE" });
@@ -174,6 +174,57 @@ export default function GuestsPage() {
     }
   }
 
+  // Add a party member (child / plus-one) under a head guest. The companion
+  // is a full guest row, so it counts toward the headcount and can be seated.
+  async function addCompanion(head: Guest) {
+    const companionName = (companionDraft[head.id] || "").trim();
+    if (!companionName) return;
+
+    const tempId = crypto.randomUUID();
+    const companion: Guest = {
+      id: tempId,
+      name: companionName,
+      email: null,
+      rsvp_status: head.rsvp_status,
+      meal_preference: null,
+      role: head.role,
+      plus_one: false,
+      plus_one_name: null,
+      address_line1: null,
+      address_line2: null,
+      city: null,
+      state: null,
+      zip: null,
+      phone: null,
+      group_name: head.group_name,
+      party_head_id: head.id,
+    };
+
+    setGuests((prev) => [...prev, companion]);
+    setCompanionDraft((d) => ({ ...d, [head.id]: "" }));
+
+    try {
+      const res = await fetch("/api/guests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: companionName,
+          party_head_id: head.id,
+          role: head.role,
+          rsvp_status: head.rsvp_status,
+          group_name: head.group_name,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const saved = await res.json();
+      setGuests((prev) => prev.map((g) => (g.id === tempId ? saved : g)));
+      toast.success(`${companionName} added to ${head.name}'s party`);
+    } catch {
+      setGuests((prev) => prev.filter((g) => g.id !== tempId));
+      toast.error("Couldn't add that guest. Try again.");
+    }
+  }
+
   function downloadTemplate() {
     const headers = ["name", "email", "role", "meal_preference", "plus_one_name", "phone", "group"];
     const example = ["Jane Doe", "jane@example.com", "friend", "Vegetarian", "John Doe", "(555) 123-4567", "College Friends"];
@@ -190,7 +241,7 @@ export default function GuestsPage() {
   async function importFromContacts() {
     const contactsApi = "contacts" in navigator && "ContactsManager" in window;
     if (!contactsApi) {
-      toast.error("Contact import is only available on mobile devices (Android Chrome or iOS Safari).");
+      toast.error("Importing from your phone's contacts isn't supported on iPhone or iPad — use Import CSV instead. (It works in Chrome on Android.)");
       return;
     }
     try {
@@ -274,12 +325,32 @@ export default function GuestsPage() {
 
   const STATUS_ORDER = ["not_invited", "invite_sent", "pending", "accepted", "declined"];
 
-  const filtered = guests.filter((g) => {
-    if (filterRole && g.role !== filterRole) return false;
-    if (filterStatus && g.rsvp_status !== filterStatus) return false;
+  // Group guests into parties — a head guest plus any companions (children
+  // or plus-ones) linked via party_head_id. Orphan companions whose head is
+  // missing are treated as heads so nothing disappears from the list.
+  const guestIds = new Set(guests.map((g) => g.id));
+  const companionsByHead = new Map<string, Guest[]>();
+  const heads: Guest[] = [];
+  for (const g of guests) {
+    if (g.party_head_id && guestIds.has(g.party_head_id)) {
+      const arr = companionsByHead.get(g.party_head_id) || [];
+      arr.push(g);
+      companionsByHead.set(g.party_head_id, arr);
+    } else {
+      heads.push(g);
+    }
+  }
+
+  const filtered = heads.filter((head) => {
+    // A party shows when its head or any companion matches the filters.
+    const party = [head, ...(companionsByHead.get(head.id) || [])];
+    if (filterRole && !party.some((g) => g.role === filterRole)) return false;
+    if (filterStatus && !party.some((g) => g.rsvp_status === filterStatus)) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      if (!g.name.toLowerCase().includes(q) && !(g.email?.toLowerCase().includes(q))) return false;
+      if (!party.some((g) => g.name.toLowerCase().includes(q) || !!g.email?.toLowerCase().includes(q))) {
+        return false;
+      }
     }
     return true;
   }).sort((a, b) => {
@@ -375,7 +446,13 @@ export default function GuestsPage() {
   async function bulkDelete() {
     const ids = [...selectedGuests];
     const prev = guests;
-    setGuests((g) => g.filter((x) => !selectedGuests.has(x.id)));
+    setGuests((g) =>
+      g.filter(
+        (x) =>
+          !selectedGuests.has(x.id) &&
+          !(x.party_head_id && selectedGuests.has(x.party_head_id))
+      )
+    );
     setConfirmBulkDelete(false);
 
     try {
@@ -462,7 +539,7 @@ export default function GuestsPage() {
             Import CSV
           </button>
           <button onClick={downloadTemplate} className="btn-ghost btn-sm text-[12px]" title="Download a CSV template showing the expected format">
-            Template
+            Download Template
           </button>
         </div>
       </div>
@@ -518,7 +595,11 @@ export default function GuestsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search guests by name or email"
-            className="w-full rounded-[10px] border border-border bg-white pl-11 pr-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+            // Inline padding-left: the global input[type="text"] rule's
+            // `padding` shorthand outranks a `pl-*` utility class, so the
+            // class alone leaves the placeholder under the search icon.
+            style={{ paddingLeft: "2.75rem" }}
+            className="w-full rounded-[10px] border border-border bg-white pr-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
           />
         </div>
         <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)} aria-label="Filter by role" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]">
@@ -593,16 +674,6 @@ export default function GuestsPage() {
                 />
               </div>
               <div>
-                <label className="text-[12px] font-semibold text-muted">Plus One Name <Tooltip text="If this guest is bringing someone, enter their name. This also counts them toward your total headcount." /></label>
-                <input
-                  type="text"
-                  value={newPlusOne}
-                  onChange={(e) => setNewPlusOne(e.target.value)}
-                  placeholder="Their guest's name"
-                  className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
-                />
-              </div>
-              <div>
                 <label className="text-[12px] font-semibold text-muted">Phone</label>
                 <input
                   type="tel"
@@ -650,8 +721,9 @@ export default function GuestsPage() {
           </div>
           {filtered.map((guest) => {
             const isExpanded = expanded === guest.id;
-            const filledCount = [guest.meal_preference, guest.phone, guest.plus_one_name, guest.group_name, guest.address_line1].filter(Boolean).length;
-            const totalOptional = 5;
+            const companions = companionsByHead.get(guest.id) || [];
+            const filledCount = [guest.meal_preference, guest.phone, guest.group_name, guest.address_line1].filter(Boolean).length;
+            const totalOptional = 4;
             const hasAllDetails = filledCount === totalOptional;
 
             return (
@@ -679,6 +751,11 @@ export default function GuestsPage() {
                     <span className="text-[15px] font-semibold text-plum">{guest.name}</span>
                     {guest.role && (
                       <span className="badge">{ROLE_LABELS[guest.role] || guest.role}</span>
+                    )}
+                    {companions.length > 0 && (
+                      <span className="badge" title="Additional guests in this party (children / plus-ones)">
+                        +{companions.length} {companions.length === 1 ? "guest" : "guests"}
+                      </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -753,20 +830,6 @@ export default function GuestsPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-[12px] font-semibold text-muted">Plus One Name <Tooltip text="If this guest is bringing someone, enter their name. This also counts them toward your total headcount." /></label>
-                    <input
-                      type="text"
-                      defaultValue={guest.plus_one_name || ""}
-                      onBlur={(e) => {
-                        const val = e.target.value || null;
-                        updateGuest(guest.id, "plus_one_name", val);
-                        updateGuest(guest.id, "plus_one", !!val);
-                      }}
-                      placeholder="Their guest's name"
-                      className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
-                    />
-                  </div>
-                  <div>
                     <label className="text-[12px] font-semibold text-muted">Phone</label>
                     <input
                       type="tel"
@@ -828,6 +891,72 @@ export default function GuestsPage() {
                       />
                     </div>
                   </div>
+                  </div>
+
+                  {/* Party — additional guests (children / plus-ones) */}
+                  <div className="mt-4 border-t border-border pt-3">
+                    <label className="text-[12px] font-semibold text-muted">
+                      Party &mdash; additional guests <Tooltip text="Add this guest's children or anyone attending with them. Each one is a full guest — counted in your headcount, with its own RSVP, meal, and seat." wide />
+                    </label>
+                    <div className="mt-2 space-y-2">
+                      {companions.map((c) => (
+                        <div key={c.id} className="flex items-center gap-2 flex-wrap">
+                          <input
+                            type="text"
+                            defaultValue={c.name}
+                            onBlur={(e) => {
+                              const v = e.target.value.trim();
+                              if (v && v !== c.name) updateGuest(c.id, "name", v);
+                            }}
+                            aria-label="Party member name"
+                            className="rounded-[10px] border-border px-3 py-1.5 text-[15px] flex-1 min-w-[140px]"
+                          />
+                          <select
+                            value={c.rsvp_status}
+                            onChange={(e) => updateGuest(c.id, "rsvp_status", e.target.value)}
+                            aria-label={`RSVP status for ${c.name}`}
+                            className={`rounded-full px-3 py-1 text-[13px] font-semibold border-0 cursor-pointer ${STATUS_BADGE[c.rsvp_status] || ""}`}
+                          >
+                            {Object.entries(STATUS_LABELS).map(([v, l]) => (
+                              <option key={v} value={v}>{l}</option>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            defaultValue={c.meal_preference || ""}
+                            onBlur={(e) => updateGuest(c.id, "meal_preference", e.target.value || null)}
+                            placeholder="Meal preference"
+                            aria-label={`Meal preference for ${c.name}`}
+                            className="rounded-[10px] border-border px-3 py-1.5 text-[15px] w-44"
+                          />
+                          <button
+                            onClick={() => setConfirmDelete(c.id)}
+                            aria-label={`Remove ${c.name}`}
+                            className="text-muted hover:text-error"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                              <path d="M5 2V1.5C5 1.22386 5.22386 1 5.5 1H10.5C10.7761 1 11 1.22386 11 1.5V2M2.5 3H13.5M3.5 3V13.5C3.5 14.0523 3.94772 14.5 4.5 14.5H11.5C12.0523 14.5 12.5 14.0523 12.5 13.5V3M6.5 6V11.5M9.5 6V11.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={companionDraft[guest.id] || ""}
+                          onChange={(e) => setCompanionDraft((d) => ({ ...d, [guest.id]: e.target.value }))}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") { e.preventDefault(); addCompanion(guest); }
+                          }}
+                          placeholder="Add a child or +1 by name"
+                          aria-label="Add a party member"
+                          className="rounded-[10px] border-border px-3 py-1.5 text-[15px] flex-1 min-w-[160px]"
+                        />
+                        <button type="button" onClick={() => addCompanion(guest)} className="btn-secondary btn-sm">
+                          Add
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

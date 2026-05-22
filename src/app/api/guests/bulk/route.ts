@@ -1,4 +1,5 @@
 import { getWeddingForUser } from "@/lib/auth";
+import { untypedClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, isValidEmail } from "@/lib/validation";
 import { logActivity } from "@/lib/audit";
@@ -219,6 +220,14 @@ export async function DELETE(request: Request) {
 
   const err = supabaseError(error, "guests");
   if (err) return err;
+
+  // Cascade: soft-delete party members of any deleted head guest.
+  await untypedClient(supabase)
+    .from("guests")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("wedding_id", wedding.id)
+    .in("party_head_id", ids)
+    .is("deleted_at", null);
 
   const deleted = data || [];
   logActivity(supabase, {

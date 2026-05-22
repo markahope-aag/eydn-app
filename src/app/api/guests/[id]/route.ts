@@ -1,4 +1,5 @@
 import { getWeddingForUser } from "@/lib/auth";
+import { untypedClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { pickFields, safeParseJSON, isParseError } from "@/lib/validation";
 import { softDelete, logActivity } from "@/lib/audit";
@@ -8,7 +9,7 @@ const ALLOWED_FIELDS = [
   "name", "email", "rsvp_status", "meal_preference", "role",
   "plus_one", "plus_one_name", "phone", "group_name",
   "address_line1", "address_line2", "city", "state", "zip",
-  "table_number",
+  "table_number", "party_head_id",
 ];
 
 export async function PATCH(
@@ -59,6 +60,15 @@ export async function DELETE(
 
   const err = supabaseError(error, "guests");
   if (err) return err;
+
+  // Cascade: removing a head guest also removes their party members
+  // (children / plus-ones attending with them).
+  await untypedClient(supabase)
+    .from("guests")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("party_head_id", id)
+    .eq("wedding_id", wedding.id)
+    .is("deleted_at", null);
 
   logActivity(supabase, { weddingId: wedding.id, userId, action: "delete", entityType: "guests", entityId: id });
 

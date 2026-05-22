@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "email is not a valid email address" }, { status: 400 });
   }
 
-  const allowed = pickFields(body, ["email", "rsvp_status", "meal_preference", "plus_one", "role", "phone", "group_name", "address_line1", "address_line2", "city", "state", "zip", "plus_one_name"]);
+  const allowed = pickFields(body, ["email", "rsvp_status", "meal_preference", "plus_one", "role", "phone", "group_name", "address_line1", "address_line2", "city", "state", "zip", "plus_one_name", "party_head_id"]);
   const { data, error } = await supabase
     .from("guests")
     .insert({

@@ -14,6 +14,9 @@ export type Guest = {
   zip: string | null;
   phone: string | null;
   group_name: string | null;
+  // Set when this guest attends as part of another guest's party
+  // (e.g. a child or plus-one). Head guests have this null.
+  party_head_id: string | null;
 };
 
 export function titleCase(s: string): string {
