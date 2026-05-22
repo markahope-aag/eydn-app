@@ -9,6 +9,11 @@ interface MusicTabProps {
 }
 
 export function MusicTab({ plan, savePlan }: MusicTabProps) {
+  const usedMoments = new Set(plan.music.map((m) => m.moment.trim().toLowerCase()));
+  const availableMoments = DEFAULT_MUSIC_MOMENTS.filter(
+    (m) => !usedMoments.has(m.toLowerCase())
+  );
+
   return (
     <div className="mt-4">
       <div className="overflow-hidden rounded-[16px] border border-border bg-white">
@@ -23,7 +28,7 @@ export function MusicTab({ plan, savePlan }: MusicTabProps) {
           </thead>
           <tbody className="divide-y divide-border">
             {plan.music.map((m, i) => (
-              <tr key={i}>
+              <tr key={`${plan.music.length}-${i}`}>
                 <td className="px-4 py-2">
                   <input
                     type="text"
@@ -78,35 +83,50 @@ export function MusicTab({ plan, savePlan }: MusicTabProps) {
           </tbody>
         </table>
       </div>
-      <div className="mt-3 flex gap-2">
+      {/* Common moment prompts — tap to add any not already listed */}
+      {availableMoments.length > 0 && (
+        <div className="mt-3 rounded-[12px] border border-border bg-lavender/20 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[12px] font-semibold text-muted">Common moments — tap to add</p>
+            <button
+              onClick={() =>
+                savePlan({
+                  ...plan,
+                  music: [
+                    ...plan.music,
+                    ...availableMoments.map((moment) => ({ moment, song: "", artist: "" })),
+                  ],
+                })
+              }
+              className="text-[12px] font-semibold text-violet hover:text-soft-violet"
+            >
+              Add all
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {availableMoments.map((moment) => (
+              <button
+                key={moment}
+                onClick={() =>
+                  savePlan({ ...plan, music: [...plan.music, { moment, song: "", artist: "" }] })
+                }
+                className="rounded-full bg-white border border-border px-3 py-1 text-[12px] text-plum hover:border-violet hover:text-violet transition"
+              >
+                + {moment}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="mt-3">
         <button
           onClick={() =>
-            savePlan({
-              ...plan,
-              music: [...plan.music, { moment: "", song: "", artist: "" }],
-            })
+            savePlan({ ...plan, music: [...plan.music, { moment: "", song: "", artist: "" }] })
           }
           className="btn-ghost btn-sm"
         >
-          Add row
+          Add custom row
         </button>
-        {plan.music.length === 0 && (
-          <button
-            onClick={() =>
-              savePlan({
-                ...plan,
-                music: DEFAULT_MUSIC_MOMENTS.map((moment) => ({
-                  moment,
-                  song: "",
-                  artist: "",
-                })),
-              })
-            }
-            className="btn-secondary btn-sm"
-          >
-            Pre-fill common moments
-          </button>
-        )}
       </div>
     </div>
   );

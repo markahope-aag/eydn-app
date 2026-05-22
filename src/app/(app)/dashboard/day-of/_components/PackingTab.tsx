@@ -30,7 +30,7 @@ export function PackingTab({
       <div className="space-y-2">
         {plan.packingChecklist.map((p, i) => (
           <div
-            key={i}
+            key={`${plan.packingChecklist.length}-${i}`}
             className="card flex items-start gap-3 px-4 py-3"
           >
             <input

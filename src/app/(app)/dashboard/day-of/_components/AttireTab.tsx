@@ -20,7 +20,7 @@ export function AttireTab({ plan, savePlan }: AttireTabProps) {
       </p>
       <div className="space-y-3">
         {plan.attire.map((item, i) => (
-          <div key={i} className="card p-4 flex gap-4">
+          <div key={`${plan.attire.length}-${i}`} className="card p-4 flex gap-4">
             {item.photoUrl ? (
               <div className="w-20 h-20 rounded-[12px] overflow-hidden flex-shrink-0 relative cursor-pointer group"
                 onClick={() => {
@@ -102,9 +102,11 @@ export function AttireTab({ plan, savePlan }: AttireTabProps) {
           try {
             const res = await fetch("/api/attachments", { method: "POST", body: formData });
             if (!res.ok) throw new Error();
-            const { file_url } = await res.json();
+            // signed_url is a ready-to-display URL; file_url is the raw
+            // storage path, which won't render in an <img> on its own.
+            const { file_url, signed_url } = await res.json();
             const updated = [...plan.attire];
-            updated[idx] = { ...updated[idx], photoUrl: file_url };
+            updated[idx] = { ...updated[idx], photoUrl: signed_url || file_url };
             savePlan({ ...plan, attire: updated });
             toast.success("Photo saved");
           } catch {

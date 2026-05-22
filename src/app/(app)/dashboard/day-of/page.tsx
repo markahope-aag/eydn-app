@@ -349,7 +349,7 @@ export default function DayOfPage() {
         />
       )}
 
-      {tab === "vendors" && <VendorsTab plan={plan} />}
+      {tab === "vendors" && <VendorsTab />}
 
       {tab === "packing" && (
         <PackingTab

@@ -22,7 +22,7 @@ export function SetupTasksTab({ plan, savePlan }: SetupTasksTabProps) {
           </thead>
           <tbody className="divide-y divide-border">
             {plan.setupTasks.map((t, i) => (
-              <tr key={i}>
+              <tr key={`${plan.setupTasks.length}-${i}`}>
                 <td className="px-4 py-2">
                   <input
                     type="text"

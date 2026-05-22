@@ -23,7 +23,7 @@ export function SpeechesTab({ plan, savePlan }: SpeechesTabProps) {
           </thead>
           <tbody className="divide-y divide-border">
             {plan.speeches.map((s, i) => (
-              <tr key={i}>
+              <tr key={`${plan.speeches.length}-${i}`}>
                 <td className="px-4 py-2 text-muted text-[13px]">{i + 1}</td>
                 <td className="px-4 py-2">
                   <input

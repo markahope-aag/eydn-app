@@ -27,13 +27,18 @@ export type Tab = "timeline" | "vendors" | "packing" | "ceremony" | "music" | "s
 export const TIMELINE_GROUPS = ["Everyone", "Partner 1", "Partner 2", "Attendants", "Family", "Vendors"];
 
 export const DEFAULT_MUSIC_MOMENTS = [
+  "Prelude",
   "Processional",
-  "Couple Entrance",
   "Recessional",
+  "Cocktail Hour",
+  "Wedding Party Entrance",
+  "Couple Entrance",
   "First Dance",
   "Parent Dance 1",
   "Parent Dance 2",
+  "Dinner",
   "Cake Cutting",
+  "Bouquet Toss",
   "Last Dance",
   "Exit Song",
 ];

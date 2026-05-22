@@ -54,7 +54,10 @@ export function TimelineTab({
           const assignedGroups = (item.forGroup || "Everyone").split(",").map((g) => g.trim());
           return (
           <div
-            key={i}
+            // Key includes the list length so every row remounts on an
+            // add/delete — without this, deleting a row leaves the next
+            // row's uncontrolled inputs showing the deleted row's text.
+            key={`${plan.timeline.length}-${i}`}
             className="group/row rounded-[12px] border border-border bg-white overflow-hidden"
           >
             {/* Main row */}

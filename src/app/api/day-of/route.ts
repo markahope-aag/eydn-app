@@ -18,6 +18,7 @@ export async function GET() {
     .single();
 
   if (data) {
+    await resignAttirePhotos(data, supabase);
     return NextResponse.json(data);
   }
 
@@ -66,6 +67,41 @@ export async function PUT(request: Request) {
   if (err) return err;
 
   return NextResponse.json(data);
+}
+
+/** Pull a Storage path back out of either a bare path or a signed URL. */
+function attachmentPathFrom(value: unknown): string | null {
+  if (typeof value !== "string" || !value) return null;
+  const marker = "/object/sign/attachments/";
+  const idx = value.indexOf(marker);
+  if (idx !== -1) {
+    return decodeURIComponent(value.slice(idx + marker.length).split("?")[0]);
+  }
+  // A bare storage path (anything that isn't already a full URL).
+  if (!value.startsWith("http")) return value;
+  return null;
+}
+
+/**
+ * Re-sign attire photo URLs on read. The plan stores a short-lived signed
+ * URL (or a bare storage path), so without this the attire preview breaks
+ * once that URL expires. The path is recovered either way and re-signed.
+ */
+async function resignAttirePhotos(
+  row: { content?: unknown },
+  supabase: ReturnType<typeof import("@/lib/supabase/server").createSupabaseAdmin>
+) {
+  const content = row.content as { attire?: Array<{ photoUrl?: string | null }> } | null;
+  const attire = content?.attire;
+  if (!Array.isArray(attire)) return;
+  for (const item of attire) {
+    const path = attachmentPathFrom(item.photoUrl);
+    if (!path) continue;
+    const { data: signed } = await supabase.storage
+      .from("attachments")
+      .createSignedUrl(path, 3600);
+    if (signed?.signedUrl) item.photoUrl = signed.signedUrl;
+  }
 }
 
 async function generateDayOfPlan(
