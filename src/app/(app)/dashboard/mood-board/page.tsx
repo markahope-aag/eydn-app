@@ -8,6 +8,7 @@ import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { trackMoodBoardAdd } from "@/lib/analytics";
 import { Tooltip } from "@/components/Tooltip";
+import { GuideLink } from "@/components/GuideLink";
 
 type MoodItem = {
   id: string;
@@ -332,6 +333,10 @@ export default function MoodBoardPage() {
             <a href="https://pin.it/4f47esCnG" target="_blank" rel="noopener noreferrer" className="text-violet underline">
               Need inspo? Check out our Pinterest
             </a>
+          </p>
+          <p className="mt-1 text-[13px] text-muted">
+            Pulling your palette together? See the{" "}
+            <GuideLink slug="colors-theme">colors &amp; theme guide</GuideLink>.
           </p>
         </div>
         <div className="flex gap-2">

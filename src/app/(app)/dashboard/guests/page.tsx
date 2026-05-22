@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { usePremium } from "@/components/PremiumGate";
 import { Tooltip } from "@/components/Tooltip";
+import { GuideLink } from "@/components/GuideLink";
 import { trackGuestAdded, trackGuestImport } from "@/lib/analytics";
 import {
   Guest,
@@ -489,7 +490,12 @@ export default function GuestsPage() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h1>Guest List <Tooltip text="Manage your wedding guests, track RSVPs, assign roles, and organize guests into groups. Use filters to quickly find specific guests." wide /></h1>
+        <div>
+          <h1>Guest List <Tooltip text="Manage your wedding guests, track RSVPs, assign roles, and organize guests into groups. Use filters to quickly find specific guests." wide /></h1>
+          <p className="mt-1 text-[13px] text-muted">
+            Building your list? The <GuideLink slug="guest-list">guest list guide</GuideLink> covers who to invite and how to keep an accurate count.
+          </p>
+        </div>
         <div className="flex gap-2">
           <input ref={fileInput} type="file" accept=".csv" onChange={importCSV} aria-label="Import CSV file" className="hidden" />
           <div className="relative">

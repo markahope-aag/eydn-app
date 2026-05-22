@@ -1,6 +1,7 @@
 "use client";
 
 import { DayOfPlan } from "./types";
+import { GuideLink } from "@/components/GuideLink";
 
 interface SpeechesTabProps {
   plan: DayOfPlan;
@@ -10,6 +11,10 @@ interface SpeechesTabProps {
 export function SpeechesTab({ plan, savePlan }: SpeechesTabProps) {
   return (
     <div className="mt-4">
+      <p className="mb-3 text-[13px] text-muted">
+        Not sure who should speak, in what order, or for how long? The{" "}
+        <GuideLink slug="speeches">speeches &amp; toasts guide</GuideLink> walks through it.
+      </p>
       <div className="overflow-hidden rounded-[16px] border border-border bg-white">
         <table className="w-full text-[15px]">
           <thead className="border-b border-border bg-lavender">

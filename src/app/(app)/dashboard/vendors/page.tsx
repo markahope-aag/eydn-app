@@ -13,6 +13,16 @@ import { Tooltip } from "@/components/Tooltip";
 import { EmailTemplate } from "./EmailTemplate";
 import { usePremium } from "@/components/PremiumGate";
 import { trackVendorAdded, trackVendorPlacement } from "@/lib/analytics";
+import { GuideLink } from "@/components/GuideLink";
+
+// Vendor categories that have a matching planning guide.
+const VENDOR_CATEGORY_GUIDE: Record<string, string> = {
+  "DJ or Band": "music",
+  Florist: "florist",
+  "Hair Stylist": "hair-makeup",
+  "Makeup Artist": "hair-makeup",
+  Rentals: "rentals",
+};
 
 type Vendor = {
   id: string;
@@ -524,6 +534,12 @@ export default function VendorsPage() {
         </div>
       )}
 
+      <p className="mt-3 text-[13px] text-muted">
+        Before you book, check that each vendor carries liability insurance — many
+        venues require it.{" "}
+        <GuideLink slug="insurance">See the vendor insurance guide</GuideLink>.
+      </p>
+
       {showAdd && (
         <form
           onSubmit={addVendor}
@@ -716,6 +732,11 @@ export default function VendorsPage() {
           <div key={category}>
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-[15px] font-semibold text-muted">{categoryLabel(category)}</h2>
+              {VENDOR_CATEGORY_GUIDE[category] && (
+                <GuideLink slug={VENDOR_CATEGORY_GUIDE[category]} className="text-[12px]">
+                  {categoryLabel(category)} guide
+                </GuideLink>
+              )}
             </div>
             <div className="space-y-2">
               {catVendors.map((vendor) => (
