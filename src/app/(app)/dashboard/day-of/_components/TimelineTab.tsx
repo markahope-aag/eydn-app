@@ -54,10 +54,12 @@ export function TimelineTab({
           const assignedGroups = (item.forGroup || "Everyone").split(",").map((g) => g.trim());
           return (
           <div
-            // Key includes the list length so every row remounts on an
-            // add/delete — without this, deleting a row leaves the next
-            // row's uncontrolled inputs showing the deleted row's text.
-            key={`${plan.timeline.length}-${i}`}
+            // Key includes list length (so add/delete remounts neighbour rows
+            // and uncontrolled inputs don't show the deleted row's text) AND
+            // the ceremony time (so Regenerate Timeline remounts every row —
+            // otherwise the new times sit in state but the inputs keep their
+            // stale defaultValue from the previous mount).
+            key={`${plan.ceremonyTime || "none"}-${plan.timeline.length}-${i}`}
             className="group/row rounded-[12px] border border-border bg-white overflow-hidden"
           >
             {/* Main row */}
