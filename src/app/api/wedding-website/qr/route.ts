@@ -2,23 +2,24 @@ import { getWeddingForUser } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
+import QRCode from "qrcode";
 
-const UNIQODE_API_KEY = process.env.UNIQODE_API_KEY;
-const UNIQODE_ORG_ID = process.env.UNIQODE_ORG_ID;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://eydn.app";
 
 /**
- * POST — Generate QR code(s) for RSVP links via Uniqode API.
+ * POST — Generate QR code(s) for personalised RSVP links.
  * Body: { guestId: string } for single, or { bulk: true } for all guests.
+ *
+ * QRs are generated locally with the `qrcode` library (no external service),
+ * uploaded once to Supabase storage, and the resulting public URL is cached
+ * on rsvp_tokens.qr_code_url so subsequent calls are no-ops. A printed QR
+ * therefore stays valid forever — the link it encodes never changes and
+ * never expires.
  */
 export async function POST(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
   const { wedding, supabase } = result;
-
-  if (!UNIQODE_API_KEY || !UNIQODE_ORG_ID) {
-    return NextResponse.json({ error: "QR code service not configured" }, { status: 503 });
-  }
 
   const parsed = await safeParseJSON(request);
   if (isParseError(parsed)) return parsed;
@@ -26,14 +27,12 @@ export async function POST(request: Request) {
 
   const sb = supabase;
 
-  // Get the wedding slug for building URLs
   const slug = wedding.website_slug;
   if (!slug) {
     return NextResponse.json({ error: "Set up your website URL first" }, { status: 400 });
   }
 
   if (body.bulk) {
-    // Bulk generate for all guests with tokens
     const { data: tokens } = await sb
       .from("rsvp_tokens")
       .select("id, token, guest_id, qr_code_url, guests(name)")
@@ -46,7 +45,6 @@ export async function POST(request: Request) {
     const results: { guestId: string; guestName: string; qrUrl: string }[] = [];
 
     for (const t of tokens) {
-      // Skip if already generated
       if (t.qr_code_url) {
         results.push({
           guestId: t.guest_id,
@@ -57,10 +55,9 @@ export async function POST(request: Request) {
       }
 
       const rsvpUrl = `${APP_URL}/w/${slug}?rsvp=${t.token}`;
-      const qrUrl = await generateQR(rsvpUrl, t.guests?.name || "Guest", wedding.id);
+      const qrUrl = await generateAndStoreQR(rsvpUrl, t.guests?.name || "Guest", wedding.id);
 
       if (qrUrl) {
-        // Cache the QR URL
         await sb
           .from("rsvp_tokens")
           .update({ qr_code_url: qrUrl })
@@ -77,7 +74,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ generated: results.length, results });
   }
 
-  // Single guest
   const guestId = body.guestId as string;
   if (!guestId) {
     return NextResponse.json({ error: "guestId required" }, { status: 400 });
@@ -94,19 +90,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No RSVP token for this guest" }, { status: 404 });
   }
 
-  // Return cached if available
   if (token.qr_code_url) {
     return NextResponse.json({ qrUrl: token.qr_code_url });
   }
 
   const rsvpUrl = `${APP_URL}/w/${slug}?rsvp=${token.token}`;
-  const qrUrl = await generateQR(rsvpUrl, token.guests?.name || "Guest", wedding.id);
+  const qrUrl = await generateAndStoreQR(rsvpUrl, token.guests?.name || "Guest", wedding.id);
 
   if (!qrUrl) {
     return NextResponse.json({ error: "Failed to generate QR code" }, { status: 500 });
   }
 
-  // Cache
   await sb
     .from("rsvp_tokens")
     .update({ qr_code_url: qrUrl })
@@ -115,67 +109,22 @@ export async function POST(request: Request) {
   return NextResponse.json({ qrUrl });
 }
 
-async function generateQR(url: string, label: string, weddingId: string): Promise<string | null> {
+async function generateAndStoreQR(
+  url: string,
+  label: string,
+  weddingId: string
+): Promise<string | null> {
   try {
-    // Step 1: Create the QR code on Uniqode
-    const createRes = await fetch("https://api.uniqode.com/api/2.0/qrcodes/", {
-      method: "POST",
-      headers: {
-        Authorization: `Token ${UNIQODE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        organization: Number(UNIQODE_ORG_ID),
-        qr_type: 2,
-        campaign: {
-          content_type: 1,
-          custom_url: url,
-        },
-        name: `RSVP: ${label}`,
-      }),
+    const pngBuffer = await QRCode.toBuffer(url, {
+      type: "png",
+      errorCorrectionLevel: "M",
+      margin: 2,
+      width: 600,
+      color: { dark: "#1A1A2E", light: "#FFFFFF" },
     });
 
-    if (!createRes.ok) {
-      console.error("[QR] Uniqode create error:", createRes.status, await createRes.text().catch(() => ""));
-      return null;
-    }
-
-    const createData = await createRes.json();
-    const qrId = createData.id;
-    if (!qrId) {
-      console.error("[QR] No ID returned from Uniqode");
-      return null;
-    }
-
-    // Step 2: Get the download URL from Uniqode
-    const downloadRes = await fetch(`https://api.uniqode.com/api/2.0/qrcodes/${qrId}/download/`, {
-      headers: {
-        Authorization: `Token ${UNIQODE_API_KEY}`,
-      },
-    });
-
-    if (!downloadRes.ok) {
-      console.error("[QR] Uniqode download error:", downloadRes.status);
-      return null;
-    }
-
-    const downloadData = await downloadRes.json();
-    const externalPngUrl = downloadData.urls?.png;
-    if (!externalPngUrl) {
-      console.error("[QR] No PNG URL in download response");
-      return null;
-    }
-
-    // Step 3: Download the PNG and re-upload to our Supabase storage
-    const pngRes = await fetch(externalPngUrl, { signal: AbortSignal.timeout(10000) });
-    if (!pngRes.ok) {
-      console.error("[QR] Failed to download PNG from Uniqode S3");
-      return externalPngUrl; // Fall back to external URL
-    }
-
-    const pngBuffer = Buffer.from(await pngRes.arrayBuffer());
     const safeName = label.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
-    const storagePath = `${weddingId}/qr-${safeName}-${qrId}.png`;
+    const storagePath = `${weddingId}/qr-${safeName}-${Date.now()}.png`;
 
     const admin = createSupabaseAdmin();
     const { error: uploadError } = await admin.storage
@@ -187,7 +136,7 @@ async function generateQR(url: string, label: string, weddingId: string): Promis
 
     if (uploadError) {
       console.error("[QR] Storage upload failed:", uploadError.message);
-      return externalPngUrl; // Fall back to external URL
+      return null;
     }
 
     const { data: publicUrl } = admin.storage

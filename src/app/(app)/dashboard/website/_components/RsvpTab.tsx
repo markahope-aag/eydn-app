@@ -173,11 +173,54 @@ export function RsvpTab({
         </p>
       </div>
 
-      {/* QR Codes for Physical Invitations */}
+      {/* Single shared QR for the whole wedding — guests scan, find their name, RSVP */}
+      {slug && (
+        <div className="card p-5 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-[15px] font-semibold text-plum">Wedding QR Code (shared)</h3>
+            <a
+              href="/api/wedding-website/qr/wedding"
+              download="wedding-rsvp-qr.png"
+              className="btn-secondary btn-sm"
+            >
+              Download PNG
+            </a>
+          </div>
+          <div className="bg-lavender/30 rounded-[12px] p-4 text-[13px] text-muted space-y-2">
+            <p className="font-semibold text-plum">One QR for everyone</p>
+            <p>
+              Print this single QR on every invitation, place it on a venue sign, or add it to thank-you cards. Guests scan, look up their name, and RSVP — no per-guest tracking needed.
+            </p>
+            <p className="text-[12px]">
+              {rsvpTokens.length > 0
+                ? "Tip: the per-guest QR codes below are still available if you want a zero-tap experience for each guest."
+                : "Generate RSVP links above first so guests can find themselves in the list when they scan."}
+            </p>
+          </div>
+          <div className="flex items-start gap-4 pt-1">
+            <div className="w-40 h-40 flex-shrink-0 rounded-[12px] border border-border bg-white p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/api/wedding-website/qr/wedding"
+                alt="Wedding RSVP QR code"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="text-[13px] text-muted">
+              <p className="font-semibold text-plum mb-1">Where it leads:</p>
+              <p className="break-all">
+                eydn.app/w/{slug}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR Codes for Physical Invitations — one unique QR per guest */}
       {rsvpTokens.length > 0 && (
         <div className="card p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-[15px] font-semibold text-plum">QR Codes for Invitations</h3>
+            <h3 className="text-[15px] font-semibold text-plum">Per-Guest QR Codes (one per invitation)</h3>
             <button
               onClick={async () => {
                 setQrGenerating(true);
@@ -204,15 +247,17 @@ export function RsvpTab({
             </button>
           </div>
           <div className="bg-lavender/30 rounded-[12px] p-4 text-[13px] text-muted space-y-2">
-            <p className="font-semibold text-plum">How to use QR codes on your invitations:</p>
+            <p className="font-semibold text-plum">The zero-tap path:</p>
+            <p>
+              Each guest gets their own QR. When they scan it, the RSVP page opens already filled in with their name — no lookup step.
+            </p>
             <ol className="list-decimal list-inside space-y-1">
-              <li>Click &quot;Generate QR Codes&quot; to create a unique QR code for each guest</li>
-              <li>Download individual QR images or the full ZIP file</li>
-              <li>Send the QR image files to your invitation designer or print shop</li>
-              <li>Each guest&apos;s invite gets their unique QR code printed on it</li>
-              <li>When a guest scans their QR code, they land directly on their personalized RSVP page — no codes to type, no names to search</li>
+              <li>Click &quot;Generate QR Codes&quot; to create a unique QR for each guest</li>
+              <li>Download individual images or the full ZIP file</li>
+              <li>Send to your invitation designer or print shop</li>
+              <li>Each guest&apos;s invite must have THEIR specific QR — not anyone else&apos;s</li>
             </ol>
-            <p className="text-[12px] mt-2">Each QR code is unique to one guest. Do not mix them up — the wrong QR on the wrong invite means the wrong person RSVPs.</p>
+            <p className="text-[12px] mt-2">Each QR is unique. Mix them up and the wrong person ends up RSVPing — use the shared Wedding QR above if you can&apos;t guarantee one-to-one matching.</p>
           </div>
           {qrCodes.length > 0 && (
             <>
