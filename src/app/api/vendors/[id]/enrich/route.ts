@@ -1,6 +1,6 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { enrichVendor } from "@/lib/google-places";
+import { enrichVendor, getPlaceDetails } from "@/lib/google-places";
 
 export async function POST(
   _request: Request,
@@ -15,7 +15,7 @@ export async function POST(
   // Get the vendor
   const { data: vendor } = await supabase
     .from("vendors")
-    .select("id, name, category, gmb_data, gmb_fetched_at")
+    .select("id, name, category, gmb_place_id, gmb_data, gmb_fetched_at")
     .eq("id", id)
     .eq("wedding_id", wedding.id)
     .single();
@@ -38,7 +38,13 @@ export async function POST(
     return NextResponse.json({ error: "Google Places API key not configured" }, { status: 500 });
   }
 
-  const placeData = await enrichVendor(vendor.name, vendor.category);
+  // Prefer a direct place-details lookup when we already know the Place ID
+  // (typically set when the vendor was added from the public directory).
+  // The fallback name+category text search is what fails for vendors whose
+  // names don't exactly match their Google listing.
+  const placeData = vendor.gmb_place_id
+    ? await getPlaceDetails(vendor.gmb_place_id)
+    : await enrichVendor(vendor.name, vendor.category);
 
   if (!placeData) {
     return NextResponse.json(

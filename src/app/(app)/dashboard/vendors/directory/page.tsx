@@ -36,8 +36,14 @@ type SuggestedVendor = {
   }>;
   /** Cached Google enrichment from suggested_vendors.gmb_data. When present
    *  on the row, the hero renders instantly without waiting on the lazy
-   *  /api/suggested-vendors/[id]/gmb call. */
-  gmb_data: { photoUrl?: string | null } | null;
+   *  /api/suggested-vendors/[id]/gmb call. Also passed through to the
+   *  couple's private vendor row on add so the vendor detail page has the
+   *  business profile cached and doesn't have to re-search Google. */
+  gmb_data: Record<string, unknown> | null;
+  /** Google Place ID — same purpose as gmb_data: carry it onto the couple's
+   *  vendor row so enrichment hits the cache instead of doing a fresh
+   *  text search that often misses. */
+  gmb_place_id: string | null;
 };
 
 type PhotoEntry = {
@@ -220,6 +226,22 @@ export default function VendorDirectoryPage() {
   const [gmbCache, setGmbCache] = useState<Record<string, PlaceData | "loading" | "error">>({});
   const sentinelRef = useRef<HTMLDivElement>(null);
 
+  // Google Places fallback — when the internal directory returns zero
+  // results for a search term, we run a Places lookup so couples can pull
+  // in a vendor that isn't in our database yet. Single best-match (the
+  // /api/vendors/places-search endpoint returns one result). Pro-gated by
+  // the vendorLookup feature.
+  type PlacesState =
+    | { kind: "idle" }
+    | { kind: "loading" }
+    | { kind: "match"; place: PlaceData }
+    | { kind: "no-match" }
+    | { kind: "gated" }
+    | { kind: "error"; message: string };
+  const [placesState, setPlacesState] = useState<PlacesState>({ kind: "idle" });
+  const [placesCategory, setPlacesCategory] = useState("");
+  const [placesAdding, setPlacesAdding] = useState(false);
+
   // Load the couple's wedding so we can show the location banner and prefill
   // the directory's location filter with venue_city.
   useEffect(() => {
@@ -320,6 +342,110 @@ export default function VendorDirectoryPage() {
       .catch(() => toast.error("Couldn't load the directory. Try refreshing."))
       .finally(() => setLoading(false));
   }, [buildUrl]);
+
+  // Google Places fallback: if the internal directory returned no results
+  // for a non-empty search term, try Google for the same term. Costs us a
+  // billable Places call (~$0.052) per fresh lookup, which is why it's gated
+  // on the Pro `vendorLookup` feature server-side. Same-term lookups within
+  // 24h hit the dedupe cache and don't charge.
+  useEffect(() => {
+    const term = debouncedSearch.trim();
+    if (term.length < 2) {
+      setPlacesState({ kind: "idle" });
+      return;
+    }
+    if (loading) return;
+    if (vendors.length > 0) {
+      setPlacesState({ kind: "idle" });
+      return;
+    }
+
+    let cancelled = false;
+    setPlacesState({ kind: "loading" });
+    setPlacesCategory(filterCategory || "");
+
+    const { city, state } = parseLocation(debouncedLocation);
+    const location =
+      [city, state].filter(Boolean).join(", ") || weddingCity || undefined;
+
+    fetch("/api/vendors/places-search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: term,
+        category: filterCategory || undefined,
+        location,
+      }),
+    })
+      .then(async (r) => {
+        if (cancelled) return;
+        if (r.status === 403) {
+          const data = await r.json().catch(() => ({}));
+          if (data?.feature === "vendorLookup") {
+            setPlacesState({ kind: "gated" });
+            return;
+          }
+          setPlacesState({ kind: "error", message: data?.error || "Not allowed" });
+          return;
+        }
+        if (r.status === 429) {
+          setPlacesState({ kind: "error", message: "Daily Google search limit reached — try again tomorrow" });
+          return;
+        }
+        if (!r.ok) {
+          setPlacesState({ kind: "error", message: "Couldn't search Google for that vendor" });
+          return;
+        }
+        const data = (await r.json()) as { place: PlaceData | null };
+        if (data.place) {
+          setPlacesState({ kind: "match", place: data.place });
+        } else {
+          setPlacesState({ kind: "no-match" });
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPlacesState({ kind: "error", message: "Couldn't search Google for that vendor" });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedSearch, debouncedLocation, filterCategory, loading, vendors.length, weddingCity]);
+
+  async function addPlacesResult(place: PlaceData) {
+    const category = placesCategory || filterCategory;
+    if (!category) {
+      toast.error("Pick a category for this vendor first");
+      return;
+    }
+    setPlacesAdding(true);
+    try {
+      const { city, state } = parseLocation(debouncedLocation || weddingCity || "");
+      const res = await fetch("/api/vendors/from-place", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          place,
+          category,
+          cityHint: city || undefined,
+          stateHint: state || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(`${place.name} added to your vendors`);
+      // Clear the search so the Google match card disappears and the user
+      // doesn't accidentally click Add twice (which would create a duplicate
+      // private vendor row). The directory reloads to its unfiltered state,
+      // ready for the next search.
+      setSearch("");
+      setPlacesState({ kind: "idle" });
+    } catch {
+      toast.error("Couldn't add that vendor. Try again.");
+    } finally {
+      setPlacesAdding(false);
+    }
+  }
 
   // Pre-populate gmbCache from rows that already have persisted gmb_data —
   // avoids redundant /api/suggested-vendors/[id]/gmb calls and renders the
@@ -450,6 +576,11 @@ export default function VendorDirectoryPage() {
           poc_email: vendor.email,
           poc_phone: vendor.phone,
           status: "contacted",
+          // Carry the Google Place link + cached profile through so the
+          // vendor detail page can render the GMB panel from cache instead
+          // of doing a fresh name+category search that frequently misses.
+          gmb_place_id: vendor.gmb_place_id ?? undefined,
+          gmb_data: vendor.gmb_data ?? undefined,
         }),
       });
       if (!res.ok) throw new Error();
@@ -679,21 +810,131 @@ export default function VendorDirectoryPage() {
         </div>
 
         {sorted.length === 0 && (
-          <div className="text-center py-10">
-            <p className="text-[15px] font-semibold text-plum">
-              No directory vendors found
-            </p>
-            <p className="mt-1 text-[14px] text-muted max-w-md mx-auto">
-              {weddingCity
-                ? `Our directory doesn't have listings within ${radiusMiles} miles of ${weddingCity} yet. Try widening the radius above, searching a nearby city, or adding vendors you've found yourself.`
-                : "Try a different search or category — or add vendors you've found yourself."}
-            </p>
-            <Link
-              href="/dashboard/vendors"
-              className="mt-4 inline-flex items-center justify-center rounded-[12px] px-4 py-2 text-[14px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
-            >
-              Add your own vendors
-            </Link>
+          <div className="py-10">
+            {placesState.kind === "loading" && (
+              <div className="text-center">
+                <p className="text-[15px] font-semibold text-plum">No directory match</p>
+                <p className="mt-1 text-[14px] text-muted">
+                  Checking Google for &ldquo;{debouncedSearch.trim()}&rdquo;...
+                </p>
+              </div>
+            )}
+
+            {placesState.kind === "match" && (
+              <div className="max-w-2xl mx-auto">
+                <div className="text-center mb-4">
+                  <p className="text-[13px] font-semibold uppercase tracking-wide text-violet">
+                    Found on Google
+                  </p>
+                  <p className="text-[14px] text-muted mt-1">
+                    Not in our directory yet — pulled this from Google.
+                  </p>
+                </div>
+                <div className="rounded-[16px] border border-border bg-white p-4">
+                  <div className="flex gap-4">
+                    {placesState.place.photoUrl && (
+                      <div className="w-20 h-20 rounded-[12px] overflow-hidden flex-shrink-0 relative">
+                        <Image
+                          src={placesState.place.photoUrl}
+                          alt={placesState.place.name}
+                          fill
+                          unoptimized
+                          sizes="80px"
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[16px] font-semibold text-plum truncate">
+                        {placesState.place.name}
+                      </h3>
+                      {placesState.place.rating !== null && (
+                        <p className="text-[13px] text-muted mt-0.5">
+                          <span className="text-yellow-500">★</span> {placesState.place.rating}
+                          {placesState.place.userRatingCount && ` (${placesState.place.userRatingCount} reviews)`}
+                        </p>
+                      )}
+                      {placesState.place.formattedAddress && (
+                        <p className="text-[12px] text-muted mt-0.5 truncate">
+                          {placesState.place.formattedAddress}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <label className="text-[12px] font-semibold text-muted">Category</label>
+                    <select
+                      value={placesCategory}
+                      onChange={(e) => setPlacesCategory(e.target.value)}
+                      className="rounded-[10px] border-border px-2 py-1.5 text-[13px]"
+                    >
+                      <option value="">Pick one…</option>
+                      {VENDOR_CATEGORIES.map((c) => (
+                        <option key={c} value={c}>{categoryLabel(c)}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => addPlacesResult(placesState.place)}
+                      disabled={placesAdding || !placesCategory}
+                      className="ml-auto inline-flex items-center justify-center rounded-[12px] px-4 py-1.5 text-[13px] font-semibold bg-violet text-white hover:bg-violet/90 transition disabled:opacity-50"
+                    >
+                      {placesAdding ? "Adding..." : "Add to my vendors"}
+                    </button>
+                  </div>
+                </div>
+                <p className="mt-4 text-[12px] text-muted text-center">
+                  Wrong business? Refine your search or{" "}
+                  <Link href="/dashboard/vendors" className="text-violet hover:underline">
+                    add manually
+                  </Link>
+                  .
+                </p>
+              </div>
+            )}
+
+            {placesState.kind === "gated" && (
+              <div className="max-w-md mx-auto text-center rounded-[16px] border border-violet/30 bg-lavender/40 p-5">
+                <p className="text-[13px] font-semibold uppercase tracking-wide text-violet">
+                  Pro feature
+                </p>
+                <p className="mt-2 text-[15px] font-semibold text-plum">
+                  We can search Google for vendors not in our directory
+                </p>
+                <p className="mt-1 text-[13px] text-muted">
+                  Pro subscribers can pull in any business from Google Places — full
+                  profile, rating, photos, and contact info — without leaving the directory.
+                </p>
+                <Link
+                  href="/dashboard/pricing"
+                  className="mt-4 inline-flex items-center justify-center rounded-[12px] px-4 py-2 text-[14px] font-semibold bg-violet text-white hover:bg-violet/90 transition"
+                >
+                  Upgrade to Pro
+                </Link>
+              </div>
+            )}
+
+            {(placesState.kind === "no-match" || placesState.kind === "error" || placesState.kind === "idle") && (
+              <div className="text-center">
+                <p className="text-[15px] font-semibold text-plum">
+                  No directory vendors found
+                </p>
+                <p className="mt-1 text-[14px] text-muted max-w-md mx-auto">
+                  {placesState.kind === "no-match"
+                    ? "We also checked Google and couldn't find a match — try a different spelling, or add the vendor manually."
+                    : placesState.kind === "error"
+                      ? placesState.message
+                      : weddingCity
+                        ? `Our directory doesn't have listings within ${radiusMiles} miles of ${weddingCity} yet. Try widening the radius above, searching a nearby city, or adding vendors you've found yourself.`
+                        : "Try a different search or category — or add vendors you've found yourself."}
+                </p>
+                <Link
+                  href="/dashboard/vendors"
+                  className="mt-4 inline-flex items-center justify-center rounded-[12px] px-4 py-2 text-[14px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+                >
+                  Add your own vendors
+                </Link>
+              </div>
+            )}
           </div>
         )}
 

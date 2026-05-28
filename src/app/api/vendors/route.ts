@@ -48,6 +48,23 @@ export async function POST(request: Request) {
   }
 
   const allowed = pickFields(body, ["status", "poc_name", "poc_email", "poc_phone", "notes", "amount", "amount_paid"]);
+
+  // When the caller is adding a vendor pulled from our public directory
+  // (which is backed by Google Place data), let them carry the Google Place
+  // ID and cached profile through. Without this, the vendor detail page
+  // has to do a fresh text search by name+category to rehydrate the GMB
+  // panel — that search frequently misses, so the panel reports "could not
+  // find this business on Google" even though we had the right link a
+  // moment ago.
+  const gmbFields: Record<string, unknown> = {};
+  if (typeof body.gmb_place_id === "string" && body.gmb_place_id) {
+    gmbFields.gmb_place_id = body.gmb_place_id;
+  }
+  if (body.gmb_data && typeof body.gmb_data === "object") {
+    gmbFields.gmb_data = body.gmb_data;
+    gmbFields.gmb_fetched_at = new Date().toISOString();
+  }
+
   const { data, error } = await supabase
     .from("vendors")
     .insert({
@@ -55,6 +72,7 @@ export async function POST(request: Request) {
       name: body.name as string,
       category: body.category as string,
       ...allowed,
+      ...gmbFields,
     })
     .select()
     .single();
