@@ -10,6 +10,7 @@ type VendorRow = {
   category: string;
   poc_name: string | null;
   poc_phone: string | null;
+  meal_count: number | null;
 };
 
 type PartyRow = {
@@ -20,26 +21,99 @@ type PartyRow = {
   phone: string | null;
 };
 
+type GuestRow = {
+  id: string;
+  rsvp_status: string | null;
+  plus_one_name: string | null;
+};
+
 export function VendorsTab() {
   const [vendors, setVendors] = useState<VendorRow[]>([]);
   const [party, setParty] = useState<PartyRow[]>([]);
+  const [guests, setGuests] = useState<GuestRow[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/vendors").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/wedding-party").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/guests").then((r) => (r.ok ? r.json() : [])),
     ])
-      .then(([v, p]) => {
+      .then(([v, p, g]) => {
         setVendors(Array.isArray(v) ? v : []);
         setParty(Array.isArray(p) ? p : []);
+        setGuests(Array.isArray(g) ? g : []);
       })
       .catch(() => {})
       .finally(() => setLoaded(true));
   }, []);
 
+  // Final meal count for the caterer = accepted guests + their plus-ones
+  // who are actually coming + every vendor meal they've asked for.
+  const acceptedGuests = guests.filter((g) => g.rsvp_status === "accepted").length;
+  const plusOnesComing = guests.filter(
+    (g) => g.rsvp_status === "accepted" && (g.plus_one_name?.trim() ?? "") !== ""
+  ).length;
+  const vendorMeals = vendors.reduce(
+    (sum, v) => sum + (v.meal_count ?? 0),
+    0
+  );
+  const guestMeals = acceptedGuests + plusOnesComing;
+  const totalMeals = guestMeals + vendorMeals;
+
   return (
     <div className="mt-4 space-y-6">
+      {/* Final meal count for the caterer */}
+      {totalMeals > 0 && (
+        <div className="rounded-[16px] border border-violet/30 bg-lavender/40 p-5">
+          <div className="flex items-baseline justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-violet">
+                Final meal count for catering
+              </p>
+              <p className="mt-1 text-[36px] font-semibold text-plum leading-none">
+                {totalMeals.toLocaleString()}
+              </p>
+            </div>
+            <p className="text-[12px] text-muted text-right max-w-[180px]">
+              Give this number to your caterer. Includes guests, plus-ones,
+              and vendor meals.
+            </p>
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+            <div className="rounded-[10px] bg-white/70 px-3 py-2">
+              <p className="text-[20px] font-semibold text-plum leading-none">
+                {acceptedGuests}
+              </p>
+              <p className="mt-1 text-[11px] text-muted">
+                Accepted {acceptedGuests === 1 ? "guest" : "guests"}
+              </p>
+            </div>
+            <div className="rounded-[10px] bg-white/70 px-3 py-2">
+              <p className="text-[20px] font-semibold text-plum leading-none">
+                {plusOnesComing}
+              </p>
+              <p className="mt-1 text-[11px] text-muted">
+                Plus-{plusOnesComing === 1 ? "one" : "ones"} coming
+              </p>
+            </div>
+            <div className="rounded-[10px] bg-white/70 px-3 py-2">
+              <p className="text-[20px] font-semibold text-plum leading-none">
+                {vendorMeals}
+              </p>
+              <p className="mt-1 text-[11px] text-muted">
+                Vendor {vendorMeals === 1 ? "meal" : "meals"}
+              </p>
+            </div>
+          </div>
+          {acceptedGuests === 0 && (
+            <p className="mt-3 text-[12px] text-muted">
+              Numbers will fill in as guests RSVP.
+            </p>
+          )}
+        </div>
+      )}
+
       {vendors.length > 0 && (
         <div>
           <h2 className="text-[15px] font-semibold text-plum mb-3">Vendor Contacts</h2>

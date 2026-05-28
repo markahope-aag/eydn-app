@@ -35,6 +35,7 @@ type Vendor = {
   notes: string | null;
   amount: number | null;
   amount_paid: number | null;
+  meal_count: number | null;
   gmb_data: { photoUrl?: string; rating?: number; userRatingCount?: number; formattedAddress?: string } | null;
 };
 
@@ -533,6 +534,28 @@ export default function VendorsPage() {
           <p className="mt-1.5 text-[12px] text-muted">{getVendorProgressLabel()}</p>
         </div>
       )}
+
+      {/* Vendor meal summary — surface a running total so the couple can
+          give their caterer one number that includes vendors who'll eat on
+          the day. Only renders when at least one vendor has a meal_count. */}
+      {(() => {
+        const mealVendors = vendors.filter((v) => (v.meal_count ?? 0) > 0);
+        const totalVendorMeals = mealVendors.reduce(
+          (sum, v) => sum + (v.meal_count ?? 0),
+          0
+        );
+        if (totalVendorMeals === 0) return null;
+        return (
+          <p className="mt-3 text-[13px] text-muted">
+            <span className="font-semibold text-plum">
+              {totalVendorMeals} vendor {totalVendorMeals === 1 ? "meal" : "meals"}
+            </span>{" "}
+            needed across {mealVendors.length}{" "}
+            {mealVendors.length === 1 ? "vendor" : "vendors"} — added to your
+            guest meal total in the Day-of planner.
+          </p>
+        );
+      })()}
 
       <p className="mt-3 text-[13px] text-muted">
         Before you book, check that each vendor carries liability insurance — many
