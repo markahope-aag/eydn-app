@@ -332,6 +332,7 @@ export default function VendorsPage() {
       notes: null,
       amount: null,
       amount_paid: null,
+      meal_count: null,
       gmb_data: null,
     };
 
