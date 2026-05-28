@@ -107,6 +107,10 @@ export async function POST(request: Request) {
       .insert({
         user_id: userId,
         ...weddingFields,
+        // The onboarding survey itself walks the couple through setup, so the
+        // post-survey feature-tour modal would be a second back-to-back
+        // walkthrough. Mark it complete on initial wedding creation.
+        tour_complete: true,
       })
       .select("id")
       .single();

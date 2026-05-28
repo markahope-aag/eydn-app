@@ -674,6 +674,7 @@ export default function OnboardingPage() {
   const [dateChangeWarning, setDateChangeWarning] = useState("");
   const [originalDate, setOriginalDate] = useState<string | null>(null);
   const [aiInput, setAIInput] = useState("");
+  const [submittedToChat, setSubmittedToChat] = useState(false);
   const [ready, setReady] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -858,13 +859,15 @@ export default function OnboardingPage() {
           }).catch(() => {});
         }
 
-        if (aiInput.trim()) {
+        const hasQuestion = aiInput.trim().length > 0;
+        if (hasQuestion) {
           await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ message: aiInput.trim() }),
           }).catch(() => {});
         }
+        setSubmittedToChat(hasQuestion);
         setShowSnapshot(true);
         // Fire confetti just after the screen mounts so it overlays the celebration
         setTimeout(() => triggerConfetti(), 200);
@@ -952,11 +955,11 @@ export default function OnboardingPage() {
             Let&rsquo;s build something beautiful.
           </p>
           <button
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push(submittedToChat ? "/dashboard/chat" : "/dashboard")}
             className="mt-10 inline-block rounded-full px-10 py-4 text-[15px] font-semibold transition"
             style={{ color: "#2C3E2D", background: "#FAF6F1" }}
           >
-            Start Planning
+            {submittedToChat ? "See Eydn's answer" : "Start Planning"}
           </button>
         </div>
         <p
