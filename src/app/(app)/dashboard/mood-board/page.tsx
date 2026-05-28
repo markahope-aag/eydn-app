@@ -70,7 +70,9 @@ export default function MoodBoardPage() {
   const [customCategory, setCustomCategory] = useState("");
   const [showCustomCat, setShowCustomCat] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<string[]>([]);
   const [weddingSlug, setWeddingSlug] = useState<string | null>(null);
+  const [websitePublished, setWebsitePublished] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -86,6 +88,7 @@ export default function MoodBoardPage() {
         setItems(moodData);
         setVendors(vendorData);
         if (weddingData?.website_slug) setWeddingSlug(weddingData.website_slug);
+        setWebsitePublished(Boolean(weddingData?.website_enabled));
       })
       .catch(() => toast.error("Couldn't load your vision board. Try refreshing."))
       .finally(() => setLoading(false));
@@ -115,6 +118,7 @@ export default function MoodBoardPage() {
     setShowCustomCat(false);
     setCustomCategory("");
     setShowAdd(false);
+    setPendingFiles([]);
   }
 
   /**
@@ -285,15 +289,17 @@ export default function MoodBoardPage() {
   }
 
   function shareBoard() {
-    // Copy a summary to clipboard
     const catCounts = new Map<string, number>();
     for (const item of items) catCounts.set(item.category, (catCounts.get(item.category) || 0) + 1);
-    const summary = `Check out my wedding vision board! ${items.length} pins across ${catCounts.size} categories.`;
+    const summary = `Check out our wedding vision board — ${items.length} pins across ${catCounts.size} categories.`;
 
-    if (weddingSlug) {
-      const url = `${window.location.origin}/w/${weddingSlug}`;
+    if (weddingSlug && websitePublished) {
+      const url = `${window.location.origin}/w/${weddingSlug}/vision`;
       navigator.clipboard.writeText(`${summary}\n${url}`);
-      toast.success("Board link copied to clipboard");
+      toast.success("Vision board link copied to clipboard");
+    } else if (weddingSlug && !websitePublished) {
+      navigator.clipboard.writeText(summary);
+      toast("Summary copied — publish your wedding website to share a public link");
     } else {
       navigator.clipboard.writeText(summary);
       toast.success("Board summary copied — set up your wedding website to share a link");
@@ -311,7 +317,7 @@ export default function MoodBoardPage() {
     for (const f of dropped) dt.items.add(f);
     if (fileRef.current) {
       fileRef.current.files = dt.files;
-      addFromUpload();
+      setPendingFiles(dropped.map((f) => f.name));
     }
   }
 
@@ -339,14 +345,22 @@ export default function MoodBoardPage() {
             <GuideLink slug="colors-theme">colors &amp; theme guide</GuideLink>.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           {items.length > 0 && (
-            <button onClick={shareBoard} className="btn-secondary btn-sm inline-flex items-center gap-1.5">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M5 7L8 4L11 7M8 4V11M3 13H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Share
-            </button>
+            <div className="inline-flex items-center gap-1.5">
+              <button onClick={shareBoard} className="btn-secondary btn-sm inline-flex items-center gap-1.5">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M5 7L8 4L11 7M8 4V11M3 13H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Share
+              </button>
+              {!websitePublished && (
+                <Tooltip
+                  text="Publish your wedding website to share a public link your vendors can open. Until then, Share copies a summary you can paste into an email."
+                  wide
+                />
+              )}
+            </div>
           )}
           <button onClick={() => setShowAdd(!showAdd)} className="btn-primary">
             {showAdd ? "Cancel" : "Add Inspiration"}
@@ -398,7 +412,11 @@ export default function MoodBoardPage() {
                 accept="image/*"
                 multiple
                 className="hidden"
-                onChange={addFromUpload}
+                onChange={(e) => {
+                  setPendingFiles(
+                    Array.from(e.target.files ?? []).map((f) => f.name)
+                  );
+                }}
               />
               <div
                 onClick={() => fileRef.current?.click()}
@@ -414,8 +432,18 @@ export default function MoodBoardPage() {
                   <circle cx="12" cy="14" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
                   <path d="M4 22L11 16L15 20L21 13L28 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <p className="text-[13px] font-semibold text-plum">Drop images here or click to browse</p>
-                <p className="text-[11px] text-muted mt-1">JPG, PNG, WebP up to 10MB · select or drop several at once</p>
+                <p className="text-[13px] font-semibold text-plum">
+                  {pendingFiles.length > 0
+                    ? pendingFiles.length === 1
+                      ? `Ready: ${pendingFiles[0]}`
+                      : `${pendingFiles.length} images ready`
+                    : "Drop images here or click to browse"}
+                </p>
+                <p className="text-[11px] text-muted mt-1">
+                  {pendingFiles.length > 0
+                    ? "Set the board, caption, or vendor below, then click Add to Board."
+                    : "JPG, PNG, WebP up to 10MB · select or drop several at once"}
+                </p>
               </div>
             </div>
           )}
@@ -541,13 +569,18 @@ export default function MoodBoardPage() {
               className="break-inside-avoid group relative rounded-[16px] overflow-hidden bg-white border border-border hover:shadow-lg transition-shadow cursor-pointer"
               onClick={() => setLightbox(item)}
             >
-              <Image
+              {/* Native img — we don't know each pasted/uploaded image's natural
+                  dimensions, and the masonry only looks right when every image
+                  renders at its own aspect ratio (so tall Pinterest pins stay
+                  tall, landscape shots stay landscape, nothing crops). next/image
+                  forces a fixed width/height which collapses everything into
+                  squares. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={item.image_url}
                 alt={item.caption || "Inspiration"}
-                className="w-full object-cover"
-                unoptimized
-                width={400}
-                height={400}
+                className="w-full h-auto block"
+                loading="lazy"
               />
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
