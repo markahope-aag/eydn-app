@@ -11,7 +11,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { trackExport } from "@/lib/analytics";
 
 import { DayOfPlan, TimelineItem, Tab } from "./_components/types";
-import { generateTimelineFromCeremony } from "./_components/timeline-utils";
+import { generateTimelineFromCeremony, parseTimeToMinutes } from "./_components/timeline-utils";
 import { TimelineTab } from "./_components/TimelineTab";
 import { VendorsTab } from "./_components/VendorsTab";
 import { PackingTab } from "./_components/PackingTab";
@@ -97,6 +97,24 @@ export default function DayOfPage() {
     if (!plan) return;
     const updated = [...plan.timeline];
     updated[index] = { ...updated[index], [field]: value };
+
+    // When the time changes, re-sort chronologically so a freshly-added
+    // event lands in the right place without manual reordering. Empty-time
+    // rows sink to the bottom (stable sort, so they stay in append order)
+    // so newly-added blanks don't jump around while the couple is still
+    // typing in the time field. Sorting only on time changes — editing the
+    // event name, duration, or notes never causes the list to reflow.
+    if (field === "time") {
+      updated.sort((a, b) => {
+        const aMin = parseTimeToMinutes(a.time);
+        const bMin = parseTimeToMinutes(b.time);
+        if (aMin === null && bMin === null) return 0;
+        if (aMin === null) return 1;
+        if (bMin === null) return -1;
+        return aMin - bMin;
+      });
+    }
+
     savePlan({ ...plan, timeline: updated });
   }
 

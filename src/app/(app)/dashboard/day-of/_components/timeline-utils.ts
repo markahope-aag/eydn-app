@@ -1,6 +1,12 @@
 import { TimelineItem } from "./types";
 
-function parseCeremonyTime(input: string): number | null {
+/**
+ * Parse a time string into minutes-since-midnight. Accepts the same formats
+ * the ceremony-time field and the HTML `<input type="time">` produce:
+ * "4:30 PM", "4:30PM", "4 PM", "16:30", "09:00". Returns null when the
+ * string isn't parseable — callers can treat null as "no time set".
+ */
+export function parseTimeToMinutes(input: string): number | null {
   const trimmed = input.trim();
 
   // Try "4:30 PM", "4:30PM", "4:30 pm", "4:30pm"
@@ -39,7 +45,7 @@ function parseCeremonyTime(input: string): number | null {
 }
 
 export function generateTimelineFromCeremony(ceremonyTime: string): TimelineItem[] {
-  const ceremonyMinutes = parseCeremonyTime(ceremonyTime);
+  const ceremonyMinutes = parseTimeToMinutes(ceremonyTime);
   if (ceremonyMinutes === null) return [];
 
   function formatTime(totalMinutes: number): string {
