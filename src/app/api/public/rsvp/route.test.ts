@@ -5,6 +5,9 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 const mockTokenLookup = vi.fn();
 const mockGuestUpdate = vi.fn();
 const mockTokenUpdate = vi.fn();
+const mockCompanionLookup = vi.fn();
+const mockCompanionInsert = vi.fn();
+const mockCompanionDelete = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createSupabaseAdmin: () => ({
@@ -21,11 +24,20 @@ vi.mock("@/lib/supabase/server", () => ({
           })),
         };
       }
-      // guests
+      // guests — supports the head update, the companion lookup, an
+      // insert when a new plus-one is added, and a soft-delete update
+      // when an existing plus-one is removed.
       return {
         update: vi.fn(() => ({
           eq: vi.fn(() => mockGuestUpdate()),
+          in: vi.fn(() => mockCompanionDelete()),
         })),
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            is: vi.fn(() => mockCompanionLookup()),
+          })),
+        })),
+        insert: vi.fn(() => mockCompanionInsert()),
       };
     }),
   }),
@@ -54,11 +66,15 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockCheckRateLimit.mockResolvedValue({ limited: false });
   mockTokenLookup.mockResolvedValue({
-    data: { id: "tok_1", guest_id: "g1" },
+    data: { id: "tok_1", guest_id: "g1", wedding_id: "w1" },
     error: null,
   });
   mockGuestUpdate.mockResolvedValue({ error: null });
   mockTokenUpdate.mockResolvedValue({ error: null });
+  // Default: no existing companion rows for the head guest.
+  mockCompanionLookup.mockResolvedValue({ data: [], error: null });
+  mockCompanionInsert.mockResolvedValue({ error: null });
+  mockCompanionDelete.mockResolvedValue({ error: null });
 });
 
 describe("POST /api/public/rsvp", () => {

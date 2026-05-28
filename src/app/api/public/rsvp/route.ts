@@ -49,19 +49,59 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid RSVP token" }, { status: 404 });
   }
 
-  // Update guest record
+  // Update head guest's RSVP. We deliberately don't write plus_one_name
+  // anymore — plus-ones live as their own guest rows (party_head_id =
+  // head's id), which keeps the seating chart, headcount, meal totals,
+  // and everywhere else that reads from `guests` consistent.
   const { error: guestError } = await supabase
     .from("guests")
     .update({
       rsvp_status,
       meal_preference: meal_preference || null,
-      plus_one_name: plus_one_name || null,
+      plus_one_name: null,
     })
     .eq("id", rsvpToken.guest_id);
 
   if (guestError) {
     console.error("[RSVP] Guest update failed:", guestError.message);
     return NextResponse.json({ error: "Failed to save RSVP" }, { status: 500 });
+  }
+
+  // Sync plus-one as a companion guest row. Three cases:
+  //   - accepting with a plus-one name: create one (or update the existing).
+  //   - accepting with no plus-one: soft-delete any existing companion.
+  //   - declining: soft-delete the companion too — they're not coming either.
+  const plusOneTrimmed = (plus_one_name || "").trim();
+  const wantPlusOne = rsvp_status === "accepted" && plusOneTrimmed.length > 0;
+
+  const { data: existingCompanions } = await supabase
+    .from("guests")
+    .select("id")
+    .eq("party_head_id", rsvpToken.guest_id)
+    .is("deleted_at", null);
+
+  if (wantPlusOne) {
+    if (existingCompanions && existingCompanions.length > 0) {
+      // Reuse the existing companion row to preserve any seat assignment
+      // and meal preference the couple may have already set for them.
+      await supabase
+        .from("guests")
+        .update({ name: plusOneTrimmed, rsvp_status: "accepted" })
+        .eq("id", (existingCompanions[0] as { id: string }).id);
+    } else {
+      await supabase.from("guests").insert({
+        wedding_id: rsvpToken.wedding_id,
+        name: plusOneTrimmed,
+        party_head_id: rsvpToken.guest_id,
+        role: "plus_one",
+        rsvp_status: "accepted",
+      });
+    }
+  } else if (existingCompanions && existingCompanions.length > 0) {
+    await supabase
+      .from("guests")
+      .update({ deleted_at: new Date().toISOString() })
+      .in("id", existingCompanions.map((c) => (c as { id: string }).id));
   }
 
   // Mark token as responded
