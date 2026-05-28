@@ -16,6 +16,11 @@ export function AddCouplePhoto() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  // Optimistic preview — shown the moment the upload succeeds, in case
+  // router.refresh() takes a beat to repaint the dashboard with the new
+  // server-side photo URL. Once the parent re-renders, it swaps this
+  // component out for the canonical <Image> entirely.
+  const [preview, setPreview] = useState<string | null>(null);
 
   async function handleFile() {
     const file = inputRef.current?.files?.[0];
@@ -53,6 +58,7 @@ export function AddCouplePhoto() {
         throw new Error(saveData.error || `Couldn't save the photo (${saveRes.status})`);
       }
 
+      setPreview(uploadData.signed_url || URL.createObjectURL(file));
       toast.success("Couple photo added.");
       router.refresh();
     } catch (err) {
@@ -80,31 +86,41 @@ export function AddCouplePhoto() {
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="hidden sm:flex flex-shrink-0 w-24 h-24 rounded-full border-2 border-dashed border-border items-center justify-center hover:border-violet hover:bg-lavender/30 transition group disabled:opacity-60 disabled:cursor-default"
-        title="Add a couple photo"
+        className="hidden sm:flex flex-shrink-0 w-24 h-24 rounded-full border-2 border-lavender items-center justify-center hover:border-violet transition group disabled:cursor-default overflow-hidden relative"
+        title={preview ? "Change couple photo" : "Add a couple photo"}
+        style={preview ? undefined : { borderStyle: "dashed" }}
       >
-        <div className="text-center">
-          {uploading ? (
-            <span
-              aria-hidden="true"
-              className="mx-auto block w-5 h-5 border-2 border-lavender border-t-violet rounded-full animate-spin"
-            />
-          ) : (
-            <svg
-              className="mx-auto text-muted group-hover:text-violet transition"
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path d="M10 4V16M4 10H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          )}
-          <span className="text-[9px] text-muted group-hover:text-violet transition mt-0.5 block">
-            {uploading ? "Uploading..." : "Add photo"}
-          </span>
-        </div>
+        {preview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={preview}
+            alt="Couple"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <div className="text-center">
+            {uploading ? (
+              <span
+                aria-hidden="true"
+                className="mx-auto block w-5 h-5 border-2 border-lavender border-t-violet rounded-full animate-spin"
+              />
+            ) : (
+              <svg
+                className="mx-auto text-muted group-hover:text-violet transition"
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path d="M10 4V16M4 10H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            )}
+            <span className="text-[9px] text-muted group-hover:text-violet transition mt-0.5 block">
+              {uploading ? "Uploading..." : "Add photo"}
+            </span>
+          </div>
+        )}
       </button>
     </>
   );
