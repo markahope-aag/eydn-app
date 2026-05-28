@@ -6,6 +6,21 @@ import { getStripe } from "@/lib/stripe";
 
 export type AdminSupabase = ReturnType<typeof createSupabaseAdmin>;
 
+// Throwing on a Supabase write error is what makes Stripe retry the webhook.
+// Without it, a failed write (missing constraint, schema drift, RLS, etc.)
+// leaves the request returning 200 to Stripe and silently drops the paid
+// subscriber's access row. The route's catch block deletes the
+// processed_stripe_events claim so the retry actually re-runs the handler.
+function throwOnDbError(
+  result: { error: { message?: string; code?: string } | null },
+  context: string
+): void {
+  if (result.error) {
+    const code = result.error.code ? ` (${result.error.code})` : "";
+    throw new Error(`${context}${code}: ${result.error.message || "unknown error"}`);
+  }
+}
+
 /**
  * Classify a paid_conversion event as trial_expiry (within 14 days of
  * trial_started_at), post_downgrade (after), or other (no wedding).
@@ -107,7 +122,7 @@ async function handleProMonthlyCheckout(
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const periodEnd = subscription.items.data[0]?.current_period_end;
 
-  await supabase.from("subscriber_purchases").upsert(
+  const result = await supabase.from("subscriber_purchases").upsert(
     {
       user_id: meta.user_id,
       wedding_id: meta.wedding_id || null,
@@ -123,6 +138,7 @@ async function handleProMonthlyCheckout(
     },
     { onConflict: "stripe_subscription_id" }
   );
+  throwOnDbError(result, "handleProMonthlyCheckout upsert subscriber_purchases");
 }
 
 /** One-time $79 Lifetime purchase (with optional promo code redemption). */
@@ -132,7 +148,7 @@ async function handleSubscriberPurchase(
   meta: Stripe.Metadata
 ): Promise<void> {
   const purchaseAmount = session.amount_total ? session.amount_total / 100 : SUBSCRIPTION_PRICE;
-  const { data: purchase } = await supabase
+  const insertResult = await supabase
     .from("subscriber_purchases")
     .insert({
       user_id: meta.user_id,
@@ -145,6 +161,8 @@ async function handleSubscriberPurchase(
     })
     .select("id")
     .single();
+  throwOnDbError(insertResult, "handleSubscriberPurchase insert subscriber_purchases");
+  const purchase = insertResult.data;
 
   const window = await classifyWindow(supabase, meta.user_id);
   await captureServer(meta.user_id, "paid_conversion", {
@@ -237,7 +255,7 @@ export async function handleSubscriptionCreated(
   const isActive =
     subscription.status === "active" || subscription.status === "trialing";
 
-  await supabase.from("subscriber_purchases").upsert(
+  const result = await supabase.from("subscriber_purchases").upsert(
     {
       user_id: meta.user_id,
       wedding_id: meta.wedding_id || null,
@@ -254,6 +272,7 @@ export async function handleSubscriptionCreated(
     },
     { onConflict: "stripe_subscription_id" }
   );
+  throwOnDbError(result, "handleSubscriptionCreated upsert subscriber_purchases");
 
   const window = await classifyWindow(supabase, meta.user_id);
   await captureServer(meta.user_id, "paid_conversion", {
