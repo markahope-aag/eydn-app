@@ -381,13 +381,13 @@ npm run security-check     # Comprehensive security validation
 ## Contact Information
 
 ### Security Team
-- **Security Issues**: security@eydn.com
-- **Vulnerability Reports**: security@eydn.com
+- **Security Issues**: security@eydn.app
+- **Vulnerability Reports**: security@eydn.app
 - **Emergency Contact**: Available 24/7 for critical security issues
 
 ### Responsible Disclosure
 We encourage responsible disclosure of security vulnerabilities:
-1. Report vulnerabilities to security@eydn.com
+1. Report vulnerabilities to security@eydn.app
 2. Provide detailed information about the vulnerability
 3. Allow reasonable time for investigation and remediation
 4. Do not access or modify user data without permission

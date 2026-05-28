@@ -2,6 +2,91 @@
 
 This document tracks all notable changes, updates, and improvements to the eydn wedding planning platform.
 
+## [1.13.0] — May 28, 2026
+
+### Critical: Stripe Pro Monthly subscriptions now persist
+
+The webhook handler upserted `subscriber_purchases` on `stripe_subscription_id` but the table had no matching UNIQUE constraint, so Postgres returned `42P10`. The handler swallowed the error, returned 200 to Stripe, and the purchase row was never written — paid users stayed on the trial tier. Migration `20260528120000_subscriber_purchases_unique_subscription_id.sql` adds the missing constraint. The three `subscriber_purchases` write paths (`handleProMonthlyCheckout`, `handleSubscriberPurchase`, `handleSubscriptionCreated`) now throw on db errors so future failures trigger Stripe retries instead of silently dropping access.
+
+### QR code generation moved off Uniqode
+
+`qrcode` npm package replaces the Uniqode API for all RSVP QR generation. Same Supabase storage pattern (cache the public URL on `rsvp_tokens.qr_code_url`), so already-printed invitations and cached URLs keep working. `UNIQODE_API_KEY` / `UNIQODE_ORG_ID` env vars and the "service not configured" error path are gone.
+
+**New: shared Wedding QR Code.** A single QR per wedding that points to the public site's RSVP lookup screen. Endpoint: `GET /api/wedding-website/qr/wedding`. Generated on demand, no caching needed — the URL it encodes never expires.
+
+### New public surface: vision board share page
+
+`/w/[slug]/vision` — read-only Pinterest-style grid of the couple's vision board, themed to match the wedding website. Strips vendor tags and locations (kept private on the dashboard). Couples can now hand a single link to a florist or planner. Gated on the wedding website being published. New route + `VisionBoardGrid.tsx` client component.
+
+### RSVP plus-ones become full guest rows
+
+When a guest accepted via the public website with a plus-one name, the API stored that as plain text on `plus_one_name` rather than creating a companion guest row. Result: plus-ones never appeared on the seating chart, in headcount, or in the meal count for catering.
+
+- `/api/public/rsvp` now creates a companion guest row (`party_head_id` = head's id) on accept-with-plus-one, updates the existing companion if one was already there (preserving seat assignment and meal preference), and soft-deletes the companion on decline or plus-one removal.
+- Migration `20260528130000_backfill_plus_ones_to_companions.sql` sweeps up any `plus_one_name` values still on head rows from earlier RSVPs and promotes them to companion rows.
+
+### Vendor directory: preserve Google profile + auto Places fallback
+
+Two related improvements:
+
+- Adding a vendor from the directory now carries the source's `gmb_place_id` and cached `gmb_data` through to the new private vendor row. The detail page's enrich endpoint hits the cache instead of doing a fresh name+category text search that frequently failed to match. The enrichment endpoint also prefers a stored Place ID over re-searching, protecting any vendor added going forward. Fixes the "could not find this business on Google" error that appeared on vendors that had clearly just been pulled from Google.
+- When the directory search returns zero results for a name, the directory now runs a Google Places lookup and surfaces a "Found on Google" card with category picker and Add button. Pro-gated (`vendorLookup` feature), 20/day cap, dedupe cache reused. Adding from this card routes through `/api/vendors/from-place`, which contributes to the public directory via quality gates and notifies the scraper.
+
+### Catering: single final meal count for the caterer
+
+Vendor meal counts were captured but never aggregated. Couples had to mentally sum guest meals + plus-one meals + vendor meals. Adds:
+
+- A small summary line on the vendors tab whenever any vendor has a meal count.
+- A "Final meal count for catering" card at the top of the Day-of planner's Vendors & Party tab, breaking the total into accepted guests, plus-ones coming, and vendor meals.
+
+### Day-of timeline: auto-sort by time
+
+Custom events appended to the bottom of the timeline regardless of the time entered. Now, when the time field blurs, the array re-sorts chronologically so the event lands in the right spot. Empty-time rows stay at the bottom (stable sort). Only triggers on time changes — editing event name, duration, or notes never reorders the list. `parseCeremonyTime` renamed to `parseTimeToMinutes` and exported.
+
+### Day-of timeline: regenerate fixes stale row values
+
+Timeline rows used uncontrolled inputs (`defaultValue`) with row keys based on list length only. Regenerating after a ceremony time change produced the same length and indices, so React kept the existing inputs mounted — they continued to display the old times even though state was updated. Row key now includes the ceremony time so all rows remount on regeneration.
+
+### Seating chart: edit popover stays open
+
+React 18 event delegation doesn't guarantee that synthetic `stopPropagation` prevents document-level mousedown listeners from firing. The reception seating chart's per-table edit popover used a document mousedown listener and relied on inner-popover `stopPropagation` to suppress it — so clicking any input inside the popover closed it. Now uses ref + `contains()` check.
+
+### Seating chart: ceremony adds use inline forms
+
+The ceremony tab's Add Officiant / Left Side / Right Side buttons used the native `window.prompt()` dialog, one field at a time. Replaced with inline form fields so name + role can be entered together and the flow stays in the app.
+
+### Wedding website: visible checklist completion
+
+The builder progress panel only listed outstanding sections. Completing a field made the item silently vanish; the only feedback was a small counter. Now renders every section with done items visibly checked off (green tick + strike).
+
+### Wedding website: photo loading fixes on public site
+
+Cover, round couple-photo, and wedding-party photos used `<Image fill>` with no `sizes` prop, defaulting to 100vw and fetching full-viewport-sized images for a 256px circle. Added appropriate `sizes` values and `unoptimized` so the Supabase signed URLs are served directly, removing the image proxy as a potential failure source.
+
+### Onboarding: chat redirect + suppress second walkthrough
+
+- Pressing Enter on the AI intro screen with a question typed fired the message at `/api/chat` then routed the couple to `/dashboard` — they never saw their question or the response. Now routes to `/dashboard/chat` when a question was submitted.
+- After completing the survey, the post-survey feature-tour modal also fired. `tour_complete` is now marked true on initial wedding creation so the modal only shows for legacy users who never went through the survey.
+
+### Guests: bulk imports default to "Save for Later"
+
+CSV imports and phone-contact imports inserted guests without an `rsvp_status`, so the DB default of `"pending"` applied — implying an invite had gone out. Both bulk paths now set `rsvp_status: "not_invited"` to match the single-add form.
+
+### Guests: inline "+ Child / +1" button
+
+The companion-add input existed in the expanded details panel of each guest, buried below five other fields. Adds a small "+ Child / +1" pill next to the role badge on every top-level guest row — click expands the row and focuses the party input directly. Suppressed on companion rows themselves.
+
+### Dashboard: couple photo previews immediately after upload
+
+`AddCouplePhoto` relied on `router.refresh()` to repaint the parent server component with the new signed URL. The refresh isn't synchronous and sometimes left the placeholder visible after a successful upload. Now stashes the signed URL returned by the upload endpoint in local state and renders it inline.
+
+### Documentation
+
+- `USER_GUIDE.md` rewritten to reflect current app state (Pro Monthly + Lifetime pricing, current features, removed aspirational content like calendar sync / mobile app / API access that doesn't exist).
+- In-app Help page FAQ refreshed with new entries for vision-board sharing, kids/plus-ones, caterer meal count, Google Places fallback, and Pro Monthly vs Lifetime comparison. User Guide tab descriptions updated. New "May 2026" entry in What's New.
+
+---
+
 ## [1.12.0] - April 26, 2026
 
 ### Removed: Places API seeder pipeline

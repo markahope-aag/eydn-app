@@ -13,9 +13,9 @@ This guide covers common issues, solutions, and debugging procedures for the eyd
 - [Performance Issues](#performance-issues)
 
 ### Emergency Contacts
-- **Technical Issues**: dev@eydn.com
-- **User Support**: support@eydn.com
-- **Security Issues**: security@eydn.com
+- **Technical Issues**: dev@eydn.app
+- **User Support**: support@eydn.app
+- **Security Issues**: security@eydn.app
 
 ## Authentication Issues
 
@@ -588,9 +588,9 @@ SELECT * FROM weddings; -- Should only return user's weddings
 
 ### Support Channels
 - **GitHub Issues**: Report bugs and feature requests
-- **Email Support**: support@eydn.com for user issues
-- **Developer Support**: dev@eydn.com for technical questions
-- **Security Issues**: security@eydn.com for security concerns
+- **Email Support**: support@eydn.app for user issues
+- **Developer Support**: dev@eydn.app for technical questions
+- **Security Issues**: security@eydn.app for security concerns
 
 ### Community Resources
 - **GitHub Discussions**: Community Q&A and feature discussions

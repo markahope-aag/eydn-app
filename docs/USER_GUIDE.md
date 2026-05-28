@@ -1,53 +1,84 @@
-# eydn user guide
+# Eydn user guide
 
-This guide covers what you get with eydn and how to use each feature.
+This guide covers what you get with Eydn and how to use each feature. For
+the most up-to-date inline help, open the Help page in the app
+(`/dashboard/help`).
 
 ## Getting started
 
 ### What's included
 
-Your $79 one-time payment gives you lifetime access to everything:
+Eydn has two plan options after the 14-day trial — both unlock the same
+feature set:
 
-- **AI planning assistant** that knows your wedding details and gives straight answers
-- **Task timeline** auto-generated from your wedding date
-- **Budget tracker** with category allocations, % of budget indicators, and spending recommendations
-- **Guest list** with RSVP tracking, "Save for Later" status, venue capacity indicator, search, sort, and CSV import
-- **Vendor management** with directory, email templates, and contract uploads
-- **Seating chart** — reception drag-and-drop layout with zoom, undo, and distinct table shapes; ceremony layout with altar, aisle, and processional ordering
-- **Wedding website** with RSVP collection, photo gallery, and registry
-- **Day-of planner** with timeline, multi-select assignee chips, vendor category tags, and binder PDF export
-- **Rehearsal dinner planner** with timeline generator, guest lookup, and RSVP tracking
-- **Planning guides** with progress bar, time estimates, and recommended completion order
-- **Vision board** with drag-and-drop upload, custom categories, and vendor linking
-- **Collaboration** — invite your partner or coordinator
+- **Pro Monthly — $14.99/month** — right if you only need Eydn during planning
+- **Lifetime — $79 once** — pays for itself after about five months and never
+  expires
+
+Either plan gives you:
+
+- **AI planning assistant** that knows your wedding details and gives straight
+  answers (can also take actions for you — add guests, mark tasks complete,
+  search the web for vendors)
+- **Task timeline** auto-generated from your wedding date, with milestones that
+  shift if you change the date
+- **Budget tracker** with category allocations, % of budget indicators, and
+  spending guidance
+- **Guest list** with RSVP tracking, "Save for Later" status, plus-one and
+  kids attached to parents, CSV/contacts import, capacity warnings
+- **Vendor management** with our public directory, automatic Google search
+  fallback for vendors we don't have yet, email templates, and contract uploads
+- **Seating chart** — drag-and-drop reception layout with round/rectangle
+  tables, plus a separate ceremony layout with altar, aisle, and processional
+  ordering
+- **Wedding website** with RSVP collection (shared or per-guest QR codes),
+  photo gallery, registry, and a progress checklist
+- **Day-of planner** with auto-sorting timeline, ceremony script, music,
+  speeches, packing checklist, a final meal count card for your caterer, and
+  a binder PDF export
+- **Rehearsal dinner planner** as a separate section
+- **Planning guides** for specific decisions (flowers, music, attire, venue,
+  etc.) with progress tracking and auto-generated vendor briefs
+- **Vision board** with drag-and-drop upload, custom categories, vendor
+  linking, and a public share link for vendors
+- **Collaboration** — invite your partner with full access, or a coordinator
+  with limited scope
 - **Data export** — download everything anytime
 
 ### First steps
 
-1. **Complete onboarding** — names, date, budget, guest count, venue, booked vendors
-2. **Review your task timeline** — Eydn generates tasks based on your date and what you've already booked
-3. **Add your vendors** — either from the directory or manually
-4. **Start your guest list** — add names or import from a spreadsheet
-5. **Ask Eydn anything** — open the chat and ask about your budget, timeline, or what to do next
+1. **Complete onboarding** — names, date, budget, guest count, venue,
+   already-booked vendors
+2. **Review your task timeline** — Eydn generates tasks based on your date and
+   what you've already booked
+3. **Add your vendors** — browse the directory; if your vendor isn't there,
+   Eydn checks Google automatically
+4. **Start your guest list** — add names, import a CSV, or pull from your
+   phone contacts
+5. **Ask Eydn anything** — open the chat and ask about your budget, timeline,
+   or what to do next
 
-## The AI Assistant
+## The AI assistant
 
-Eydn's assistant has your full wedding context loaded — budget, vendors, tasks, guests, guide answers, everything. It gives you direct answers, not generic advice.
+Eydn's assistant has your full wedding context loaded — budget, vendors, tasks,
+guests, guide answers, everything. Direct answers, not generic advice.
 
 ### What it can do
 
-- **Answer questions** about your specific situation ("Am I behind?" "Where's my budget tight?")
-- **Take actions** — add guests, update RSVPs, mark tasks complete, add vendors, save to your mood board
-- **Search the web** for vendors, venues, and pricing in your area
-- **Draft messages** — vendor outreach, vows, speeches, thank-you notes
-- **Flag problems** — overdue tasks, budget overruns, missing vendors, low RSVP rates
+- Answer questions about your specific situation ("Am I behind?" "Where's my
+  budget tight?")
+- Take actions — add guests, update RSVPs, mark tasks complete, add vendors,
+  save to your vision board
+- Search the web for vendors, venues, and pricing in your area
+- Draft messages — vendor outreach, vows, speeches, thank-you notes
+- Flag problems — overdue tasks, budget overruns, missing vendors, low RSVPs
 
 ### What it won't do
 
-- Use exclamation points or cheerleader energy
+- Use exclamation points or cheerleader copy
 - Give you 47 options and wish you luck — it recommends and explains
 - Sugarcoat budget problems or pretend everything is fine
-- Make up vendor names or prices it doesn't have
+- Make up vendor names or prices
 
 ### Good questions to ask
 
@@ -58,94 +89,59 @@ Eydn's assistant has your full wedding context loaded — budget, vendors, tasks
 - "What questions should I ask our caterer?"
 - "We just changed our guest count by 30 — what does that affect?"
 
-## Planning Your Wedding Timeline
+## Tasks
 
-### The 12-Month Planning Journey
+The task timeline is auto-generated from your wedding date and what you've
+already booked during onboarding. Tasks group by phase (12 months out, 6
+months out, etc.).
 
-eydn provides a comprehensive timeline that adapts to your wedding date:
+- **Mark complete** to track progress
+- **Add custom tasks** for anything Eydn didn't think of
+- **Notes per task** for vendor notes, decisions made, etc.
+- **Date changes cascade** — milestone tasks auto-shift when you change your
+  wedding date; appointment tasks are flagged in a banner for you to
+  reschedule manually
 
-#### **12 Months Before**
-- Set your budget and priorities
-- Choose your wedding date
-- Book major vendors (venue, photographer, caterer)
-- Create your guest list draft
-- Choose your wedding party
+## Budget
 
-#### **6-9 Months Before**
-- Order attire for wedding party
-- Plan ceremony and reception details
-- Send save-the-dates
-- Start decor planning
-- Book remaining vendors
+- Pre-seeded with 36 line items in recommended categories
+- Each row shows your budgeted amount, what you've spent, and the recommended
+  % of total budget for that category
+- The remaining-budget card changes color: healthy, tight, or over-budget
+- Update budget categories as priorities change
 
-#### **3-4 Months Before**
-- Mail invitations
-- Schedule beauty trials
-- Plan seating arrangements
-- Finalize menu details
-- Order wedding rings
+### Allocation recommendations (typical splits)
 
-#### **1-2 Months Before**
-- Final dress fitting
-- Confirm all vendor details
-- Create day-of timeline
-- Apply for marriage license
-- Plan bachelor/bachelorette parties
-
-#### **Final Week**
-- Wedding rehearsal
-- Pack decor and essentials
-- Confirm final details
-- Relax and enjoy!
-
-### Using the Task System
-
-1. **View Your Timeline**: See all tasks organized by due date
-2. **Mark Tasks Complete**: Check off completed items for satisfaction
-3. **Add Custom Tasks**: Create your own tasks for unique needs
-4. **Set Reminders**: Get notifications before important deadlines
-5. **Collaborate**: Assign tasks to your partner or coordinator
-
-## Budget management
-
-### Setting up your budget
-
-1. **Use the budget template**: Start with the pre-seeded categories
-2. **Set realistic amounts**: eydn shows you the recommended percentage allocation for each category
-3. **Track actual expenses**: Log payments as you make them
-4. **Monitor progress**: The remaining budget card changes color to indicate healthy, tight, or over-budget states
-5. **Adjust as needed**: Update budget categories as priorities change
-
-### Budget categories
-
-Each category row shows:
-- Your budgeted amount
-- What you've spent so far
-- The recommended % of your total budget for that category
-- The recommended dollar amount based on that percentage
-
-### Allocation recommendations
-
-The recommended percentage splits are based on typical wedding budgets:
-
-- **Venue** — typically 40–50% of budget
+- **Venue** — 40–50%
 - **Catering & bar** — 25–35%
 - **Photography & videography** — 10–15%
 - **Flowers & decor** — 8–10%
-- **Attire** — 5–8%
 - **Music & entertainment** — 8–10%
+- **Attire** — 5–8%
 - **Transportation** — 2–3%
 - **Miscellaneous** — 5–10% buffer
 
-## Guest management
+## Guest list
 
-### Building your guest list
+### Adding guests
 
-1. **Add guests manually or import**: Use the CSV import feature to upload a list; download the template first to see the expected format
-2. **Use Save for Later**: Add guests you're unsure about using the "Save for Later" status — they won't count toward your invited total until you change their status
-3. **Track plus-ones**: Manage who gets a plus-one invitation
-4. **Monitor capacity**: If your venue capacity is set, the header shows how many guests you have versus the venue limit and warns you when you're over
-5. **Search and sort**: Use the search bar to find guests by name; sort by name, RSVP status, or group
+- **One at a time** via the add form
+- **CSV import** — download the template first to see the expected format
+- **Phone contacts** — works in Chrome on Android (Safari and iPhone don't
+  expose the contact picker)
+
+Bulk-imported guests default to **"Save for Later"** status — they're on
+your list but not yet invited.
+
+### Adding kids and plus-ones to a guest
+
+Every guest row has a small **"+ Child / +1"** button next to their name.
+Click it and type the kid or plus-one's name — they become a full guest
+record (their own RSVP, meal preference, seat) linked to the parent guest.
+
+Plus-ones submitted via the public RSVP form become full guest rows
+automatically too, so they show up on the seating chart and in the
+headcount.
 
 ### RSVP statuses
 
@@ -157,322 +153,245 @@ The recommended percentage splits are based on typical wedding budgets:
 | Accepted | Coming |
 | Declined | Not coming |
 
-The "Awaiting" stat in the header shows the combined count of guests with "Invite sent" or "Pending" status.
+The "Awaiting" stat in the header counts "Invite sent" + "Pending".
 
 ### RSVP collection
 
-- **Wedding website integration**: Guests RSVP directly on your site
-- **Automatic updates**: RSVPs sync with your guest list automatically
-- **Meal preferences**: Collect dietary restrictions and meal choices
-- **Export options**: Download lists for caterers and venues
+RSVPs from your wedding website sync to the guest list automatically,
+including meal preferences and plus-one details (as full companion rows).
 
-### Seating chart planning
+## Vendor management
 
-1. **Wait for RSVPs**: Start after you know who's coming
-2. **Consider relationships**: Keep compatible groups together
-3. **Use distinct table shapes**: Choose round, rectangle, or square per table
-4. **Use zoom and undo**: Zoom the canvas in or out; undo any assignment with the undo button
-5. **Search unassigned guests**: Filter the unassigned panel by name to find guests quickly
+### Finding vendors
 
-## 🏢 Working with Vendors
+Open **Vendors → Browse Directory** to search our curated directory of
+local vendors. Filter by category, distance from your venue, and price
+range.
 
-### Finding the Right Vendors
+**If we don't have your vendor:** when the directory has no match for your
+search term, Eydn automatically checks Google Places and shows a "Found on
+Google" card you can import with one click. The full business profile
+(photo, rating, contact info) comes along, and your add also contributes
+to the public directory so future couples find them.
 
-1. **Get eydn's Recommendations**: Curated vendors in your area and budget
-2. **Read Reviews**: Check ratings and past client experiences
-3. **View Portfolios**: Ensure their style matches your vision
-4. **Compare Quotes**: Get multiple proposals for major expenses
-5. **Check Availability**: Confirm they're free on your date
+You can also add vendors manually from the Vendors page.
 
-### Vendor Communication
+### Vendor pipeline
 
-- **Use Email Templates**: eydn provides proven outreach templates
-- **Track Communications**: Log all vendor conversations and decisions
-- **Share Your Vision**: Use your mood board to communicate style
-- **Ask the Right Questions**: eydn helps you know what to ask
-- **Negotiate Wisely**: Understand what's negotiable and what's not
+Each vendor moves through stages: **Searching → Contacted → Quote Received
+→ Booked → Deposit Paid → Paid in Full**. Click any stage on the detail
+page to update it.
 
-### Managing Vendor Contracts
+### Other vendor features
 
-1. **Review Carefully**: Read all terms and conditions
-2. **Understand Cancellation Policies**: Know your options if plans change
-3. **Track Payment Schedules**: Set reminders for deposit and final payments
-4. **Store Documents Safely**: Upload contracts to your eydn account
-5. **Communicate Changes**: Keep vendors updated on any modifications
+- **Email templates** — pre-filled with your wedding details
+- **Contract uploads** — store contracts on each vendor
+- **Day-of details** — arrival time and vendor meal count per vendor (feeds
+  the caterer meal total in the Day-of planner)
+- **Vendor insurance** — track which vendors have submitted liability proof
+
+## Seating chart
+
+### Reception
+
+- Drag-and-drop tables with seat positions
+- Round, rectangle, or square table shapes
+- Edit any table by clicking the small "Edit" button below it (name, shape,
+  capacity, per-seat assignments)
+- Zoom and undo controls
+- Search unassigned guests by name in the sidebar
+
+### Ceremony
+
+A separate tab for arranging who stands where at the altar.
+
+- Partner names appear at the center/altar positions
+- Left and right are from the guests' perspective
+- An aisle line separates the two sides
+- Processional order numbers next to each name; reorder with arrow buttons
+- Print button generates a printer-friendly layout
 
 ## Vision board
 
-### Creating your vision
+### Building your board
 
-1. **Upload by drag-and-drop or URL**: Drag image files directly onto the upload area, or paste a URL
-2. **Organize by category**: Choose from preset categories (Florals, Attire, Colors, Decor, Venue, Food) or type a custom category name
-3. **Tag a location**: Optionally tag each item to a venue area (Ceremony, Reception, Bar, etc.)
-4. **Link to a vendor**: Associate an image with one of your booked or prospective vendors — this creates a direct connection between your inspiration and the vendor you're considering
-5. **Share**: Use the share button to show your board to vendors or collaborators
+- **Upload images** by drag-and-drop or click-to-browse (files queue first
+  so you can set category/vendor/caption before saving)
+- **Paste URLs** from Pinterest, Instagram, or anywhere — works with image
+  URLs and og:image extraction from page URLs
+- **Categorize** with built-in categories or your own
+- **Tag locations** (Ceremony, Reception, Bar, etc.)
+- **Link to a vendor** so the inspiration ties to whoever's executing it
 
-### What vendor linking does
+### Sharing with vendors
 
-When you link a mood board item to a vendor, the vendor's name appears on the item card. This helps you communicate visual direction to that specific vendor during meetings.
+Click **Share** on the vision board to copy a public link
+(`eydn.app/w/your-slug/vision`). Anyone with the link sees your inspiration
+in a Pinterest-style grid, filtered by category — perfect for sending to
+your florist or planner. Your wedding website has to be published for the
+public link to work; until then, Share copies a summary you can paste into
+an email instead.
+
+The public vision board hides vendor tags and locations (kept private).
+
+## Wedding website
+
+### Setting up
+
+- **Choose a URL** — your site lives at `eydn.app/w/your-slug`
+- **Pick a theme** with your wedding colors
+- **Add your story, schedule, travel info, hotels, FAQs**
+- **Live preview** updates as you edit
+- A **progress checklist** at the top tracks what's still to do, with
+  completed sections visibly checked off
+
+### RSVP collection — two QR options
+
+1. **Shared Wedding QR Code** — a single QR that goes on every invitation,
+   venue sign, or thank-you card. Guests scan, look up their name on the
+   site, and RSVP. Simple print job, zero risk of mixing them up.
+2. **Per-guest QR codes** — each guest gets their own QR that opens the
+   RSVP page already filled in with their name (zero-tap). Each invite
+   needs THAT specific guest's QR — don't mix them up.
+
+Pick whichever fits your invitation workflow. Both are on the RSVP tab.
+
+### Photo gallery
+
+Guests upload photos directly from your site. Moderate before publishing
+if you've turned that on. Download everything as a ZIP after the wedding.
+
+## Day-of planner
+
+### Timeline
+
+The auto-generated timeline is built around your ceremony time —
+hair/makeup and photos count backwards from the ceremony; reception events
+count forward.
+
+- **Type a time and tab away** — the event auto-sorts into chronological
+  position. Empty-time rows stay at the bottom so newly-added blanks don't
+  jump around while you're typing.
+- **Regenerate Timeline** rebuilds from a new ceremony time (replaces any
+  custom edits, asks for confirmation first)
+- **Assignee chips** — tag each event for specific groups (Partner 1,
+  Attendants, Vendors, Everyone, etc.) and filter the view by group
+
+### Other day-of tabs
+
+- **Ceremony** — script, processional order, officiant notes
+- **Music** — ceremony and reception music lists
+- **Speeches** — speaker list with notes and time allocation
+- **Setup tasks** — venue setup and breakdown checklist
+- **Attire** — what each member of the wedding party wears
+- **Vendors & Party** — contact sheet plus the **Final meal count for
+  catering** card that sums accepted guests + plus-ones coming + vendor
+  meals into one number ready for your caterer
+- **Packing checklist** — wedding-day essentials, vendor tips, marriage
+  license, emergency kit
+
+### Binder export
+
+Export the whole plan as a PDF binder for your coordinator. Includes
+timeline, vendor contacts, wedding party jobs, packing checklist, seating
+chart, and ceremony layout.
 
 ## Wedding party
 
-### Managing your wedding party
-
 Each member card supports:
 
-- **Role** — uses inclusive titles: Attendant, Honor Attendant, Officiant, etc.
+- **Role** — inclusive titles: Attendant, Honor Attendant, Officiant, etc.
 - **Contact info** — email and phone
-- **Address** — street address, city, state, and zip (useful for attire delivery or gift shipping)
-- **Job assignments** — select multiple day-of responsibilities using chips; assignments appear in the day-of planner
-- **Photo** — upload a photo that appears in their avatar
-- **Attire** — individual attire notes per member
+- **Address** — street, city, state, zip (useful for attire delivery)
+- **Job assignments** — select multiple day-of responsibilities; assignments
+  appear in the day-of planner
+- **Photo** — appears in the avatar and on the public wedding website
+- **Attire notes** per member
 
-The shared attire note at the top of the page (stored on the wedding record) is a good place to describe the overall look when everyone wears the same thing.
+The shared attire note at the top (stored on the wedding record) describes
+the overall look when everyone wears the same thing.
 
 ## Rehearsal dinner
 
-The rehearsal dinner planner is a separate section from the main day-of planner. It supports:
+A separate planner from the main day-of:
 
-- **Date and time pickers** for the rehearsal date and start time
-- **Timeline generator** — enter the start time and generate a suggested schedule
-- **Guest list** — search and add guests from your main guest list, or add names manually
-- **RSVP tracking** — mark who has confirmed attendance for the rehearsal dinner
-- **Host, dress code, and capacity** fields
-- **Print** — generate a printer-friendly summary
-
-## Ceremony layout
-
-The ceremony tab of the seating chart lets you arrange who stands where at the altar.
-
-- Partner names from your onboarding are shown at the center/altar positions
-- Left and right sides are from the guests' perspective
-- An aisle line separates the two sides visually
-- The processional order number appears next to each name; use the arrow buttons to reorder without drag-and-drop
-- The print button opens a printer-friendly ceremony layout in a new window
-
-## Date and time changes
-
-When you change your wedding date or ceremony time, eydn automatically shifts milestone tasks to maintain their relative timing (for example, a task set for "12 months before" moves to 12 months before the new date).
-
-Tasks tied to specific vendor appointments are not auto-shifted. Instead, eydn shows an amber banner at the top of every dashboard page listing those tasks and their previous due dates. The banner will not go away until you click "I understand — I will update affected appointments." This gives you a record of what changed and reminds you to contact affected vendors.
+- Date and time pickers
+- Timeline generator from the start time
+- Guest list — search and add from your main guest list, or add names
+  manually
+- RSVP tracking specific to the rehearsal
+- Host, dress code, and capacity fields
+- Print a printer-friendly summary
 
 ## Planning guides
 
-The planning guides page shows:
+The guides page shows:
 
-- A progress bar with your overall completion percentage
-- A "Start here" label on the first incomplete guide in the recommended order
-- "Not Started" badges on guides you haven't opened
-- Time estimates for how long each guide takes
-- Color-coded call-to-action buttons based on guide state
+- Progress bar with overall completion %
+- "Start here" label on the first incomplete guide in the recommended order
+- Time estimates per guide
+- Color-coded CTAs based on guide state
 
-Complete guides in the recommended order to avoid missing dependencies (for example, finishing the venue guide before the florals guide).
+Each guide is a structured questionnaire — once filled in, it can generate
+a vendor brief (e.g., a florist brief, a DJ brief) summarizing your
+answers in a vendor-ready format.
+
+Complete in recommended order to avoid missing dependencies (e.g., finish
+the venue guide before the florals guide).
+
+## Date and time changes
+
+When you change your wedding date or ceremony time, Eydn automatically
+shifts **milestone tasks** to maintain their relative timing (e.g., a task
+set for "12 months before" moves to 12 months before the new date).
+
+**Appointment tasks** (tastings, fittings, trials) are NOT auto-shifted —
+those need rescheduling with your vendors. Eydn shows an amber banner at
+the top of every dashboard page listing those tasks until you acknowledge
+it.
 
 ## Collaboration
 
-### Inviting Your Partner
+### Inviting your partner
 
-1. **Send an Invitation**: Use their email address to invite them
-2. **Choose Partner Role**: Gives them full planning access
-3. **Share the Load**: Divide tasks and responsibilities
-4. **Stay Synchronized**: All changes appear for both of you instantly
-5. **Communicate**: Use comments to discuss decisions
+Settings → Collaborators → invite by email with the **Partner** role.
+Partners get full access to view, edit, and manage everything.
 
-### Working with a Coordinator
+### Inviting a coordinator
 
-1. **Invite as Coordinator**: Limited access focused on planning tasks
-2. **Share Relevant Information**: Give them access to vendor details and timeline
-3. **Set Boundaries**: Coordinators can't change core wedding details
-4. **Track Progress**: See what they're working on in real-time
-5. **Maintain Control**: You always have final say on decisions
+Same flow with the **Coordinator** role. Coordinators can manage tasks,
+vendors, and guests, but can't change core wedding details (date, venue,
+budget).
 
-### Collaboration Best Practices
+### Parents and family
 
-- **Communicate Clearly**: Discuss roles and responsibilities upfront
-- **Use Comments**: Leave notes on tasks and vendor communications
-- **Regular Check-ins**: Schedule weekly planning sessions
-- **Respect Boundaries**: Stay within your assigned permissions
-- **Document Decisions**: Keep notes on important choices made
+The **Parent** role gives read-only access — they can see the wedding
+without being able to change anything.
 
-## Wedding Website
+### Live editing
 
-### Setting Up Your Site
+Collaborators can edit simultaneously. All changes sync automatically.
+Use Comments on tasks and vendors to coordinate.
 
-1. **Choose Your URL**: Pick a memorable wedding website address
-2. **Add Your Story**: Share how you met and your engagement story
-3. **Include Wedding Details**: Date, time, venue, and directions
-4. **Set Up RSVP**: Let guests respond directly on your site
-5. **Add Registry Links**: Make it easy for guests to find gifts
+## Data and recovery
 
-### Website Features
+- **Export** — Settings has a full export of everything as JSON or PDF
+- **Recently Deleted** — all deleted items are kept for 30 days and
+  restored with one click from Settings
+- **Daily backups** — your data is backed up every night to redundant
+  off-site servers
 
-- **Mobile-Optimized**: Perfect on phones, tablets, and computers
-- **RSVP System**: Guests can respond and provide meal preferences
-- **Photo Sharing**: Guests can upload photos from your events
-- **Travel Information**: Hotels, directions, and local attractions
-- **Real-Time Updates**: Changes appear immediately on your live site
+## After your wedding
 
-### Managing RSVPs
+After 12 months post-wedding, your account becomes read-only — you keep
+access to view and export everything, but can't edit. The optional
+**Memory Plan ($29/year)** keeps the wedding website live and your data
+fully accessible indefinitely.
 
-1. **Track Responses**: See who has and hasn't responded
-2. **Send Reminders**: Gentle nudges for late responders
-3. **Collect Details**: Meal preferences and dietary restrictions
-4. **Export Data**: Download for caterers and seating charts
-5. **Analyze Trends**: See response patterns and timing
+## Getting help
 
-## Mobile Experience
-
-### Using eydn on Your Phone
-
-- **Full Functionality**: All features work perfectly on mobile
-- **Quick Updates**: Add tasks and expenses on the go
-- **Photo Uploads**: Capture inspiration and upload instantly
-- **Vendor Communications**: Respond to emails and calls anywhere
-- **Real-Time Sync**: Changes sync across all your devices
-
-### Mobile Tips
-
-- **Download the App**: Get the best mobile experience
-- **Enable Notifications**: Stay updated on deadlines and RSVPs
-- **Use Voice Notes**: Record ideas when you can't type
-- **Take Photos**: Capture venue visits and vendor meetings
-- **Share Access**: Let vendors and coordinators use mobile too
-
-## 📊 Analytics & Insights
-
-### Understanding Your Data
-
-- **Budget Analysis**: See where your money is going
-- **RSVP Tracking**: Monitor response rates and timing
-- **Task Progress**: Visualize your planning completion
-- **Website Analytics**: See how guests engage with your site
-- **Vendor Performance**: Track communication and satisfaction
-
-### Making Data-Driven Decisions
-
-1. **Review Regularly**: Check your dashboard weekly
-2. **Identify Trends**: Notice patterns in spending and planning
-3. **Adjust Accordingly**: Modify plans based on what you learn
-4. **Share Insights**: Discuss data with your partner and coordinator
-5. **Plan Ahead**: Use insights to anticipate future needs
-
-## 🔒 Privacy & Security
-
-### Your Data Protection
-
-- **Secure Storage**: All data encrypted and backed up safely
-- **Private by Default**: Your information isn't shared without permission
-- **Control Access**: You decide who can see and edit your wedding details
-- **Regular Backups**: Your planning data is automatically saved
-- **GDPR Compliant**: European privacy standards followed
-
-### Managing Privacy
-
-1. **Review Permissions**: Check who has access to your wedding
-2. **Secure Passwords**: Use strong passwords for your account
-3. **Log Out Safely**: Always log out on shared devices
-4. **Monitor Activity**: Review who's making changes to your plans
-5. **Contact Support**: Report any security concerns immediately
-
-## 📞 Getting Help & Support
-
-### When You Need Assistance
-
-- **Chat with eydn**: Your AI assistant is available 24/7
-- **Help Documentation**: Comprehensive guides for all features
-- **Video Tutorials**: Step-by-step visual instructions
-- **Email Support**: Direct contact with our support team
-- **Community Forum**: Connect with other couples planning weddings
-
-### Common Questions
-
-**Q: Can I change my wedding date after setting up my timeline?**
-A: Yes. eydn automatically shifts milestone tasks to maintain their relative timing. Tasks tied to vendor appointments are not auto-shifted — eydn shows a banner listing those tasks so you can review and reschedule them with your vendors. The banner stays visible until you acknowledge it.
-
-**Q: What happens if I need to cancel my wedding?**
-A: Your data remains accessible, and you can use eydn for future events or reference.
-
-**Q: Can I invite multiple coordinators?**
-A: Yes, you can invite multiple people with coordinator access as needed.
-
-**Q: How do I export my data?**
-A: Use the export feature in settings to download all your planning information.
-
-**Q: Can I use eydn for other events?**
-A: While designed for weddings, many couples use eydn for engagement parties and other celebrations.
-
-## 🎯 Pro Tips for Success
-
-### Maximizing Your eydn Experience
-
-1. **Start Early**: Begin planning as soon as you're engaged
-2. **Be Consistent**: Log in regularly and update your progress
-3. **Use All Features**: Don't miss out on any tools available to you
-4. **Communicate Often**: Keep your partner and team in the loop
-5. **Stay Organized**: Use categories, tags, and notes effectively
-
-### Planning Like a Pro
-
-- **Prioritize Ruthlessly**: Focus on what matters most to you
-- **Build in Buffer Time**: Add extra time for important deadlines
-- **Keep Backup Plans**: Have alternatives for weather and vendor issues
-- **Document Everything**: Save emails, contracts, and important details
-- **Enjoy the Process**: Remember to have fun planning your special day
-
-### Wedding Day Success
-
-1. **Delegate Responsibilities**: Let others handle day-of details
-2. **Create Emergency Kits**: Pack backup supplies and essentials
-3. **Share Your Timeline**: Ensure all vendors have the schedule
-4. **Stay Flexible**: Be ready to adapt if things don't go perfectly
-5. **Be Present**: Focus on enjoying your celebration
-
-## 🚀 Advanced Features
-
-### Power User Tips
-
-- **Keyboard Shortcuts**: Learn shortcuts for faster navigation
-- **Bulk Operations**: Update multiple items at once
-- **Advanced Filters**: Find exactly what you're looking for quickly
-- **Custom Categories**: Create your own organization system
-- **API Access**: Connect eydn with other tools you use
-
-### Integration Opportunities
-
-- **Calendar Sync**: Connect with Google Calendar or Outlook
-- **Photo Storage**: Link with Google Photos or iCloud
-- **Social Media**: Share updates on Instagram and Facebook
-- **Email Integration**: Forward vendor emails to your eydn account
-- **Backup Services**: Sync with Dropbox or Google Drive
-
-## 📈 After Your Wedding
-
-### Post-Wedding Features
-
-- **Memory Preservation**: Keep all your planning data as memories
-- **Thank You Management**: Track thank you notes and gifts received
-- **Vendor Reviews**: Rate and review your wedding vendors
-- **Photo Organization**: Organize and share your wedding photos
-- **Anniversary Planning**: Use eydn for anniversary celebrations
-
-### Sharing Your Experience
-
-- **Leave Reviews**: Help future couples by reviewing vendors
-- **Share Success Stories**: Inspire others with your planning journey
-- **Refer Friends**: Help engaged friends discover eydn
-- **Provide Feedback**: Share suggestions for platform improvements
-- **Stay Connected**: Join our community of married couples
-
----
-
-## 🎊 Congratulations!
-
-You now have everything you need to plan an amazing wedding with eydn. Remember, we're here to support you every step of the way. Your AI assistant eydn is always ready to help, and our support team is just an email away.
-
-**Happy planning, and congratulations on your engagement!**
-
----
-
-*This guide is updated regularly. For the latest features and tips, check your eydn dashboard or visit our help center.*
-
-**Need immediate help?** Chat with eydn in your dashboard or email support@eydn.com
+- **Chat with Eydn** — available any time in the app, knows your context
+- **Help page** — `/dashboard/help` has the latest user guide, FAQ, and
+  what's new
+- **Email** — `support@eydn.app` for questions, `feedback@eydn.app` for
+  bug reports and suggestions

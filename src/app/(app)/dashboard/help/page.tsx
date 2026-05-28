@@ -6,18 +6,23 @@ import Link from "next/link";
 type Tab = "guide" | "faq" | "shortcuts" | "whats-new";
 
 const FAQ = [
-  { q: "How do I share my wedding website?", a: "Go to Wedding Website → Setup. Your URL is eydn.app/w/your-slug. Copy it and share via email, text, or social media. You can also generate unique RSVP links per guest in the RSVP tab.", link: "/dashboard/website" },
-  { q: "Can my partner see everything?", a: "Yes! When you invite your partner as a collaborator, they get full access to view, edit, and manage everything — guests, vendors, tasks, budget, website, and more.", link: "/dashboard/settings" },
+  { q: "How do I share my wedding website?", a: "Go to Wedding Website → Setup. Your URL is eydn.app/w/your-slug. Copy it and share via email, text, or social media. You can also generate a single shared Wedding QR Code (one QR for every invite) or per-guest QR codes from the RSVP tab.", link: "/dashboard/website" },
+  { q: "Can my partner see everything?", a: "Yes. When you invite your partner as a collaborator, they get full access to view, edit, and manage everything — guests, vendors, tasks, budget, website, and more.", link: "/dashboard/settings" },
   { q: "How do vendor emails get generated?", a: "Go to any vendor's detail page and click 'Send Email'. Eydn generates a professional inquiry email pre-filled with your wedding details. You can customize it before sending.", link: "/dashboard/vendors" },
-  { q: "Can I change my wedding date after setting up my timeline?", a: "Yes! Go to Settings → Review Questionnaire. Your rehearsal dinner date and all planning milestones will automatically update. Any appointments you've created will be flagged for manual rescheduling.", link: "/dashboard/settings" },
+  { q: "Can I change my wedding date after setting up my timeline?", a: "Yes. Go to Settings → Review Questionnaire. Your rehearsal dinner date and all planning milestones will automatically update. Any appointments you've created will be flagged for manual rescheduling.", link: "/dashboard/settings" },
   { q: "How do I invite my partner or coordinator?", a: "Go to Settings → Collaborators, or accept the invitation during onboarding. Partners get full access. Coordinators can manage tasks, vendors, and guests. Parents get read-only access.", link: "/dashboard/settings" },
-  { q: "What happens after my 14-day trial?", a: "Your dashboard becomes read-only. You can still view and export all your data. To restore full access, upgrade for $79 (one-time, forever). No data is ever deleted during this period.", link: "/dashboard/pricing" },
+  { q: "What happens after my 14-day trial?", a: "Two options to keep going: Pro Monthly at $14.99/month, or a one-time Lifetime purchase for $79. Without an upgrade, your dashboard becomes read-only — you can still view and export everything, no data is ever deleted.", link: "/dashboard/pricing" },
+  { q: "What's the difference between the Pro Monthly and Lifetime plans?", a: "Both unlock the same features. Pro Monthly is $14.99/month and right if you only need Eydn during planning. Lifetime is $79 once and never expires — pays for itself if you'll use Eydn for more than ~5 months.", link: "/dashboard/pricing" },
   { q: "How does the AI assistant remember my preferences?", a: "Go to Settings → Things Eydn should know, or use the card on your dashboard. Add your style, allergies, priorities, and key decisions. Eydn uses this in every conversation.", link: "/dashboard/settings" },
-  { q: "Can I restore something I accidentally deleted?", a: "Yes! Go to Settings → Recently Deleted. All deleted items are kept for 30 days and can be restored with one click.", link: "/dashboard/settings" },
-  { q: "How do I generate QR codes for invitations?", a: "Go to Wedding Website → RSVP tab → Generate RSVP Links, then Generate QR Codes. Each guest gets a unique QR that links directly to their personalized RSVP page.", link: "/dashboard/website" },
-  { q: "How do I set up my wedding website?", a: "Go to Wedding Website → Setup. Choose a URL, toggle the site on, upload a cover image, pick a theme, and add your story. The live preview shows changes in real-time.", link: "/dashboard/website" },
+  { q: "Can I restore something I accidentally deleted?", a: "Yes. Go to Settings → Recently Deleted. All deleted items are kept for 30 days and can be restored with one click.", link: "/dashboard/settings" },
+  { q: "How do QR codes for invitations work?", a: "Two options on Wedding Website → RSVP tab. (1) Wedding QR Code: a single shared QR that goes on every invite. Guests scan, look up their name, RSVP. Simple print job, zero risk of mixing them up. (2) Per-guest QR codes: each guest gets their own QR that opens the RSVP page already filled in with their name — zero-tap, but every invite needs the matching QR.", link: "/dashboard/website" },
+  { q: "How do I set up my wedding website?", a: "Go to Wedding Website → Setup. Choose a URL, toggle the site on, upload a cover image, pick a theme, and add your story. The live preview shows changes in real-time. The checklist at the top tracks what's still to do.", link: "/dashboard/website" },
+  { q: "Can I share my vision board with vendors?", a: "Yes. Click Share on the Vision Board to copy a public link (eydn.app/w/your-slug/vision). Anyone with the link can view your inspiration grid filtered by category — perfect for sending to florists or planners. Your website has to be published first.", link: "/dashboard/mood-board" },
+  { q: "How do I add a guest's kids or plus-one?", a: "On the guest list, click the small '+ Child / +1' button next to any guest's name. The row opens and your cursor lands in the party input — type the name, hit Enter. They become a full guest record (own RSVP, meal, seat) linked to the parent. Plus-ones submitted via the public RSVP form become full guest rows automatically too.", link: "/dashboard/guests" },
+  { q: "What number do I give my caterer for final headcount?", a: "The Day-of planner → Vendors & Party tab shows a 'Final meal count for catering' card that adds accepted guests + plus-ones coming + vendor meals into one number. That's what goes to your caterer.", link: "/dashboard/day-of" },
+  { q: "What if I can't find my vendor in our directory?", a: "Search for them in the Vendor Directory. If they're not in our database, Eydn checks Google automatically (Pro feature) and surfaces a 'Found on Google' card you can import with one click — the full business profile comes with it. Your add also contributes to the public directory so the next couple finds them too.", link: "/dashboard/vendors/directory" },
+  { q: "Can multiple people edit at the same time?", a: "Yes. Collaborators can edit simultaneously. All changes sync automatically. Use Comments on tasks and vendors to coordinate.", link: "/dashboard/settings" },
   { q: "What's the Memory Plan?", a: "After 12 months post-wedding, your account becomes read-only. The Memory Plan ($29/year) keeps your wedding website live and your data fully accessible indefinitely.", link: "/dashboard/pricing" },
-  { q: "Can multiple people edit at the same time?", a: "Yes! Collaborators can edit simultaneously. All changes sync automatically. Use Comments on tasks and vendors to coordinate.", link: "/dashboard/settings" },
 ];
 
 type GuideItem = { label: string; desc: string; icon: string; link?: string; linkLabel?: string };
@@ -38,18 +43,19 @@ const GUIDE_SECTIONS: GuideSection[] = [
     title: "Planning Tools",
     items: [
       { label: "Task timeline", desc: "50+ tasks auto-generated from your date. Mark complete, add notes, drag to reorder.", icon: "✅", link: "/dashboard/tasks", linkLabel: "Go to Tasks" },
-      { label: "Vendor tracker", desc: "Track 13 categories through the pipeline: searching → booked → paid. Use email templates for outreach.", icon: "🏪", link: "/dashboard/vendors", linkLabel: "Go to Vendors" },
-      { label: "Seating chart", desc: "Drag-and-drop tables with seat positions. Round and rectangle tables with guest assignments.", icon: "🪑", link: "/dashboard/seating", linkLabel: "Go to Seating" },
-      { label: "Vision board", desc: "Upload images or paste URLs from Pinterest. Organize by category, link to vendors.", icon: "🎨", link: "/dashboard/mood-board", linkLabel: "Go to Vision Board" },
-      { label: "Day-of planner", desc: "Complete day-of timeline, ceremony script, music, speeches, setup tasks, and packing checklist.", icon: "📅", link: "/dashboard/day-of", linkLabel: "Go to Day-of" },
+      { label: "Vendor tracker", desc: "Track 13 categories through the pipeline: searching → booked → paid. Browse our directory or import any business from Google automatically. Email templates pre-fill with your wedding details.", icon: "🏪", link: "/dashboard/vendors", linkLabel: "Go to Vendors" },
+      { label: "Guest list", desc: "Add guests one at a time, by CSV, or from your phone contacts. Track RSVPs, meal preferences, and groups. Attach kids and plus-ones to any guest with one click.", icon: "👥", link: "/dashboard/guests", linkLabel: "Go to Guests" },
+      { label: "Seating chart", desc: "Drag-and-drop tables with seat positions. Round and rectangle tables, edit table size and capacity inline.", icon: "🪑", link: "/dashboard/seating", linkLabel: "Go to Seating" },
+      { label: "Vision board", desc: "Upload images or paste URLs from Pinterest. Organize by category, link to vendors. Share a public read-only link with your florist or planner.", icon: "🎨", link: "/dashboard/mood-board", linkLabel: "Go to Vision Board" },
+      { label: "Day-of planner", desc: "Timeline (auto-sorts by time as you type), ceremony script, music, speeches, setup tasks, packing checklist, and a final meal count card for your caterer.", icon: "📅", link: "/dashboard/day-of", linkLabel: "Go to Day-of" },
       { label: "Planning guides", desc: "Step-by-step questionnaires for flowers, music, attire, and more. Generate vendor briefs automatically.", icon: "📖", link: "/dashboard/guides", linkLabel: "Go to Guides" },
     ],
   },
   {
     title: "Wedding Website",
     items: [
-      { label: "Build your site", desc: "Choose a URL, pick a theme with your wedding colors, add your story, schedule, and travel info.", icon: "🌐", link: "/dashboard/website", linkLabel: "Go to Website" },
-      { label: "RSVP system", desc: "Generate unique RSVP links and QR codes per guest. Track responses, meals, and plus-ones.", icon: "💌", link: "/dashboard/website", linkLabel: "Manage RSVPs" },
+      { label: "Build your site", desc: "Choose a URL, pick a theme with your wedding colors, add your story, schedule, and travel info. A progress checklist tracks what's still to do.", icon: "🌐", link: "/dashboard/website", linkLabel: "Go to Website" },
+      { label: "RSVP system", desc: "One shared Wedding QR Code that goes on every invite (guests look up their name), or per-guest QR codes that open the RSVP form pre-filled. Track responses, meals, and plus-ones — plus-ones become full guest records on the seating chart automatically.", icon: "💌", link: "/dashboard/website", linkLabel: "Manage RSVPs" },
       { label: "Photo gallery", desc: "Guests upload photos directly. Moderate before publishing. Download all as ZIP after the wedding.", icon: "📸", link: "/dashboard/website", linkLabel: "Manage Gallery" },
     ],
   },
@@ -64,6 +70,22 @@ const GUIDE_SECTIONS: GuideSection[] = [
 ];
 
 const WHATS_NEW = [
+  {
+    date: "May 2026",
+    title: "Catering, sharing & RSVP polish",
+    items: [
+      "Final meal count for the caterer: one card on the Day-of planner that adds guests, plus-ones, and vendor meals",
+      "Shared Wedding QR Code — one QR for every invitation, guests look up their name",
+      "Plus-ones from RSVPs now appear on the seating chart and in headcount totals",
+      "Vision board: share a public link with vendors (eydn.app/w/your-slug/vision)",
+      "Add a kid or +1 to any guest in one click — '+ Child / +1' button on every guest row",
+      "Vendor directory: when our database doesn't have your vendor, Eydn checks Google automatically",
+      "Day-of timeline: events auto-sort by time when you tab off the time field",
+      "Website builder progress checklist shows completed sections with a clear green check",
+      "Couple photo on the dashboard previews immediately after upload (no refresh needed)",
+      "Onboarding: typing a question on the AI intro lands you in the chat with your answer ready",
+    ],
+  },
   { date: "March 2026", title: "Wedding Website Overhaul", items: ["Live preview while editing", "Theme & color customization", "QR codes for physical invitations", "Gallery moderation queue", "Structured hotel/accommodation cards", "Schedule import from Day-of Planner"] },
   { date: "March 2026", title: "Communication System", items: ["SMS notifications via Twilio", "Web push notifications", "Collaborator invitation emails", "Overdue task alerts", "Vendor payment reminders", "Email engagement tracking"] },
   { date: "March 2026", title: "Data Integrity", items: ["Date/time synchronization across the app", "Cascading updates when wedding date changes", "Persistent warning banners for date changes", "Smart task shifting (milestones vs appointments)"] },
