@@ -17,21 +17,21 @@
     "bundle:check": "node scripts/check-bundle-size.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.90.0",
+    "@anthropic-ai/sdk": "^0.100.0",
     "@axiomhq/pino": "^1.6.1",
     "@clerk/nextjs": "^7.0.5",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@react-pdf/renderer": "^4.3.2",
-    "@sentry/nextjs": "^10.45.0",
+    "@sentry/nextjs": "^10.55.0",
     "@supabase/supabase-js": "^2.99.2",
     "@tavily/core": "^0.7.2",
     "@types/sanitize-html": "^2.16.1",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
     "@vercel/analytics": "^2.0.1",
-    "exceljs": "^4.4.0",
+    "exceljs": "^3.4.0",
     "isomorphic-dompurify": "^3.7.1",
     "jszip": "^3.10.1",
     "next": "16.2.6",
@@ -48,6 +48,7 @@
     "sonner": "^2.0.7",
     "ssh2-sftp-client": "^12.1.0",
     "stripe": "^20.4.1",
+    "svix": "^1.95.1",
     "twilio": "^5.13.1",
     "web-push": "^3.6.7"
   },
@@ -74,5 +75,9 @@
     "typescript": "^5",
     "vitest": "^4.1.0",
     "wait-on": "^9.0.4"
+  },
+  "overrides": {
+    "postcss": "^8.5.15",
+    "uuid": "^11.0.0"
   }
 }
