@@ -41,6 +41,11 @@ export default function GuestsPage() {
   const [showAddFields, setShowAddFields] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  // When the "+ Add child / +1" button on a collapsed row fires, we expand
+  // the guest and ask the party-input down in the expanded section to take
+  // focus the moment it mounts. Cleared after the first focus to avoid
+  // stealing focus on subsequent renders.
+  const [focusCompanionId, setFocusCompanionId] = useState<string | null>(null);
   // Draft "add a party member" name, keyed by head guest id.
   const [companionDraft, setCompanionDraft] = useState<Record<string, string>>({});
   const [filterRole, setFilterRole] = useState("");
@@ -753,7 +758,7 @@ export default function GuestsPage() {
                   className="w-4 h-4 rounded border-border accent-violet flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[15px] font-semibold text-plum">{guest.name}</span>
                     {guest.role && (
                       <span className="badge">{ROLE_LABELS[guest.role] || guest.role}</span>
@@ -762,6 +767,22 @@ export default function GuestsPage() {
                       <span className="badge" title="Additional guests in this party (children / plus-ones)">
                         +{companions.length} {companions.length === 1 ? "guest" : "guests"}
                       </span>
+                    )}
+                    {/* Quick-add a child or +1 to this guest's party. Expands
+                        the row and focuses the party input directly. */}
+                    {!guest.party_head_id && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpanded(guest.id);
+                          setFocusCompanionId(guest.id);
+                        }}
+                        className="text-[11px] font-semibold text-violet hover:text-plum bg-lavender/60 hover:bg-lavender px-2 py-0.5 rounded-full transition"
+                        title="Add a child or plus-one to this guest's party"
+                      >
+                        + Child / +1
+                      </button>
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -956,6 +977,12 @@ export default function GuestsPage() {
                           }}
                           placeholder="Add a child or +1 by name"
                           aria-label="Add a party member"
+                          ref={(el) => {
+                            if (el && focusCompanionId === guest.id) {
+                              el.focus();
+                              setFocusCompanionId(null);
+                            }
+                          }}
                           className="rounded-[10px] border-border px-3 py-1.5 text-[15px] flex-1 min-w-[160px]"
                         />
                         <button type="button" onClick={() => addCompanion(guest)} className="btn-secondary btn-sm">
