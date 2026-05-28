@@ -116,6 +116,11 @@ export async function POST(request: Request) {
       name,
       email: emailIdx >= 0 ? cols[emailIdx] || null : null,
       group_name: groupIdx >= 0 ? cols[groupIdx] || null : null,
+      // Bulk-imported guests are people the couple is considering, not yet
+      // invited — match the single-add UI which uses "Save for Later" rather
+      // than the DB default of "Pending" (which implies an invite has gone
+      // out and is awaiting a response).
+      rsvp_status: "not_invited",
     });
   }
 

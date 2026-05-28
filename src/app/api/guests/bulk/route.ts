@@ -74,6 +74,11 @@ export async function POST(request: Request) {
       role: g.role || null,
       group_name: g.group_name || null,
       meal_preference: g.meal_preference || null,
+      // Bulk-imported guests are people the couple is considering, not yet
+      // invited — match the single-add UI which uses "Save for Later" rather
+      // than the DB default of "Pending" (which implies an invite has gone
+      // out and is awaiting a response).
+      rsvp_status: "not_invited",
     });
   }
 
