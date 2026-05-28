@@ -227,6 +227,8 @@ export default async function WeddingWebsitePage({
                 className="object-cover"
                 fill
                 priority
+                sizes="(min-width: 768px) 50vw, 100vw"
+                unoptimized
               />
             </div>
             <div className="w-full md:w-1/2 flex flex-col items-center justify-center text-center px-8 py-16" style={{ background: `linear-gradient(135deg, var(--theme-primary), var(--theme-accent))` }}>
@@ -258,6 +260,8 @@ export default async function WeddingWebsitePage({
               className="object-cover"
               fill
               priority
+              sizes="100vw"
+              unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-b from-[#1A1A2E]/20 via-transparent to-[#1A1A2E]/70" />
             <div className="relative z-10 flex flex-col items-center justify-end h-full pb-20 text-center px-6">
@@ -339,7 +343,9 @@ export default async function WeddingWebsitePage({
                   alt={coupleNames}
                   className="object-cover"
                   fill
-                    />
+                  sizes="(min-width: 768px) 320px, 256px"
+                  unoptimized
+                />
               </div>
               <p className="mt-6 text-[20px] font-[family-name:var(--font-serif)] text-plum">{coupleNames}</p>
             </div>
@@ -356,7 +362,14 @@ export default async function WeddingWebsitePage({
                 <div key={member.id} className="group">
                   {(member as Record<string, unknown>).photo_url ? (
                     <div className="w-20 h-20 rounded-full mx-auto overflow-hidden relative">
-                      <Image src={(member as Record<string, unknown>).photo_url as string} alt={member.name} className="object-cover" fill />
+                      <Image
+                        src={(member as Record<string, unknown>).photo_url as string}
+                        alt={member.name}
+                        className="object-cover"
+                        fill
+                        sizes="80px"
+                        unoptimized
+                      />
                     </div>
                   ) : (
                     <div className="w-20 h-20 rounded-full bg-lavender mx-auto flex items-center justify-center">
