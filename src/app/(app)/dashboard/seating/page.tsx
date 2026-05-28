@@ -44,6 +44,9 @@ export default function SeatingPage() {
   const [newGuestName, setNewGuestName] = useState("");
   const [partner1, setPartner1] = useState("Partner 1");
   const [partner2, setPartner2] = useState("Partner 2");
+  const [ceremonyAddName, setCeremonyAddName] = useState("");
+  const [ceremonyAddRole, setCeremonyAddRole] = useState("");
+  const [officiantName, setOfficiantName] = useState("");
   const undoStack = useRef<{ type: "assign" | "unassign"; guestId: string; tableId?: string }[]>([]);
   const [undoCount, setUndoCount] = useState(0); // trigger re-render on undo stack change
 
@@ -479,6 +482,8 @@ export default function SeatingPage() {
   }
 
   const [editingTable, setEditingTable] = useState<string | null>(null);
+  const editPopoverRef = useRef<HTMLDivElement | null>(null);
+  const editButtonRef = useRef<HTMLButtonElement | null>(null);
 
   async function updateTable(id: string, updates: Partial<Table>) {
     setTables((prev) =>
@@ -495,12 +500,13 @@ export default function SeatingPage() {
     }
   }
 
-  // Close the table edit popover on any click outside it. The popover and
-  // its Edit/Done button stop their own mousedown, so a mousedown that
-  // reaches the document is by definition an outside click.
   useEffect(() => {
     if (!editingTable) return;
-    function closeOnOutside() {
+    function closeOnOutside(e: MouseEvent) {
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (editPopoverRef.current?.contains(target)) return;
+      if (editButtonRef.current?.contains(target)) return;
       setEditingTable(null);
     }
     document.addEventListener("mousedown", closeOnOutside);
@@ -828,6 +834,7 @@ export default function SeatingPage() {
 
                     {/* Edit button */}
                     <button
+                      ref={editingTable === table.id ? editButtonRef : undefined}
                       onClick={(e) => { e.stopPropagation(); setEditingTable(editingTable === table.id ? null : table.id); }}
                       onMouseDown={(e) => e.stopPropagation()}
                       className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-muted hover:text-violet transition bg-white border border-border rounded-full px-2 py-0.5 z-10"
@@ -838,6 +845,7 @@ export default function SeatingPage() {
                     {/* Edit popover */}
                     {editingTable === table.id && (
                       <div
+                        ref={editPopoverRef}
                         className="absolute top-full left-0 mt-4 z-20 bg-white border border-border rounded-[12px] shadow-lg p-3 space-y-3 w-64 sm:w-72"
                         onClick={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
@@ -1195,17 +1203,8 @@ export default function SeatingPage() {
               </div>
             )}
 
-            {/* Manual add buttons */}
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => {
-                  const name = prompt("Officiant name:");
-                  if (name) addCeremonyPosition(name, "officiant", "center", "Officiant");
-                }}
-                className="btn-ghost btn-sm"
-              >
-                Add Officiant
-              </button>
+            {/* Quick-add couple */}
+            <div className="flex gap-2 flex-wrap mb-4">
               <button
                 onClick={() => addCeremonyPosition(partner1, "couple", "center", "Couple")}
                 className="btn-ghost btn-sm"
@@ -1218,28 +1217,81 @@ export default function SeatingPage() {
               >
                 Add {partner2}
               </button>
-              <button
-                onClick={() => {
-                  const name = prompt("Name:");
-                  if (!name) return;
-                  const role = prompt("Role (e.g. Attendant, Reader):") || undefined;
-                  addCeremonyPosition(name, "wedding_party", "left", role);
-                }}
-                className="btn-ghost btn-sm"
-              >
-                Add to Left Side
-              </button>
-              <button
-                onClick={() => {
-                  const name = prompt("Name:");
-                  if (!name) return;
-                  const role = prompt("Role (e.g. Attendant, Reader):") || undefined;
-                  addCeremonyPosition(name, "wedding_party", "right", role);
-                }}
-                className="btn-ghost btn-sm"
-              >
-                Add to Right Side
-              </button>
+            </div>
+
+            {/* Add officiant */}
+            <div className="mb-4">
+              <label className="text-[12px] font-semibold text-muted">Officiant</label>
+              <div className="mt-1 flex gap-2 flex-wrap">
+                <input
+                  type="text"
+                  value={officiantName}
+                  onChange={(e) => setOfficiantName(e.target.value)}
+                  placeholder="Officiant name"
+                  className="flex-1 min-w-[180px] rounded-[8px] border-border px-3 py-2 text-[14px]"
+                />
+                <button
+                  onClick={() => {
+                    const name = officiantName.trim();
+                    if (!name) return;
+                    addCeremonyPosition(name, "officiant", "center", "Officiant");
+                    setOfficiantName("");
+                  }}
+                  disabled={!officiantName.trim()}
+                  className="btn-secondary btn-sm disabled:opacity-50"
+                >
+                  Add Officiant
+                </button>
+              </div>
+            </div>
+
+            {/* Add to ceremony sides */}
+            <div>
+              <label className="text-[12px] font-semibold text-muted">Add a person</label>
+              <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={ceremonyAddName}
+                  onChange={(e) => setCeremonyAddName(e.target.value)}
+                  placeholder="Name"
+                  className="rounded-[8px] border-border px-3 py-2 text-[14px]"
+                />
+                <input
+                  type="text"
+                  value={ceremonyAddRole}
+                  onChange={(e) => setCeremonyAddRole(e.target.value)}
+                  placeholder="Role (e.g. Attendant, Reader)"
+                  className="rounded-[8px] border-border px-3 py-2 text-[14px]"
+                />
+              </div>
+              <div className="mt-2 flex gap-2 flex-wrap">
+                <button
+                  onClick={() => {
+                    const name = ceremonyAddName.trim();
+                    if (!name) return;
+                    addCeremonyPosition(name, "wedding_party", "left", ceremonyAddRole.trim() || undefined);
+                    setCeremonyAddName("");
+                    setCeremonyAddRole("");
+                  }}
+                  disabled={!ceremonyAddName.trim()}
+                  className="btn-secondary btn-sm disabled:opacity-50"
+                >
+                  Add to Left Side
+                </button>
+                <button
+                  onClick={() => {
+                    const name = ceremonyAddName.trim();
+                    if (!name) return;
+                    addCeremonyPosition(name, "wedding_party", "right", ceremonyAddRole.trim() || undefined);
+                    setCeremonyAddName("");
+                    setCeremonyAddRole("");
+                  }}
+                  disabled={!ceremonyAddName.trim()}
+                  className="btn-secondary btn-sm disabled:opacity-50"
+                >
+                  Add to Right Side
+                </button>
+              </div>
             </div>
           </div>
         </div>
