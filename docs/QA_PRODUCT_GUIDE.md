@@ -194,12 +194,35 @@ issues:
 
 ## Test environment / accounts
 
-Use the `+designator` alias trick on your real work email
-(`sophie.hope+designator@asymmetric.pro`). Every message lands in your
-real inbox, but Eydn and Clerk treat each alias as a completely
-separate account — which means you can be signed in as multiple test
-couples in different browser sessions, and the alias itself tells you
-at a glance which tier or scenario you're working in.
+### Your admin account — `sophie.hope@asymmetric.pro`
+
+Your main work email is already set up as an **admin account**. Use it
+**only** for testing the platform admin tooling (`/dashboard/admin`) —
+vendor moderation, blog editor, integrations health, user/wedding
+search, cron triggers, analytics, etc.
+
+A couple of things to know:
+
+- Admin accounts auto-redirect from `/dashboard` straight to
+  `/dashboard/admin`. You won't see the couple-facing dashboard from
+  this account, which is why you need the aliases below for everything
+  else.
+- Admin actions are real — if you delete a vendor from the directory,
+  it's gone for every couple. Be deliberate about what you click.
+- Anything destructive (deleting vendors, banning users, hard
+  deletes) should be limited to test fixtures Mark sets up for you —
+  ask before purging anything you didn't add yourself.
+
+### Couple-facing testing — `+alias` accounts
+
+For testing the actual couple-facing app (everything outside
+`/dashboard/admin`), use the `+designator` alias trick on your work
+email (`sophie.hope+designator@asymmetric.pro`). Every message lands
+in your real inbox, but Eydn and Clerk treat each alias as a
+completely separate account — which means you can be signed in as
+multiple test couples in different browser sessions, and the alias
+itself tells you at a glance which tier or scenario you're working
+in.
 
 Suggested aliases (pick whatever's useful — you don't need all of them
 day one):
@@ -242,10 +265,15 @@ day one):
 
 ### What to ask Mark for
 
-Only **admin role access** — granting it requires a DB-level role
-write, so it can't be self-served. Skip this if admin features
-(vendor moderation, blog editor) aren't a priority on your first
-pass.
+Nothing required up front — your admin account and the `+alias`
+pattern cover everything self-serve. Ping Mark if:
+
+- You need a test fixture set up (e.g., a couple with 150 guests and
+  3 months of historical activity for performance testing).
+- You hit a feature that only works in production data, not your test
+  data (a webhook that requires a real third-party callback, etc.).
+- You think you've found something destructive in the admin panel
+  that needs sandboxing.
 
 ## What to log when you find a bug
 
