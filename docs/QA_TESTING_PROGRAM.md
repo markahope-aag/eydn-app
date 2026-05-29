@@ -529,36 +529,69 @@ behavior is often a UX bug.
 
 ---
 
-## Bug report template
+## Bug report format
 
-For each bug, log:
+Keep bug reports short and declarative. Four things, in this order:
 
-```
-**Title** (one line, specific)
+1. **What you're seeing** (and where, exactly)
+2. **What you expected**
+3. **How the result is different**
+4. **Desired end-state** (what should happen instead)
 
-**Where**: URL or screen name
-**Account**: which test account (tier matters)
-**Browser / device**: Chrome 120 on macOS / Safari 17 on iPhone 12 / etc.
+That's it. Mark wants to be able to read each one in 10 seconds and
+know exactly what to fix. Don't pad with steps-to-reproduce paragraphs
+if the "where" and "what you're seeing" already make it obvious.
 
-**Steps to reproduce**:
-1. ...
-2. ...
-3. ...
+**Good example:**
 
-**Expected**: what should have happened
-**Actual**: what did happen
-**Screenshot / video**: attached
+> When you upload an image to the vision board, it automatically saves
+> before you change any of the board or category options.
+>
+> Expected: the file should queue first so I can set the category,
+> caption, and vendor, then click Add to Board to save with my
+> choices.
+>
+> Currently: saves immediately on file select, with default category.
+>
+> Desired: upload area should hold the file, show me what's queued,
+> and only save when I click Add to Board.
 
-**Reproducible?**: every time / sometimes / once
-**Severity**: critical / high / medium / low
-  - critical = data loss, can't sign in, can't pay
-  - high = a core feature is broken
-  - medium = a feature works but UX is bad
-  - low = cosmetic / minor
+**Another good example:**
 
-**Console errors**: (paste any browser console errors)
-**Notes**: anything else worth knowing
-```
+> The Sign In with Google button on /sign-in shows "Access blocked:
+> This app's request is invalid".
+>
+> Expected: Google account picker opens.
+>
+> Difference: Google rejects the OAuth request entirely.
+>
+> Desired: working Google sign-in.
+
+### Add these only when they're not obvious from the above
+
+- **Account / tier**: only if the bug behaves differently by tier
+  (most don't).
+- **Browser / device**: only if you can't reproduce on a different
+  browser (most bugs are universal — don't bother citing the browser
+  on a clearly platform-agnostic bug).
+- **Screenshot / video**: when the issue is visual, broken layout, or
+  hard to describe in words. Skip if the text description is clear.
+- **Reproducible?**: only if it's intermittent (always-reproducible
+  is the default assumption).
+- **Severity** (only if you have a strong opinion):
+  - **critical**: data loss, can't sign in, can't pay
+  - **high**: a core feature is broken
+  - **medium**: works but the UX is broken
+  - **low**: cosmetic / minor
+- **Console errors**: paste them if the bug looks like a crash.
+
+### Where to log them
+
+Add each bug as a row in your tracking sheet (the `Bug Link` column),
+OR if you have access, file them as GitHub issues against the repo.
+Either way, the four-bullet format above is what the body should look
+like — don't expand it into a long form just because the issue
+template might suggest one.
 
 ## Coverage tracking template
 
