@@ -144,26 +144,26 @@ function PartnerNames({
       </p>
       <div className="mt-6 space-y-4">
         <div>
-          <label className="block text-[14px] font-medium text-muted mb-1">Your name</label>
+          <label htmlFor="onboarding-partner1" className="block text-[14px] font-medium text-muted mb-1">Your name</label>
           <input
+            id="onboarding-partner1"
             type="text"
             value={partner1}
             onChange={(e) => onPartner1Change(e.target.value)}
             className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
             placeholder="First name"
-            aria-label="Your name"
             autoFocus
           />
         </div>
         <div>
-          <label className="block text-[14px] font-medium text-muted mb-1">Partner&apos;s name</label>
+          <label htmlFor="onboarding-partner2" className="block text-[14px] font-medium text-muted mb-1">Partner&apos;s name</label>
           <input
+            id="onboarding-partner2"
             type="text"
             value={partner2}
             onChange={(e) => onPartner2Change(e.target.value)}
             className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
             placeholder="First name"
-            aria-label="Partner's name"
           />
         </div>
       </div>
@@ -193,12 +193,13 @@ function WeddingDate({
       <p className="mt-2 text-[15px] text-muted leading-relaxed">
         Everything in Eydn — your task timeline, checklist, and planning priorities — is built around this date.
       </p>
+      <label htmlFor="onboarding-date" className="sr-only">Wedding date</label>
       <input
+        id="onboarding-date"
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="mt-6 w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
-        aria-label="Wedding date"
       />
       {error && (
         <p className="mt-2 text-[13px] text-red-600">{error}</p>
@@ -251,17 +252,17 @@ function BudgetAndGuests({
 
       <div className="mt-6 space-y-6">
         <div>
-          <label className="block text-[14px] font-medium text-muted mb-1">Total budget</label>
+          <label htmlFor="onboarding-budget" className="block text-[14px] font-medium text-muted mb-1">Total budget</label>
           <div className="flex items-center gap-2">
-            <span className="text-muted text-[20px] font-medium">$</span>
+            <span className="text-muted text-[20px] font-medium" aria-hidden="true">$</span>
             <input
+              id="onboarding-budget"
               type="text"
               inputMode="numeric"
               value={budgetDisplay}
               onChange={(e) => handleBudgetChange(e.target.value)}
               className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
               placeholder="e.g. 30,000"
-              aria-label="Total budget"
               autoFocus
             />
           </div>
@@ -271,9 +272,10 @@ function BudgetAndGuests({
         </div>
 
         <div>
-          <label className="block text-[14px] font-medium text-muted mb-1">Estimated guest count</label>
+          <label htmlFor="onboarding-guests" className="block text-[14px] font-medium text-muted mb-1">Estimated guest count</label>
           {!notSureYet ? (
             <input
+              id="onboarding-guests"
               type="number"
               value={guestCount}
               onChange={(e) => onGuestCountChange(e.target.value)}
@@ -281,7 +283,6 @@ function BudgetAndGuests({
               placeholder="e.g. 120"
               min="1"
               step="1"
-              aria-label="Estimated guest count"
             />
           ) : (
             <div className="w-full rounded-[10px] border-border bg-lavender/30 px-4 py-3.5 text-[15px] text-muted">
@@ -333,6 +334,9 @@ function VenueStatus({
   const [suggestions, setSuggestions] = useState<VenueSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  // Surface a hint when search is unavailable so the couple knows to type
+  // the venue manually rather than thinking nothing's happening.
+  const [searchFailed, setSearchFailed] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -347,19 +351,19 @@ function VenueStatus({
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await fetch(`/api/suggested-vendors?category=Venue&q=${encodeURIComponent(query)}&limit=6`);
-        if (res.ok) {
-          const data = await res.json();
-          const results = (data.vendors || []).map((v: { id: string; name: string; city: string; state: string }) => ({
-            id: v.id,
-            name: v.name,
-            city: v.city,
-            state: v.state,
-          }));
-          setSuggestions(results);
-          setShowSuggestions(results.length > 0);
-        }
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const results = (data.vendors || []).map((v: { id: string; name: string; city: string; state: string }) => ({
+          id: v.id,
+          name: v.name,
+          city: v.city,
+          state: v.state,
+        }));
+        setSuggestions(results);
+        setShowSuggestions(results.length > 0);
+        setSearchFailed(false);
       } catch {
-        // Silently fail — user can still type manually
+        setSearchFailed(true);
       } finally {
         setSearchLoading(false);
       }
@@ -404,14 +408,14 @@ function VenueStatus({
       </div>
       {(status === "looking" || status === "nontraditional") && (
         <div className="mt-5">
-          <label className="block text-[14px] font-medium text-muted mb-1">Where are you planning?</label>
+          <label htmlFor="onboarding-wedding-city" className="block text-[14px] font-medium text-muted mb-1">Where are you planning?</label>
           <input
+            id="onboarding-wedding-city"
             type="text"
             value={venueCity}
             onChange={(e) => onVenueCityChange(e.target.value)}
             className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
             placeholder="e.g. Austin, TX"
-            aria-label="Wedding city"
           />
           <p className="mt-1.5 text-[12px] text-muted">Helps Eydn find local vendors and venues for you.</p>
         </div>
@@ -419,9 +423,10 @@ function VenueStatus({
       {status === "booked" && (
         <div className="mt-5 space-y-3">
           <div ref={wrapperRef} className="relative">
-            <label className="block text-[14px] font-medium text-muted mb-1">Venue name</label>
+            <label htmlFor="onboarding-venue-name" className="block text-[14px] font-medium text-muted mb-1">Venue name</label>
             <div className="relative">
               <input
+                id="onboarding-venue-name"
                 type="text"
                 value={venueName}
                 onChange={(e) => {
@@ -431,7 +436,6 @@ function VenueStatus({
                 onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
                 className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
                 placeholder="Search our directory or type your venue"
-                aria-label="Venue name"
                 autoFocus
                 autoComplete="off"
               />
@@ -457,16 +461,21 @@ function VenueStatus({
                 </div>
               </div>
             )}
+            {searchFailed && !showSuggestions && (
+              <p className="mt-1.5 text-[12px] text-muted">
+                Directory search isn&rsquo;t reachable right now — type your venue name and we&rsquo;ll save it.
+              </p>
+            )}
           </div>
           <div>
-            <label className="block text-[14px] font-medium text-muted mb-1">City</label>
+            <label htmlFor="onboarding-venue-city" className="block text-[14px] font-medium text-muted mb-1">City</label>
             <input
+              id="onboarding-venue-city"
               type="text"
               value={venueCity}
               onChange={(e) => onVenueCityChange(e.target.value)}
               className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
               placeholder="e.g. Austin, TX"
-              aria-label="Venue city"
             />
           </div>
         </div>
@@ -555,7 +564,9 @@ function AIScreen({
 
       {/* Text input — Enter sends the question and opens the dashboard */}
       <div className="mt-5">
+        <label htmlFor="onboarding-ai-input" className="sr-only">Message Eydn</label>
         <input
+          id="onboarding-ai-input"
           type="text"
           value={aiInput}
           onChange={(e) => onAIInputChange(e.target.value)}
@@ -567,7 +578,6 @@ function AIScreen({
           }}
           placeholder="Ask anything, or head to your dashboard..."
           className="w-full rounded-[10px] border-border px-4 py-3.5 text-[16px] disabled:opacity-70"
-          aria-label="Message Eydn"
           disabled={submitting}
         />
       </div>
@@ -605,7 +615,9 @@ function InvitePartnerStep({ email, onEmailChange, onNext, onSkip }: { email: st
         Planning is better together. Your partner will get full access to view, edit, and manage your wedding.
       </p>
       <div className="mt-6 space-y-3">
+        <label htmlFor="onboarding-partner-email" className="sr-only">Partner&apos;s email address</label>
         <input
+          id="onboarding-partner-email"
           type="email"
           value={email}
           onChange={(e) => onEmailChange(e.target.value)}

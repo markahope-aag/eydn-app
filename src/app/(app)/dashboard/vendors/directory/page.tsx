@@ -286,7 +286,9 @@ export default function VendorDirectoryPage() {
           setWeddingLng(null);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        toast.error("Couldn't refresh your location. Try saving it again.");
+      });
   }
 
   // Admin "Preview as couple" deep link: /dashboard/vendors/directory?expand=<id>
@@ -496,23 +498,28 @@ export default function VendorDirectoryPage() {
     return () => observer.disconnect();
   }, [loadMore]);
 
-  // Auto-fetch GMB for a vendor
+  // Auto-fetch GMB for a vendor. Side effects (the fetch) MUST NOT live
+  // inside the setState updater — React may invoke an updater more than
+  // once (StrictMode in dev, concurrent rendering) and we'd kick off
+  // duplicate requests. Read the current value first, then schedule
+  // exactly one fetch.
+  const gmbCacheRef = useRef(gmbCache);
+  useEffect(() => { gmbCacheRef.current = gmbCache; }, [gmbCache]);
+
   const fetchGmb = useCallback((vendorId: string) => {
-    setGmbCache((prev) => {
-      if (prev[vendorId]) return prev;
-      fetch(`/api/suggested-vendors/${vendorId}/gmb`)
-        .then((r) => {
-          if (!r.ok) throw new Error();
-          return r.json();
-        })
-        .then((data: PlaceData) => {
-          setGmbCache((p) => ({ ...p, [vendorId]: data }));
-        })
-        .catch(() => {
-          setGmbCache((p) => ({ ...p, [vendorId]: "error" }));
-        });
-      return { ...prev, [vendorId]: "loading" };
-    });
+    if (gmbCacheRef.current[vendorId]) return;
+    setGmbCache((p) => ({ ...p, [vendorId]: "loading" }));
+    fetch(`/api/suggested-vendors/${vendorId}/gmb`)
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then((data: PlaceData) => {
+        setGmbCache((p) => ({ ...p, [vendorId]: data }));
+      })
+      .catch(() => {
+        setGmbCache((p) => ({ ...p, [vendorId]: "error" }));
+      });
   }, []);
 
   // Auto-fetch GMB for featured vendors on load
@@ -526,11 +533,15 @@ export default function VendorDirectoryPage() {
   // ?expand=<id> handler — pins the requested vendor to the top, expands
   // it, and scrolls into view. Fetches the vendor via the id filter when
   // it's not already in the loaded page (e.g. it's on page 4 of 10).
+  // Guarded so the effect doesn't re-pin on every infinite-scroll page
+  // load (the `vendors` dep makes it re-fire otherwise).
+  const previewHandledRef = useRef(false);
   useEffect(() => {
-    if (!previewId || loading) return;
+    if (!previewId || loading || previewHandledRef.current) return;
     const inList = vendors.some((v) => v.id === previewId);
 
     if (inList) {
+      previewHandledRef.current = true;
       setExpandedId(previewId);
       fetchGmb(previewId);
       requestAnimationFrame(() => {
@@ -539,6 +550,7 @@ export default function VendorDirectoryPage() {
       return;
     }
 
+    previewHandledRef.current = true;
     fetch(`/api/suggested-vendors?id=${previewId}&limit=1`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data: { vendors: SuggestedVendor[] }) => {

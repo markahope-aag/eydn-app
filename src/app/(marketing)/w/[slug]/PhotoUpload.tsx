@@ -88,19 +88,20 @@ export function PhotoUpload({ weddingSlug, hasPhotos = false }: Props) {
     <div className="space-y-6">
       {!hasPhotos && (
         <div className="text-center py-4">
-          <p className="text-[28px] mb-2">&#128248;</p>
+          <p className="text-[28px] mb-2" aria-hidden="true">&#128248;</p>
           <p className="text-[16px] text-muted">
-            Be the first to share a moment! Upload photos from the celebration.
+            Be the first to share a moment from the celebration.
           </p>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="card p-6 space-y-4 text-left">
         <div>
-          <label className="text-[13px] font-semibold text-muted block mb-1">
+          <label htmlFor="photo-uploader-name" className="text-[13px] font-semibold text-muted block mb-1">
             Your Name
           </label>
           <input
+            id="photo-uploader-name"
             type="text"
             value={uploaderName}
             onChange={(e) => setUploaderName(e.target.value)}
@@ -110,15 +111,20 @@ export function PhotoUpload({ weddingSlug, hasPhotos = false }: Props) {
         </div>
 
         <div>
-          <label className="text-[13px] font-semibold text-muted block mb-1">
+          <span className="text-[13px] font-semibold text-muted block mb-1">
             Photo
-          </label>
-          <div
+          </span>
+          {/* Keyboard-accessible drop zone: button semantics so Enter/Space
+              activate it, and the underlying <input type="file"> still
+              handles the actual file pick. */}
+          <button
+            type="button"
             onClick={() => fileRef.current?.click()}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`rounded-[16px] border-2 border-dashed p-8 text-center cursor-pointer transition-all ${
+            aria-label={preview ? `Replace photo (${fileName} selected)` : "Choose a photo to upload"}
+            className={`w-full rounded-[16px] border-2 border-dashed p-8 text-center transition-all focus:outline-none focus:ring-2 focus:ring-violet/40 ${
               dragging
                 ? "border-violet bg-violet/5 scale-[1.02]"
                 : preview
@@ -132,6 +138,7 @@ export function PhotoUpload({ weddingSlug, hasPhotos = false }: Props) {
               accept="image/*"
               onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
               className="hidden"
+              tabIndex={-1}
             />
             {preview ? (
               <div className="space-y-3">
@@ -146,7 +153,7 @@ export function PhotoUpload({ weddingSlug, hasPhotos = false }: Props) {
               </div>
             ) : (
               <div className="space-y-2 py-2">
-                <p className="text-[24px]">&#128247;</p>
+                <p className="text-[24px]" aria-hidden="true">&#128247;</p>
                 <p className="text-[15px] font-medium text-plum">
                   Drop a photo here or click to browse
                 </p>
@@ -155,14 +162,15 @@ export function PhotoUpload({ weddingSlug, hasPhotos = false }: Props) {
                 </p>
               </div>
             )}
-          </div>
+          </button>
         </div>
 
         <div>
-          <label className="text-[13px] font-semibold text-muted block mb-1">
+          <label htmlFor="photo-caption" className="text-[13px] font-semibold text-muted block mb-1">
             Caption
           </label>
           <input
+            id="photo-caption"
             type="text"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}

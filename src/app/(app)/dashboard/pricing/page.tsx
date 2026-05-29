@@ -84,7 +84,6 @@ export default function PricingPage() {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
-      console.error("[SUBSCRIBE LIFETIME]", msg);
       toast.error(`Couldn't start checkout: ${msg}`);
     } finally {
       setLoadingPlan(null);
@@ -110,7 +109,6 @@ export default function PricingPage() {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
-      console.error("[SUBSCRIBE MONTHLY]", msg);
       toast.error(`Couldn't start checkout: ${msg}`);
     } finally {
       setLoadingPlan(null);

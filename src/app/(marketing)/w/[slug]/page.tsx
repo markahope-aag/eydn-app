@@ -241,13 +241,13 @@ export default async function WeddingWebsitePage({
                 <p className="mt-4 text-[18px] text-white/90 tracking-wide">{weddingDate}</p>
               )}
               {wedding.venue && (
-                <p className="mt-1 text-[16px] text-white/75">{wedding.venue}</p>
+                <p className="mt-1 text-[16px] text-white/85">{wedding.venue}</p>
               )}
               {wedding.website_headline && (
-                <p className="mt-4 text-[16px] text-white/70 max-w-sm italic">{wedding.website_headline}</p>
+                <p className="mt-4 text-[16px] text-white/85 max-w-sm italic">{wedding.website_headline}</p>
               )}
               {daysUntil !== null && daysUntil > 0 && (
-                <p className="mt-4 text-[14px] text-white/60 tracking-widest uppercase">{daysUntil} days to go</p>
+                <p className="mt-4 text-[14px] text-white/85 tracking-widest uppercase">{daysUntil} days to go</p>
               )}
             </div>
           </div>
@@ -276,15 +276,15 @@ export default async function WeddingWebsitePage({
                 <p className="mt-4 text-[18px] text-white/90 drop-shadow tracking-wide">{weddingDate}</p>
               )}
               {wedding.venue && (
-                <p className="mt-1 text-[16px] text-white/75 drop-shadow">{wedding.venue}</p>
+                <p className="mt-1 text-[16px] text-white/85 drop-shadow">{wedding.venue}</p>
               )}
               {wedding.website_headline && (
-                <p className="mt-4 text-[16px] text-white/70 max-w-lg drop-shadow italic">
+                <p className="mt-4 text-[16px] text-white/85 max-w-lg drop-shadow italic">
                   {wedding.website_headline}
                 </p>
               )}
               {daysUntil !== null && daysUntil > 0 && (
-                <p className="mt-4 text-[14px] text-white/60 tracking-widest uppercase">{daysUntil} days to go</p>
+                <p className="mt-4 text-[14px] text-white/85 tracking-widest uppercase">{daysUntil} days to go</p>
               )}
             </div>
           </div>
@@ -303,15 +303,15 @@ export default async function WeddingWebsitePage({
                 <p className="mt-4 text-[18px] text-white/90 tracking-wide">{weddingDate}</p>
               )}
               {wedding.venue && (
-                <p className="mt-1 text-[16px] text-white/75">{wedding.venue}</p>
+                <p className="mt-1 text-[16px] text-white/85">{wedding.venue}</p>
               )}
               {wedding.website_headline && (
-                <p className="mt-4 text-[16px] text-white/70 max-w-lg mx-auto italic">
+                <p className="mt-4 text-[16px] text-white/85 max-w-lg mx-auto italic">
                   {wedding.website_headline}
                 </p>
               )}
               {daysUntil !== null && daysUntil > 0 && (
-                <p className="mt-4 text-[14px] text-white/60 tracking-widest uppercase">{daysUntil} days to go</p>
+                <p className="mt-4 text-[14px] text-white/85 tracking-widest uppercase">{daysUntil} days to go</p>
               )}
             </div>
           </div>
@@ -556,7 +556,7 @@ export default async function WeddingWebsitePage({
         <section className="text-center" id="rsvp">
           <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>RSVP</h2>
           <SectionDivider />
-          <p className="mt-4 text-[16px] text-muted">We can&apos;t wait to celebrate with you!</p>
+          <p className="mt-4 text-[16px] text-muted">We&rsquo;d love for you to join us.</p>
           {rsvpDeadline && (
             <p className="mt-2 text-[14px] text-violet font-semibold">
               Please respond by {new Date(rsvpDeadline + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}

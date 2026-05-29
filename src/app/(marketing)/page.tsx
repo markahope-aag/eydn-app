@@ -141,7 +141,7 @@ export default function HomePage() {
                   lineHeight: 1.02,
                   marginTop: 16,
                 }}
-                className="max-lg:!text-[48px]"
+                className="max-lg:!text-[48px] max-sm:!text-[34px] max-sm:!leading-[1.1]"
               >
                 Plan your wedding,
                 <br />

@@ -51,14 +51,14 @@ export function RsvpForm({ token, guestName }: Props) {
   if (submitted) {
     return (
       <div className="card p-8 text-center">
-        <div className="text-[32px] mb-4">&#10003;</div>
+        <div className="text-[32px] mb-4" aria-hidden="true">&#10003;</div>
         <p className="text-[15px] font-semibold text-plum">
-          Thank you, {guestName}!
+          Thank you, {guestName}.
         </p>
         <p className="mt-2 text-[15px] text-muted">
           {status === "accepted"
-            ? "We can't wait to celebrate with you!"
-            : "We're sorry you can't make it. You'll be missed!"}
+            ? "We&rsquo;re so glad you&rsquo;ll be there."
+            : "We&rsquo;re sorry you can&rsquo;t make it. You&rsquo;ll be missed."}
         </p>
       </div>
     );
@@ -67,14 +67,15 @@ export function RsvpForm({ token, guestName }: Props) {
   return (
     <form onSubmit={handleSubmit} className="card p-8 text-left">
       <p className="text-[15px] text-muted text-center mb-6">
-        Hello, <span className="font-semibold text-plum">{guestName}</span>!
+        Hello, <span className="font-semibold text-plum">{guestName}</span>.
         Will you be joining us?
       </p>
 
-      <div className="flex gap-3 justify-center mb-6">
+      <div className="flex gap-3 justify-center mb-6" role="group" aria-label="RSVP response">
         <button
           type="button"
           onClick={() => setStatus("accepted")}
+          aria-pressed={status === "accepted"}
           className={`px-6 py-2 rounded-full text-[15px] font-semibold transition border ${
             status === "accepted"
               ? "bg-violet text-white border-violet"
@@ -86,6 +87,7 @@ export function RsvpForm({ token, guestName }: Props) {
         <button
           type="button"
           onClick={() => setStatus("declined")}
+          aria-pressed={status === "declined"}
           className={`px-6 py-2 rounded-full text-[15px] font-semibold transition border ${
             status === "declined"
               ? "bg-plum text-white border-plum"
@@ -99,10 +101,11 @@ export function RsvpForm({ token, guestName }: Props) {
       {status === "accepted" && (
         <div className="space-y-4">
           <div>
-            <label className="text-[13px] font-semibold text-muted block mb-1">
+            <label htmlFor="rsvp-meal" className="text-[13px] font-semibold text-muted block mb-1">
               Meal Preference
             </label>
             <select
+              id="rsvp-meal"
               value={mealPreference}
               onChange={(e) => setMealPreference(e.target.value)}
               className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
@@ -117,10 +120,11 @@ export function RsvpForm({ token, guestName }: Props) {
           </div>
 
           <div>
-            <label className="text-[13px] font-semibold text-muted block mb-1">
+            <label htmlFor="rsvp-plus-one" className="text-[13px] font-semibold text-muted block mb-1">
               Plus One Name (if applicable)
             </label>
             <input
+              id="rsvp-plus-one"
               type="text"
               value={plusOneName}
               onChange={(e) => setPlusOneName(titleCase(e.target.value))}
@@ -193,7 +197,7 @@ export function RsvpNameLookup({ weddingSlug }: NameLookupProps) {
       return (
         <div className="bg-white border border-border rounded-[20px] p-10">
           <p className="text-[16px] text-muted">
-            Thank you, <span className="font-semibold text-plum">{foundGuest.guest_name}</span>! Your RSVP has already been recorded.
+            Thank you, <span className="font-semibold text-plum">{foundGuest.guest_name}</span>. Your RSVP has already been recorded.
           </p>
         </div>
       );
@@ -211,19 +215,22 @@ export function RsvpNameLookup({ weddingSlug }: NameLookupProps) {
 
   return (
     <form onSubmit={handleSearch} className="card p-8 text-center">
-      <p className="text-[16px] text-muted mb-6">
+      <label htmlFor="rsvp-name-lookup" className="text-[16px] text-muted block mb-6">
         Find your name to RSVP
-      </p>
+      </label>
       <div className="space-y-4">
         <input
+          id="rsvp-name-lookup"
           type="text"
           value={name}
           onChange={(e) => setName(titleCase(e.target.value))}
           placeholder="Your full name"
+          aria-describedby={error ? "rsvp-name-error" : undefined}
+          aria-invalid={error ? "true" : undefined}
           className="w-full rounded-[12px] border border-border px-5 py-3 text-[16px] text-center focus:outline-none focus:ring-2 focus:ring-violet/30"
         />
         {error && (
-          <p className="text-[14px] text-red-500">{error}</p>
+          <p id="rsvp-name-error" role="alert" className="text-[14px] text-red-500">{error}</p>
         )}
         <button
           type="submit"

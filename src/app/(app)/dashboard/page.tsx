@@ -504,7 +504,15 @@ export default async function DashboardPage() {
             <span className="text-[13px] font-semibold text-white">e</span>
           </div>
           <div className="bg-lavender rounded-[12px] rounded-tl-[4px] px-4 py-3">
-            <p className="text-[15px] text-plum">{greeting}</p>
+            {/* Decorative emojis would otherwise be announced literally
+                ("Hi Mark, sparkles, plant"). Visible text keeps them;
+                screen readers get the cleaned version via aria-label. */}
+            <p
+              className="text-[15px] text-plum"
+              aria-label={greeting.replace(/\p{Extended_Pictographic}/gu, "").replace(/\s+/g, " ").trim()}
+            >
+              {greeting}
+            </p>
           </div>
         </div>
       )}
@@ -627,7 +635,12 @@ export default async function DashboardPage() {
               return (
                 <div key={i} className="card-list px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${priorityDot[task.priority] || priorityDot.medium}`} title={`${task.priority} priority`} />
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${priorityDot[task.priority] || priorityDot.medium}`}
+                      role="img"
+                      aria-label={`${task.priority || "medium"} priority`}
+                      title={`${task.priority} priority`}
+                    />
                     <span className="flex-1 text-[15px] text-plum truncate">
                       {task.title}
                     </span>

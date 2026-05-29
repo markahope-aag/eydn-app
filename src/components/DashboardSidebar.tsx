@@ -105,12 +105,15 @@ function CollapsibleSection({
 }) {
   const hasActive = isSectionActive(pathname, section);
   const [open, setOpen] = useState(hasActive);
+  const panelId = `sidebar-section-${section.label.toLowerCase().replace(/\s+/g, "-")}`;
 
   return (
     <div>
       <button
         type="button"
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-controls={panelId}
         className="w-full flex items-center justify-between px-3 py-1.5 text-[15px] font-bold text-plum tracking-wide hover:text-plum transition"
       >
         {section.label}
@@ -123,13 +126,14 @@ function CollapsibleSection({
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
+          aria-hidden="true"
           className={`transition-transform ${open ? "rotate-180" : ""}`}
         >
           <path d="M3 4.5L6 7.5L9 4.5" />
         </svg>
       </button>
       {open && (
-        <div className="flex flex-col gap-0.5 mt-0.5">
+        <div id={panelId} className="flex flex-col gap-0.5 mt-0.5">
           {section.items.map((item) => (
             <NavLink
               key={item.href}

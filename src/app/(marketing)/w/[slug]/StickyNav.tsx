@@ -56,6 +56,7 @@ export function StickyNav({ sections, coupleNames }: { sections: Section[]; coup
             <button
               key={s.id}
               onClick={() => scrollTo(s.id)}
+              aria-current={active === s.id ? "location" : undefined}
               className={`px-3 py-1.5 text-[12px] font-semibold rounded-full whitespace-nowrap transition ${
                 active === s.id
                   ? "text-violet bg-lavender"
