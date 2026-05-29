@@ -126,10 +126,11 @@ export function ScheduleTab({
       </div>
 
       <div>
-        <label className="text-[13px] font-semibold text-muted block mb-1">
+        <label htmlFor="website-travel" className="text-[13px] font-semibold text-muted block mb-1">
           Travel Info
         </label>
         <textarea
+          id="website-travel"
           value={travel}
           onChange={(e) => {
             setTravel(e.target.value);
@@ -142,10 +143,11 @@ export function ScheduleTab({
       </div>
 
       <div>
-        <label className="text-[13px] font-semibold text-muted block mb-1">
+        <label htmlFor="website-accommodations" className="text-[13px] font-semibold text-muted block mb-1">
           Accommodations
         </label>
         <textarea
+          id="website-accommodations"
           value={accommodations}
           onChange={(e) => {
             setAccommodations(e.target.value);
@@ -158,7 +160,7 @@ export function ScheduleTab({
       </div>
 
       <div>
-        <h3 className="text-[15px] font-semibold text-plum mb-4">FAQ</h3>
+        <h2 className="text-[15px] font-semibold text-plum mb-4">FAQ</h2>
         <div className="space-y-4">
           {faq.map((item, i) => (
             <div key={i} className="card p-4 space-y-2">

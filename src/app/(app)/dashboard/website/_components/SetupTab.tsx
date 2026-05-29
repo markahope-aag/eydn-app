@@ -270,9 +270,9 @@ export function SetupTab({
       )}
 
       <div>
-        <label className="text-[13px] font-semibold text-muted block mb-1">
+        <p className="text-[13px] font-semibold text-muted block mb-1">
           Cover Image
-        </label>
+        </p>
         {coverUrl && (
           <div className="mb-3 rounded-[16px] overflow-hidden h-40 relative">
             <Image src={coverUrl} alt="Wedding cover photo" className="object-cover" fill unoptimized />
@@ -295,9 +295,9 @@ export function SetupTab({
       </div>
 
       <div>
-        <label className="text-[13px] font-semibold text-muted block mb-1">
+        <p className="text-[13px] font-semibold text-muted block mb-1">
           Website Header Image
-        </label>
+        </p>
         <div className="flex gap-2">
           <button
             onClick={() => { setHeroLayout("fullscreen"); autoSaveImmediate({ website_theme: { heroLayout: "fullscreen" } }); }}
@@ -316,9 +316,9 @@ export function SetupTab({
       </div>
 
       <div>
-        <label className="text-[13px] font-semibold text-muted block mb-1">
+        <p className="text-[13px] font-semibold text-muted block mb-1">
           Couple Photo
-        </label>
+        </p>
         <p className="text-[12px] text-muted mb-2">
           A photo of you and your partner to feature on your website
         </p>
@@ -344,10 +344,11 @@ export function SetupTab({
       </div>
 
       <div>
-        <label className="text-[13px] font-semibold text-muted block mb-1">
+        <label htmlFor="website-headline" className="text-[13px] font-semibold text-muted block mb-1">
           Headline
         </label>
         <input
+          id="website-headline"
           type="text"
           value={headline}
           onChange={(e) => {
@@ -360,10 +361,11 @@ export function SetupTab({
       </div>
 
       <div>
-        <label className="text-[13px] font-semibold text-muted block mb-1">
+        <label htmlFor="website-story" className="text-[13px] font-semibold text-muted block mb-1">
           Our Story
         </label>
         <textarea
+          id="website-story"
           value={story}
           onChange={(e) => {
             setStory(e.target.value);

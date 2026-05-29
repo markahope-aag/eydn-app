@@ -62,10 +62,11 @@ export function RsvpTab({
     <div className="space-y-6">
       <div className="max-w-lg space-y-6">
         <div>
-          <label className="text-[13px] font-semibold text-muted block mb-1">
+          <label htmlFor="rsvp-deadline" className="text-[13px] font-semibold text-muted block mb-1">
             RSVP Deadline <Tooltip text="Guests will see this deadline on your RSVP page. Set it 2-4 weeks before the wedding to give your caterer final numbers." wide />
           </label>
           <input
+            id="rsvp-deadline"
             type="date"
             value={rsvpDeadline}
             onChange={(e) => {
@@ -77,7 +78,7 @@ export function RsvpTab({
         </div>
 
         <div>
-          <h3 className="text-[15px] font-semibold text-plum mb-3">Meal Options</h3>
+          <h2 className="text-[15px] font-semibold text-plum mb-3">Meal Options</h2>
           <p className="text-[12px] text-muted mb-3">
             Define the meal choices guests will see when they RSVP.
           </p>
@@ -177,7 +178,7 @@ export function RsvpTab({
       {slug && (
         <div className="card p-5 space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-[15px] font-semibold text-plum">Wedding QR Code (shared)</h3>
+            <h2 className="text-[15px] font-semibold text-plum">Wedding QR Code (shared)</h2>
             <a
               href="/api/wedding-website/qr/wedding"
               download="wedding-rsvp-qr.png"
@@ -220,7 +221,7 @@ export function RsvpTab({
       {rsvpTokens.length > 0 && (
         <div className="card p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-[15px] font-semibold text-plum">Per-Guest QR Codes (one per invitation)</h3>
+            <h2 className="text-[15px] font-semibold text-plum">Per-Guest QR Codes (one per invitation)</h2>
             <button
               onClick={async () => {
                 setQrGenerating(true);

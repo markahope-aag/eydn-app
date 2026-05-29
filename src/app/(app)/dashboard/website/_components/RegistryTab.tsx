@@ -78,7 +78,7 @@ export function RegistryTab({ registryLinks, loadRegistry }: RegistryTabProps) {
       </p>
 
       <div className="card p-4 space-y-3">
-        <h3 className="text-[15px] font-semibold text-plum">Add Registry Link</h3>
+        <h2 className="text-[15px] font-semibold text-plum">Add Registry Link</h2>
         <div className="flex flex-wrap gap-2">
           {[
             { name: "Amazon Wedding Registry", icon: "🅰️" },
@@ -106,6 +106,7 @@ export function RegistryTab({ registryLinks, loadRegistry }: RegistryTabProps) {
           value={newRegistryName}
           onChange={(e) => setNewRegistryName(e.target.value)}
           placeholder="Registry name (e.g. Amazon, Zola)"
+          aria-label="Registry name"
           className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
         />
         <input
@@ -113,6 +114,7 @@ export function RegistryTab({ registryLinks, loadRegistry }: RegistryTabProps) {
           value={newRegistryUrl}
           onChange={(e) => setNewRegistryUrl(e.target.value)}
           placeholder="https://..."
+          aria-label="Registry URL"
           className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
         />
         <button onClick={addRegistryLink} className="btn-primary btn-sm">
