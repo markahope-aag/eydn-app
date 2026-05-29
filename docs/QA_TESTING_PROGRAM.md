@@ -8,12 +8,34 @@ context.
 
 1. Read the product guide first.
 2. Set up your test accounts (see "Test environment" below).
-3. Work through the test passes in order — **Smoke** first to confirm
+3. **Import [`QA_TEST_TRACKING.csv`](QA_TEST_TRACKING.csv) into a
+   Google Sheet** — that's your active tracker, one row per test step,
+   ready for status / notes / bug-link columns. (See "Setting up your
+   tracker" below.)
+4. Work through the test passes in order — **Smoke** first to confirm
    nothing's catastrophically broken, then deeper passes.
-4. For each test, mark **Pass / Fail / Blocked / N/A** and log any
-   failures using the bug report template at the bottom.
-5. When you finish a pass, share the spreadsheet or write a summary so
-   we can prioritize fixes.
+5. For each test, mark **Pass / Fail / Blocked / N/A** in the sheet
+   and log any failures using the bug report template at the bottom.
+6. When you finish a pass, share the sheet or write a summary so we
+   can prioritize fixes.
+
+## Setting up your tracker
+
+The `QA_TEST_TRACKING.csv` file in this folder has every test step
+from this document as a row (~270 rows total), with empty columns
+ready for tracking.
+
+**To import into Google Sheets:**
+
+1. Open Google Sheets → File → Import → Upload → drop the CSV.
+2. Choose "Replace spreadsheet" → Import data.
+3. Optionally: select the `Status` column → Data → Data validation →
+   Dropdown with values: `Not Started, Pass, Fail, Blocked, N/A`.
+4. Optionally: add conditional formatting so Fail rows turn red.
+5. Share the sheet back with Mark so he can see progress.
+
+The columns are: `Pass | Pass Name | Section | Test ID | Test Step |
+Status | Notes | Bug Link | Tester | Date`.
 
 ## Test environment
 
