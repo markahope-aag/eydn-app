@@ -194,16 +194,29 @@ issues:
 
 ## Test environment / accounts
 
-Ask Mark for:
-- A test couple account on the production site (or instructions to
-  spin one up).
-- A Pro Monthly test account (if testing paid-tier behavior).
-- A Lifetime test account.
-- An admin account (if testing the admin panel).
-- A collaborator email you can invite from the test couple.
-- A test guest email you can send a real RSVP from.
-- Stripe test card numbers (4242 4242 4242 4242 always works in test
-  mode).
+You can set up most of what you need yourself — no provisioning
+required:
+
+- **Fresh trial account**: sign up at `eydn.app` with any new email
+  address. You're now on day 1 of a 14-day trial with full access.
+- **Pro Monthly tier**: from your test account, upgrade and pay with
+  Stripe test card `4242 4242 4242 4242` (expiration any future date,
+  CVC any 3 digits). Test mode never charges a real card.
+- **Lifetime tier**: same flow, pick the Lifetime plan.
+- **Trial-expired tier**: either wait 14 days, or skip this state on
+  your first pass and circle back when an account naturally rolls past
+  trial.
+- **Collaborator testing**: sign up a second account under a different
+  email, then invite that email from your main test account.
+- **Guest RSVP testing**: any free Gmail address works (e.g.
+  `youremail+rsvp@gmail.com` aliases land in your main inbox).
+- **Card decline testing**: Stripe test card `4000 0000 0000 0002`
+  triggers a decline.
+
+**Only ask Mark for** an admin role grant if you want to test the
+admin panel (vendor moderation, blog editor, etc.). That requires a
+DB-level role write. Skip it for your first pass if admin features
+aren't a priority.
 
 ## What to log when you find a bug
 
