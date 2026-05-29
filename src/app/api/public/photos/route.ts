@@ -4,6 +4,21 @@ import { randomUUID } from "crypto";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 import { UPLOAD } from "@/lib/config";
 
+/** Map a validated image MIME type to a safe file extension. The MIME type
+ *  comes from the same allowlist used to gate the upload, so this is the
+ *  authoritative source for the extension — never the user-supplied filename. */
+function extensionForMime(mime: string): string {
+  switch (mime) {
+    case "image/jpeg": return "jpg";
+    case "image/png": return "png";
+    case "image/webp": return "webp";
+    case "image/gif": return "gif";
+    case "image/heic": return "heic";
+    case "image/heif": return "heif";
+    default: return "bin";
+  }
+}
+
 export async function POST(request: Request) {
   const ip = getClientIP(request);
   const rl = await checkRateLimit(`photos:${ip}`, RATE_LIMITS.public);
@@ -51,8 +66,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Wedding not found" }, { status: 404 });
   }
 
-  // Upload to Supabase storage
-  const ext = file.name.split(".").pop() || "jpg";
+  // Derive the file extension from the VALIDATED MIME type, not the
+  // user-supplied filename. Trusting `file.name.split(".").pop()` lets a
+  // file named "evil.jpg.php" produce a `.php` extension in the storage
+  // path — a latent risk if the bucket ever serves files with execution
+  // permissions or if a CDN misroutes based on extension.
+  const ext = extensionForMime(file.type);
   const fileName = `${wedding.id}/${randomUUID()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 

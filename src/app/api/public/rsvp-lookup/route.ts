@@ -44,18 +44,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Wedding not found" }, { status: 404 });
   }
 
-  // Search for the guest by name (case-insensitive)
-  const { data: tokens } = await supabase
+  // Match the name in the DATABASE rather than fetching up to 500 rows and
+  // scanning in JS. The previous loop made hits measurably slower than
+  // misses, leaking guest existence via response timing. The inner join +
+  // ilike runs in constant time regardless of guest-list size.
+  const trimmed = name.trim();
+  const { data: match } = await supabase
     .from("rsvp_tokens")
-    .select("token, responded, guests(id, name)")
+    .select("token, responded, guests!inner(id, name)")
     .eq("wedding_id", wedding.id)
-    .limit(500);
-
-  const trimmed = name.trim().toLowerCase();
-  const match = (tokens ?? []).find((t) => {
-    const guest = t.guests as unknown as { id: string; name: string } | null;
-    return guest?.name?.toLowerCase() === trimmed;
-  });
+    .ilike("guests.name", trimmed)
+    .limit(1)
+    .maybeSingle();
 
   if (!match) {
     logRequest("POST", "/api/public/rsvp-lookup", 404, Date.now() - start, { ip });

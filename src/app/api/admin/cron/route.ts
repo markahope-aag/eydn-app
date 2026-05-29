@@ -73,12 +73,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unknown job name" }, { status: 400 });
   }
 
-  // Trigger the cron via internal fetch with the appropriate secret
+  // Trigger the cron via internal fetch with the appropriate secret.
+  // The base URL must come from a server-controlled env var, NOT from
+  // request.url — that derives from the Host header, which is forwarded
+  // user input. Spoofing it would send the cron secret to an attacker's
+  // server in the Authorization header.
   const secret = ["backup", "lifecycle"].includes(jobName)
     ? process.env.BACKUP_SECRET
     : process.env.CRON_SECRET;
 
-  const res = await fetch(new URL(route, request.url).toString(), {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://eydn.app";
+  const res = await fetch(new URL(route, appUrl).toString(), {
     method: "POST",
     headers: { Authorization: `Bearer ${secret}` },
   });

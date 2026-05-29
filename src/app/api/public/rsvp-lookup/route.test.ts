@@ -136,7 +136,10 @@ describe("POST /api/public/rsvp-lookup", () => {
     expect(json.error).toMatch(/wedding not found/i);
   });
 
-  it("returns 404 when guest name not found", async () => {
+  // Helper: name lookup now happens in the DB via .ilike(), so the mock
+  // returns either the matched token row or null based on what we want
+  // to simulate (rather than returning the full list and matching in JS).
+  function setupTokenLookup(match: { token: string; responded: boolean; guest: { id: string; name: string } } | null) {
     mockFrom.mockImplementation((table: string) => {
       if (table === "weddings") {
         return {
@@ -153,11 +156,15 @@ describe("POST /api/public/rsvp-lookup", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
-                data: [
-                  { token: "tok-1", responded: false, guests: { id: "g-1", name: "Bob Smith" } },
-                ],
-                error: null,
+              ilike: vi.fn().mockReturnValue({
+                limit: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue({
+                    data: match
+                      ? { token: match.token, responded: match.responded, guests: match.guest }
+                      : null,
+                    error: null,
+                  }),
+                }),
               }),
             }),
           }),
@@ -165,6 +172,10 @@ describe("POST /api/public/rsvp-lookup", () => {
       }
       return {};
     });
+  }
+
+  it("returns 404 when guest name not found", async () => {
+    setupTokenLookup(null);
 
     const res = await POST(mockRequest({ name: "Alice Jones", wedding_slug: "alice-bob" }));
     const json = await res.json();
@@ -174,34 +185,10 @@ describe("POST /api/public/rsvp-lookup", () => {
   });
 
   it("returns matching guest with token on success", async () => {
-    mockFrom.mockImplementation((table: string) => {
-      if (table === "weddings") {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                maybeSingle: vi.fn().mockResolvedValue({ data: { id: "w-1" }, error: null }),
-              }),
-            }),
-          }),
-        };
-      }
-      if (table === "rsvp_tokens") {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
-                data: [
-                  { token: "tok-1", responded: false, guests: { id: "g-1", name: "Alice Jones" } },
-                  { token: "tok-2", responded: true, guests: { id: "g-2", name: "Bob Smith" } },
-                ],
-                error: null,
-              }),
-            }),
-          }),
-        };
-      }
-      return {};
+    setupTokenLookup({
+      token: "tok-1",
+      responded: false,
+      guest: { id: "g-1", name: "Alice Jones" },
     });
 
     const res = await POST(mockRequest({ name: "Alice Jones", wedding_slug: "alice-bob" }));
@@ -215,33 +202,12 @@ describe("POST /api/public/rsvp-lookup", () => {
   });
 
   it("matches names case-insensitively", async () => {
-    mockFrom.mockImplementation((table: string) => {
-      if (table === "weddings") {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                maybeSingle: vi.fn().mockResolvedValue({ data: { id: "w-1" }, error: null }),
-              }),
-            }),
-          }),
-        };
-      }
-      if (table === "rsvp_tokens") {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
-                data: [
-                  { token: "tok-1", responded: false, guests: { id: "g-1", name: "Alice Jones" } },
-                ],
-                error: null,
-              }),
-            }),
-          }),
-        };
-      }
-      return {};
+    // The DB's ilike() handles case-insensitivity — the route now just
+    // trims and passes through, so the mock returns the canonical name.
+    setupTokenLookup({
+      token: "tok-1",
+      responded: false,
+      guest: { id: "g-1", name: "Alice Jones" },
     });
 
     const res = await POST(mockRequest({ name: "  ALICE JONES  ", wedding_slug: "alice-bob" }));
@@ -252,29 +218,7 @@ describe("POST /api/public/rsvp-lookup", () => {
   });
 
   it("handles null tokens data gracefully", async () => {
-    mockFrom.mockImplementation((table: string) => {
-      if (table === "weddings") {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                maybeSingle: vi.fn().mockResolvedValue({ data: { id: "w-1" }, error: null }),
-              }),
-            }),
-          }),
-        };
-      }
-      if (table === "rsvp_tokens") {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({ data: null, error: null }),
-            }),
-          }),
-        };
-      }
-      return {};
-    });
+    setupTokenLookup(null);
 
     const res = await POST(mockRequest({ name: "Ghost", wedding_slug: "alice-bob" }));
     const json = await res.json();

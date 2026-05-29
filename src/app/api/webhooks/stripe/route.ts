@@ -80,8 +80,15 @@ export async function POST(request: Request) {
     if ((claimError as { code?: string }).code === "23505") {
       return NextResponse.json({ received: true, duplicate: true });
     }
-    // Any other DB error → 500 so Stripe retries the delivery later.
-    console.error("[STRIPE WEBHOOK] Failed to record event", claimError);
+    // Any other DB error → 500 so Stripe retries the delivery later. Log
+    // only the safe fields; the raw Supabase error object can include the
+    // SQL string in its `message`/`details`, which leaks schema details
+    // into server logs.
+    const safe = claimError as { code?: string; message?: string };
+    console.error("[STRIPE WEBHOOK] Failed to record event", {
+      code: safe.code,
+      message: safe.message,
+    });
     return NextResponse.json({ error: "Could not record event" }, { status: 500 });
   }
 

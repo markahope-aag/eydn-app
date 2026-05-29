@@ -83,6 +83,13 @@ export async function POST(request: Request) {
     });
   }
 
+  // Match the format check the GET handler does — keep both paths consistent.
+  if (!/^[a-f0-9]+$/.test(token)) {
+    return new Response(renderPage("Error", "Invalid unsubscribe token."), {
+      headers: { "Content-Type": "text/html" }, status: 400,
+    });
+  }
+
   const supabase = createSupabaseAdmin();
 
   const { data: pref } = await supabase

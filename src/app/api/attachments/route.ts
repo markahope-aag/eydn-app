@@ -111,8 +111,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "File too large. Maximum size is 10MB." }, { status: 413 });
   }
 
-  // Validate file type
-  if (!(UPLOAD.ALLOWED_DOCUMENT_TYPES as readonly string[]).includes(file.type) && file.type !== "application/octet-stream") {
+  // Validate file type. Reject application/octet-stream — it was previously
+  // accepted as a fallback for clients that omit content-type, but that
+  // carve-out lets any binary (executables, scripts) bypass the allowlist
+  // since the magic-byte sniffing below only covers images and PDFs.
+  if (!(UPLOAD.ALLOWED_DOCUMENT_TYPES as readonly string[]).includes(file.type)) {
     return NextResponse.json({ error: "File type not allowed. Accepted: images, PDF, Word, Excel, CSV." }, { status: 400 });
   }
 
