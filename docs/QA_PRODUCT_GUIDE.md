@@ -194,29 +194,58 @@ issues:
 
 ## Test environment / accounts
 
-You can set up most of what you need yourself — no provisioning
-required:
+Use the `+designator` alias trick on your real work email
+(`sophie.hope+designator@asymmetric.pro`). Every message lands in your
+real inbox, but Eydn and Clerk treat each alias as a completely
+separate account — which means you can be signed in as multiple test
+couples in different browser sessions, and the alias itself tells you
+at a glance which tier or scenario you're working in.
 
-- **Fresh trial account**: sign up at `eydn.app` with any new email
-  address. You're now on day 1 of a 14-day trial with full access.
+Suggested aliases (pick whatever's useful — you don't need all of them
+day one):
+
+| Purpose | Sign up with |
+|---|---|
+| Fresh trial — your default | `sophie.hope+trial@asymmetric.pro` |
+| Pro Monthly subscriber | `sophie.hope+pro-monthly@asymmetric.pro` |
+| Lifetime subscriber | `sophie.hope+lifetime@asymmetric.pro` |
+| Trial-expired (after 14 days) | `sophie.hope+expired@asymmetric.pro` |
+| Couple's partner (for collaboration tests) | `sophie.hope+partner@asymmetric.pro` |
+| Coordinator role | `sophie.hope+coordinator@asymmetric.pro` |
+| Parent / read-only role | `sophie.hope+parent@asymmetric.pro` |
+| RSVP guest | `sophie.hope+guest@asymmetric.pro` |
+| Photo-upload guest | `sophie.hope+guest2@asymmetric.pro` |
+
+### Walking yourself up the tiers
+
+- **Fresh trial**: sign up with any of the aliases above — you're on
+  day 1 of a 14-day trial with full access.
 - **Pro Monthly tier**: from your test account, upgrade and pay with
   Stripe test card `4242 4242 4242 4242` (expiration any future date,
-  CVC any 3 digits). Test mode never charges a real card.
+  CVC any 3 digits). Test mode never charges anyone.
 - **Lifetime tier**: same flow, pick the Lifetime plan.
-- **Trial-expired tier**: either wait 14 days, or skip this state on
-  your first pass and circle back when an account naturally rolls past
-  trial.
-- **Collaborator testing**: sign up a second account under a different
-  email, then invite that email from your main test account.
-- **Guest RSVP testing**: any free Gmail address works (e.g.
-  `youremail+rsvp@gmail.com` aliases land in your main inbox).
-- **Card decline testing**: Stripe test card `4000 0000 0000 0002`
-  triggers a decline.
+- **Card decline test**: Stripe test card `4000 0000 0000 0002`
+  triggers a decline cleanly.
+- **Trial-expired**: either wait 14 days, or skip this state on your
+  first pass and circle back later.
+- **Collaboration**: invite a partner/coordinator/parent alias from
+  your main test couple — accept the invite in a different browser
+  (or incognito) so you can have both sessions open at once.
 
-**Only ask Mark for** an admin role grant if you want to test the
-admin panel (vendor moderation, blog editor, etc.). That requires a
-DB-level role write. Skip it for your first pass if admin features
-aren't a priority.
+### Browser session tips
+
+- Use one **regular** browser window for your main test account.
+- Use a **private / incognito** window for the partner or guest role,
+  so both can be signed in simultaneously without colliding sessions.
+- Some scenarios (multi-collaborator editing) want a third — use a
+  second browser entirely (e.g., Firefox alongside Chrome).
+
+### What to ask Mark for
+
+Only **admin role access** — granting it requires a DB-level role
+write, so it can't be self-served. Skip this if admin features
+(vendor moderation, blog editor) aren't a priority on your first
+pass.
 
 ## What to log when you find a bug
 
