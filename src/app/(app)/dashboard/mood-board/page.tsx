@@ -51,6 +51,19 @@ const CATEGORIES = [
   "Other",
 ];
 
+// Personalized starting points shown on the empty board. Each label matches a
+// CATEGORIES value so it pre-selects the board when the add form opens.
+const SUGGESTED_CATEGORIES: { label: string; icon: string }[] = [
+  { label: "Florals", icon: "💐" },
+  { label: "Reception", icon: "🥂" },
+  { label: "Ceremony", icon: "💍" },
+  { label: "Attire", icon: "👗" },
+  { label: "Cake & Desserts", icon: "🍰" },
+  { label: "Table Settings", icon: "🍽️" },
+  { label: "Colors & Palette", icon: "🎨" },
+  { label: "Photo Inspo", icon: "📷" },
+];
+
 export default function MoodBoardPage() {
   const [items, setItems] = useState<MoodItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -336,8 +349,16 @@ export default function MoodBoardPage() {
           <h1>Vision Board</h1>
           <p className="mt-1 text-[15px] text-muted">
             Collect inspiration for your wedding look and feel.{" "}
-            <a href="https://pin.it/4f47esCnG" target="_blank" rel="noopener noreferrer" className="text-violet underline">
-              Need inspo? Check out our Pinterest
+            <a
+              href="https://pin.it/4f47esCnG"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-semibold text-violet underline underline-offset-2 decoration-2 hover:text-soft-violet transition"
+            >
+              Need inspo? Browse our Pinterest
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M6 3h7v7M13 3L4 12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </a>
           </p>
           <p className="mt-1 text-[13px] text-muted">
@@ -362,7 +383,10 @@ export default function MoodBoardPage() {
               )}
             </div>
           )}
-          <button onClick={() => setShowAdd(!showAdd)} className="btn-primary">
+          <button
+            onClick={() => setShowAdd(!showAdd)}
+            className={showAdd || items.length === 0 ? "btn-secondary" : "btn-primary"}
+          >
             {showAdd ? "Cancel" : "Add Inspiration"}
           </button>
         </div>
@@ -630,20 +654,47 @@ export default function MoodBoardPage() {
           No items in this category yet.
         </p>
       ) : (
-        <div className="mt-8 text-center">
-          {/* Placeholder grid to set expectations */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-lg mx-auto mb-8 opacity-30">
-            {[120, 160, 100, 140, 110, 150].map((h, i) => (
-              <div key={i} className="bg-lavender rounded-[12px]" style={{ height: h }} />
+        <div className="mt-6 max-w-2xl mx-auto">
+          {/* Single primary action — an upload zone that also sets the
+              expectation that you can drag, click, or paste to add images. */}
+          <button
+            type="button"
+            onClick={() => { setAddMode("upload"); setShowAdd(true); }}
+            className="group w-full flex flex-col items-center justify-center text-center py-12 px-6 border-2 border-dashed border-violet/30 rounded-[20px] bg-lavender/20 hover:border-violet/60 hover:bg-lavender/40 transition"
+          >
+            <span className="flex items-center justify-center w-14 h-14 rounded-full bg-violet/10 text-violet">
+              <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                <rect x="4" y="6" width="24" height="20" rx="3" stroke="currentColor" strokeWidth="1.6" />
+                <circle cx="12" cy="14" r="2.5" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M4 22L11 16L15 20L21 13L28 22" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <span className="mt-4 text-[18px] font-semibold text-plum">Start your vision board</span>
+            <span className="mt-2 text-[15px] text-muted max-w-md">
+              Drag &amp; drop images here, click to upload, or paste a link from Pinterest or Instagram.
+            </span>
+            <span className="mt-5 inline-block rounded-full bg-violet text-white px-5 py-2 text-[14px] font-semibold group-hover:opacity-90 transition">
+              Add your first image
+            </span>
+          </button>
+
+          {/* Suggested starting points to help couples get going faster */}
+          <p className="mt-8 text-center text-[12px] font-semibold uppercase tracking-wide text-muted">
+            Or start with an idea
+          </p>
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            {SUGGESTED_CATEGORIES.map(({ label, icon }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => { setCategory(label); setAddMode("upload"); setShowAdd(true); }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-3.5 py-2 text-[13px] text-plum hover:border-violet hover:bg-lavender/40 transition"
+              >
+                <span aria-hidden="true">{icon}</span>
+                {label}
+              </button>
             ))}
           </div>
-          <p className="text-[18px] font-semibold text-plum">Start building your vision</p>
-          <p className="mt-2 text-[15px] text-muted max-w-md mx-auto">
-            Add your first inspiration image — flowers, venues, decor, anything! Upload photos or paste URLs from Pinterest, Instagram, or anywhere.
-          </p>
-          <button onClick={() => setShowAdd(true)} className="btn-primary mt-6">
-            Add Your First Pin
-          </button>
         </div>
       )}
 
