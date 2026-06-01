@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { PhotoWithFallback } from "@/components/PhotoWithFallback";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
@@ -712,8 +712,14 @@ export default function VendorsPage() {
               {dirMatches.map((m) => (
                 <div key={m.id} className="flex items-center gap-3">
                   {m.photoUrl ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={m.photoUrl} alt={m.name} className="w-10 h-10 rounded-[8px] object-cover" />
+                    <div className="w-10 h-10 rounded-[8px] overflow-hidden relative flex-shrink-0">
+                      <PhotoWithFallback
+                        src={m.photoUrl}
+                        alt={m.name}
+                        className="object-cover"
+                        fallback={<div className="w-full h-full bg-lavender" aria-hidden="true" />}
+                      />
+                    </div>
                   ) : (
                     <div className="w-10 h-10 rounded-[8px] bg-lavender" aria-hidden="true" />
                   )}
@@ -770,8 +776,14 @@ export default function VendorsPage() {
               <p className="text-[12px] text-muted mb-2">Google Places match:</p>
               <div className="flex items-start gap-3">
                 {placeResult.photoUrl ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={placeResult.photoUrl} alt={placeResult.name} className="w-16 h-16 rounded-[8px] object-cover" />
+                  <div className="w-16 h-16 rounded-[8px] overflow-hidden relative flex-shrink-0">
+                    <PhotoWithFallback
+                      src={placeResult.photoUrl}
+                      alt={placeResult.name}
+                      className="object-cover"
+                      fallback={<div className="w-full h-full bg-lavender" aria-hidden="true" />}
+                    />
+                  </div>
                 ) : (
                   <div className="w-16 h-16 rounded-[8px] bg-lavender" aria-hidden="true" />
                 )}
@@ -848,12 +860,15 @@ export default function VendorsPage() {
                     <a href={`/dashboard/vendors/${vendor.id}`} className="flex-shrink-0">
                       {vendor.gmb_data?.photoUrl ? (
                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[10px] overflow-hidden relative">
-                          <Image
+                          <PhotoWithFallback
                             src={vendor.gmb_data.photoUrl}
                             alt={vendor.name}
-                            fill
-                            unoptimized
                             className="object-cover"
+                            fallback={
+                              <div className="w-full h-full bg-lavender flex items-center justify-center">
+                                <span className="text-[16px] sm:text-[18px] font-semibold text-violet">{vendor.name.charAt(0)}</span>
+                              </div>
+                            }
                           />
                         </div>
                       ) : (

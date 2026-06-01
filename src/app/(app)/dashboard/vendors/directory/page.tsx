@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
-import Image from "next/image";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { VENDOR_CATEGORIES, categoryLabel } from "@/lib/vendors/categories";
+import { PhotoWithFallback } from "@/components/PhotoWithFallback";
 import { LocationBanner } from "./_components/LocationBanner";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -89,48 +89,6 @@ function heroPhoto(
     return gmbState.photoUrl ?? null;
   }
   return null;
-}
-
-/** A next/image that swaps in `fallback` when the photo fails to load.
- *  Google Places photos are proxied through /api/places-photo and the proxied
- *  URL is cached on the vendor row for up to 30 days. Google rotates photo
- *  references, so a cached ref can go stale — the proxy then 404s and the
- *  browser would render its broken-image icon. Showing the placeholder instead
- *  keeps the card looking intentional. Error state resets when `src` changes so
- *  a lazily-resolved GMB photo replacing an errored one still gets a chance. */
-function PhotoWithFallback({
-  src,
-  alt,
-  className,
-  fallback,
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-  fallback: ReactNode;
-}) {
-  const [errored, setErrored] = useState(false);
-  // Reset the error when the source changes (e.g. a lazily-resolved GMB photo
-  // replaces a prior one) using React's adjust-state-during-render pattern
-  // rather than an effect, which avoids a cascading re-render.
-  const [prevSrc, setPrevSrc] = useState(src);
-  if (src !== prevSrc) {
-    setPrevSrc(src);
-    setErrored(false);
-  }
-
-  if (errored) return <>{fallback}</>;
-
-  return (
-    <Image
-      src={src}
-      alt={alt}
-      fill
-      unoptimized
-      className={className}
-      onError={() => setErrored(true)}
-    />
-  );
 }
 
 type PlaceData = {
