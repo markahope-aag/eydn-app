@@ -64,10 +64,36 @@ const STATUS_CLASSES: Record<string, string> = {
   done: "bg-lavender text-plum",
 };
 
-const PRIORITY_DOT: Record<string, string> = {
-  high: "bg-error",
-  medium: "bg-[#D4A017]",
-  low: "bg-transparent",
+// Priority drives a colored left accent bar so importance is scannable at a
+// glance. Low priority gets a transparent bar to keep rows aligned.
+const PRIORITY_BORDER: Record<string, string> = {
+  high: "border-l-error",
+  medium: "border-l-[#D4A017]",
+  low: "border-l-transparent",
+};
+
+// A small wayfinding icon per task category for fast visual scanning.
+const CATEGORY_ICON: Record<string, string> = {
+  Budget: "💰",
+  Planning: "📋",
+  Guests: "👥",
+  "Wedding Party": "🥂",
+  Venue: "🏛️",
+  Photography: "📷",
+  Catering: "🍽️",
+  Music: "🎵",
+  Officiant: "📜",
+  Honeymoon: "✈️",
+  Flowers: "💐",
+  Rentals: "🪑",
+  Attire: "👗",
+  Beauty: "💄",
+  Transportation: "🚗",
+  Decorations: "🎀",
+  Invitations: "✉️",
+  Events: "🎉",
+  Vendors: "🤝",
+  Other: "📌",
 };
 
 function SortableTaskItem({
@@ -127,8 +153,8 @@ function SortableTaskItem({
       }}
       role="button"
       tabIndex={0}
-      aria-label={`Open task: ${task.title}`}
-      className="group relative px-4 py-2.5 hover:bg-lavender transition bg-white cursor-pointer focus:outline-none focus-visible:bg-lavender"
+      aria-label={`Open task: ${task.title} (${task.priority} priority)`}
+      className={`group relative border-l-[3px] px-4 py-2.5 hover:bg-lavender transition bg-white cursor-pointer focus:outline-none focus-visible:bg-lavender ${PRIORITY_BORDER[task.priority]}`}
     >
       {justCompleted && (
         <div
@@ -161,13 +187,15 @@ function SortableTaskItem({
           </svg>
         </button>
 
-        {/* Priority dot */}
-        <span
-          className={`w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]} ${
-            task.priority === "low" ? "border border-border" : ""
-          }`}
-          title={`${task.priority} priority`}
-        />
+        {/* High-priority flag — the left accent bar carries medium/low */}
+        {task.priority === "high" && task.status !== "done" && (
+          <span
+            className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide text-error bg-error/10 px-1.5 py-0.5 rounded"
+            title="High priority"
+          >
+            High
+          </span>
+        )}
 
         {/* Status badge - click to cycle */}
         <button
@@ -184,6 +212,8 @@ function SortableTaskItem({
         {/* Task title */}
         <span
           className={`flex-1 text-[15px] truncate ${
+            task.priority === "high" && task.status !== "done" ? "font-semibold" : ""
+          } ${
             task.status === "done"
               ? "text-muted line-through"
               : task.status === "in_progress"
@@ -232,7 +262,8 @@ function SortableTaskItem({
       {/* Bottom row: category, guide, secondary actions — wraps on mobile */}
       <div className="flex items-center gap-2 mt-1 ml-[18px] sm:ml-[34px] flex-wrap">
         {task.category && (
-          <span className="badge text-[11px]">
+          <span className="badge text-[11px] inline-flex items-center gap-1">
+            <span aria-hidden="true">{CATEGORY_ICON[task.category] ?? "📌"}</span>
             {task.category}
           </span>
         )}
