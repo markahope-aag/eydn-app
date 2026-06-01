@@ -22,9 +22,19 @@ export function GlobalHeader() {
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-white/95 backdrop-blur pl-16 lg:pl-6 pr-6 py-3">
       <div className="flex items-center gap-8">
-        <Link href="/" className="flex items-center">
-          <Image src="/logo.png" alt="eydn" width={136} height={34} className="h-[34px] w-auto" />
-        </Link>
+        {/* Signed-in users stay in the app (logo → dashboard); signed-out
+            users go to the marketing home. Avoids the logo feeling like a
+            "log out" that drops you on a signed-out page. */}
+        <Show when="signed-in">
+          <Link href="/dashboard" className="flex items-center" aria-label="Go to dashboard">
+            <Image src="/logo.png" alt="eydn" width={136} height={34} className="h-[34px] w-auto" />
+          </Link>
+        </Show>
+        <Show when="signed-out">
+          <Link href="/" className="flex items-center" aria-label="eydn home">
+            <Image src="/logo.png" alt="eydn" width={136} height={34} className="h-[34px] w-auto" />
+          </Link>
+        </Show>
         <Show when="signed-out">
           <nav className="hidden sm:flex items-center gap-6">
             <Link href="/tools" className="text-[15px] text-muted hover:text-plum transition">Free Tools</Link>
@@ -40,12 +50,6 @@ export function GlobalHeader() {
           <Link href="/sign-up" className="btn-primary btn-sm">Start Free Trial</Link>
         </Show>
         <Show when="signed-in">
-          <Link
-            href="/dashboard"
-            className="text-[15px] font-semibold text-violet hover:text-soft-violet transition"
-          >
-            Dashboard
-          </Link>
           <UserButton />
         </Show>
       </div>
