@@ -634,6 +634,21 @@ Tracks which lifecycle emails have been sent per wedding.
 | email_type | text | post_wedding_welcome, download_reminder_1mo, etc. |
 | sent_at | timestamptz | |
 
+### `email_images`
+Admin-managed image library for email templates. Binaries live in the public `email-images` storage bucket; this table holds the metadata the library UI shows. Admin-only — RLS is enabled with no policies, so all access is via service-role API routes.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| path | text | Object path in the `email-images` bucket (unique) |
+| alt_text | text | Accessibility / fallback text |
+| width | integer | Final width in px (after resize) |
+| height | integer | Final height in px |
+| byte_size | integer | Stored file size |
+| content_type | text | MIME type |
+| created_by | text | Clerk user ID of uploader |
+| created_at | timestamptz | |
+
 ### `push_subscriptions`
 Web push notification subscriptions.
 

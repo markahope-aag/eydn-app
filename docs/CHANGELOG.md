@@ -2,6 +2,27 @@
 
 This document tracks all notable changes, updates, and improvements to the eydn wedding planning platform.
 
+## [1.14.0] — June 1, 2026
+
+### New: image library for email templates
+
+Email templates store raw HTML, so adding an image previously meant hand-writing an `<img>` tag pointing at an externally hosted URL — there was no way to upload or manage images for emails in the app.
+
+- **New admin page** at `/dashboard/admin/email-images` (sidebar: Operations → Email Images): upload an image, resize it to an email-appropriate width before upload (600 / 300 / 150 / original), set alt text, and manage the library (edit alt text, copy URL, copy `<img>` snippet, delete).
+- **Insert image** button in the email template editor drops a mobile-safe `<img>` snippet at the cursor, sourced from the library.
+- Resizing/compression runs in the browser via canvas (no `sharp`/server dependency); animated GIFs are left at original size to preserve animation.
+- Backed by a public `email-images` storage bucket and the `email_images` metadata table, with admin-only API routes under `/api/admin/email/images`. Migration `20260601000000_email_images.sql`.
+
+See `EMAIL_SEQUENCES.md` §4 for the operator how-to.
+
+### Fixed: new accounts no longer show tasks as overdue on day one
+
+The task seeder wrote the legacy `completed` boolean but never set the `status` field the task UI now reads. Auto-completed and already-booked starter tasks therefore defaulted to `not_started` and rendered as overdue for brand-new couples. The seeder now sets `status` in lockstep with `completed` for both parent tasks and sub-tasks.
+
+### Fixed: notification dropdown stays on-screen on narrow widths
+
+The notification bell's panel used a fixed width and could open partly off the edge of the screen on small browser widths with no way to scroll to the hidden content. It now caps to the viewport width while keeping its full size where there's room.
+
 ## [1.13.0] — May 28, 2026
 
 ### Critical: Stripe Pro Monthly subscriptions now persist

@@ -897,6 +897,22 @@ Update suggested vendor.
 #### `DELETE /api/admin/suggested-vendors/[id]`
 Remove suggested vendor.
 
+### Admin Email Images
+
+Image library for email templates. All routes require admin. Uploads go to the public `email-images` storage bucket; metadata is tracked in `email_images`.
+
+#### `GET /api/admin/email/images`
+List the image library (newest first), each with its resolved public URL.
+
+#### `POST /api/admin/email/images`
+Upload an image (multipart form: `file`, plus `alt`, `width`, `height`). The client resizes/compresses before upload and supplies the final dimensions. Validates type (JPEG/PNG/WebP/GIF/AVIF) and size (≤8MB), stores the binary, and records metadata. Returns the created image with its public URL.
+
+#### `PATCH /api/admin/email/images/[id]`
+Update an image's `alt_text`.
+
+#### `DELETE /api/admin/email/images/[id]`
+Delete an image — removes both the storage object and the metadata row.
+
 ### Admin Settings
 
 #### `GET /api/admin/settings`

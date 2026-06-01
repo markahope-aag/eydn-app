@@ -77,6 +77,19 @@ What shipped:
 
 Operator action: verify `CADENCE_URL` and `CADENCE_NEWSLETTER_FORM_ID` are set in production. Any save with a missing env var will surface as `cadence_error: 'skipped: CADENCE_URL not configured'` in the admin Leads page.
 
+### Phase D — Email image library (commit `f927e2d`)
+Closed a content gap: templates store raw HTML, so adding an image meant hand-writing an `<img>` tag pointing at a URL hosted somewhere — there was no way to upload or manage images for emails inside the app.
+
+What shipped:
+- **`email-images` public storage bucket** + **`email_images` metadata table** (path, alt text, dimensions, byte size). Admin-only — all access is via service-role API routes; the table has RLS enabled with no policies.
+- **Admin API** (4 routes under `/api/admin/email/images`): list, upload (multipart), patch alt text, delete (removes the storage object too).
+- **Client-side resize** (`src/lib/images/resize.ts`) — images are drawn to a canvas and re-encoded at a chosen target width *before* upload, so email payloads stay small. No `sharp`/server dependency. Animated GIFs skip the resize to preserve animation.
+- **Admin UI** at `/dashboard/admin/email-images` — upload with size presets (600 / 300 / 150 / original), library grid with editable alt text, copy-URL, copy-`<img>`-snippet, and delete.
+- **Insert-image button** in the template editor (`/dashboard/admin/email-sequences`) — opens a picker and drops a mobile-safe `<img>` snippet at the cursor in the HTML body.
+- **Sidebar link** under Operations → Email Images.
+
+No code deploy is needed to add, resize, or insert an image into a template.
+
 ---
 
 ## 1. The 30-second model
@@ -96,6 +109,9 @@ Because all three live in the database, **you can change template copy, retime a
 | Thing | Location |
 |---|---|
 | Admin UI | `/dashboard/admin/email-sequences` (sidebar: Operations → Email Sequences) |
+| Image library UI | `/dashboard/admin/email-images` (sidebar: Operations → Email Images) |
+| Image library tables | `email_images` + `email-images` storage bucket |
+| Image upload/resize code | `src/app/api/admin/email/images/`, `src/lib/images/` |
 | Templates table | `email_templates` |
 | Sequences table | `email_sequences`, `email_sequence_steps` |
 | Send log (dedup + audit) | `sequence_send_log` |
@@ -196,6 +212,19 @@ This is the post-wedding archival flow (1mo / 6mo / 9mo download reminders, memo
 ### Live preview
 
 The modal has a collapsible **Live preview** that renders the body inside a plain card (no chrome). This is fast, but it doesn't show the gradient header or footer — for the full visual, use **Send test**.
+
+### Adding an image
+
+Images live in their own library (`/dashboard/admin/email-images`, sidebar: Operations → Email Images) so they can be uploaded once and reused across templates.
+
+1. **Upload** at the Email Images page: pick a file (JPEG / PNG / WebP / GIF / AVIF, up to 8MB), choose a **resize** preset (Email width 600px / Half 300px / Thumbnail 150px / Original), and add **alt text**. Resizing happens in the browser before upload to keep emails light; animated GIFs are kept at original size to preserve animation.
+2. **Insert into a template:** in the template editor, click **Insert image** above the HTML body, pick an image, and a correctly-formatted, mobile-safe `<img>` snippet is dropped at the cursor.
+3. **Or copy by hand:** each library image has **Copy URL** and **Copy `<img>`** buttons if you'd rather paste manually.
+
+Notes:
+- Inserted snippets use inline styles only (`max-width: 100%`) so they render in email clients and don't overflow on mobile.
+- Images are served from a **public** bucket — the URL is reachable by anyone, which is required for email clients to load it. Don't upload anything sensitive.
+- **Deleting** a library image breaks any already-sent email that references it (same as removing any hosted image); the UI confirms before deleting.
 
 ---
 
@@ -337,6 +366,7 @@ You **don't** need to deploy code to change:
 - Step offsets, step audience filters, step enabled state
 - Adding new sequences/templates/steps via SQL
 - Backfilling sequence_send_log for new sequences
+- Uploading, resizing, or inserting images into a template (via Email Images)
 
 You **do** need to deploy code to change:
 - The email wrapper chrome (logo, header gradient, footer base) → `src/lib/email-theme.ts`
