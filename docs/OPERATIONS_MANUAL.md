@@ -233,6 +233,20 @@ In the Communications tab (`/dashboard/admin?tab=email`), scroll to **Send Test 
 
 For editing the template content before sending a test, use **Operations → Email Sequences** (see [EMAIL_SEQUENCES.md §4](EMAIL_SEQUENCES.md)).
 
+### How do I add an image to an email?
+
+Images are managed in their own library so you can upload once and reuse across templates. No code or developer help needed.
+
+1. Go to **Operations → Email Images** (`/dashboard/admin/email-images`).
+2. Click to choose an image file (JPEG, PNG, WebP, GIF, or AVIF, up to 8MB), pick a **size** — *Email width (600px)* is the right default for a banner; *Half* or *Thumbnail* for smaller — add **alt text** (a short description, shown if the image can't load), and click **Upload**. The image is resized in your browser before uploading so emails stay light. (Animated GIFs keep their original size so the animation isn't lost.)
+3. To put it in an email: open **Operations → Email Sequences**, edit the template, click **Insert image** above the body, and pick your image. It's dropped in at your cursor, already sized to fit on phones.
+4. Always **Send test** afterward to confirm the image shows up in a real inbox.
+
+Notes:
+- Images are hosted on a **public** address (that's what lets email apps load them) — don't upload anything private.
+- **Deleting** an image from the library will break it in any email that already uses it. The page asks you to confirm first.
+- Prefer the **Insert image** button over pasting URLs — it formats the image correctly for email automatically. The library also has **Copy URL** / **Copy `<img>`** buttons if you ever need them.
+
 ### How do I send a broadcast email to all users?
 
 There is no broadcast tool in the Eydn admin panel. To send a one-time email to all users or a segment:
