@@ -11,6 +11,7 @@ import { NoWeddingState } from "@/components/NoWeddingState";
 import { EmptyState } from "@/components/EmptyState";
 import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { TaskFilters } from "./TaskFilters";
+import { TasksQuickStart } from "./TasksQuickStart";
 import { Tooltip } from "@/components/Tooltip";
 import { trackTaskCreated, trackTaskCompleted } from "@/lib/analytics";
 import type { Task } from "./types";
@@ -719,6 +720,9 @@ export default function TasksPage() {
           </div>
         </div>
       )}
+
+      {/* First-time quick-start guidance (dismissible) */}
+      {viewMode === "list" && tasks.length > 0 && <TasksQuickStart />}
 
       {/* View */}
       <div className="mt-6">
