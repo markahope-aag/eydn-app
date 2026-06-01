@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { toast } from "sonner";
 import { formatDueDate } from "@/lib/date-utils";
+import { PHASE_ORDER, PHASE_LABELS } from "@/lib/tasks/phases";
 import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { EmptyState } from "@/components/EmptyState";
@@ -126,6 +127,19 @@ export default function TasksPage() {
 
   const completed = tasks.filter((t) => t.status === "done" && !t.parent_task_id).length;
   const total = tasks.filter((t) => !t.parent_task_id).length;
+  const remaining = total - completed;
+  const progressPct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  // Highlight the current milestone (earliest phase with open tasks) so the
+  // header leads with a small, manageable focus instead of the full volume.
+  const topLevel = tasks.filter((t) => !t.parent_task_id);
+  const focusPhase = PHASE_ORDER.find((phase) =>
+    topLevel.some((t) => t.timeline_phase === phase && t.status !== "done")
+  );
+  const focusLabel = focusPhase ? PHASE_LABELS[focusPhase]?.label ?? focusPhase : null;
+  const focusRemaining = focusPhase
+    ? topLevel.filter((t) => t.timeline_phase === focusPhase && t.status !== "done").length
+    : 0;
 
   async function addTask(e: React.FormEvent) {
     e.preventDefault();
@@ -465,9 +479,34 @@ export default function TasksPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1>Tasks</h1>
-          <p className="mt-1 text-[15px] text-muted">
-            {completed}/{total} completed
-          </p>
+          {total > 0 && (
+            <div className="mt-1.5">
+              {remaining === 0 ? (
+                <p className="text-[15px] font-semibold text-plum">
+                  All done — every task is complete
+                </p>
+              ) : focusLabel ? (
+                <p className="text-[15px] text-plum">
+                  <span className="font-semibold">Up next: {focusLabel}</span>
+                  <span className="text-muted">
+                    {" "}· {focusRemaining} {focusRemaining === 1 ? "task" : "tasks"} to focus on now
+                  </span>
+                </p>
+              ) : (
+                <p className="text-[15px] font-semibold text-plum">
+                  {remaining} {remaining === 1 ? "task" : "tasks"} to go
+                </p>
+              )}
+              <div className="mt-1.5 flex items-center gap-2">
+                <div className="progress-track w-40 max-w-full">
+                  <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+                </div>
+                <span className="text-[12px] text-muted">
+                  {completed} of {total} done
+                </span>
+              </div>
+            </div>
+          )}
           {weddingInfo ? (
             <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-lavender/60 px-3.5 py-1.5 text-[13px]">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="text-violet">

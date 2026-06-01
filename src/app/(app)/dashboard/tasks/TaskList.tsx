@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatDueDate } from "@/lib/date-utils";
 import { TASK_GUIDE_MAP } from "@/lib/tasks/task-guide-map";
+import { PHASE_ORDER, PHASE_LABELS } from "@/lib/tasks/phases";
 import {
   DndContext,
   closestCenter,
@@ -27,29 +28,6 @@ type Props = {
   onDelete: (_id: string) => void;
   onSelect: (_task: Task) => void;
   onReorder?: (_phaseTaskIds: string[]) => void;
-};
-
-const PHASE_ORDER = [
-  "12 Months Before",
-  "9-12 Months Before",
-  "6-9 Months Before",
-  "4-6 Months Before",
-  "3-4 Months Before",
-  "1-2 Months Before",
-  "1 Week Before",
-  "After the Wedding",
-];
-
-const PHASE_LABELS: Record<string, { label: string; hint: string }> = {
-  "12 Months Before": { label: "Start Here", hint: "Lock in your big-ticket vendors early" },
-  "9-12 Months Before": { label: "Building Momentum", hint: "Book your creative team and set the tone" },
-  "6-9 Months Before": { label: "Details Taking Shape", hint: "Invitations, attire, and decor decisions" },
-  "4-6 Months Before": { label: "Getting Real", hint: "Finalize menus, music, and guest details" },
-  "3-4 Months Before": { label: "Fine-Tuning", hint: "Fittings, beauty trials, and logistics" },
-  "1-2 Months Before": { label: "Almost There", hint: "Confirm everything and tie up loose ends" },
-  "1 Week Before": { label: "Final Countdown", hint: "Last checks before your big day" },
-  "After the Wedding": { label: "After the I Do's", hint: "Thank-yous, name changes, and memories" },
-  "Custom Tasks": { label: "Custom Tasks", hint: "Tasks you added yourself" },
 };
 
 const STATUS_LABELS: Record<string, string> = {
