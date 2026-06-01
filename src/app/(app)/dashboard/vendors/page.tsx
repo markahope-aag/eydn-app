@@ -376,6 +376,18 @@ export default function VendorsPage() {
     }
   }
 
+  // Close the add form and clear every field — used by the header toggle,
+  // the form's Cancel button, and the close (×) control.
+  function closeAddForm() {
+    setShowAdd(false);
+    setNewName("");
+    setNewCategory("");
+    setNewWebsite("");
+    setNewCity("");
+    setNewState("");
+    setPlaceResult(null);
+  }
+
   async function updateStatus(id: string, status: string) {
     const prev = vendors;
     const vendor = vendors.find((v) => v.id === id);
@@ -483,10 +495,10 @@ export default function VendorsPage() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setShowAdd(!showAdd)}
+            onClick={() => (showAdd ? closeAddForm() : setShowAdd(true))}
             className="btn-secondary text-[13px] sm:text-[15px]"
           >
-            Add Your Own
+            {showAdd ? "Close" : "Add Your Own"}
           </button>
           <Link
             href="/dashboard/vendors/directory"
@@ -575,66 +587,119 @@ export default function VendorsPage() {
               e.preventDefault();
             }
           }}
-          className="mt-4 card p-4 space-y-3"
+          className="mt-4 card p-5 sm:p-6 space-y-5 border border-violet/30 shadow-sm animate-fade-slide-in"
         >
-          <p className="text-[13px] text-muted">
-            Add a vendor you&apos;ve found or been recommended.
-            <Tooltip text="Type a name to search the Eydn directory first; if it isn't there, click 'Search Google Places' to pull in real address, phone, and reviews. Or just type and click Add Vendor for a manual entry." wide />
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              type="text"
-              placeholder="Vendor name"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  searchGooglePlaces();
-                }
-              }}
-              aria-label="Vendor name"
-              className="rounded-[10px] border-border px-3 py-2 text-[15px]"
-              required
-              autoFocus
-            />
-            <select
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              aria-label="Vendor category"
-              className="rounded-[10px] border-border px-3 py-2 text-[15px]"
+          {/* Header — names the selected category for context, with a close control */}
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-[16px] font-semibold text-plum">
+                {newCategory ? `Add a ${categoryLabel(newCategory)} vendor` : "Add a vendor"}
+              </h2>
+              <p className="mt-1 text-[13px] text-muted">
+                Add a vendor you&apos;ve found or been recommended.
+                <Tooltip text="Type a name to search the Eydn directory first; if it isn't there, click 'Search Google Places' to pull in real address, phone, and reviews. Or just type and click Add Vendor for a manual entry." wide />
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={closeAddForm}
+              aria-label="Close add vendor form"
+              className="text-muted hover:text-plum text-xl leading-none px-1 flex-shrink-0"
             >
-              <option value="" disabled>Choose vendor category…</option>
-              {VENDOR_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{categoryLabel(c)}</option>
-              ))}
-            </select>
-            <input
-              type="text"
-              placeholder="Website (optional)"
-              value={newWebsite}
-              onChange={(e) => setNewWebsite(e.target.value)}
-              aria-label="Vendor website"
-              className="rounded-[10px] border-border px-3 py-2 text-[15px]"
-            />
-            <div className="flex gap-2">
+              &times;
+            </button>
+          </div>
+
+          {newCategory && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-lavender px-3 py-1 text-[12px] font-semibold text-violet">
+              Adding for: {categoryLabel(newCategory)}
+            </span>
+          )}
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="v-name" className="text-[12px] font-semibold text-muted">
+                Vendor name <span className="text-error">*</span>
+              </label>
               <input
+                id="v-name"
                 type="text"
-                placeholder="City (optional)"
-                value={newCity}
-                onChange={(e) => setNewCity(e.target.value)}
-                aria-label="Vendor city"
-                className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1"
+                placeholder="e.g. Sunset Gardens Venue"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    searchGooglePlaces();
+                  }
+                }}
+                className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+                required
+                autoFocus
               />
+            </div>
+            <div>
+              <label htmlFor="v-category" className="text-[12px] font-semibold text-muted">
+                Category <span className="text-error">*</span>
+              </label>
+              <div className="relative mt-1">
+                <select
+                  id="v-category"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  className="w-full appearance-none rounded-[10px] border-border bg-white px-3 py-2 pr-9 text-[15px]"
+                  required
+                >
+                  <option value="" disabled>Choose vendor category…</option>
+                  {VENDOR_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>{categoryLabel(c)}</option>
+                  ))}
+                </select>
+                <svg
+                  width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
+                >
+                  <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
+            <div>
+              <label htmlFor="v-website" className="text-[12px] font-semibold text-muted">
+                Website <span className="font-normal text-muted/70">(optional)</span>
+              </label>
               <input
+                id="v-website"
                 type="text"
-                placeholder="State"
-                value={newState}
-                onChange={(e) => setNewState(e.target.value)}
-                aria-label="Vendor state"
-                className="rounded-[10px] border-border px-3 py-2 text-[15px] w-20"
-                maxLength={2}
+                placeholder="e.g. https://sunsetgardens.com"
+                value={newWebsite}
+                onChange={(e) => setNewWebsite(e.target.value)}
+                className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
               />
+              <p className="mt-1 text-[11px] text-muted">Include https:// so the link opens correctly.</p>
+            </div>
+            <div>
+              <label className="text-[12px] font-semibold text-muted">
+                Location <span className="font-normal text-muted/70">(optional)</span>
+              </label>
+              <div className="mt-1 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="City"
+                  value={newCity}
+                  onChange={(e) => setNewCity(e.target.value)}
+                  aria-label="Vendor city"
+                  className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1 min-w-0"
+                />
+                <input
+                  type="text"
+                  placeholder="State"
+                  value={newState}
+                  onChange={(e) => setNewState(e.target.value)}
+                  aria-label="Vendor state"
+                  className="rounded-[10px] border-border px-3 py-2 text-[15px] w-20"
+                  maxLength={2}
+                />
+              </div>
             </div>
           </div>
 
@@ -745,9 +810,19 @@ export default function VendorsPage() {
             </div>
           )}
 
-          <button type="submit" className="btn-primary">
-            Add Vendor
-          </button>
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-3 pt-1 border-t border-border/60">
+            <div className="flex gap-2 pt-3 sm:pt-0">
+              <button type="submit" className="btn-primary">
+                Add Vendor
+              </button>
+              <button type="button" onClick={closeAddForm} className="btn-ghost">
+                Cancel
+              </button>
+            </div>
+            <p className="text-[12px] text-muted sm:ml-auto sm:pt-0 pt-1">
+              Saved vendors appear in your list below, grouped by category.
+            </p>
+          </div>
         </form>
       )}
 

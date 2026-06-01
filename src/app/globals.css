@@ -320,6 +320,19 @@ input, textarea, select, select option {
   100% { opacity: 0; transform: scale(0.95); }
 }
 
+/* Gentle entrance for panels/forms that appear in place (e.g. add-vendor) */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-slide-in {
+  animation: fadeSlideIn 220ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-slide-in { animation: none; }
+}
+
 
 /* Blog content typography */
 .blog-content {
