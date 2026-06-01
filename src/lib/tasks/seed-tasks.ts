@@ -114,12 +114,15 @@ export function generateTasks(ctx: WeddingContext): TaskInsert[] {
       dueDate = today;
     }
 
+    const isComplete = isBooked || autoComplete;
+
     const parentTask: TaskInsert = {
       wedding_id: ctx.weddingId,
       title: taskDef.title,
       category: taskDef.category,
       due_date: dueDate,
-      completed: isBooked || autoComplete,
+      completed: isComplete,
+      status: isComplete ? "done" : "not_started",
       edyn_message: taskDef.edynMessage,
       sort_order: sortOrder++,
       timeline_phase: taskDef.phase,
@@ -144,12 +147,15 @@ export function generateTasks(ctx: WeddingContext): TaskInsert[] {
           subDueDate = today;
         }
 
+        const subComplete = autoComplete || (subIsPast && !keepOpen);
+
         tasks.push({
           wedding_id: ctx.weddingId,
           title: sub.title,
           category: taskDef.category,
           due_date: subDueDate,
-          completed: autoComplete || (subIsPast && !keepOpen),
+          completed: subComplete,
+          status: subComplete ? "done" : "not_started",
           edyn_message: sub.edynMessage || null,
           sort_order: sortOrder++,
           timeline_phase: taskDef.phase,
