@@ -81,19 +81,27 @@ describe("GET /api/places-photo", () => {
 
 describe("GET /api/places-photo — upstream fetch handling", () => {
   const originalFetch = global.fetch;
+  const originalKey = process.env.GOOGLE_PLACES_API_KEY;
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    vi.stubEnv("GOOGLE_PLACES_API_KEY", "test-key");
+    // Set the key BEFORE the dynamic import below so route.ts captures it at
+    // module load. Direct process.env assignment (vi.stubEnv isn't available
+    // in this Vitest setup).
+    process.env.GOOGLE_PLACES_API_KEY = "test-key";
     mockAuth.mockResolvedValue({ userId: "user-1" });
     fetchMock = vi.fn();
     global.fetch = fetchMock as unknown as typeof fetch;
   });
 
   afterEach(() => {
-    vi.unstubAllEnv();
+    if (originalKey === undefined) {
+      delete process.env.GOOGLE_PLACES_API_KEY;
+    } else {
+      process.env.GOOGLE_PLACES_API_KEY = originalKey;
+    }
     global.fetch = originalFetch;
   });
 
