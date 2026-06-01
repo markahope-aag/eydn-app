@@ -102,6 +102,9 @@ function SortableTaskItem({
 
   // "Just completed" micro-animation
   const [justCompleted, setJustCompleted] = useState(false);
+  // Delete is tucked behind a secondary control + inline confirm to avoid
+  // accidental deletion from the frequently-used row.
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   function handleToggle() {
     // Show animation when task is about to become done (in_progress → done)
@@ -226,7 +229,7 @@ function SortableTaskItem({
         </svg>
       </div>
 
-      {/* Bottom row: category, guide, delete — wraps on mobile */}
+      {/* Bottom row: category, guide, secondary actions — wraps on mobile */}
       <div className="flex items-center gap-2 mt-1 ml-[18px] sm:ml-[34px] flex-wrap">
         {task.category && (
           <span className="badge text-[11px]">
@@ -238,15 +241,46 @@ function SortableTaskItem({
             Guide
           </span>
         )}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(task.id);
-          }}
-          className="text-[12px] text-error hover:opacity-80 flex-shrink-0"
-        >
-          Delete
-        </button>
+        {confirmingDelete ? (
+          <span className="ml-auto flex items-center gap-2 text-[12px] flex-shrink-0">
+            <span className="text-muted">Delete this task?</span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(task.id);
+              }}
+              className="font-semibold text-error hover:opacity-80"
+            >
+              Delete
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirmingDelete(false);
+              }}
+              className="text-muted hover:text-plum"
+            >
+              Cancel
+            </button>
+          </span>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmingDelete(true);
+            }}
+            className="ml-auto flex-shrink-0 text-muted hover:text-plum transition p-0.5"
+            aria-label="More actions"
+            aria-expanded={false}
+            title="Delete task"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <circle cx="3" cy="8" r="1.5" />
+              <circle cx="8" cy="8" r="1.5" />
+              <circle cx="13" cy="8" r="1.5" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );
