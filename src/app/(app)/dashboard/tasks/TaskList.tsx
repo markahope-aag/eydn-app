@@ -310,7 +310,11 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect, onReorder }: Pro
   }
 
   return (
-    <div className="space-y-4">
+    // Single column on smaller screens; two columns on wide screens so phase
+    // cards fill the available width instead of stretching one sparse column.
+    // Row-major order keeps the timeline reading left-to-right, top-to-bottom.
+    // items-start lets cards keep their natural height (phases vary in length).
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
       {sortedPhases.map((phase) => {
         const phaseTasks = grouped.get(phase)!;
         const completed = phaseTasks.filter((t) => t.status === "done").length;
