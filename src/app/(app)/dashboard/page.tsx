@@ -14,6 +14,7 @@ import { AddCouplePhoto } from "@/components/AddCouplePhoto";
 import { WeddingDateField } from "@/components/WeddingDateField";
 import { KeyDecisionsCard } from "@/components/KeyDecisionsCard";
 import { WebsiteNudgeCard } from "@/components/WebsiteNudgeCard";
+import { Tooltip } from "@/components/Tooltip";
 import { getWebsiteProgress } from "@/lib/website-milestones";
 
 function buildGreeting(ctx: { name: string; both: string; days: number | null; totalTasks: number; doneTasks: number; taskPct: number }): string {
@@ -139,7 +140,7 @@ export default async function DashboardPage() {
     );
   }
 
-  const [{ count: guestCount }, { count: taskCount }, { count: completedTasks }, { data: upcomingTasks }, { data: allVendors }, { data: allGuests }, { data: overdueTasks }, { data: guidesCompleted }, { data: expensesData }, { data: dayOfPlan }, { count: registryCount }] =
+  const [{ count: guestCount }, { count: taskCount }, { count: completedTasks }, { data: upcomingTasks }, { data: allVendors }, { data: allGuests }, { data: guidesCompleted }, { data: expensesData }, { data: dayOfPlan }, { count: registryCount }] =
     await Promise.all([
       supabase
         .from("guests")
@@ -176,14 +177,6 @@ export default async function DashboardPage() {
         .select("rsvp_status")
         .eq("wedding_id", wedding.id)
         .is("deleted_at", null),
-      supabase
-        .from("tasks")
-        .select("title, due_date")
-        .eq("wedding_id", wedding.id)
-        .eq("completed", false)
-        .is("deleted_at", null)
-        .lt("due_date", new Date().toISOString().split("T")[0])
-        .not("due_date", "is", null),
       supabase
         .from("guide_responses")
         .select("guide_slug")
@@ -307,6 +300,9 @@ export default async function DashboardPage() {
   const totalTasks = taskCount ?? 0;
   const doneTasks = completedTasks ?? 0;
   const taskPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const acceptedGuests = (allGuests as { rsvp_status: string }[] | null ?? []).filter(
+    (g) => g.rsvp_status === "accepted"
+  ).length;
 
   const budgetSpent = (expensesData || []).reduce((sum: number, e: { amount_paid: number }) => sum + ((e as { amount_paid: number }).amount_paid || 0), 0);
   const budgetTotal = wedding.budget ?? 0;
@@ -337,18 +333,10 @@ export default async function DashboardPage() {
   // ─── Generate proactive nudges ──────────────────────────────────────────
   const nudges: { message: string; type: "urgent" | "tip" | "celebrate"; link?: string }[] = [];
 
-  // Overdue tasks
-  const overdueCount = overdueTasks?.length ?? 0;
-  if (overdueCount > 0) {
-    const names = (overdueTasks as { title: string }[]).slice(0, 2).map((t) => t.title).join(" and ");
-    nudges.push({
-      message: overdueCount === 1
-        ? `"${names}" is past due — let's get that checked off!`
-        : `You have ${overdueCount} overdue tasks — ${names}${overdueCount > 2 ? ` and ${overdueCount - 2} more` : ""}. Let's catch up!`,
-      type: "urgent",
-      link: "/dashboard/tasks",
-    });
-  }
+  // Overdue tasks are surfaced once, by <CatchUpBanner /> at the top of the
+  // page — we deliberately don't add a second overdue nudge here so the
+  // messaging isn't duplicated. (Individual overdue items still show, in red,
+  // in the Upcoming tasks list below.)
 
   // Vendor gaps — key categories not yet booked
   const vendorCategories = (allVendors || []).map((v) => (v as { category: string }).category);
@@ -487,8 +475,16 @@ export default async function DashboardPage() {
               }`}>
                 <p className="text-[16px] text-plum leading-relaxed">{nudge.message}</p>
                 {nudge.link && (
-                  <a href={nudge.link} className="text-[14px] font-semibold text-violet hover:text-soft-violet mt-1.5 inline-block">
-                    Take action →
+                  <a
+                    href={nudge.link}
+                    className={`mt-3 inline-flex items-center gap-1 rounded-full px-4 py-1.5 text-[13px] font-semibold transition ${
+                      nudge.type === "urgent"
+                        ? "bg-error text-white hover:opacity-90"
+                        : "bg-violet text-white hover:bg-soft-violet"
+                    }`}
+                  >
+                    Take action
+                    <span aria-hidden="true">→</span>
                   </a>
                 )}
               </div>
@@ -566,17 +562,26 @@ export default async function DashboardPage() {
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div className="card-summary p-6 flex flex-col items-center justify-center sm:col-span-2 lg:col-span-1 lg:row-span-2">
           <ProgressRing percentage={taskPct} />
-          <p className="mt-3 text-[14px] font-semibold text-plum">Planning Progress</p>
-          <p className="text-[12px] text-muted">{doneTasks} of {totalTasks} tasks</p>
+          <p className="mt-3 text-[14px] font-semibold text-plum">
+            Planning Progress
+            <Tooltip text="The share of your planning tasks marked done. Completing tasks on the Tasks page moves this up." />
+          </p>
+          <p className="text-[12px] text-muted">{doneTasks} of {totalTasks} tasks done</p>
         </div>
-        <StatCard label="Guests" value={guestCount ?? 0} href="/dashboard/guests" />
+        <StatCard
+          label="Guests"
+          value={guestCount ?? 0}
+          sub={(guestCount ?? 0) === 0 ? "Start your guest list" : `${acceptedGuests} attending so far`}
+          href="/dashboard/guests"
+        />
         <StatCard
           label="Tasks"
           value={`${doneTasks}/${totalTasks}`}
+          sub={`${taskPct}% complete`}
           href="/dashboard/tasks"
         />
         {budgetTotal > 0 ? (
-          <div className="card-summary p-4">
+          <div className="card-summary p-5">
             <div className="flex items-center justify-between">
               <p className="text-[13px] font-semibold text-muted">Budget</p>
               <Link href="/dashboard/budget" className="text-[13px] text-violet hover:text-soft-violet font-semibold">View →</Link>
@@ -810,7 +815,7 @@ function ProgressRing({ percentage }: { percentage: number }) {
   );
 }
 
-function StatCard({ label, value, href }: { label: string; value: string | number; href?: string }) {
+function StatCard({ label, value, sub, href }: { label: string; value: string | number; sub?: string; href?: string }) {
   const content = (
     <>
       <div className="flex items-center justify-between">
@@ -818,16 +823,17 @@ function StatCard({ label, value, href }: { label: string; value: string | numbe
         {href && <span className="text-[13px] text-violet font-semibold">View →</span>}
       </div>
       <p className="mt-1 text-[26px] font-semibold text-plum">{value}</p>
+      {sub && <p className="mt-auto pt-1 text-[12px] text-muted">{sub}</p>}
     </>
   );
 
   if (href) {
     return (
-      <Link href={href} className="card-summary p-4 hover:border-violet/30 transition-colors">
+      <Link href={href} className="card-summary p-5 flex flex-col hover:border-violet/30 transition-colors">
         {content}
       </Link>
     );
   }
 
-  return <div className="card-summary p-4">{content}</div>;
+  return <div className="card-summary p-5 flex flex-col">{content}</div>;
 }

@@ -86,9 +86,8 @@ export function AddCouplePhoto() {
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className="hidden sm:flex flex-shrink-0 w-24 h-24 rounded-full border-2 border-lavender items-center justify-center hover:border-violet transition group disabled:cursor-default overflow-hidden relative"
+        className="hidden sm:flex flex-shrink-0 w-24 h-24 rounded-full border-2 border-dashed border-violet/30 bg-lavender/40 items-center justify-center hover:border-violet hover:bg-lavender transition group disabled:cursor-default overflow-hidden relative"
         title={preview ? "Change couple photo" : "Add a couple photo"}
-        style={preview ? undefined : { borderStyle: "dashed" }}
       >
         {preview ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -98,26 +97,28 @@ export function AddCouplePhoto() {
             className="absolute inset-0 w-full h-full object-cover"
           />
         ) : (
-          <div className="text-center">
+          <div className="flex flex-col items-center text-center px-2">
             {uploading ? (
               <span
                 aria-hidden="true"
-                className="mx-auto block w-5 h-5 border-2 border-lavender border-t-violet rounded-full animate-spin"
+                className="block w-5 h-5 border-2 border-lavender border-t-violet rounded-full animate-spin"
               />
             ) : (
               <svg
-                className="mx-auto text-muted group-hover:text-violet transition"
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
+                className="text-violet"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
                 fill="none"
                 aria-hidden="true"
               >
-                <path d="M10 4V16M4 10H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <rect x="3" y="6" width="18" height="14" rx="3" stroke="currentColor" strokeWidth="1.6" />
+                <circle cx="12" cy="13" r="3.2" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M8 6l1.2-2h5.6L16 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             )}
-            <span className="text-[9px] text-muted group-hover:text-violet transition mt-0.5 block">
-              {uploading ? "Uploading..." : "Add photo"}
+            <span className="text-[10px] font-semibold text-violet mt-1 block leading-tight">
+              {uploading ? "Uploading…" : "Add photo"}
             </span>
           </div>
         )}
