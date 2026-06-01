@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
+import { EmailImagePicker } from "../email-images/EmailImagePicker";
 
 type TemplateSummary = {
   slug: string;
@@ -298,8 +299,24 @@ function TemplateEditor({
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
   const [testTo, setTestTo] = useState("");
+  const [pickingImage, setPickingImage] = useState(false);
+  const htmlRef = useRef<HTMLTextAreaElement>(null);
   const dirty =
     subject !== template.subject || html !== template.html || enabled !== template.enabled;
+
+  // Insert an <img> snippet at the cursor (or end of the body if unfocused).
+  function insertImage(snippet: string) {
+    const el = htmlRef.current;
+    const at = el ? el.selectionStart : html.length;
+    const next = html.slice(0, at) + snippet + html.slice(at);
+    setHtml(next);
+    requestAnimationFrame(() => {
+      if (!el) return;
+      el.focus();
+      const caret = at + snippet.length;
+      el.setSelectionRange(caret, caret);
+    });
+  }
 
   async function save() {
     setSaving(true);
@@ -343,6 +360,7 @@ function TemplateEditor({
   }
 
   return (
+    <>
     <div className="fixed inset-0 z-50 bg-plum/50 flex items-start justify-center overflow-y-auto p-6">
       <div className="bg-surface rounded-2xl max-w-4xl w-full my-6 overflow-hidden">
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
@@ -367,9 +385,19 @@ function TemplateEditor({
             />
           </div>
           <div>
-            <label htmlFor="tmpl-html">HTML body</label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="tmpl-html">HTML body</label>
+              <button
+                type="button"
+                onClick={() => setPickingImage(true)}
+                className="btn-secondary btn-sm"
+              >
+                Insert image
+              </button>
+            </div>
             <textarea
               id="tmpl-html"
+              ref={htmlRef}
               value={html}
               onChange={(e) => setHtml(e.target.value)}
               rows={18}
@@ -424,5 +452,12 @@ function TemplateEditor({
         </div>
       </div>
     </div>
+    {pickingImage && (
+      <EmailImagePicker
+        onInsert={insertImage}
+        onClose={() => setPickingImage(false)}
+      />
+    )}
+    </>
   );
 }
