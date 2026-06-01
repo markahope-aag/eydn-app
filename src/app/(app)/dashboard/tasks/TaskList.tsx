@@ -251,25 +251,27 @@ function SortableTaskItem({
           </span>
         )}
         {confirmingDelete ? (
+          // Safe action (Keep) is emphasized; the destructive action stays a
+          // quiet red link so it never out-weighs the non-destructive choice.
           <span className="ml-auto flex items-center gap-2 text-[12px] flex-shrink-0">
             <span className="text-muted">Delete this task?</span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onDelete(task.id);
+                setConfirmingDelete(false);
               }}
-              className="font-semibold text-error hover:opacity-80"
+              className="rounded-full bg-lavender px-2.5 py-1 font-semibold text-plum hover:opacity-90 transition"
             >
-              Delete
+              Keep
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setConfirmingDelete(false);
+                onDelete(task.id);
               }}
-              className="text-muted hover:text-plum"
+              className="text-error hover:opacity-80"
             >
-              Cancel
+              Delete
             </button>
           </span>
         ) : (
