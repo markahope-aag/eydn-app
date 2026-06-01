@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -89,6 +89,48 @@ function heroPhoto(
     return gmbState.photoUrl ?? null;
   }
   return null;
+}
+
+/** A next/image that swaps in `fallback` when the photo fails to load.
+ *  Google Places photos are proxied through /api/places-photo and the proxied
+ *  URL is cached on the vendor row for up to 30 days. Google rotates photo
+ *  references, so a cached ref can go stale — the proxy then 404s and the
+ *  browser would render its broken-image icon. Showing the placeholder instead
+ *  keeps the card looking intentional. Error state resets when `src` changes so
+ *  a lazily-resolved GMB photo replacing an errored one still gets a chance. */
+function PhotoWithFallback({
+  src,
+  alt,
+  className,
+  fallback,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  fallback: ReactNode;
+}) {
+  const [errored, setErrored] = useState(false);
+  // Reset the error when the source changes (e.g. a lazily-resolved GMB photo
+  // replaces a prior one) using React's adjust-state-during-render pattern
+  // rather than an effect, which avoids a cascading re-render.
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (src !== prevSrc) {
+    setPrevSrc(src);
+    setErrored(false);
+  }
+
+  if (errored) return <>{fallback}</>;
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      unoptimized
+      className={className}
+      onError={() => setErrored(true)}
+    />
+  );
 }
 
 type PlaceData = {
@@ -846,13 +888,11 @@ export default function VendorDirectoryPage() {
                   <div className="flex gap-4">
                     {placesState.place.photoUrl && (
                       <div className="w-20 h-20 rounded-[12px] overflow-hidden flex-shrink-0 relative">
-                        <Image
+                        <PhotoWithFallback
                           src={placesState.place.photoUrl}
                           alt={placesState.place.name}
-                          fill
-                          unoptimized
-                          sizes="80px"
                           className="object-cover"
+                          fallback={<div className="w-full h-full bg-lavender" />}
                         />
                       </div>
                     )}
@@ -1005,12 +1045,11 @@ function GmbHighlightCard({ state }: { state: PlaceData | "loading" | "error" | 
       <div className="flex gap-4">
         {data.photoUrl && (
           <div className="w-24 h-24 rounded-[12px] overflow-hidden flex-shrink-0 relative">
-            <Image
+            <PhotoWithFallback
               src={data.photoUrl}
               alt={data.name}
-              fill
-              unoptimized
               className="object-cover"
+              fallback={<div className="w-full h-full bg-lavender" />}
             />
           </div>
         )}
@@ -1132,15 +1171,20 @@ function FeaturedCard({
 }) {
   const photo = heroPhoto(vendor, gmbState);
   const heroAttribution = vendor.photos?.[0]?.attribution;
+  const heroPlaceholder = (
+    <div className="w-full h-full bg-lavender flex items-center justify-center">
+      <span className="text-[40px] font-semibold text-violet/60">{vendor.name.charAt(0)}</span>
+    </div>
+  );
 
   return (
     <div id={`vendor-${vendor.id}`} className="card-summary overflow-hidden">
-      {/* Hero — always rendered. Falls through to a lavender placeholder
-       *  when the vendor has neither a persisted photo nor GMB enrichment. */}
+      {/* Hero — always rendered. Falls through to a lavender placeholder when
+       *  the vendor has no photo, or when a proxied Google photo fails to load. */}
       <div className="relative w-full h-36">
         {photo ? (
           <>
-            <Image src={photo} alt={vendor.name} fill unoptimized className="object-cover" />
+            <PhotoWithFallback src={photo} alt={vendor.name} className="object-cover" fallback={heroPlaceholder} />
             {heroAttribution && (
               <span className="absolute bottom-1 right-1 text-[9px] text-white/90 bg-black/40 px-1.5 py-0.5 rounded">
                 {heroAttribution}
@@ -1148,9 +1192,7 @@ function FeaturedCard({
             )}
           </>
         ) : (
-          <div className="w-full h-full bg-lavender flex items-center justify-center">
-            <span className="text-[40px] font-semibold text-violet/60">{vendor.name.charAt(0)}</span>
-          </div>
+          heroPlaceholder
         )}
       </div>
       <div className="p-4">
@@ -1234,7 +1276,16 @@ function VendorRow({
          *  falls back to lavender placeholder when no photo is available. */}
         {photo ? (
           <div className="w-12 h-12 rounded-[10px] overflow-hidden relative flex-shrink-0">
-            <Image src={photo} alt={vendor.name} fill unoptimized className="object-cover" />
+            <PhotoWithFallback
+              src={photo}
+              alt={vendor.name}
+              className="object-cover"
+              fallback={
+                <div className="w-full h-full bg-lavender flex items-center justify-center">
+                  <span className="text-[18px] font-semibold text-violet">{vendor.name.charAt(0)}</span>
+                </div>
+              }
+            />
           </div>
         ) : (
           <div className="w-12 h-12 rounded-[10px] bg-lavender flex items-center justify-center flex-shrink-0">
@@ -1282,7 +1333,12 @@ function AdditionalPhotos({ photos, vendorName }: { photos: PhotoEntry[]; vendor
           if (!src) return null;
           return (
             <div key={i} className="relative aspect-square rounded-[8px] overflow-hidden" title={p.attribution}>
-              <Image src={src} alt={`${vendorName} photo ${i + 2}`} fill unoptimized className="object-cover" />
+              <PhotoWithFallback
+                src={src}
+                alt={`${vendorName} photo ${i + 2}`}
+                className="object-cover"
+                fallback={<div className="w-full h-full bg-lavender" />}
+              />
             </div>
           );
         })}

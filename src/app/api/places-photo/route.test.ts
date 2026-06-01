@@ -1,4 +1,4 @@
-import { vi, describe, it, expect, beforeEach } from "vitest";
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 
 // --- Mock Clerk auth ---
 
@@ -71,5 +71,112 @@ describe("GET /api/places-photo", () => {
 
     expect(res.status).toBe(500);
     expect(json.error).toMatch(/not configured/i);
+  });
+});
+
+// ── Upstream fetch handling ──────────────────────────────────────────────────
+// These exercise the Google fetch path, which the top-level GET import can't
+// reach (its API_KEY was captured as "" at load). We stub the env var and
+// re-import the route module so it picks up a configured key, then mock fetch.
+
+describe("GET /api/places-photo — upstream fetch handling", () => {
+  const originalFetch = global.fetch;
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    vi.stubEnv("GOOGLE_PLACES_API_KEY", "test-key");
+    mockAuth.mockResolvedValue({ userId: "user-1" });
+    fetchMock = vi.fn();
+    global.fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnv();
+    global.fetch = originalFetch;
+  });
+
+  async function loadGet() {
+    const mod = await import("./route");
+    return mod.GET;
+  }
+
+  function imageResponse(): Response {
+    return new Response(new Uint8Array([0xff, 0xd8, 0xff]), {
+      status: 200,
+      headers: { "content-type": "image/jpeg" },
+    });
+  }
+
+  it("passes image bytes through with the upstream content type", async () => {
+    fetchMock.mockResolvedValue(imageResponse());
+    const get = await loadGet();
+
+    const res = await get(mockRequest("places/abc/photos/xyz"));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/jpeg");
+    expect(res.headers.get("cache-control")).toMatch(/max-age=86400/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 404 when Google answers a non-image body with a 200", async () => {
+    // Missing/expired photos sometimes come back as a 200 JSON error.
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ error: "not found" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const get = await loadGet();
+
+    const res = await get(mockRequest("places/abc/photos/stale"));
+    const json = await res.json();
+
+    expect(res.status).toBe(404);
+    expect(json.error).toMatch(/not found/i);
+  });
+
+  it("retries once on a transient 429 and then succeeds", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response("rate limited", { status: 429 }))
+      .mockResolvedValueOnce(imageResponse());
+    const get = await loadGet();
+
+    const res = await get(mockRequest("places/abc/photos/xyz"));
+
+    expect(res.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("fails fast (no retry) on a non-transient upstream error", async () => {
+    fetchMock.mockResolvedValue(new Response("forbidden", { status: 403 }));
+    const get = await loadGet();
+
+    const res = await get(mockRequest("places/abc/photos/xyz"));
+
+    expect(res.status).toBe(404);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 404 after exhausting retries on persistent transient errors", async () => {
+    fetchMock.mockResolvedValue(new Response("unavailable", { status: 503 }));
+    const get = await loadGet();
+
+    const res = await get(mockRequest("places/abc/photos/xyz"));
+
+    expect(res.status).toBe(404);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns 404 when the fetch throws (network error / timeout)", async () => {
+    fetchMock.mockRejectedValue(new Error("timeout"));
+    const get = await loadGet();
+
+    const res = await get(mockRequest("places/abc/photos/xyz"));
+
+    expect(res.status).toBe(404);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
