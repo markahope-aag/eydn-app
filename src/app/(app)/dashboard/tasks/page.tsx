@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { toast } from "sonner";
+import { formatDueDate } from "@/lib/date-utils";
 import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { EmptyState } from "@/components/EmptyState";
@@ -35,6 +37,7 @@ const ADD_CATEGORIES = [
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [weddingDate, setWeddingDate] = useState<string | null>(null);
   const [noWedding, setNoWedding] = useState(false);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Other");
@@ -77,6 +80,15 @@ export default function TasksPage() {
       .then(setTasks)
       .catch(() => toast.error("Couldn't load your tasks. Try refreshing."))
       .finally(() => setLoading(false));
+  }, []);
+
+  // Wedding date drives every task due date — surface it in the header so the
+  // timeline is understandable at a glance.
+  useEffect(() => {
+    fetch("/api/weddings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((w) => setWeddingDate(w?.date ?? null))
+      .catch(() => {});
   }, []);
 
   const allCategories = useMemo(
@@ -445,6 +457,8 @@ export default function TasksPage() {
     ? tasks.filter((t) => t.parent_task_id === selectedTask.id)
     : [];
 
+  const weddingInfo = weddingDate ? formatDueDate(weddingDate) : null;
+
   return (
     <div>
       <Confetti />
@@ -454,6 +468,32 @@ export default function TasksPage() {
           <p className="mt-1 text-[15px] text-muted">
             {completed}/{total} completed
           </p>
+          {weddingInfo ? (
+            <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-lavender/60 px-3.5 py-1.5 text-[13px]">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="text-violet">
+                <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M2 7h12" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <span className="text-muted">Wedding date</span>
+              <span className="font-semibold text-plum">{weddingInfo.formatted}</span>
+              {!weddingInfo.isOverdue && (
+                <span className="text-muted">· {weddingInfo.isToday ? "Today" : weddingInfo.relative}</span>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/dashboard/settings"
+              className="mt-2 inline-flex items-center gap-2 rounded-full bg-lavender/60 px-3.5 py-1.5 text-[13px] text-violet hover:bg-lavender transition"
+            >
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M2 7h12" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              Add your wedding date to set your timeline
+            </Link>
+          )}
         </div>
         <div className="flex gap-2 items-center flex-wrap">
           <button
