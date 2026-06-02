@@ -1,5 +1,6 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { calculatePhase } from "@/lib/lifecycle";
+import { purgeWeddingData } from "@/lib/lifecycle/purge";
 import { logCronExecution } from "@/lib/cron-logger";
 import { runSequenceForRecipient } from "@/lib/email-sequences";
 import { getEmailPreferences } from "@/lib/email-preferences";
@@ -201,7 +202,7 @@ export async function GET(request: Request) {
         // Sunset: soft-delete data for weddings without memory plan.
         if (newPhase === "sunset" && !memoryPlanActive && oldPhase !== "sunset") {
           try {
-            await softDeleteWeddingData(supabase, wedding.id);
+            await purgeWeddingData(supabase, wedding.id);
             results.sunsetted.push(wedding.id);
             console.info(`[LIFECYCLE] Sunset: soft-deleted data for wedding ${wedding.id}`);
           } catch (sunsetError) {
@@ -241,106 +242,6 @@ export async function GET(request: Request) {
       { error: error instanceof Error ? error.message : "Lifecycle cron failed" },
       { status: 500 }
     );
-  }
-}
-
-/**
- * Soft-delete all wedding data for a sunsetted wedding.
- * Creates a final backup export first, then removes associated data rows.
- * The wedding row itself is preserved (with phase = "sunset") for record-keeping.
- */
-async function softDeleteWeddingData(
-  supabase: ReturnType<typeof createSupabaseAdmin>,
-  weddingId: string
-) {
-  const [
-    { data: guests },
-    { data: vendors },
-    { data: tasks },
-    { data: expenses },
-    { data: weddingParty },
-    { data: seatingTables },
-    { data: ceremonyPositions },
-    { data: chatMessages },
-    { data: questionnaire },
-    { data: dayOfPlan },
-    { data: moodBoard },
-    { data: registryLinks },
-  ] = await Promise.all([
-    supabase.from("guests").select("*").eq("wedding_id", weddingId),
-    supabase.from("vendors").select("*").eq("wedding_id", weddingId),
-    supabase.from("tasks").select("*").eq("wedding_id", weddingId),
-    supabase.from("expenses").select("*").eq("wedding_id", weddingId),
-    supabase.from("wedding_party").select("*").eq("wedding_id", weddingId),
-    supabase.from("seating_tables").select("*").eq("wedding_id", weddingId),
-    supabase.from("ceremony_positions").select("*").eq("wedding_id", weddingId),
-    supabase.from("chat_messages").select("*").eq("wedding_id", weddingId),
-    supabase.from("questionnaire_responses").select("*").eq("wedding_id", weddingId).single(),
-    supabase.from("day_of_plans").select("*").eq("wedding_id", weddingId).single(),
-    supabase.from("mood_board_items").select("*").eq("wedding_id", weddingId),
-    supabase.from("registry_links").select("*").eq("wedding_id", weddingId),
-  ]);
-
-  const backupPayload = {
-    weddingId,
-    exportedAt: new Date().toISOString(),
-    type: "sunset-final-backup",
-    data: {
-      guests: guests || [],
-      vendors: vendors || [],
-      tasks: tasks || [],
-      expenses: expenses || [],
-      weddingParty: weddingParty || [],
-      seatingTables: seatingTables || [],
-      ceremonyPositions: ceremonyPositions || [],
-      chatMessages: chatMessages || [],
-      questionnaireResponses: questionnaire || null,
-      dayOfPlan: dayOfPlan || null,
-      moodBoard: moodBoard || [],
-      registryLinks: registryLinks || [],
-    },
-  };
-
-  console.info(
-    `[LIFECYCLE] Final backup for sunset wedding ${weddingId}: ${JSON.stringify(backupPayload).length} bytes`
-  );
-
-  const tablesToDelete = [
-    "seat_assignments",
-    "ceremony_positions",
-    "seating_tables",
-    "wedding_party",
-    "chat_messages",
-    "mood_board_items",
-    "registry_links",
-    "activity_log",
-    "expenses",
-    "tasks",
-    "vendors",
-    "guests",
-    "attachments",
-    "questionnaire_responses",
-    "day_of_plans",
-  ] as const;
-
-  for (const table of tablesToDelete) {
-    if (table === "seat_assignments") {
-      const { data: tables } = await supabase
-        .from("seating_tables")
-        .select("id")
-        .eq("wedding_id", weddingId);
-
-      if (tables && tables.length > 0) {
-        const tableIds = tables.map((t) => t.id);
-        await supabase.from("seat_assignments").delete().in("table_id", tableIds);
-      }
-      continue;
-    }
-
-    const { error } = await supabase.from(table).delete().eq("wedding_id", weddingId);
-    if (error) {
-      console.error(`[LIFECYCLE] Failed to delete from ${table} for ${weddingId}: ${error.message}`);
-    }
   }
 }
 
