@@ -35,11 +35,17 @@ describe("ConfirmDialog", () => {
     expect(dialog).toHaveAttribute("aria-modal", "true");
   });
 
-  it("has aria-labelledby and aria-describedby", () => {
+  it("has aria-labelledby and aria-describedby wired to the title and message", () => {
     const { getByRole } = render(<ConfirmDialog {...defaultProps} />);
     const dialog = getByRole("dialog", roleOpts);
-    expect(dialog).toHaveAttribute("aria-labelledby", "confirm-dialog-title");
-    expect(dialog).toHaveAttribute("aria-describedby", "confirm-dialog-message");
+    const labelledBy = dialog.getAttribute("aria-labelledby");
+    const describedBy = dialog.getAttribute("aria-describedby");
+    expect(labelledBy).toBeTruthy();
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(labelledBy!)?.textContent).toBe("Delete Item");
+    expect(document.getElementById(describedBy!)?.textContent).toBe(
+      "Are you sure you want to delete this item?"
+    );
   });
 
   it("displays the title and message", () => {

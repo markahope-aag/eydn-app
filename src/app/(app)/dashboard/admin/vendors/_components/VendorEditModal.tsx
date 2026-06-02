@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { VENDOR_CATEGORIES } from "@/lib/vendors/categories";
+import { Modal } from "@/components/Modal";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -167,46 +168,60 @@ export function VendorEditModal({ vendor, onClose, onSaved, onDeleted }: Props) 
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-plum/50 flex items-start justify-center overflow-y-auto p-6"
-      onClick={onClose}
-    >
-      <div
-        className="bg-surface rounded-2xl max-w-3xl w-full my-6 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="px-6 py-4 border-b border-border flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h2 className="text-[18px] truncate">{vendor.name || "Untitled vendor"}</h2>
-            <p className="text-[12px] text-muted mt-0.5">
-              {vendor.category} · {vendor.city}, {vendor.state}
-              {vendor.seed_source && <> · source: <code className="bg-lavender px-1 rounded">{vendor.seed_source}</code></>}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {vendor.active ? (
-              <a
-                href={`/dashboard/vendors/directory?expand=${vendor.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-ghost btn-sm"
-                title="Open the public directory in a new tab and auto-expand this vendor"
-              >
-                Preview as couple ↗
-              </a>
-            ) : (
-              <span
-                className="btn-ghost btn-sm opacity-50 cursor-not-allowed"
-                title="Inactive vendors aren't visible to couples — toggle Active first"
-              >
-                Preview as couple ↗
-              </span>
-            )}
-            <button onClick={onClose} className="btn-ghost btn-sm">Close</button>
+    <Modal
+      open
+      onClose={onClose}
+      title={vendor.name || "Untitled vendor"}
+      size="3xl"
+      description={
+        <>
+          {vendor.category} · {vendor.city}, {vendor.state}
+          {vendor.seed_source && <> · source: <code className="bg-lavender px-1 rounded">{vendor.seed_source}</code></>}
+        </>
+      }
+      headerAction={
+        vendor.active ? (
+          <a
+            href={`/dashboard/vendors/directory?expand=${vendor.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-ghost btn-sm"
+            title="Open the public directory in a new tab and auto-expand this vendor"
+          >
+            Preview as couple ↗
+          </a>
+        ) : (
+          <span
+            className="btn-ghost btn-sm opacity-50 cursor-not-allowed"
+            title="Inactive vendors aren't visible to couples — toggle Active first"
+          >
+            Preview as couple ↗
+          </span>
+        )
+      }
+      footer={
+        <div className="flex items-center justify-between gap-4">
+          <button
+            onClick={deleteVendor}
+            disabled={deleting || saving}
+            className="btn-destructive btn-sm"
+          >
+            {deleting ? "Removing…" : "Remove from directory"}
+          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={onClose} className="btn-ghost btn-sm">Cancel</button>
+            <button
+              onClick={save}
+              disabled={!dirty || saving || deleting}
+              className="btn-primary btn-sm"
+            >
+              {saving ? "Saving…" : dirty ? "Save changes" : "No changes"}
+            </button>
           </div>
         </div>
-
-        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+      }
+    >
+        <div className="space-y-5">
           {/* Editable fields */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
@@ -509,28 +524,7 @@ export function VendorEditModal({ vendor, onClose, onSaved, onDeleted }: Props) 
             </div>
           </details>
         </div>
-
-        <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-4 bg-whisper">
-          <button
-            onClick={deleteVendor}
-            disabled={deleting || saving}
-            className="btn-destructive btn-sm"
-          >
-            {deleting ? "Removing…" : "Remove from directory"}
-          </button>
-          <div className="flex items-center gap-2">
-            <button onClick={onClose} className="btn-ghost btn-sm">Cancel</button>
-            <button
-              onClick={save}
-              disabled={!dirty || saving || deleting}
-              className="btn-primary btn-sm"
-            >
-              {saving ? "Saving…" : dirty ? "Save changes" : "No changes"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
 
