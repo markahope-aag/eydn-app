@@ -19,8 +19,8 @@ export type QuizResult = {
 };
 
 export type ArchetypeQuiz = {
-  id: "planning_style";
-  slug: "wedding-planning-style";
+  id: "planning_style" | "aesthetic_style";
+  slug: "wedding-planning-style" | "wedding-style";
   title: string;
   subtitle: string;
   questions: QuizQuestion[];

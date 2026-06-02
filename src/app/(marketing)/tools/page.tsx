@@ -18,6 +18,14 @@ const tools = [
     cta: "Take the quiz",
   },
   {
+    href: "/tools/wedding-style",
+    eyebrow: "Quiz · 2 min",
+    title: "What's your wedding style?",
+    blurb:
+      "Eight questions reveal your wedding aesthetic — Classic, Modern, Rustic, Boho, Romantic, or Glam — with a starting color palette and the details that bring it to life.",
+    cta: "Take the quiz",
+  },
+  {
     href: "/tools/do-i-need-a-planner",
     eyebrow: "Quiz · 2 min",
     title: "Can you plan your wedding without a planner?",

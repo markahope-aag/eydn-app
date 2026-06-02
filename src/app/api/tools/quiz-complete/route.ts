@@ -4,16 +4,18 @@ import { sendEmail } from "@/lib/email";
 import { getQuizResultEmail } from "@/lib/email-quiz";
 import { planningStyleQuiz } from "@/lib/quizzes/planning-style";
 import { plannerAssessmentQuiz } from "@/lib/quizzes/planner-assessment";
+import { aestheticStyleQuiz } from "@/lib/quizzes/aesthetic-style";
 import { isValidEmail, safeParseJSON, isParseError } from "@/lib/validation";
 import { checkRateLimit, getClientIP, RATE_LIMITS } from "@/lib/rate-limit";
 import { captureServer } from "@/lib/analytics-server";
 import { cadenceSubscribe } from "@/lib/cadence";
 
-type QuizId = "planning_style" | "planner_assessment";
+type QuizId = "planning_style" | "planner_assessment" | "aesthetic_style";
 
 const CADENCE_FORMS: Record<QuizId, string | undefined> = {
   planning_style: process.env.CADENCE_QUIZ_PLANNING_STYLE_FORM_ID,
   planner_assessment: process.env.CADENCE_QUIZ_PLANNER_ASSESSMENT_FORM_ID,
+  aesthetic_style: process.env.CADENCE_QUIZ_AESTHETIC_STYLE_FORM_ID,
 };
 
 async function syncToCadence(
@@ -51,7 +53,8 @@ export async function POST(request: Request) {
     score?: number | null;
   };
 
-  if (body.quiz_id !== "planning_style" && body.quiz_id !== "planner_assessment") {
+  const validQuizIds: QuizId[] = ["planning_style", "planner_assessment", "aesthetic_style"];
+  if (!validQuizIds.includes(body.quiz_id as QuizId)) {
     return NextResponse.json({ error: "Unknown quiz" }, { status: 400 });
   }
   const quizId = body.quiz_id as QuizId;
@@ -71,10 +74,17 @@ export async function POST(request: Request) {
   }
 
   // Resolve the quiz + result server-side to avoid trusting client copy
-  const quiz = quizId === "planning_style" ? planningStyleQuiz : plannerAssessmentQuiz;
+  const quiz =
+    quizId === "planning_style"
+      ? planningStyleQuiz
+      : quizId === "aesthetic_style"
+      ? aestheticStyleQuiz
+      : plannerAssessmentQuiz;
   let result;
   if (quizId === "planning_style") {
     result = planningStyleQuiz.results[resultKey];
+  } else if (quizId === "aesthetic_style") {
+    result = aestheticStyleQuiz.results[resultKey];
   } else {
     result = plannerAssessmentQuiz.results.find((r) => r.key === resultKey);
   }

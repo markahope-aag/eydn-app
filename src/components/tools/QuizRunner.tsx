@@ -5,8 +5,6 @@ import Link from "next/link";
 import { toast } from "sonner";
 import type { Quiz, QuizResult } from "@/lib/quizzes/types";
 import { resolveArchetype, resolveBand } from "@/lib/quizzes/scoring";
-import { planningStyleQuiz } from "@/lib/quizzes/planning-style";
-import { plannerAssessmentQuiz } from "@/lib/quizzes/planner-assessment";
 
 type Stage = "intro" | "questions" | "gate" | "result";
 
@@ -36,11 +34,12 @@ export function QuizRunner({ quiz }: Props) {
     const next = [...answers, value];
     setAnswers(next);
     if (next.length >= totalQuestions) {
-      // Precompute the result so we can show it after gate
-      if (quiz.id === "planning_style") {
-        setResult(resolveArchetype(planningStyleQuiz, next as string[]));
+      // Precompute the result so we can show it after the gate. Archetype
+      // quizzes have a tieBreaker; score-band quizzes have bands.
+      if ("tieBreaker" in quiz) {
+        setResult(resolveArchetype(quiz, next as string[]));
       } else {
-        const r = resolveBand(plannerAssessmentQuiz, next as number[]);
+        const r = resolveBand(quiz, next as number[]);
         setResult(r.result);
         setScore(r.score);
       }
