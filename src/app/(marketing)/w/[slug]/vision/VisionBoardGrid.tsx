@@ -7,11 +7,20 @@ type Item = {
   image_url: string;
   caption: string | null;
   category: string;
+  size?: string | null;
 };
 
 interface Props {
   items: Item[];
 }
+
+// Mirrors the dashboard board's tile spans so the public board matches the
+// couple's chosen sizes.
+const SIZE_SPAN: Record<string, string> = {
+  small: "col-span-1 row-span-1",
+  medium: "col-span-2 row-span-1",
+  large: "col-span-2 row-span-2",
+};
 
 /**
  * Public-facing masonry grid for the wedding vision board. Read-only — no
@@ -50,20 +59,20 @@ export function VisionBoardGrid({ items }: Props) {
         </div>
       )}
 
-      {/* Masonry */}
-      <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+      {/* Resizable grid — mirrors the couple's chosen order and tile sizes */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 auto-rows-[170px] gap-3 grid-flow-row-dense">
         {filtered.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => setLightbox(item)}
-            className="block w-full break-inside-avoid group relative rounded-[16px] overflow-hidden bg-white border border-border hover:shadow-lg transition-shadow text-left"
+            className={`${SIZE_SPAN[item.size || "small"] || SIZE_SPAN.small} group relative rounded-[16px] overflow-hidden bg-white border border-border hover:shadow-lg transition-shadow text-left`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.image_url}
               alt={item.caption || "Wedding inspiration"}
-              className="w-full h-auto block"
+              className="w-full h-full object-cover block"
               loading="lazy"
             />
             {item.caption && (

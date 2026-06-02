@@ -1032,6 +1032,7 @@ export type Database = {
           id: string
           image_url: string
           location: string | null
+          size: string
           sort_order: number
           vendor_id: string | null
           wedding_id: string
@@ -1044,6 +1045,7 @@ export type Database = {
           id?: string
           image_url: string
           location?: string | null
+          size?: string
           sort_order?: number
           vendor_id?: string | null
           wedding_id: string
@@ -1056,6 +1058,7 @@ export type Database = {
           id?: string
           image_url?: string
           location?: string | null
+          size?: string
           sort_order?: number
           vendor_id?: string | null
           wedding_id?: string

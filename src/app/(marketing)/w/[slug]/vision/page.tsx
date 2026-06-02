@@ -70,14 +70,14 @@ export default async function PublicVisionBoardPage({
 
   const { data: itemsRaw } = await supabase
     .from("mood_board_items")
-    .select("id, image_url, caption, category, sort_order, created_at")
+    .select("id, image_url, caption, category, sort_order, size, created_at")
     .eq("wedding_id", wedding.id)
     .is("deleted_at", null)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
   const rawItems = (itemsRaw ?? []) as Array<
-    Pick<MoodItem, "id" | "image_url" | "caption" | "category" | "sort_order" | "created_at">
+    Pick<MoodItem, "id" | "image_url" | "caption" | "category" | "sort_order" | "size" | "created_at">
   >;
 
   // Sign storage-path images; pass external URLs through unchanged.
