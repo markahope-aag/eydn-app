@@ -24,6 +24,7 @@ const SOURCE_LABELS: Record<string, string> = {
   beta: "Beta Waitlist",
   waitlist: "Waitlist",
   calculator: "Budget Calculator",
+  quiz: "Quiz",
 };
 
 function sourceLabel(source: string): string {
@@ -97,6 +98,7 @@ export default function LeadsPage() {
 
   const newsletterCount = leads.filter((l) => l.source.includes("newsletter")).length;
   const calculatorCount = leads.filter((l) => l.source.includes("calculator")).length;
+  const quizCount = leads.filter((l) => l.source.includes("quiz")).length;
   const betaCount = leads.filter((l) => l.source.includes("beta") || l.source.includes("waitlist")).length;
 
   return (
@@ -109,7 +111,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Stats */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-4">
+      <div className="mt-6 grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         <div className="card p-5">
           <p className="text-[13px] text-muted">Total Leads</p>
           <p className="mt-1 text-[28px] font-bold text-plum">{leads.length}</p>
@@ -121,6 +123,10 @@ export default function LeadsPage() {
         <div className="card p-5">
           <p className="text-[13px] text-muted">Budget Calculator</p>
           <p className="mt-1 text-[28px] font-bold text-plum">{calculatorCount}</p>
+        </div>
+        <div className="card p-5">
+          <p className="text-[13px] text-muted">Quizzes</p>
+          <p className="mt-1 text-[28px] font-bold text-plum">{quizCount}</p>
         </div>
         <div className="card p-5">
           <p className="text-[13px] text-muted">Beta / Waitlist</p>

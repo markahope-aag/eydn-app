@@ -7,7 +7,7 @@ export async function GET() {
   const { supabase } = admin;
 
   // Fetch all lead sources in parallel
-  const [{ data: waitlist }, { data: calculator }] = await Promise.all([
+  const [{ data: waitlist }, { data: calculator }, { data: quizzes }] = await Promise.all([
     supabase
       .from("waitlist")
       .select("name, email, source, created_at")
@@ -16,7 +16,18 @@ export async function GET() {
       .from("calculator_saves")
       .select("name, email, budget, guests, state, month, created_at, cadence_synced_at, cadence_error")
       .order("created_at", { ascending: false }),
+    supabase
+      .from("quiz_completions")
+      .select("first_name, email, quiz_id, result_label, created_at")
+      .order("created_at", { ascending: false }),
   ]);
+
+  // Friendly names for the quiz sources, shown in the lead's details.
+  const QUIZ_NAMES: Record<string, string> = {
+    planning_style: "Planning style quiz",
+    planner_assessment: "Planner quiz",
+    aesthetic_style: "Wedding style quiz",
+  };
 
   // Normalize into a unified lead format
   type Lead = {
@@ -66,6 +77,24 @@ export async function GET() {
       created_at: calc.created_at,
       cadenceStatus,
       cadenceMessage: calc.cadence_error,
+    });
+  }
+
+  for (const q of quizzes || []) {
+    const quiz = q as {
+      first_name: string | null;
+      email: string;
+      quiz_id: string;
+      result_label: string | null;
+      created_at: string;
+    };
+    const quizName = QUIZ_NAMES[quiz.quiz_id] || "Quiz";
+    leads.push({
+      name: quiz.first_name,
+      email: quiz.email,
+      source: "quiz",
+      details: quiz.result_label ? `${quizName} → ${quiz.result_label}` : quizName,
+      created_at: quiz.created_at,
     });
   }
 

@@ -22,27 +22,21 @@ async function GET() {
 function createMockSupabase(overrides: {
   waitlist?: unknown[];
   calculator?: unknown[];
+  quizzes?: unknown[];
 } = {}) {
-  const { waitlist = [], calculator = [] } = overrides;
+  const { waitlist = [], calculator = [], quizzes = [] } = overrides;
+  const tableData: Record<string, unknown[]> = {
+    waitlist,
+    calculator_saves: calculator,
+    quiz_completions: quizzes,
+  };
 
   return {
-    from: vi.fn((table: string) => {
-      if (table === "waitlist") {
-        return {
-          select: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({ data: waitlist, error: null }),
-          }),
-        };
-      }
-      if (table === "calculator_saves") {
-        return {
-          select: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({ data: calculator, error: null }),
-          }),
-        };
-      }
-      return {};
-    }),
+    from: vi.fn((table: string) => ({
+      select: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue({ data: tableData[table] ?? [], error: null }),
+      }),
+    })),
   };
 }
 
@@ -203,23 +197,11 @@ describe("GET /api/admin/leads", () => {
 
   it("handles null waitlist data gracefully", async () => {
     const supabase = {
-      from: vi.fn((table: string) => {
-        if (table === "waitlist") {
-          return {
-            select: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({ data: null, error: null }),
-            }),
-          };
-        }
-        if (table === "calculator_saves") {
-          return {
-            select: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({ data: null, error: null }),
-            }),
-          };
-        }
-        return {};
-      }),
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      })),
     };
     mockRequireAdmin.mockResolvedValue({ userId: "admin-1", supabase });
 
@@ -228,5 +210,30 @@ describe("GET /api/admin/leads", () => {
 
     expect(res.status).toBe(200);
     expect(json).toEqual([]);
+  });
+
+  it("includes quiz completions as leads with the quiz result in details", async () => {
+    const supabase = createMockSupabase({
+      quizzes: [
+        {
+          first_name: "Sam",
+          email: "sam@test.com",
+          quiz_id: "aesthetic_style",
+          result_label: "Classic & Timeless",
+          created_at: "2026-05-01T00:00:00Z",
+        },
+      ],
+    });
+    mockRequireAdmin.mockResolvedValue({ userId: "admin-1", supabase });
+
+    const res = await GET();
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json).toHaveLength(1);
+    expect(json[0].source).toBe("quiz");
+    expect(json[0].email).toBe("sam@test.com");
+    expect(json[0].details).toContain("Wedding style quiz");
+    expect(json[0].details).toContain("Classic & Timeless");
   });
 });
