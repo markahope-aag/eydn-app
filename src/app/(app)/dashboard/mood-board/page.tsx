@@ -25,7 +25,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { trackMoodBoardAdd } from "@/lib/analytics";
 import { Tooltip } from "@/components/Tooltip";
 import { GuideLink } from "@/components/GuideLink";
-import { extractPalette } from "@/lib/images/palette";
+import { extractPalette, pickThemeColors } from "@/lib/images/palette";
 
 type MoodItem = {
   id: string;
@@ -102,6 +102,7 @@ export default function MoodBoardPage() {
   const [filterCategory, setFilterCategory] = useState("All");
   const [palette, setPalette] = useState<string[]>([]);
   const [paletteLoading, setPaletteLoading] = useState(false);
+  const [applyingColors, setApplyingColors] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -368,6 +369,35 @@ export default function MoodBoardPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ size }),
     }).catch(() => toast.error("Couldn't resize that image. Try again."));
+  }
+
+  // Push the image's extracted palette into the website theme. Fetches the
+  // current theme first and merges, so other theme settings aren't lost.
+  async function applyPaletteToWebsite() {
+    const colors = pickThemeColors(palette);
+    if (!colors) return;
+    setApplyingColors(true);
+    try {
+      const current = (await fetch("/api/wedding-website").then((r) => (r.ok ? r.json() : {}))) as {
+        website_theme?: Record<string, unknown>;
+      };
+      const theme = {
+        ...(current.website_theme || {}),
+        primaryColor: colors.primary,
+        accentColor: colors.accent,
+      };
+      const res = await fetch("/api/wedding-website", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ website_theme: theme }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Website colors updated from this image");
+    } catch {
+      toast.error("Couldn't update website colors. Try again.");
+    } finally {
+      setApplyingColors(false);
+    }
   }
 
   // Drag-to-reorder (only in the "All" view, where the full order is unambiguous).
@@ -838,20 +868,32 @@ export default function MoodBoardPage() {
                   {paletteLoading ? (
                     <p className="mt-1 text-[12px] text-muted">Pulling colors…</p>
                   ) : palette.length > 0 ? (
-                    <div className="mt-1 flex flex-wrap gap-1.5">
-                      {palette.map((hex) => (
+                    <>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        {palette.map((hex) => (
+                          <button
+                            key={hex}
+                            type="button"
+                            onClick={() => { navigator.clipboard.writeText(hex); toast.success(`${hex} copied`); }}
+                            title={`Copy ${hex}`}
+                            className="flex items-center gap-1 rounded-full border border-border pl-1 pr-2 py-0.5 hover:border-violet transition"
+                          >
+                            <span className="h-4 w-4 rounded-full border border-black/5" style={{ background: hex }} />
+                            <span className="text-[10px] font-mono text-muted">{hex}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {palette.length >= 2 && (
                         <button
-                          key={hex}
                           type="button"
-                          onClick={() => { navigator.clipboard.writeText(hex); toast.success(`${hex} copied`); }}
-                          title={`Copy ${hex}`}
-                          className="flex items-center gap-1 rounded-full border border-border pl-1 pr-2 py-0.5 hover:border-violet transition"
+                          onClick={applyPaletteToWebsite}
+                          disabled={applyingColors}
+                          className="mt-2 text-[12px] font-semibold text-violet hover:text-soft-violet transition disabled:opacity-60"
                         >
-                          <span className="h-4 w-4 rounded-full border border-black/5" style={{ background: hex }} />
-                          <span className="text-[10px] font-mono text-muted">{hex}</span>
+                          {applyingColors ? "Applying…" : "Use these colors on your website →"}
                         </button>
-                      ))}
-                    </div>
+                      )}
+                    </>
                   ) : (
                     <p className="mt-1 text-[12px] text-muted">Couldn&apos;t read colors from this image.</p>
                   )}

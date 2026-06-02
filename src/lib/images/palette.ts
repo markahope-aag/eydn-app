@@ -10,6 +10,27 @@ function rgbToHex(r: number, g: number, b: number): string {
   return `#${h(r)}${h(g)}${h(b)}`.toUpperCase();
 }
 
+/** Relative luminance (0–255-ish) of a hex color. */
+function luminance(hex: string): number {
+  const n = parseInt(hex.replace("#", ""), 16);
+  if (Number.isNaN(n)) return 0;
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/**
+ * Choose a primary/accent pair from a palette for a website theme: darkest
+ * color as primary, lightest as accent — gives the hero gradient good contrast.
+ * Returns null if there aren't at least two colors.
+ */
+export function pickThemeColors(palette: string[]): { primary: string; accent: string } | null {
+  if (palette.length < 2) return null;
+  const sorted = [...palette].sort((a, b) => luminance(a) - luminance(b));
+  return { primary: sorted[0], accent: sorted[sorted.length - 1] };
+}
+
 export async function extractPalette(url: string, count = 5): Promise<string[]> {
   return new Promise((resolve) => {
     const img = new window.Image();
