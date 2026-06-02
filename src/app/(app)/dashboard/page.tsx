@@ -15,6 +15,8 @@ import { WeddingDateField } from "@/components/WeddingDateField";
 import { KeyDecisionsCard } from "@/components/KeyDecisionsCard";
 import { WebsiteNudgeCard } from "@/components/WebsiteNudgeCard";
 import { Tooltip } from "@/components/Tooltip";
+import { QuickStart } from "./QuickStart";
+import { getQuickStartSteps, isQuickStartComplete } from "@/lib/onboarding/quick-start";
 import { getWebsiteProgress } from "@/lib/website-milestones";
 
 function buildGreeting(ctx: { name: string; both: string; days: number | null; totalTasks: number; doneTasks: number; taskPct: number }): string {
@@ -308,6 +310,17 @@ export default async function DashboardPage() {
   const budgetTotal = wedding.budget ?? 0;
   const budgetRemaining = budgetTotal - budgetSpent;
 
+  // ─── Quick Start walk-through (optional, for new couples) ───────────────
+  const quickStartSteps = getQuickStartSteps({
+    hasDate: Boolean(wedding.date),
+    hasBudget: budgetTotal > 0,
+    guestCount: guestCount ?? 0,
+    vendorCount: (allVendors ?? []).length,
+    doneTasks,
+  });
+  const quickstartDismissed = (wedding as { quickstart_dismissed?: boolean }).quickstart_dismissed ?? false;
+  const showQuickStart = !quickstartDismissed && !isQuickStartComplete(quickStartSteps);
+
   // Sign couple photo URL if it's a storage path
   let couplePhotoUrl: string | null = null;
   const rawPhotoUrl = (wedding as Record<string, unknown>).website_couple_photo_url as string | null;
@@ -454,6 +467,12 @@ export default async function DashboardPage() {
         />
       )}
 
+      {showQuickStart && (
+        <QuickStart partnerName={wedding.partner1_name} steps={quickStartSteps} />
+      )}
+
+      {!showQuickStart && (
+        <>
       <CatchUpBanner />
 
       {/* Proactive nudges from Eydn */}
@@ -669,6 +688,8 @@ export default async function DashboardPage() {
 
       {/* Recent Activity */}
       <RecentActivity weddingId={wedding.id} />
+        </>
+      )}
     </div>
   );
 }

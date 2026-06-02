@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type Tab = "guide" | "faq" | "shortcuts" | "whats-new";
 
@@ -101,9 +103,27 @@ const SHORTCUTS = [
 ];
 
 export default function HelpPage() {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("guide");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [search, setSearch] = useState("");
+  const [restarting, setRestarting] = useState(false);
+
+  async function restartQuickStart() {
+    setRestarting(true);
+    try {
+      const res = await fetch("/api/quickstart-status", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dismissed: false }),
+      });
+      if (!res.ok) throw new Error();
+      router.push("/dashboard");
+    } catch {
+      toast.error("Couldn't restart the walk-through. Try again.");
+      setRestarting(false);
+    }
+  }
 
   const filteredFaq = search
     ? FAQ.filter((f) => f.q.toLowerCase().includes(search.toLowerCase()) || f.a.toLowerCase().includes(search.toLowerCase()))
@@ -122,6 +142,22 @@ export default function HelpPage() {
       <p className="mt-1 text-[15px] text-muted">
         Everything you need to make the most of Eydn
       </p>
+
+      {/* Restart the optional Quick Start walk-through */}
+      <div className="mt-4 rounded-[16px] bg-lavender/40 border border-border p-4 flex items-center gap-4">
+        <div className="flex-1">
+          <p className="text-[14px] font-semibold text-plum">New here? Take the quick start</p>
+          <p className="text-[12px] text-muted mt-0.5">A simple, step-by-step way to get your essentials set up.</p>
+        </div>
+        <button
+          type="button"
+          onClick={restartQuickStart}
+          disabled={restarting}
+          className="btn-secondary btn-sm flex-shrink-0 disabled:opacity-60"
+        >
+          {restarting ? "Opening…" : "Start walk-through"}
+        </button>
+      </div>
 
       {/* Beta feedback banner */}
       <div className="mt-4 rounded-[16px] bg-violet/5 border border-violet/20 p-4 flex items-center gap-4">
