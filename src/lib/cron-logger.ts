@@ -1,5 +1,7 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
+import { alertOps } from "@/lib/ops-alert";
+import { escapeHtml } from "@/lib/validation";
 
 /**
  * Log a cron job execution to the cron_log table AND ship a structured
@@ -40,4 +42,15 @@ export async function logCronExecution(params: {
       error_message: params.errorMessage || null,
     })
     .then(({ error }) => { if (error) console.error("[CRON-LOG]", error.message); });
+
+  // Real-time alert to ops on failure. Best-effort — never blocks the job.
+  if (params.status === "error") {
+    await alertOps(
+      `Cron failed: ${params.jobName}`,
+      `<p>The scheduled job <strong>${escapeHtml(params.jobName)}</strong> reported a failure.</p>
+       <p><strong>Duration:</strong> ${params.durationMs}ms</p>
+       <p><strong>Error:</strong> ${escapeHtml(params.errorMessage || "(no message)")}</p>
+       <p>Check the admin Cron Jobs tab and Sentry for detail.</p>`
+    );
+  }
 }
