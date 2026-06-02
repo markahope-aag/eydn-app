@@ -22,8 +22,6 @@ export function BetaPopup() {
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
   const dialogRef = useRef<HTMLDivElement | null>(null);
-  const headingRef = useRef<HTMLHeadingElement | null>(null);
-  const lastFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -38,42 +36,20 @@ export function BetaPopup() {
     return () => clearTimeout(t);
   }, []);
 
-  // Focus management, focus trap, and Escape-to-close while visible.
+  // Non-modal toast: Escape closes it, but it never steals focus or traps it,
+  // so it can't disrupt someone reading or scrolling the hero.
   useEffect(() => {
     if (!visible) return;
-    lastFocusedRef.current = document.activeElement as HTMLElement | null;
-    const raf = requestAnimationFrame(() => headingRef.current?.focus());
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.preventDefault();
         dismiss();
-        return;
-      }
-      if (e.key === "Tab" && dialogRef.current) {
-        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
-          'a, button, input, textarea, select, [tabindex]:not([tabindex="-1"])'
-        );
-        if (focusable.length === 0) return;
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        const active = document.activeElement as HTMLElement | null;
-        if (e.shiftKey && active === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && active === last) {
-          e.preventDefault();
-          first.focus();
-        }
       }
     }
 
     document.addEventListener("keydown", onKeyDown);
-    return () => {
-      cancelAnimationFrame(raf);
-      document.removeEventListener("keydown", onKeyDown);
-      lastFocusedRef.current?.focus?.();
-    };
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [visible]);
 
   function dismiss() {
@@ -126,36 +102,23 @@ export function BetaPopup() {
   return (
     <>
       <div
-        onClick={dismiss}
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(26, 26, 46, 0.55)",
-          backdropFilter: "blur(4px)",
-          WebkitBackdropFilter: "blur(4px)",
-          zIndex: 9998,
-          animation: "betaPopupFade 220ms ease-out",
-        }}
-        aria-hidden="true"
-      />
-      <div
         ref={dialogRef}
         role="dialog"
-        aria-modal="true"
+        aria-modal="false"
         aria-labelledby="beta-popup-heading"
         style={{
           position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "min(520px, calc(100vw - 32px))",
-          maxHeight: "calc(100vh - 64px)",
+          right: "clamp(16px, 4vw, 32px)",
+          bottom: "clamp(16px, 4vw, 32px)",
+          left: "auto",
+          width: "min(380px, calc(100vw - 32px))",
+          maxHeight: "calc(100vh - 48px)",
           overflowY: "auto",
           background: "#FAF6F1",
           borderRadius: 20,
           boxShadow: "0 24px 80px rgba(26, 26, 46, 0.35)",
           zIndex: 9999,
-          animation: "betaPopupIn 280ms cubic-bezier(0.16, 1, 0.3, 1)",
+          animation: "betaPopupIn 320ms cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
         {/* header band */}
@@ -207,17 +170,14 @@ export function BetaPopup() {
             Beta program
           </div>
           <h2
-            ref={headingRef}
             id="beta-popup-heading"
-            tabIndex={-1}
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: 28,
+              fontSize: 24,
               fontWeight: 600,
               color: "#FAF6F1",
               marginTop: 12,
               lineHeight: 1.2,
-              outline: "none",
             }}
           >
             Get Eydn free — for life.
@@ -340,13 +300,12 @@ export function BetaPopup() {
       </div>
 
       <style jsx>{`
-        @keyframes betaPopupFade {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
         @keyframes betaPopupIn {
-          from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
-          to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          from { opacity: 0; transform: translateY(24px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [role="dialog"] { animation: none !important; }
         }
       `}</style>
     </>
