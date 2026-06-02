@@ -39,6 +39,7 @@ export function WebsiteProgressPanel({ summary, onJumpToTab }: WebsiteProgressPa
       <div
         className="mt-3 h-2 rounded-full bg-lavender overflow-hidden"
         role="progressbar"
+        aria-label={`Website sections completed: ${doneCount} of ${totalCount}`}
         aria-valuenow={doneCount}
         aria-valuemin={0}
         aria-valuemax={totalCount}
@@ -100,7 +101,7 @@ export function WebsiteProgressPanel({ summary, onJumpToTab }: WebsiteProgressPa
                   {item.label}
                 </span>
                 {!item.done && item.overdue && (
-                  <span className="ml-auto text-[11px] font-semibold text-amber-600">overdue</span>
+                  <span className="ml-auto text-[11px] font-semibold text-amber-700">overdue</span>
                 )}
               </button>
             );

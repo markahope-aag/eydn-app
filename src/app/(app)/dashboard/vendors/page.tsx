@@ -502,7 +502,7 @@ export default function VendorsPage() {
           </button>
           <Link
             href="/dashboard/vendors/directory"
-            className="inline-flex items-center justify-center rounded-[12px] px-4 py-2 text-[13px] sm:text-[15px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+            className="inline-flex items-center justify-center rounded-[12px] px-4 py-2 text-[13px] sm:text-[15px] font-semibold bg-emerald-700 text-white hover:bg-emerald-800 transition"
           >
             Browse Directory
           </Link>
