@@ -8,7 +8,6 @@ import { NewsletterSignup } from "@/app/_components/NewsletterSignup";
 import { BetaPopup } from "@/app/_components/BetaPopup";
 import { AuthCTAStatic as AuthCTA } from "@/app/_components/AuthCTAStatic";
 import {
-  BotanicalOverlay,
   HeroTaskCard,
   HeroBudgetCard,
   HeroAIChatCard,
@@ -135,7 +134,7 @@ export default function HomePage() {
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(100deg, rgba(20,16,12,0.80) 0%, rgba(20,16,12,0.58) 35%, rgba(20,16,12,0.22) 62%, rgba(20,16,12,0.06) 100%)",
+              "linear-gradient(100deg, rgba(20,16,12,0.58) 0%, rgba(20,16,12,0.38) 35%, rgba(20,16,12,0.14) 62%, rgba(20,16,12,0.02) 100%)",
             zIndex: 0,
           }}
         />
@@ -167,7 +166,7 @@ export default function HomePage() {
                     color: "#FAF6F1",
                     lineHeight: 1.02,
                     marginTop: 16,
-                    textShadow: "0 2px 28px rgba(0,0,0,0.35)",
+                    textShadow: "0 2px 24px rgba(0,0,0,0.55)",
                   }}
                   className="max-lg:!text-[48px] max-sm:!text-[34px] max-sm:!leading-[1.1]"
                 >
@@ -177,7 +176,7 @@ export default function HomePage() {
                 </h1>
               </ScrollReveal>
               <ScrollReveal immediate>
-                <p style={{ fontFamily: "var(--font-body)", fontSize: 18, color: "rgba(250,246,241,0.92)", lineHeight: 1.65, marginTop: 28, maxWidth: 480 }}>
+                <p style={{ fontFamily: "var(--font-body)", fontSize: 18, color: "rgba(250,246,241,0.92)", lineHeight: 1.65, marginTop: 28, maxWidth: 480, textShadow: "0 1px 12px rgba(0,0,0,0.45)" }}>
                   From guest lists to vendor outreach to your day-of binder — everything in one beautiful place, guided by an AI that knows your wedding inside and out.
                 </p>
               </ScrollReveal>
@@ -517,7 +516,7 @@ export default function HomePage() {
             style={{
               position: "absolute",
               inset: 0,
-              background: "linear-gradient(165deg, rgba(15,21,37,0.55) 0%, rgba(15,21,37,0.72) 100%)",
+              background: "linear-gradient(165deg, rgba(15,21,37,0.18) 0%, rgba(15,21,37,0.40) 100%)",
               zIndex: 0,
             }}
           />
@@ -860,26 +859,41 @@ export default function HomePage() {
         </svg>
       </div>
 
-      {/* ─── FINAL CTA — WARM GRADIENT ─── */}
+      {/* ─── FINAL CTA — FULL-BLEED PHOTO ─── */}
       <ScrollReveal>
         <section
           style={{
-            background: "linear-gradient(165deg, #F3EAE0 0%, #F7EDED 40%, #F0E4CC 100%)",
-            padding: "140px 24px",
             position: "relative",
+            padding: "160px 24px",
             overflow: "hidden",
+            background: "#2A2018",
           }}
         >
-          <BotanicalOverlay color="#D4A5A5" opacity={0.08} />
-          <BotanicalOverlay color="#C9A84C" opacity={0.05} />
+          <Image
+            src="/images/home/final-cta.jpg"
+            alt="A bride with her wedding party on the wedding day"
+            fill
+            sizes="100vw"
+            style={{ objectFit: "cover", objectPosition: "center 30%", zIndex: 0 }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(180deg, rgba(20,16,12,0.52) 0%, rgba(20,16,12,0.40) 50%, rgba(20,16,12,0.62) 100%)",
+              zIndex: 0,
+            }}
+          />
           <div style={{ maxWidth: 820, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 1 }}>
             <h2
               style={{
                 fontFamily: "var(--font-display)",
                 fontSize: 76,
                 fontWeight: 600,
-                color: "#2A2018",
+                color: "#FAF6F1",
                 lineHeight: 1.08,
+                textShadow: "0 2px 24px rgba(0,0,0,0.5)",
               }}
               className="max-lg:!text-[48px]"
             >

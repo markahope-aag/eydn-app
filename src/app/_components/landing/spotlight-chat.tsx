@@ -1,6 +1,6 @@
 export function SpotlightChat() {
   return (
-    <div style={{ background: "#1E2340", borderRadius: 16, padding: 24, maxWidth: 420, boxShadow: "0 8px 40px rgba(0,0,0,0.3)" }}>
+    <div style={{ background: "rgba(30,35,64,0.92)", backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)", borderRadius: 16, padding: 24, maxWidth: 380, boxShadow: "0 12px 48px rgba(0,0,0,0.45)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#C9A84C" }} />
         <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#FAF6F1", fontWeight: 600 }}>Eydn AI</span>

@@ -30,7 +30,7 @@ const VIEWPORTS =
     ? ALL_VIEWPORTS
     : ALL_VIEWPORTS.filter((v) => v.name === "desktop");
 
-const FULL_PAGE_HEIGHT = 9000;
+const FULL_PAGE_HEIGHT = Number(process.env.SHOOT_FULL_HEIGHT ?? 9000);
 
 const slug =
   route === "/"
