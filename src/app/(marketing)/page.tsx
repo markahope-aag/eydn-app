@@ -115,7 +115,6 @@ export default function HomePage() {
           minHeight: "100vh",
           position: "relative",
           display: "flex",
-          alignItems: "center",
           overflow: "hidden",
           background: "#2A2018",
         }}
@@ -141,18 +140,18 @@ export default function HomePage() {
           }}
         />
 
-        {/* Content over the photo */}
-        <div style={{ position: "relative", zIndex: 1, width: "100%", display: "flex", alignItems: "center" }}>
-          {/* Left — text */}
-          <div
-            style={{
-              flex: "0 0 55%",
-              display: "flex",
-              alignItems: "center",
-              padding: "80px 60px 80px 80px",
-            }}
-            className="max-lg:!flex-[1_1_100%] max-lg:!p-8 max-lg:!pt-24"
-          >
+        {/* Left — text (column stretches full height) */}
+        <div
+          style={{
+            flex: "0 0 55%",
+            position: "relative",
+            zIndex: 1,
+            display: "flex",
+            alignItems: "center",
+            padding: "80px 60px 80px 80px",
+          }}
+          className="max-lg:!flex-[1_1_100%] max-lg:!p-8 max-lg:!pt-24"
+        >
             <div style={{ maxWidth: 600 }}>
               <ScrollReveal immediate>
                 <p style={{ fontFamily: "var(--font-script)", fontSize: 32, color: "#E8B7B7" }}>
@@ -216,11 +215,13 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right — floating UI cards over the photo */}
-          <div
-            style={{ flex: "0 0 45%", position: "relative", minHeight: 500, padding: 40 }}
-            className="max-lg:!hidden"
-          >
+        {/* Right — floating UI cards over the photo (full-height container so
+            the cards have room to drift, matching the original) */}
+        <div
+          style={{ flex: "0 0 45%", position: "relative", zIndex: 1, padding: 40 }}
+          className="max-lg:!hidden"
+        >
+          <div style={{ position: "relative", width: "100%", height: "100%", minHeight: 500 }}>
             <HeroTaskCard />
             <HeroBudgetCard />
             <HeroAIChatCard />

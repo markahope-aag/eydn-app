@@ -31,6 +31,10 @@ export function LandingNavStatic() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Over the dark hero photo (not scrolled) the bar needs light text/logo;
+  // once scrolled onto the cream background it reverts to the dark ink.
+  const barInk = scrolled ? "#2A2018" : "#FAF6F1";
+
   return (
     <>
       <nav
@@ -53,7 +57,7 @@ export function LandingNavStatic() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
           <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-            <Image src="/logo.png" alt="eydn" width={120} height={30} priority />
+            <Image src={scrolled ? "/logo.png" : "/logo-white.png"} alt="eydn" width={120} height={30} priority />
           </Link>
           <nav style={{ display: "flex", alignItems: "center", gap: 24 }} className="max-md:!hidden">
             {navLinks.map((l) => (
@@ -65,7 +69,7 @@ export function LandingNavStatic() {
                   fontFamily: "var(--font-body)",
                   fontSize: 13,
                   letterSpacing: "0.08em",
-                  color: "#2A2018",
+                  color: barInk,
                   opacity: 0.75,
                   textDecoration: "none",
                   transition: "opacity 0.2s",
@@ -85,7 +89,7 @@ export function LandingNavStatic() {
               fontFamily: "var(--font-body)",
               fontSize: 13,
               fontWeight: 600,
-              color: "#2A2018",
+              color: barInk,
               textDecoration: "none",
               transition: "opacity 0.2s",
             }}
@@ -118,7 +122,7 @@ export function LandingNavStatic() {
               fontFamily: "var(--font-body)",
               fontSize: 13,
               fontWeight: 600,
-              color: "#2A2018",
+              color: barInk,
               textDecoration: "none",
             }}
           >
@@ -140,9 +144,9 @@ export function LandingNavStatic() {
           }}
           aria-label="Open menu"
         >
-          <span style={{ display: "block", width: 22, height: 2, background: "#2A2018", borderRadius: 2 }} />
-          <span style={{ display: "block", width: 22, height: 2, background: "#2A2018", borderRadius: 2 }} />
-          <span style={{ display: "block", width: 22, height: 2, background: "#2A2018", borderRadius: 2 }} />
+          <span style={{ display: "block", width: 22, height: 2, background: barInk, borderRadius: 2 }} />
+          <span style={{ display: "block", width: 22, height: 2, background: barInk, borderRadius: 2 }} />
+          <span style={{ display: "block", width: 22, height: 2, background: barInk, borderRadius: 2 }} />
         </button>
       </nav>
 

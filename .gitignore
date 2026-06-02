@@ -57,3 +57,4 @@ __tests__/visual/screenshots/
 .env*.local
 
 .vercel
+.screenshots/
