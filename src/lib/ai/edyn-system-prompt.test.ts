@@ -183,4 +183,38 @@ describe("buildEdynSystemPrompt", () => {
     );
     expect(result).toContain("Rustic bohemian");
   });
+
+  // Tone shifts as the wedding approaches. Dates are computed relative to now.
+  function dateInDays(days: number): string {
+    return new Date(Date.now() + days * 86400000).toISOString().split("T")[0];
+  }
+
+  it("uses a celebratory tone during wedding week", () => {
+    const result = buildEdynSystemPrompt(
+      makeContext({ wedding: { date: dateInDays(3) } }),
+    );
+    expect(result).toContain("It's Wedding Week");
+  });
+
+  it("uses a wedding-day tone on the day", () => {
+    const result = buildEdynSystemPrompt(
+      makeContext({ wedding: { date: dateInDays(0) } }),
+    );
+    expect(result).toContain("It's the Wedding Day");
+  });
+
+  it("uses a reflective tone after the wedding", () => {
+    const result = buildEdynSystemPrompt(
+      makeContext({ wedding: { date: dateInDays(-5) } }),
+    );
+    expect(result).toContain("The Wedding Has Happened");
+  });
+
+  it("does not use the celebratory tone blocks when the wedding is far off", () => {
+    const result = buildEdynSystemPrompt(
+      makeContext({ wedding: { date: dateInDays(120) } }),
+    );
+    expect(result).not.toContain("It's Wedding Week");
+    expect(result).not.toContain("It's the Wedding Day");
+  });
 });
