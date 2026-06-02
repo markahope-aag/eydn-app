@@ -182,6 +182,8 @@ export default async function WeddingWebsitePage({
   const schedule = (wedding.website_schedule ?? []) as Array<{ time: string; event: string }>;
   const faq = (wedding.website_faq ?? []) as Array<{ question: string; answer: string }>;
   const theme = ((wedding as Record<string, unknown>).website_theme ?? {}) as { primaryColor?: string; accentColor?: string; fontFamily?: string; heroLayout?: string };
+  // Focal point for the cover photo (CSS object-position), set by the couple.
+  const coverPosition = ((wedding as Record<string, unknown>).website_cover_position as string) || "50% 50%";
   const hotels = ((wedding as Record<string, unknown>).website_hotels ?? []) as Array<{ name: string; url?: string; discountCode?: string; notes?: string }>;
   const coupleNames = `${wedding.partner1_name} & ${wedding.partner2_name}`;
   const rsvpDeadline = (wedding as Record<string, unknown>).rsvp_deadline as string | null;
@@ -225,6 +227,7 @@ export default async function WeddingWebsitePage({
                 src={wedding.website_cover_url}
                 alt={`${coupleNames} wedding cover photo`}
                 className="object-cover"
+                style={{ objectPosition: coverPosition }}
                 fill
                 priority
                 sizes="(min-width: 768px) 50vw, 100vw"
@@ -258,6 +261,7 @@ export default async function WeddingWebsitePage({
               src={wedding.website_cover_url}
               alt={`${coupleNames} wedding cover photo`}
               className="object-cover"
+              style={{ objectPosition: coverPosition }}
               fill
               priority
               sizes="100vw"

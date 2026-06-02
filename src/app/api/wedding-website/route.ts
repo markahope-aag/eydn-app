@@ -31,6 +31,7 @@ export async function GET() {
     accommodations: wedding.website_accommodations,
     faq: wedding.website_faq,
     cover_url: coverUrl,
+    cover_position: (wedding as Record<string, unknown>).website_cover_position ?? "50% 50%",
     couple_photo_url: couplePhotoUrl,
     enabled: wedding.website_enabled,
     rsvp_deadline: (wedding as Record<string, unknown>).rsvp_deadline ?? null,
@@ -87,6 +88,7 @@ export async function PATCH(request: Request) {
   if (body.accommodations !== undefined) updates.website_accommodations = body.accommodations;
   if (body.faq !== undefined) updates.website_faq = body.faq;
   if (body.cover_url !== undefined) updates.website_cover_url = body.cover_url;
+  if (body.cover_position !== undefined) updates.website_cover_position = body.cover_position;
   if (body.couple_photo_url !== undefined) updates.website_couple_photo_url = body.couple_photo_url;
   if (body.enabled !== undefined) updates.website_enabled = body.enabled;
   if (body.rsvp_deadline !== undefined) updates.rsvp_deadline = body.rsvp_deadline;

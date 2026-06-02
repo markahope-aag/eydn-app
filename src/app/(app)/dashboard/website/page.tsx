@@ -36,6 +36,7 @@ export default function WebsitePage() {
   const [headline, setHeadline] = useState("");
   const [story, setStory] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
+  const [coverPosition, setCoverPosition] = useState("50% 50%");
   const [couplePhotoUrl, setCouplePhotoUrl] = useState("");
   const [heroLayout, setHeroLayout] = useState<"fullscreen" | "side-by-side">("fullscreen");
   const originalSlug = useRef("");
@@ -131,6 +132,7 @@ export default function WebsitePage() {
       setHeadline(data.headline || "");
       setStory(data.story || "");
       setCoverUrl(data.cover_url || "");
+      setCoverPosition(data.cover_position || "50% 50%");
       setCouplePhotoUrl(data.couple_photo_url || "");
       setSchedule(data.schedule || []);
       setTravel(data.travel || "");
@@ -282,6 +284,8 @@ export default function WebsitePage() {
             setStory={setStory}
             coverUrl={coverUrl}
             setCoverUrl={setCoverUrl}
+            coverPosition={coverPosition}
+            setCoverPosition={setCoverPosition}
             couplePhotoUrl={couplePhotoUrl}
             setCouplePhotoUrl={setCouplePhotoUrl}
             heroLayout={heroLayout}

@@ -21,6 +21,8 @@ interface SetupTabProps {
   setStory: (story: string) => void;
   coverUrl: string;
   setCoverUrl: (url: string) => void;
+  coverPosition: string;
+  setCoverPosition: (position: string) => void;
   couplePhotoUrl: string;
   setCouplePhotoUrl: (url: string) => void;
   heroLayout: "fullscreen" | "side-by-side";
@@ -43,6 +45,8 @@ export function SetupTab({
   setStory,
   coverUrl,
   setCoverUrl,
+  coverPosition,
+  setCoverPosition,
   couplePhotoUrl,
   setCouplePhotoUrl,
   heroLayout,
@@ -56,6 +60,27 @@ export function SetupTab({
 
   const coverRef = useRef<HTMLInputElement>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const coverPreviewRef = useRef<HTMLDivElement>(null);
+  const draggingCover = useRef(false);
+
+  // Translate a pointer position over the cover preview into a CSS
+  // object-position focal point, so couples can choose which part of a tall
+  // photo stays visible instead of always centering.
+  function setFocalFromEvent(e: React.PointerEvent<HTMLDivElement>) {
+    const el = coverPreviewRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100));
+    const pos = `${Math.round(x)}% ${Math.round(y)}%`;
+    setCoverPosition(pos);
+    autoSave({ cover_position: pos }, 400);
+  }
+
+  const [focalX, focalY] = coverPosition.split(" ").map((v) => {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : 50;
+  });
 
   const couplePhotoRef = useRef<HTMLInputElement>(null);
   const [uploadingCouplePhoto, setUploadingCouplePhoto] = useState(false);
@@ -120,7 +145,9 @@ export function SetupTab({
         throw new Error(data.error || `Upload failed (${res.status})`);
       }
       setCoverUrl(data.signed_url || data.file_url);
-      autoSaveImmediate({ cover_url: data.file_url });
+      // Reset the focal point to center for the new image.
+      setCoverPosition("50% 50%");
+      autoSaveImmediate({ cover_url: data.file_url, cover_position: "50% 50%" });
       toast.success("Cover image uploaded");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -274,8 +301,40 @@ export function SetupTab({
           Cover Image
         </p>
         {coverUrl && (
-          <div className="mb-3 rounded-[16px] overflow-hidden h-40 relative">
-            <Image src={coverUrl} alt="Wedding cover photo" className="object-cover" fill unoptimized />
+          <div className="mb-3">
+            <div
+              ref={coverPreviewRef}
+              onPointerDown={(e) => {
+                draggingCover.current = true;
+                e.currentTarget.setPointerCapture(e.pointerId);
+                setFocalFromEvent(e);
+              }}
+              onPointerMove={(e) => {
+                if (draggingCover.current) setFocalFromEvent(e);
+              }}
+              onPointerUp={() => {
+                draggingCover.current = false;
+              }}
+              className="rounded-[16px] overflow-hidden h-40 relative cursor-crosshair select-none touch-none"
+            >
+              <Image
+                src={coverUrl}
+                alt="Wedding cover photo"
+                className="object-cover"
+                style={{ objectPosition: coverPosition }}
+                fill
+                unoptimized
+              />
+              <span
+                aria-hidden="true"
+                className="absolute -ml-3 -mt-3 h-6 w-6 rounded-full border-2 border-white bg-violet/30 ring-2 ring-violet shadow pointer-events-none"
+                style={{ left: `${focalX}%`, top: `${focalY}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-muted mt-1">
+              Tall or vertical photo getting cropped? Drag the dot (or tap a spot)
+              to choose which part of the image stays in view.
+            </p>
           </div>
         )}
         <input
