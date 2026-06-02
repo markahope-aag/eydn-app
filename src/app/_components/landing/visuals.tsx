@@ -15,7 +15,6 @@ import {
   MiniDataSecurity,
 } from "./mini-features";
 
-export { BotanicalOverlay } from "./botanical";
 export { HeroTaskCard, HeroBudgetCard, HeroAIChatCard } from "./hero-cards";
 export {
   MiniTaskTimeline,

@@ -4,7 +4,7 @@
 //
 // Run with:  node scripts/fetch-empty-state-images.mjs
 
-const UNSPLASH_KEY = "y264U7AcuUbI9tFhwj-4t7_lmOL53apj9aLa86pgP9g";
+const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY; // set in env; never hardcode
 const UTM_SOURCE = "eydn-app";
 
 // Slot → search query. Kept short and editorial — heavy on tone, light on

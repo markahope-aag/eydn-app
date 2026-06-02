@@ -19,7 +19,7 @@ const env = Object.fromEntries(
 
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
-const UNSPLASH_KEY = "y264U7AcuUbI9tFhwj-4t7_lmOL53apj9aLa86pgP9g";
+const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY; // set in env; never hardcode
 const UTM_SOURCE = "eydn-blog";
 
 if (!SUPABASE_URL || !SERVICE_KEY) {

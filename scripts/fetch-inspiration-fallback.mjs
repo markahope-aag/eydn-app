@@ -7,7 +7,7 @@
 // The shipped JSON includes the track_url so a fresh ping fires every time
 // a user actually saves the image.
 
-const UNSPLASH_KEY = "y264U7AcuUbI9tFhwj-4t7_lmOL53apj9aLa86pgP9g";
+const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY; // set in env; never hardcode
 const UTM_SOURCE = "eydn-app";
 
 const QUERIES = [
