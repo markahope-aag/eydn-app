@@ -3,12 +3,29 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  rectSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { SkeletonGrid } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { trackMoodBoardAdd } from "@/lib/analytics";
 import { Tooltip } from "@/components/Tooltip";
 import { GuideLink } from "@/components/GuideLink";
+import { extractPalette } from "@/lib/images/palette";
 
 type MoodItem = {
   id: string;
@@ -18,7 +35,21 @@ type MoodItem = {
   location: string | null;
   vendor_id: string | null;
   created_at: string;
+  sort_order?: number;
+  size?: string;
 };
+
+const SIZE_SPAN: Record<string, string> = {
+  small: "col-span-1 row-span-1",
+  medium: "col-span-2 row-span-1",
+  large: "col-span-2 row-span-2",
+};
+
+const SIZE_OPTIONS: { value: string; label: string }[] = [
+  { value: "small", label: "Small" },
+  { value: "medium", label: "Wide" },
+  { value: "large", label: "Large" },
+];
 
 type Vendor = { id: string; name: string; category: string };
 
@@ -69,6 +100,13 @@ export default function MoodBoardPage() {
   const [loading, setLoading] = useState(true);
   const [noWedding, setNoWedding] = useState(false);
   const [filterCategory, setFilterCategory] = useState("All");
+  const [palette, setPalette] = useState<string[]>([]);
+  const [paletteLoading, setPaletteLoading] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
   const [showAdd, setShowAdd] = useState(false);
   const [addMode, setAddMode] = useState<"upload" | "url">("upload");
   const [imageUrl, setImageUrl] = useState("");
@@ -87,6 +125,27 @@ export default function MoodBoardPage() {
   const [weddingSlug, setWeddingSlug] = useState<string | null>(null);
   const [websitePublished, setWebsitePublished] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Pull a color palette from the open image (best-effort; empty if blocked).
+  const lightboxImageUrl = lightbox?.image_url;
+  useEffect(() => {
+    if (!lightboxImageUrl) {
+      setPalette([]);
+      setPaletteLoading(false);
+      return;
+    }
+    let active = true;
+    setPalette([]);
+    setPaletteLoading(true);
+    extractPalette(lightboxImageUrl).then((p) => {
+      if (!active) return;
+      setPalette(p);
+      setPaletteLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [lightboxImageUrl]);
 
   useEffect(() => {
     Promise.all([
@@ -299,6 +358,38 @@ export default function MoodBoardPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ vendor_id: newVendorId }),
     }).catch(() => toast.error("Couldn't link that vendor. Try again."));
+  }
+
+  async function updateSize(id: string, size: string) {
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, size } : i)));
+    setLightbox((l) => (l && l.id === id ? { ...l, size } : l));
+    await fetch(`/api/mood-board/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ size }),
+    }).catch(() => toast.error("Couldn't resize that image. Try again."));
+  }
+
+  // Drag-to-reorder (only in the "All" view, where the full order is unambiguous).
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = items.findIndex((i) => i.id === active.id);
+    const newIndex = items.findIndex((i) => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(items, oldIndex, newIndex).map((it, idx) => ({ ...it, sort_order: idx }));
+    setItems(reordered);
+    // Persist only the tiles whose position actually changed.
+    const lo = Math.min(oldIndex, newIndex);
+    const hi = Math.max(oldIndex, newIndex);
+    reordered.slice(lo, hi + 1).forEach((it) => {
+      fetch(`/api/mood-board/${it.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sort_order: it.sort_order }),
+      }).catch(() => {});
+    });
   }
 
   function shareBoard() {
@@ -584,70 +675,31 @@ export default function MoodBoardPage() {
         </div>
       )}
 
-      {/* Masonry grid */}
+      {/* Resizable, drag-to-reorder grid */}
       {filtered.length > 0 ? (
-        <div className="mt-6 columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-          {filtered.map((item) => (
-            <div
-              key={item.id}
-              className="break-inside-avoid group relative rounded-[16px] overflow-hidden bg-white border border-border hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => setLightbox(item)}
-            >
-              {/* Native img — we don't know each pasted/uploaded image's natural
-                  dimensions, and the masonry only looks right when every image
-                  renders at its own aspect ratio (so tall Pinterest pins stay
-                  tall, landscape shots stay landscape, nothing crops). next/image
-                  forces a fixed width/height which collapses everything into
-                  squares. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={item.image_url}
-                alt={item.caption || "Inspiration"}
-                className="w-full h-auto block"
-                loading="lazy"
-              />
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                {/* Top row — category/location badges + delete */}
-                <div className="absolute top-2 left-2 right-2 flex items-start justify-between">
-                  <div className="flex gap-1 flex-wrap">
-                    <span className="bg-white/90 backdrop-blur-sm text-[10px] font-semibold text-plum px-2 py-0.5 rounded-full">
-                      {item.category}
-                    </span>
-                    {item.location && (
-                      <span className="bg-white/90 backdrop-blur-sm text-[10px] font-semibold text-violet px-2 py-0.5 rounded-full">
-                        {item.location}
-                      </span>
-                    )}
-                    {item.vendor_id && (() => {
-                      const v = vendors.find((vn) => vn.id === item.vendor_id);
-                      return v ? (
-                        <span className="bg-violet/80 backdrop-blur-sm text-[10px] font-semibold text-white px-2 py-0.5 rounded-full">
-                          {v.name}
-                        </span>
-                      ) : null;
-                    })()}
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setConfirmDelete(item.id); }}
-                    aria-label="Remove image"
-                    className="w-6 h-6 bg-black/40 hover:bg-error text-white rounded-full text-[11px] flex items-center justify-center transition flex-shrink-0"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                      <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                </div>
-                {/* Bottom row — caption + edit hint */}
-                <div className="absolute bottom-0 left-0 right-0 p-3">
-                  {item.caption && (
-                    <p className="text-[12px] text-white font-semibold leading-tight">{item.caption}</p>
-                  )}
-                  <p className="text-[10px] text-white/60 mt-1">Click to edit details</p>
-                </div>
+        <div className="mt-6">
+          {filterCategory !== "All" && (
+            <p className="text-[12px] text-muted mb-2">
+              Switch to “All” to drag and reorder. Open an image to resize it or pull its colors.
+            </p>
+          )}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={filtered.map((i) => i.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 auto-rows-[170px] gap-3 grid-flow-row-dense">
+                {filtered.map((item) => (
+                  <SortableMoodCard
+                    key={item.id}
+                    item={item}
+                    sizeClass={SIZE_SPAN[item.size || "small"] || SIZE_SPAN.small}
+                    disabled={filterCategory !== "All"}
+                    vendorName={vendors.find((vn) => vn.id === item.vendor_id)?.name ?? null}
+                    onOpen={() => setLightbox(item)}
+                    onDelete={() => setConfirmDelete(item.id)}
+                  />
+                ))}
               </div>
-            </div>
-          ))}
+            </SortableContext>
+          </DndContext>
         </div>
       ) : items.length > 0 ? (
         <p className="text-[15px] text-muted text-center py-12">
@@ -763,6 +815,48 @@ export default function MoodBoardPage() {
                   </select>
                 </div>
               </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="text-[11px] font-semibold text-muted uppercase">Size on board</label>
+                  <div className="mt-1 inline-flex rounded-[10px] bg-lavender p-0.5">
+                    {SIZE_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => updateSize(lightbox.id, opt.value)}
+                        className={`px-3 py-1 text-[13px] font-semibold rounded-[8px] transition ${
+                          (lightbox.size || "small") === opt.value ? "bg-white text-violet shadow-sm" : "text-muted hover:text-violet"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-muted uppercase">Colors in this image</label>
+                  {paletteLoading ? (
+                    <p className="mt-1 text-[12px] text-muted">Pulling colors…</p>
+                  ) : palette.length > 0 ? (
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {palette.map((hex) => (
+                        <button
+                          key={hex}
+                          type="button"
+                          onClick={() => { navigator.clipboard.writeText(hex); toast.success(`${hex} copied`); }}
+                          title={`Copy ${hex}`}
+                          className="flex items-center gap-1 rounded-full border border-border pl-1 pr-2 py-0.5 hover:border-violet transition"
+                        >
+                          <span className="h-4 w-4 rounded-full border border-black/5" style={{ background: hex }} />
+                          <span className="text-[10px] font-mono text-muted">{hex}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-[12px] text-muted">Couldn&apos;t read colors from this image.</p>
+                  )}
+                </div>
+              </div>
               {vendors.length > 0 && (
                 <div>
                   <label className="text-[11px] font-semibold text-muted uppercase">Linked Vendor</label>
@@ -825,6 +919,92 @@ export default function MoodBoardPage() {
         }}
         onCancel={() => setConfirmDelete(null)}
       />
+    </div>
+  );
+}
+
+function SortableMoodCard({
+  item,
+  sizeClass,
+  disabled,
+  vendorName,
+  onOpen,
+  onDelete,
+}: {
+  item: MoodItem;
+  sizeClass: string;
+  disabled: boolean;
+  vendorName: string | null;
+  onOpen: () => void;
+  onDelete: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+    disabled,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={onOpen}
+      className={`${sizeClass} group relative rounded-[16px] overflow-hidden bg-white border border-border hover:shadow-lg transition-shadow ${
+        disabled ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"
+      }`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={item.image_url}
+        alt={item.caption || "Inspiration"}
+        className="w-full h-full object-cover block"
+        loading="lazy"
+        draggable={false}
+      />
+      {/* Hover overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 left-2 right-2 flex items-start justify-between">
+          <div className="flex gap-1 flex-wrap">
+            <span className="bg-white/90 backdrop-blur-sm text-[10px] font-semibold text-plum px-2 py-0.5 rounded-full">
+              {item.category}
+            </span>
+            {item.location && (
+              <span className="bg-white/90 backdrop-blur-sm text-[10px] font-semibold text-violet px-2 py-0.5 rounded-full">
+                {item.location}
+              </span>
+            )}
+            {vendorName && (
+              <span className="bg-violet/80 backdrop-blur-sm text-[10px] font-semibold text-white px-2 py-0.5 rounded-full">
+                {vendorName}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            onPointerDown={(e) => e.stopPropagation()}
+            aria-label="Remove image"
+            className="w-6 h-6 bg-black/40 hover:bg-error text-white rounded-full text-[11px] flex items-center justify-center transition flex-shrink-0"
+          >
+            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          {item.caption && (
+            <p className="text-[12px] text-white font-semibold leading-tight">{item.caption}</p>
+          )}
+          <p className="text-[10px] text-white/60 mt-1">Click to edit · drag to reorder</p>
+        </div>
+      </div>
     </div>
   );
 }
