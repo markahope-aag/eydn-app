@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { EmailImagePicker } from "../email-images/EmailImagePicker";
+import { Modal } from "@/components/Modal";
 
 type TemplateSummary = {
   slug: string;
@@ -361,19 +362,43 @@ function TemplateEditor({
 
   return (
     <>
-    <div className="fixed inset-0 z-50 bg-plum/50 flex items-start justify-center overflow-y-auto p-6">
-      <div className="bg-surface rounded-2xl max-w-4xl w-full my-6 overflow-hidden">
-        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-          <div>
-            <h2 className="text-[18px]">{template.slug}</h2>
-            <p className="text-[12px] text-muted mt-0.5">
-              {CATEGORY_LABELS[template.category] || template.category} ·
-              vars: {template.variables.length === 0 ? "none" : template.variables.join(", ")}
-            </p>
+    <Modal
+      open
+      onClose={onClose}
+      title={template.slug}
+      size="4xl"
+      description={
+        <>
+          {CATEGORY_LABELS[template.category] || template.category} ·
+          vars: {template.variables.length === 0 ? "none" : template.variables.join(", ")}
+        </>
+      }
+      footer={
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 flex-1">
+            <input
+              type="email"
+              aria-label="Send test to email address"
+              placeholder="(your email)"
+              value={testTo}
+              onChange={(e) => setTestTo(e.target.value)}
+              className="flex-1 max-w-xs"
+            />
+            <button onClick={sendTest} disabled={sending} className="btn-secondary btn-sm">
+              {sending ? "Sending..." : "Send test"}
+            </button>
           </div>
-          <button onClick={onClose} className="btn-ghost btn-sm">Close</button>
+          <button
+            onClick={save}
+            disabled={!dirty || saving}
+            className="btn-primary btn-sm"
+          >
+            {saving ? "Saving..." : "Save changes"}
+          </button>
         </div>
-        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+      }
+    >
+        <div className="space-y-4">
           <div>
             <label htmlFor="tmpl-subject">Subject</label>
             <input
@@ -435,29 +460,7 @@ function TemplateEditor({
             </div>
           </details>
         </div>
-        <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-4 bg-whisper">
-          <div className="flex items-center gap-2 flex-1">
-            <input
-              type="email"
-              placeholder="(your email)"
-              value={testTo}
-              onChange={(e) => setTestTo(e.target.value)}
-              className="flex-1 max-w-xs"
-            />
-            <button onClick={sendTest} disabled={sending} className="btn-secondary btn-sm">
-              {sending ? "Sending..." : "Send test"}
-            </button>
-          </div>
-          <button
-            onClick={save}
-            disabled={!dirty || saving}
-            className="btn-primary btn-sm"
-          >
-            {saving ? "Saving..." : "Save changes"}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
     {pickingImage && (
       <EmailImagePicker
         onInsert={insertImage}

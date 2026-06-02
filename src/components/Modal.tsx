@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback, useRef, useId, type ReactNode, type RefObject } from "react";
 
-type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
+type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
 
 const SIZE_CLASS: Record<ModalSize, string> = {
   sm: "max-w-sm",
@@ -11,6 +11,7 @@ const SIZE_CLASS: Record<ModalSize, string> = {
   xl: "max-w-xl",
   "2xl": "max-w-2xl",
   "3xl": "max-w-3xl",
+  "4xl": "max-w-4xl",
 };
 
 interface ModalProps {
