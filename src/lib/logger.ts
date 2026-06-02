@@ -103,17 +103,4 @@ export function createLogger(dataset: string = defaultDataset): Logger {
 
 export const logger: Logger = createLogger(defaultDataset);
 
-/**
- * Return a child logger bound to the request's id. The proxy is welcome
- * to mint one and set `x-request-id`, but if absent we fall back to
- * "unknown" — no need to gate logging on the header being present.
- */
-export function createRequestLogger(
-  request: { headers: { get(name: string): string | null } },
-  parent: Logger = logger,
-): Logger {
-  const requestId = request.headers.get("x-request-id") ?? "unknown";
-  return parent.child({ requestId });
-}
-
 export type { Logger } from "pino";

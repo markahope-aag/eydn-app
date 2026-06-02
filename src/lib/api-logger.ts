@@ -1,8 +1,9 @@
 /**
- * Lightweight API request logger.
- * Logs method, path, status, and duration to console.
- * In production, pipe these to a logging service (Datadog, Axiom, etc.).
+ * Lightweight API request logger. Emits a structured record (method, path,
+ * status, duration) through the shared Pino logger, which ships to stdout and
+ * Axiom in production.
  */
+import { logger } from "@/lib/logger";
 
 export function logRequest(
   method: string,
@@ -11,47 +12,20 @@ export function logRequest(
   durationMs: number,
   extra?: Record<string, unknown>
 ) {
-  const level = status >= 500 ? "ERROR" : status >= 400 ? "WARN" : "INFO";
-  const entry = {
-    level,
+  const fields = {
     method,
     path,
     status,
     durationMs: Math.round(durationMs),
-    timestamp: new Date().toISOString(),
     ...extra,
   };
+  const msg = `${method} ${path} ${status}`;
 
-  if (level === "ERROR") {
-    console.error("[API]", JSON.stringify(entry));
-  } else if (level === "WARN") {
-    console.warn("[API]", JSON.stringify(entry));
+  if (status >= 500) {
+    logger.error(fields, msg);
+  } else if (status >= 400) {
+    logger.warn(fields, msg);
   } else {
-    console.log("[API]", JSON.stringify(entry));
+    logger.info(fields, msg);
   }
-}
-
-/**
- * Wrap an API route handler with automatic request logging.
- */
-export function withLogging<T extends (..._args: unknown[]) => Promise<Response>>(
-  handler: T
-): T {
-  return (async (...args: unknown[]) => {
-    const start = Date.now();
-    const request = args[0] as Request | undefined;
-    const method = request?.method ?? "UNKNOWN";
-    const path = request?.url ? new URL(request.url).pathname : "unknown";
-
-    try {
-      const response = await handler(...args);
-      logRequest(method, path, response.status, Date.now() - start);
-      return response;
-    } catch (error) {
-      logRequest(method, path, 500, Date.now() - start, {
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-      throw error;
-    }
-  }) as T;
 }

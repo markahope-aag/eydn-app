@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 /**
  * Standard API error response. Use in catch blocks or after Supabase errors.
- * Logs the error server-side and returns a clean JSON response to the client.
+ * Logs the error server-side (structured, via the shared Pino logger → Axiom)
+ * and returns a clean JSON response to the client.
  */
 export function apiError(
   message: string,
   status: number = 500,
   context?: string
 ): NextResponse {
-  if (context) {
-    console.error(`[API] ${context}:`, message);
+  const fields = context ? { context, status } : { status };
+  if (status >= 500) {
+    logger.error(fields, message);
   } else {
-    console.error("[API]", message);
+    logger.warn(fields, message);
   }
   return NextResponse.json(
     { error: status >= 500 ? "Internal server error" : message },
