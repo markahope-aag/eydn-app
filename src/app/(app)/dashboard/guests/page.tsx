@@ -38,6 +38,8 @@ export default function GuestsPage() {
   const [newCity, setNewCity] = useState("");
   const [newState, setNewState] = useState("");
   const [newZip, setNewZip] = useState("");
+  const [newPlusOne, setNewPlusOne] = useState(false);
+  const [newPlusOneName, setNewPlusOneName] = useState("");
   const [showAddFields, setShowAddFields] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -79,6 +81,10 @@ export default function GuestsPage() {
     e.preventDefault();
     if (!name.trim()) return;
 
+    // Capture plus-one intent before the form fields are reset below.
+    const wantsPlusOne = newPlusOne;
+    const plusOneNameVal = newPlusOneName.trim();
+
     const tempId = crypto.randomUUID();
     const newGuest: Guest = {
       id: tempId,
@@ -111,6 +117,8 @@ export default function GuestsPage() {
     setNewCity("");
     setNewState("");
     setNewZip("");
+    setNewPlusOne(false);
+    setNewPlusOneName("");
     setShowAddFields(false);
 
     try {
@@ -137,6 +145,51 @@ export default function GuestsPage() {
       setGuests((prev) => prev.map((g) => (g.id === tempId ? saved : g)));
       trackGuestAdded();
       toast.success(`${newGuest.name} added to the guest list`);
+
+      // Create the linked plus-one as a companion guest row so it counts toward
+      // the headcount and can be seated — same model as the per-row "+1".
+      if (wantsPlusOne) {
+        const companionName = plusOneNameVal || `${saved.name}'s guest`;
+        const companionTempId = crypto.randomUUID();
+        const companion: Guest = {
+          id: companionTempId,
+          name: companionName,
+          email: null,
+          rsvp_status: saved.rsvp_status,
+          meal_preference: null,
+          role: saved.role,
+          plus_one: false,
+          plus_one_name: null,
+          address_line1: null,
+          address_line2: null,
+          city: null,
+          state: null,
+          zip: null,
+          phone: null,
+          group_name: saved.group_name,
+          party_head_id: saved.id,
+        };
+        setGuests((prev) => [...prev, companion]);
+        try {
+          const cRes = await fetch("/api/guests", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: companionName,
+              party_head_id: saved.id,
+              role: saved.role,
+              rsvp_status: saved.rsvp_status,
+              group_name: saved.group_name,
+            }),
+          });
+          if (!cRes.ok) throw new Error();
+          const cSaved = await cRes.json();
+          setGuests((prev) => prev.map((g) => (g.id === companionTempId ? cSaved : g)));
+        } catch {
+          setGuests((prev) => prev.filter((g) => g.id !== companionTempId));
+          toast.error("Couldn't add the plus-one. You can add them from the guest's row.");
+        }
+      }
     } catch {
       setGuests((prev) => prev.filter((g) => g.id !== tempId));
       toast.error("Failed to add guest");
@@ -663,6 +716,30 @@ export default function GuestsPage() {
             <p className="text-[12px] text-violet font-semibold mb-3">
               Optional &mdash; you can also add these later
             </p>
+            <div className="mb-3 rounded-[10px] border border-border bg-white px-3 py-2.5">
+              <label className="flex items-center gap-2 text-[13px] font-semibold text-plum cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={newPlusOne}
+                  onChange={(e) => setNewPlusOne(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                Bringing a plus-one
+              </label>
+              {newPlusOne && (
+                <input
+                  type="text"
+                  value={newPlusOneName}
+                  onChange={(e) => setNewPlusOneName(titleCase(e.target.value))}
+                  placeholder="Plus-one's name (optional)"
+                  aria-label="Plus-one name"
+                  className="mt-2 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
+                />
+              )}
+              <p className="text-[11px] text-muted mt-1.5">
+                Adds a second guest linked to this one — counts toward your headcount and can be seated. You can name them later.
+              </p>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className="text-[12px] font-semibold text-muted">Role <Tooltip text="Categorize guests as Family, Friend, Wedding Party, Coworker, Plus One, or Other. Roles help you filter and organize your guest list." wide /></label>
