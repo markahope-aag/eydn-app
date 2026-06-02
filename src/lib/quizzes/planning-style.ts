@@ -88,6 +88,45 @@ export const planningStyleQuiz: ArchetypeQuiz = {
     },
   ],
   tieBreaker: "BD",
+  landing: {
+    heroSubhead:
+      "Answer eight quick questions about how you actually plan, and we'll match you to your planning archetype — plus one tip that fits the way your brain works.",
+    benefits: [
+      {
+        title: "Your planning archetype",
+        body: "Know how you naturally operate, so you can lean into your strengths instead of fighting them.",
+      },
+      {
+        title: "A tip that fits you",
+        body: "One piece of advice matched to your style — not generic checklist filler.",
+      },
+      {
+        title: "Compare with your partner",
+        body: "Have them take it too and see where you line up, and where you'll divide and conquer.",
+      },
+    ],
+    resultsTeaserTitle: "The planners you might be",
+    resultsTeaser: [
+      { label: "The Spreadsheet Commander", blurb: "Organized, on top of it, three tabs deep." },
+      { label: "The Vibes-Only Planner", blurb: "Trusts the gut, plans by feel." },
+      { label: "The Delegator", blurb: "Sets the vision, lets others run with it." },
+      { label: "The Detail Obsessive", blurb: "Researches everything until it's exactly right." },
+      { label: "The Balanced Duo", blurb: "Splits the load and shares the wins." },
+    ],
+    socialProof: "From Eydn — the AI wedding planner that actually does things.",
+    faq: [
+      { q: "How long does it take?", a: "About two minutes — eight questions, no overthinking." },
+      {
+        q: "Do I need an account?",
+        a: "No. We'll ask for your email so we can send your result and a weekly planning tip — unsubscribe anytime.",
+      },
+      {
+        q: "Should my partner take it too?",
+        a: "Yes — it's more fun (and more useful) to compare. You'll see how to split the planning between you.",
+      },
+      { q: "Is it free?", a: "Completely free." },
+    ],
+  },
   results: {
     SC: {
       key: "SC",

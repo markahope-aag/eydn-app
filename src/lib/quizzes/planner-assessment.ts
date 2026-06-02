@@ -96,6 +96,43 @@ export const plannerAssessmentQuiz: ScoreBandQuiz = {
     { min: 9, max: 16, resultIndex: 1 },
     { min: 17, max: 24, resultIndex: 2 },
   ],
+  landing: {
+    heroSubhead:
+      "Eight quick questions score your wedding's real complexity — guest count, events, distance, runway — and tell you whether you can DIY, want a coordinator, or need a full planner.",
+    benefits: [
+      {
+        title: "A real complexity score",
+        body: "An honest read on how much wedding you're actually taking on.",
+      },
+      {
+        title: "A clear recommendation",
+        body: "DIY, day-of coordinator, or full planner — no upselling, just what fits.",
+      },
+      {
+        title: "Where to focus",
+        body: "The parts of your wedding most likely to need an extra set of hands.",
+      },
+    ],
+    resultsTeaserTitle: "What your score could mean",
+    resultsTeaser: [
+      { label: "You can DIY this", blurb: "Low complexity — a good system is all you need." },
+      { label: "DIY, with the right setup", blurb: "Medium complexity — doable with the right tools." },
+      { label: "Bring in some help", blurb: "Higher complexity — a coordinator is probably worth it." },
+    ],
+    socialProof: "From Eydn — the AI wedding planner that actually does things.",
+    faq: [
+      { q: "How long does it take?", a: "About two minutes — eight quick questions." },
+      {
+        q: "Do I need an account?",
+        a: "No. We'll ask for your email so we can send your result and a weekly planning tip — unsubscribe anytime.",
+      },
+      {
+        q: "Is this just trying to sell me a planner?",
+        a: "No — it's an honest assessment. Plenty of couples get a 'you can DIY this' result.",
+      },
+      { q: "Is it free?", a: "Completely free." },
+    ],
+  },
   results: [
     {
       key: "low",
