@@ -109,6 +109,7 @@ export function RsvpTab({
             <input
               type="text"
               value={newMealOption}
+              aria-label="Add a meal option"
               onChange={(e) => setNewMealOption(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && newMealOption.trim()) {

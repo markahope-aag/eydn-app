@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { EdynMessage } from "@/components/EdynMessage";
 import { FileUpload } from "@/components/FileUpload";
+import { Modal } from "@/components/Modal";
+import { Field } from "@/components/Field";
 import { VENDOR_EMAIL_TEMPLATES } from "@/lib/vendors/email-templates";
 import { formatDueDate } from "@/lib/date-utils";
 import { Comments } from "@/components/Comments";
@@ -109,15 +111,6 @@ export function TaskDetail({
   const dueDateInfo = task.due_date ? formatDueDate(task.due_date) : null;
   const isOverdue = dueDateInfo?.isOverdue && task.status !== "done";
 
-  // Close on Escape — matches the modal-on-backdrop-click affordance below.
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
   async function fetchResources() {
     try {
       const res = await fetch(`/api/tasks/${task.id}/resources`);
@@ -221,63 +214,35 @@ export function TaskDetail({
     )
     .slice(0, 4);
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        className="bg-white rounded-[16px] shadow-xl w-full max-w-3xl mx-4 max-h-[88vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Sticky header — keeps the close X reachable on long scroll. The
-            white backdrop + soft border avoids content bleeding through as
-            the body scrolls beneath it. */}
-        <div className="sticky top-0 z-10 bg-white border-b border-whisper px-6 pt-6 pb-4 rounded-t-[16px]">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold text-plum">{task.title}</h2>
-              <div className="mt-1 flex gap-2 flex-wrap">
-                {task.category && (
-                  <span className="badge">
-                    {task.category}
-                  </span>
-                )}
-                {task.timeline_phase && (
-                  <span className="rounded-full bg-lavender px-2 py-0.5 text-[12px] text-violet">
-                    {task.timeline_phase}
-                  </span>
-                )}
-                {isOverdue && (
-                  <span className="badge badge-overdue">
-                    Overdue
-                  </span>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              aria-label="Close"
-              className="text-muted hover:text-plum text-xl leading-none"
-            >
-              &times;
-            </button>
-          </div>
-        </div>
+  const badges =
+    task.category || task.timeline_phase || isOverdue ? (
+      <span className="flex gap-2 flex-wrap">
+        {task.category && <span className="badge">{task.category}</span>}
+        {task.timeline_phase && (
+          <span className="rounded-full bg-lavender px-2 py-0.5 text-[12px] text-violet">
+            {task.timeline_phase}
+          </span>
+        )}
+        {isOverdue && <span className="badge badge-overdue">Overdue</span>}
+      </span>
+    ) : undefined;
 
-        <div className="p-6 pt-4">
+  return (
+    <Modal open onClose={onClose} title={task.title} description={badges} size="3xl">
+      <div>
 
           {/* Due date — editable, with a heads-up that the timeline is data-driven */}
           <div className="mt-4">
             {editingDue ? (
               <div className="rounded-[12px] border border-amber-200 bg-amber-50 p-3">
-                <label className="text-[13px] font-medium text-plum">
-                  {task.due_date ? "Change due date" : "Set a due date"}
-                </label>
+                <Field
+                  label={task.due_date ? "Change due date" : "Set a due date"}
+                  className="[&>label]:text-[13px] [&>label]:font-medium [&>label]:text-plum [&>label]:mb-0"
+                >
+                  {(p) => (
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">
                   <input
+                    {...p}
                     type="date"
                     value={dueDraft}
                     onChange={(e) => setDueDraft(e.target.value)}
@@ -302,6 +267,8 @@ export function TaskDetail({
                     Cancel
                   </button>
                 </div>
+                  )}
+                </Field>
                 <p className="mt-2 text-[12px] text-amber-700 leading-relaxed">
                   Heads up — your task timeline is built from real wedding-planning
                   data, so this date is timed for a reason. You can move it, but
@@ -721,8 +688,10 @@ export function TaskDetail({
           </div>
 
           {/* Notes */}
-          <div className="mt-4">
-            <label className="text-[15px] font-semibold text-muted">Notes</label>
+          <Field
+            label="Notes"
+            className="mt-4 [&>label]:text-[15px] [&>label]:font-semibold [&>label]:text-muted"
+          >
             <textarea
               defaultValue={task.notes || ""}
               onBlur={(e) => onUpdateNotes(task.id, e.target.value)}
@@ -730,14 +699,13 @@ export function TaskDetail({
               rows={3}
               className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none"
             />
-          </div>
+          </Field>
 
           {/* Comments */}
           <div className="mt-4 pt-4 border-t border-border">
             <Comments entityType="task" entityId={task.id} />
           </div>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }

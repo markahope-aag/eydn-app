@@ -7,6 +7,7 @@ import {
   emailImageSnippet,
   formatBytes,
 } from "@/lib/images/email-image";
+import { Modal } from "@/components/Modal";
 
 /**
  * Modal that lists the email image library and inserts a chosen image's <img>
@@ -38,50 +39,44 @@ export function EmailImagePicker({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] bg-plum/50 flex items-start justify-center overflow-y-auto p-6">
-      <div className="bg-surface rounded-2xl max-w-3xl w-full my-6 overflow-hidden">
-        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-          <div>
-            <h2 className="text-[18px]">Insert image</h2>
-            <p className="text-[12px] text-muted mt-0.5">
-              Pick an image to drop into the email body.
-            </p>
-          </div>
-          <button onClick={onClose} className="btn-ghost btn-sm">Close</button>
+    <Modal
+      open
+      onClose={onClose}
+      title="Insert image"
+      description="Pick an image to drop into the email body."
+      size="3xl"
+      overlayClassName="!z-[60]"
+    >
+      {loading ? (
+        <p className="text-[15px] text-muted py-6">Loading...</p>
+      ) : images.length === 0 ? (
+        <p className="text-[15px] text-muted py-6">
+          No images yet. Add some in Admin → Email Images first.
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {images.map((img) => (
+            <button
+              key={img.id}
+              onClick={() => pick(img)}
+              className="card overflow-hidden text-left hover:ring-2 hover:ring-violet transition"
+            >
+              <div className="bg-whisper flex items-center justify-center p-2 h-32">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img.url}
+                  alt={img.alt_text || "Email image"}
+                  className="max-h-28 w-auto object-contain"
+                />
+              </div>
+              <div className="px-3 py-2 text-[12px] text-muted">
+                {img.width && img.height ? `${img.width}×${img.height}` : "—"} ·{" "}
+                {formatBytes(img.byte_size)}
+              </div>
+            </button>
+          ))}
         </div>
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
-          {loading ? (
-            <p className="text-[15px] text-muted py-6">Loading...</p>
-          ) : images.length === 0 ? (
-            <p className="text-[15px] text-muted py-6">
-              No images yet. Add some in Admin → Email Images first.
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {images.map((img) => (
-                <button
-                  key={img.id}
-                  onClick={() => pick(img)}
-                  className="card overflow-hidden text-left hover:ring-2 hover:ring-violet transition"
-                >
-                  <div className="bg-whisper flex items-center justify-center p-2 h-32">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={img.url}
-                      alt={img.alt_text || "Email image"}
-                      className="max-h-28 w-auto object-contain"
-                    />
-                  </div>
-                  <div className="px-3 py-2 text-[12px] text-muted">
-                    {img.width && img.height ? `${img.width}×${img.height}` : "—"} ·{" "}
-                    {formatBytes(img.byte_size)}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+      )}
+    </Modal>
   );
 }

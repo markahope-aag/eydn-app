@@ -333,13 +333,13 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          <label className="text-[15px] font-semibold text-muted">
+          <label htmlFor="reminder-days" className="text-[15px] font-semibold text-muted">
             Remind me before deadline <Tooltip text="You'll receive an email notification this many days before each task's due date, so you have time to complete it." wide />
           </label>
           <select
+            id="reminder-days"
             value={reminderDays}
             onChange={(e) => setReminderDays(Number(e.target.value))}
-            aria-label="Reminder days before deadline"
             className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
           >
             <option value={3}>3 days before</option>

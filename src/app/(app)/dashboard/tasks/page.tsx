@@ -13,6 +13,8 @@ import { Confetti, triggerConfetti } from "@/components/Confetti";
 import { TaskFilters } from "./TaskFilters";
 import { TasksQuickStart } from "./TasksQuickStart";
 import { Tooltip } from "@/components/Tooltip";
+import { Modal } from "@/components/Modal";
+import { Field } from "@/components/Field";
 import { trackTaskCreated, trackTaskCompleted } from "@/lib/analytics";
 import type { Task } from "./types";
 
@@ -637,89 +639,73 @@ export default function TasksPage() {
       </div>
 
       {/* Add task modal */}
-      {showAddTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white rounded-[16px] shadow-xl w-full max-w-md mx-4 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-plum">Add Task</h2>
-              <button
-                type="button"
-                onClick={() => setShowAddTask(false)}
-                className="text-muted hover:text-plum text-xl leading-none"
+      <Modal open={showAddTask} onClose={() => setShowAddTask(false)} title="Add Task">
+        <form
+          onSubmit={(e) => {
+            addTask(e);
+            setShowAddTask(false);
+          }}
+          className="space-y-4"
+        >
+          <Field label="Task name" className="[&>label]:text-[13px] [&>label]:text-muted [&>label]:font-normal">
+            <input
+              type="text"
+              placeholder="e.g. Book florist consultation"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+              required
+              autoFocus
+            />
+          </Field>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Category" className="[&>label]:text-[13px] [&>label]:text-muted [&>label]:font-normal">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
               >
-                &times;
-              </button>
+                {ADD_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </Field>
+            <div>
+              <label className="text-[13px] text-muted">Priority <Tooltip text="High priority tasks appear first and trigger earlier reminders." /></label>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as "high" | "medium" | "low")}
+                aria-label="Priority"
+                className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+              >
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
             </div>
-            <form
-              onSubmit={(e) => {
-                addTask(e);
-                setShowAddTask(false);
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="text-[13px] text-muted">Task name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Book florist consultation"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
-                  required
-                  autoFocus
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[13px] text-muted">Category</label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
-                  >
-                    {ADD_CATEGORIES.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[13px] text-muted">Priority <Tooltip text="High priority tasks appear first and trigger earlier reminders." /></label>
-                  <select
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value as "high" | "medium" | "low")}
-                    className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
-                  >
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="text-[13px] text-muted">Due date (optional)</label>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
-                />
-              </div>
-              <div className="flex gap-3 justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddTask(false)}
-                  className="btn-ghost btn-sm"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary">
-                  Add Task
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+          <Field label="Due date (optional)" className="[&>label]:text-[13px] [&>label]:text-muted [&>label]:font-normal">
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+            />
+          </Field>
+          <div className="flex gap-3 justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => setShowAddTask(false)}
+              className="btn-ghost btn-sm"
+            >
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary">
+              Add Task
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* First-time quick-start guidance (dismissible) */}
       {viewMode === "list" && tasks.length > 0 && <TasksQuickStart />}

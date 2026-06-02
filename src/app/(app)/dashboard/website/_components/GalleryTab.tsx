@@ -115,6 +115,7 @@ export function GalleryTab({
             type="checkbox"
             role="switch"
             aria-checked={photoApprovalRequired}
+            aria-label="Approve guest photos before they appear publicly"
             checked={photoApprovalRequired}
             onChange={(e) => {
               const newVal = e.target.checked;

@@ -22,6 +22,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { SkeletonGrid } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Modal } from "@/components/Modal";
 import { trackMoodBoardAdd } from "@/lib/analytics";
 import { Tooltip } from "@/components/Tooltip";
 import { GuideLink } from "@/components/GuideLink";
@@ -558,8 +559,9 @@ export default function MoodBoardPage() {
 
           {addMode === "url" && (
             <div>
-              <label className="text-[12px] font-semibold text-muted">Image URLs</label>
+              <label htmlFor="mb-image-urls" className="text-[12px] font-semibold text-muted">Image URLs</label>
               <textarea
+                id="mb-image-urls"
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
                 placeholder={"https://...\nPaste one URL per line to add several at once"}
@@ -577,6 +579,7 @@ export default function MoodBoardPage() {
                 type="file"
                 accept="image/*"
                 multiple
+                aria-label="Upload images to your vision board"
                 className="hidden"
                 onChange={(e) => {
                   setPendingFiles(
@@ -616,8 +619,9 @@ export default function MoodBoardPage() {
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label className="text-[12px] font-semibold text-muted">Caption (optional)</label>
+              <label htmlFor="mb-caption" className="text-[12px] font-semibold text-muted">Caption (optional)</label>
               <input
+                id="mb-caption"
                 type="text"
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
@@ -626,10 +630,11 @@ export default function MoodBoardPage() {
               />
             </div>
             <div>
-              <label className="text-[12px] font-semibold text-muted">Board / Category <Tooltip text="Organize your pins into boards. Use the built-in categories or create your own like 'Cocktail Hour' or 'Favors'." wide /></label>
+              <label htmlFor={showCustomCat ? "mb-custom-category" : "mb-category"} className="text-[12px] font-semibold text-muted">Board / Category <Tooltip text="Organize your pins into boards. Use the built-in categories or create your own like 'Cocktail Hour' or 'Favors'." wide /></label>
               {showCustomCat ? (
                 <div className="mt-1 flex gap-1">
                   <input
+                    id="mb-custom-category"
                     type="text"
                     value={customCategory}
                     onChange={(e) => setCustomCategory(e.target.value)}
@@ -647,6 +652,7 @@ export default function MoodBoardPage() {
                 </div>
               ) : (
                 <select
+                  id="mb-category"
                   value={category}
                   onChange={(e) => {
                     if (e.target.value === "__custom__") {
@@ -665,8 +671,9 @@ export default function MoodBoardPage() {
               )}
             </div>
             <div>
-              <label className="text-[12px] font-semibold text-muted">Where in your venue? <Tooltip text="Where in your venue would this look go? Helps you plan decor placement room by room." /></label>
+              <label htmlFor="mb-location" className="text-[12px] font-semibold text-muted">Where in your venue? <Tooltip text="Where in your venue would this look go? Helps you plan decor placement room by room." /></label>
               <select
+                id="mb-location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
@@ -678,8 +685,9 @@ export default function MoodBoardPage() {
               </select>
             </div>
             <div>
-              <label className="text-[12px] font-semibold text-muted">Link to vendor (optional) <Tooltip text="Tag this image to a vendor in your list — great for sharing inspiration with your florist, decorator, or photographer." wide /></label>
+              <label htmlFor="mb-vendor" className="text-[12px] font-semibold text-muted">Link to vendor (optional) <Tooltip text="Tag this image to a vendor in your list — great for sharing inspiration with your florist, decorator, or photographer." wide /></label>
               <select
+                id="mb-vendor"
                 value={vendorId}
                 onChange={(e) => setVendorId(e.target.value)}
                 className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
@@ -803,15 +811,15 @@ export default function MoodBoardPage() {
 
       {/* Lightbox */}
       {lightbox && (
-        <div
-          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-6"
-          onClick={() => setLightbox(null)}
+        <Modal
+          open
+          onClose={() => setLightbox(null)}
+          title="Photo preview"
+          titleVisuallyHidden
+          size="2xl"
+          className="rounded-[20px]"
         >
-          <div
-            className="bg-white rounded-[20px] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="relative flex-1 min-h-0">
+            <div className="-mx-6 -mt-2 mb-5">
               <Image
                 src={lightbox.image_url}
                 alt={lightbox.caption || "Inspiration"}
@@ -820,18 +828,12 @@ export default function MoodBoardPage() {
                 width={800}
                 height={600}
               />
-              <button
-                onClick={() => setLightbox(null)}
-                aria-label="Close preview"
-                className="absolute top-3 right-3 w-8 h-8 bg-white/90 hover:bg-white text-plum rounded-full text-[18px] flex items-center justify-center shadow transition"
-              >
-                &times;
-              </button>
             </div>
-            <div className="p-5 space-y-3">
+            <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-semibold text-muted uppercase">Caption</label>
+                <label htmlFor="lb-caption" className="text-[11px] font-semibold text-muted uppercase">Caption</label>
                 <input
+                  id="lb-caption"
                   type="text"
                   defaultValue={lightbox.caption || ""}
                   onBlur={(e) => updateCaption(lightbox.id, e.target.value)}
@@ -841,8 +843,9 @@ export default function MoodBoardPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="text-[11px] font-semibold text-muted uppercase">Board / Category</label>
+                  <label htmlFor="lb-category" className="text-[11px] font-semibold text-muted uppercase">Board / Category</label>
                   <select
+                    id="lb-category"
                     defaultValue={lightbox.category}
                     onChange={(e) => { updateCategory(lightbox.id, e.target.value); setLightbox({ ...lightbox, category: e.target.value }); }}
                     className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
@@ -853,8 +856,9 @@ export default function MoodBoardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-semibold text-muted uppercase">Where in your venue?</label>
+                  <label htmlFor="lb-location" className="text-[11px] font-semibold text-muted uppercase">Where in your venue?</label>
                   <select
+                    id="lb-location"
                     defaultValue={lightbox.location || ""}
                     onChange={(e) => { const val = e.target.value || null; updateLocation(lightbox.id, val); setLightbox({ ...lightbox, location: val }); }}
                     className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
@@ -868,7 +872,7 @@ export default function MoodBoardPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="text-[11px] font-semibold text-muted uppercase">Size on board</label>
+                  <span className="text-[11px] font-semibold text-muted uppercase">Size on board</span>
                   <div className="mt-1 inline-flex rounded-[10px] bg-lavender p-0.5">
                     {SIZE_OPTIONS.map((opt) => (
                       <button
@@ -885,7 +889,7 @@ export default function MoodBoardPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[11px] font-semibold text-muted uppercase">Colors in this image</label>
+                  <span className="text-[11px] font-semibold text-muted uppercase">Colors in this image</span>
                   {paletteLoading ? (
                     <p className="mt-1 text-[12px] text-muted">Pulling colors…</p>
                   ) : palette.length > 0 ? (
@@ -922,8 +926,9 @@ export default function MoodBoardPage() {
               </div>
               {vendors.length > 0 && (
                 <div>
-                  <label className="text-[11px] font-semibold text-muted uppercase">Linked Vendor</label>
+                  <label htmlFor="lb-vendor" className="text-[11px] font-semibold text-muted uppercase">Linked Vendor</label>
                   <select
+                    id="lb-vendor"
                     defaultValue={lightbox.vendor_id || ""}
                     onChange={(e) => { const val = e.target.value || null; updateVendor(lightbox.id, val); setLightbox({ ...lightbox, vendor_id: val }); }}
                     className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
@@ -964,8 +969,7 @@ export default function MoodBoardPage() {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       <ConfirmDialog

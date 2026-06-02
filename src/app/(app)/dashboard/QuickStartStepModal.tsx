@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { VENDOR_CATEGORIES, categoryLabel } from "@/lib/vendors/categories";
+import { Modal } from "@/components/Modal";
+import { Field } from "@/components/Field";
 import type { QuickStartStep } from "@/lib/onboarding/quick-start";
 
 type Props = {
@@ -21,27 +23,16 @@ type Props = {
  */
 export function QuickStartStepModal({ step, weddingId, onClose, onSaved }: Props) {
   return (
-    <div className="fixed inset-0 z-[60] bg-plum/50 flex items-start justify-center overflow-y-auto p-6">
-      <div className="bg-surface rounded-2xl max-w-md w-full my-10 overflow-hidden">
-        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-          <h2 className="text-[18px] text-plum">{step.label}</h2>
-          <button onClick={onClose} aria-label="Close" className="text-muted hover:text-plum text-xl leading-none px-1">
-            &times;
-          </button>
-        </div>
-        <div className="p-6">
-          <p className="text-[14px] text-muted">{step.description}</p>
-          <div className="mt-4">
-            <StepBody step={step} weddingId={weddingId} onSaved={onSaved} />
-          </div>
-          <div className="mt-5 border-t border-border/60 pt-3">
-            <Link href={step.href} className="text-[13px] font-semibold text-violet hover:text-soft-violet transition">
-              Open the full page →
-            </Link>
-          </div>
-        </div>
+    <Modal open onClose={onClose} title={step.label} description={step.description}>
+      <div className="mt-1">
+        <StepBody step={step} weddingId={weddingId} onSaved={onSaved} />
       </div>
-    </div>
+      <div className="mt-5 border-t border-border/60 pt-3">
+        <Link href={step.href} className="text-[13px] font-semibold text-violet hover:text-soft-violet transition">
+          Open the full page →
+        </Link>
+      </div>
+    </Modal>
   );
 }
 
@@ -90,13 +81,15 @@ function DateBody({ weddingId, onSaved }: { weddingId: string; onSaved: () => vo
 
   return (
     <div className="space-y-3">
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        className="w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
-        autoFocus
-      />
+      <Field label="Wedding date" labelHidden>
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+          autoFocus
+        />
+      </Field>
       <button onClick={save} disabled={!date || busy} className="btn-primary disabled:opacity-50">
         {busy ? "Saving…" : "Save date"}
       </button>
@@ -124,18 +117,23 @@ function BudgetBody({ weddingId, onSaved }: { weddingId: string; onSaved: () => 
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <span className="text-[15px] text-muted">$</span>
-        <input
-          type="number"
-          min="0"
-          value={budget}
-          onChange={(e) => setBudget(e.target.value)}
-          placeholder="e.g. 30000"
-          className="flex-1 rounded-[10px] border-border px-3 py-2 text-[15px]"
-          autoFocus
-        />
-      </div>
+      <Field label="Total budget (USD)" labelHidden>
+        {(p) => (
+          <div className="flex items-center gap-2">
+            <span className="text-[15px] text-muted">$</span>
+            <input
+              {...p}
+              type="number"
+              min="0"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+              placeholder="e.g. 30000"
+              className="flex-1 rounded-[10px] border-border px-3 py-2 text-[15px]"
+              autoFocus
+            />
+          </div>
+        )}
+      </Field>
       <button onClick={save} disabled={!budget || busy} className="btn-primary disabled:opacity-50">
         {busy ? "Saving…" : "Save budget"}
       </button>
@@ -171,20 +169,25 @@ function GuestsBody({ onSaved }: { onSaved: () => void }) {
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
-          placeholder="Guest name"
-          className="flex-1 rounded-[10px] border-border px-3 py-2 text-[15px]"
-          autoFocus
-        />
-        <button onClick={add} disabled={!name.trim() || busy} className="btn-secondary disabled:opacity-50">
-          Add
-        </button>
-      </div>
+      <Field label="Guest name" labelHidden>
+        {(p) => (
+          <div className="flex gap-2">
+            <input
+              {...p}
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
+              placeholder="Guest name"
+              className="flex-1 rounded-[10px] border-border px-3 py-2 text-[15px]"
+              autoFocus
+            />
+            <button onClick={add} disabled={!name.trim() || busy} className="btn-secondary disabled:opacity-50">
+              Add
+            </button>
+          </div>
+        )}
+      </Field>
       {added > 0 && (
         <p className="text-[13px] text-confirmed-text">
           {added} guest{added === 1 ? "" : "s"} added.
@@ -226,24 +229,28 @@ function VendorsBody({ onSaved }: { onSaved: () => void }) {
 
   return (
     <div className="space-y-3">
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="e.g. Sunset Gardens Venue"
-        className="w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
-        autoFocus
-      />
-      <select
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        className="w-full rounded-[10px] border-border bg-white px-3 py-2 text-[15px]"
-      >
-        <option value="" disabled>Choose a category…</option>
-        {VENDOR_CATEGORIES.map((c) => (
-          <option key={c} value={c}>{categoryLabel(c)}</option>
-        ))}
-      </select>
+      <Field label="Vendor name" labelHidden>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Sunset Gardens Venue"
+          className="w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
+          autoFocus
+        />
+      </Field>
+      <Field label="Vendor category" labelHidden>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full rounded-[10px] border-border bg-white px-3 py-2 text-[15px]"
+        >
+          <option value="" disabled>Choose a category…</option>
+          {VENDOR_CATEGORIES.map((c) => (
+            <option key={c} value={c}>{categoryLabel(c)}</option>
+          ))}
+        </select>
+      </Field>
       <button onClick={add} disabled={!name.trim() || !category || busy} className="btn-secondary disabled:opacity-50">
         Add vendor
       </button>

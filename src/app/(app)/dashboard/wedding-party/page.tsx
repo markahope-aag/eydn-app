@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useId } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
@@ -72,6 +72,19 @@ export default function WeddingPartyPage() {
   const photoRef = useRef<HTMLInputElement>(null);
   const photoTargetId = useRef<string | null>(null);
   const attireTimer = useRef<ReturnType<typeof setTimeout>>(null);
+  // Stable ids for the add-form and shared-note controls so every <label>
+  // ties to its control via htmlFor/id. Per-member rows derive ids from the
+  // member id (see the member list) to stay unique across the list.
+  const fid = useId();
+  const ids = {
+    name: `${fid}-name`,
+    role: `${fid}-role`,
+    email: `${fid}-email`,
+    phone: `${fid}-phone`,
+    job: `${fid}-job`,
+    attire: `${fid}-attire`,
+    sharedAttire: `${fid}-shared-attire`,
+  };
 
   useEffect(() => {
     Promise.all([
@@ -266,6 +279,7 @@ export default function WeddingPartyPage() {
           <div className="flex gap-3 px-4 py-3">
             <input
               type="text"
+              aria-label="Name"
               placeholder="Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -274,6 +288,7 @@ export default function WeddingPartyPage() {
               autoFocus
             />
             <select
+              aria-label="Role"
               value={role}
               onChange={(e) => setRole(e.target.value)}
               className="rounded-[10px] border-border px-3 py-2 text-[15px]"
@@ -301,8 +316,9 @@ export default function WeddingPartyPage() {
               </p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="text-[12px] font-semibold text-muted">Email</label>
+                  <label htmlFor={ids.email} className="text-[12px] font-semibold text-muted">Email</label>
                   <input
+                    id={ids.email}
                     type="email"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
@@ -311,8 +327,9 @@ export default function WeddingPartyPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[12px] font-semibold text-muted">Phone</label>
+                  <label htmlFor={ids.phone} className="text-[12px] font-semibold text-muted">Phone</label>
                   <input
+                    id={ids.phone}
                     type="tel"
                     value={newPhone}
                     onChange={(e) => setNewPhone(e.target.value)}
@@ -321,8 +338,9 @@ export default function WeddingPartyPage() {
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-[12px] font-semibold text-muted">Day-of Job Assignment</label>
+                  <label htmlFor={ids.job} className="text-[12px] font-semibold text-muted">Day-of Job Assignment</label>
                   <input
+                    id={ids.job}
                     type="text"
                     value={newJobAssignment}
                     onChange={(e) => setNewJobAssignment(e.target.value)}
@@ -331,8 +349,9 @@ export default function WeddingPartyPage() {
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-[12px] font-semibold text-muted">Attire</label>
+                  <label htmlFor={ids.attire} className="text-[12px] font-semibold text-muted">Attire</label>
                   <input
+                    id={ids.attire}
                     type="text"
                     value={newAttire}
                     onChange={(e) => setNewAttire(e.target.value)}
@@ -349,9 +368,10 @@ export default function WeddingPartyPage() {
       {/* Shared attire note */}
       {members.length > 0 && (
         <div className="mt-4 card p-4">
-          <label className="text-[12px] font-semibold text-muted">Shared Attire Note</label>
+          <label htmlFor={ids.sharedAttire} className="text-[12px] font-semibold text-muted">Shared Attire Note</label>
           <p className="text-[11px] text-muted mt-0.5 mb-2">A note visible to everyone — e.g. &quot;Left side: Dusty Rose floor-length, Right side: Navy suit&quot;</p>
           <textarea
+            id={ids.sharedAttire}
             value={sharedAttireNote}
             onChange={(e) => handleSharedAttireChange(e.target.value)}
             placeholder="e.g. Left side: Dusty Rose floor-length dress from Azazie. Right side: Navy suit with blush tie."
@@ -447,13 +467,21 @@ export default function WeddingPartyPage() {
               const currentJobs = member.job_assignment || "";
               const jobList = currentJobs ? currentJobs.split(", ").filter(Boolean) : [];
               const hasCustomJob = jobList.some((j) => !DAY_OF_JOBS.includes(j));
+              // Per-member ids keep htmlFor/id unique across the list.
+              const rowIds = {
+                role: `member-${member.id}-role`,
+                email: `member-${member.id}-email`,
+                phone: `member-${member.id}-phone`,
+                attire: `member-${member.id}-attire`,
+              };
 
               return (
               <div className="border-t border-border px-4 py-4 bg-lavender/20">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="sm:col-span-2">
-                    <label className="text-[12px] font-semibold text-muted">Role</label>
+                    <label htmlFor={rowIds.role} className="text-[12px] font-semibold text-muted">Role</label>
                     <select
+                      id={rowIds.role}
                       value={member.role}
                       onChange={(e) => updateField(member.id, "role", e.target.value)}
                       className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
@@ -467,8 +495,9 @@ export default function WeddingPartyPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-[12px] font-semibold text-muted">Email</label>
+                    <label htmlFor={rowIds.email} className="text-[12px] font-semibold text-muted">Email</label>
                     <input
+                      id={rowIds.email}
                       type="email"
                       defaultValue={member.email || ""}
                       onBlur={(e) => updateField(member.id, "email", e.target.value || null)}
@@ -477,8 +506,9 @@ export default function WeddingPartyPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-[12px] font-semibold text-muted">Phone</label>
+                    <label htmlFor={rowIds.phone} className="text-[12px] font-semibold text-muted">Phone</label>
                     <input
+                      id={rowIds.phone}
                       type="tel"
                       defaultValue={member.phone || ""}
                       onBlur={(e) => updateField(member.id, "phone", e.target.value || null)}
@@ -491,11 +521,11 @@ export default function WeddingPartyPage() {
                   <div className="sm:col-span-2">
                     <label className="text-[12px] font-semibold text-muted">Mailing Address <Tooltip text="Used for shipping rehearsal dinner invites, thank-you cards, or attendant gifts." /></label>
                     <div className="mt-1 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                      <input type="text" defaultValue={member.address_line1 || ""} onBlur={(e) => updateField(member.id, "address_line1", e.target.value || null)} placeholder="Street address" className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
-                      <input type="text" defaultValue={member.address_line2 || ""} onBlur={(e) => updateField(member.id, "address_line2", e.target.value || null)} placeholder="Apt, suite, etc." className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
-                      <input type="text" defaultValue={member.city || ""} onBlur={(e) => updateField(member.id, "city", e.target.value || null)} placeholder="City" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" />
-                      <input type="text" defaultValue={member.state || ""} onBlur={(e) => updateField(member.id, "state", e.target.value || null)} placeholder="State" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={2} />
-                      <input type="text" defaultValue={member.zip || ""} onBlur={(e) => updateField(member.id, "zip", e.target.value || null)} placeholder="ZIP" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={10} />
+                      <input type="text" aria-label="Street address" defaultValue={member.address_line1 || ""} onBlur={(e) => updateField(member.id, "address_line1", e.target.value || null)} placeholder="Street address" className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
+                      <input type="text" aria-label="Apartment, suite, etc." defaultValue={member.address_line2 || ""} onBlur={(e) => updateField(member.id, "address_line2", e.target.value || null)} placeholder="Apt, suite, etc." className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
+                      <input type="text" aria-label="City" defaultValue={member.city || ""} onBlur={(e) => updateField(member.id, "city", e.target.value || null)} placeholder="City" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" />
+                      <input type="text" aria-label="State" defaultValue={member.state || ""} onBlur={(e) => updateField(member.id, "state", e.target.value || null)} placeholder="State" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={2} />
+                      <input type="text" aria-label="ZIP" defaultValue={member.zip || ""} onBlur={(e) => updateField(member.id, "zip", e.target.value || null)} placeholder="ZIP" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={10} />
                     </div>
                   </div>
 
@@ -523,6 +553,7 @@ export default function WeddingPartyPage() {
                       {/* Custom job input */}
                       <input
                         type="text"
+                        aria-label="Custom day-of job"
                         defaultValue={hasCustomJob ? jobList.filter((j) => !DAY_OF_JOBS.includes(j)).join(", ") : ""}
                         onBlur={(e) => {
                           const standardJobs = jobList.filter((j) => DAY_OF_JOBS.includes(j));
@@ -538,11 +569,12 @@ export default function WeddingPartyPage() {
 
                   {/* Attire — individual note */}
                   <div className="sm:col-span-2">
-                    <label className="text-[12px] font-semibold text-muted">Attire Note <Tooltip text="Individual attire details for this person — size, alterations, pickup dates. The shared note above applies to everyone." wide /></label>
+                    <label htmlFor={rowIds.attire} className="text-[12px] font-semibold text-muted">Attire Note <Tooltip text="Individual attire details for this person — size, alterations, pickup dates. The shared note above applies to everyone." wide /></label>
                     {sharedAttireNote && (
                       <p className="text-[11px] text-muted mt-0.5">Shared: {sharedAttireNote}</p>
                     )}
                     <input
+                      id={rowIds.attire}
                       type="text"
                       defaultValue={member.attire || ""}
                       onBlur={(e) => updateField(member.id, "attire", e.target.value || null)}

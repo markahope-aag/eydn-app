@@ -742,8 +742,9 @@ export default function GuestsPage() {
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div>
-                <label className="text-[12px] font-semibold text-muted">Role <Tooltip text="Categorize guests as Family, Friend, Wedding Party, Coworker, Plus One, or Other. Roles help you filter and organize your guest list." wide /></label>
+                <label htmlFor="add-role" className="text-[12px] font-semibold text-muted">Role <Tooltip text="Categorize guests as Family, Friend, Wedding Party, Coworker, Plus One, or Other. Roles help you filter and organize your guest list." wide /></label>
                 <select
+                  id="add-role"
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
                   className="mt-1 w-full rounded-[10px] border-border px-3 py-1.5 text-[15px]"
@@ -752,8 +753,9 @@ export default function GuestsPage() {
                 </select>
               </div>
               <div>
-                <label className="text-[12px] font-semibold text-muted">Meal Preference <Tooltip text="Record dietary needs or meal choices for each guest. This integrates with your catering planning to ensure accurate headcounts per meal type." wide /></label>
+                <label htmlFor="add-meal" className="text-[12px] font-semibold text-muted">Meal Preference <Tooltip text="Record dietary needs or meal choices for each guest. This integrates with your catering planning to ensure accurate headcounts per meal type." wide /></label>
                 <input
+                  id="add-meal"
                   type="text"
                   value={newMeal}
                   onChange={(e) => setNewMeal(e.target.value)}
@@ -762,8 +764,9 @@ export default function GuestsPage() {
                 />
               </div>
               <div>
-                <label className="text-[12px] font-semibold text-muted">Phone</label>
+                <label htmlFor="add-phone" className="text-[12px] font-semibold text-muted">Phone</label>
                 <input
+                  id="add-phone"
                   type="tel"
                   value={newPhone}
                   onChange={(e) => setNewPhone(e.target.value)}
@@ -772,8 +775,9 @@ export default function GuestsPage() {
                 />
               </div>
               <div>
-                <label className="text-[12px] font-semibold text-muted">Group <Tooltip text="Use groups to organize related guests together, such as family units, friend circles, or work colleagues. Groups make it easy to manage seating and send batch updates." wide /></label>
+                <label htmlFor="add-group" className="text-[12px] font-semibold text-muted">Group <Tooltip text="Use groups to organize related guests together, such as family units, friend circles, or work colleagues. Groups make it easy to manage seating and send batch updates." wide /></label>
                 <input
+                  id="add-group"
                   type="text"
                   value={newGroup}
                   onChange={(e) => setNewGroup(e.target.value)}
@@ -782,13 +786,13 @@ export default function GuestsPage() {
                 />
               </div>
               <div className="sm:col-span-2 lg:col-span-3">
-                <label className="text-[12px] font-semibold text-muted">Mailing Address</label>
+                <span className="text-[12px] font-semibold text-muted">Mailing Address</span>
                 <div className="mt-1 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                  <input type="text" value={newAddr1} onChange={(e) => setNewAddr1(e.target.value)} placeholder="Street address" aria-label="Street address" className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
-                  <input type="text" value={newAddr2} onChange={(e) => setNewAddr2(e.target.value)} placeholder="Apt, suite, etc." aria-label="Apartment, suite, etc." className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
-                  <input type="text" value={newCity} onChange={(e) => setNewCity(e.target.value)} placeholder="City" aria-label="City" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" />
-                  <input type="text" value={newState} onChange={(e) => setNewState(e.target.value)} placeholder="State" aria-label="State" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={2} />
-                  <input type="text" value={newZip} onChange={(e) => setNewZip(e.target.value)} placeholder="ZIP" aria-label="ZIP code" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={10} />
+                  <input id="add-addr1" type="text" value={newAddr1} onChange={(e) => setNewAddr1(e.target.value)} placeholder="Street address" aria-label="Street address" className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
+                  <input id="add-addr2" type="text" value={newAddr2} onChange={(e) => setNewAddr2(e.target.value)} placeholder="Apt, suite, etc." aria-label="Apartment, suite, etc." className="rounded-[10px] border-border px-3 py-1.5 text-[15px] sm:col-span-2" />
+                  <input id="add-city" type="text" value={newCity} onChange={(e) => setNewCity(e.target.value)} placeholder="City" aria-label="City" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" />
+                  <input id="add-state" type="text" value={newState} onChange={(e) => setNewState(e.target.value)} placeholder="State" aria-label="State" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={2} />
+                  <input id="add-zip" type="text" value={newZip} onChange={(e) => setNewZip(e.target.value)} placeholder="ZIP" aria-label="ZIP code" className="rounded-[10px] border-border px-3 py-1.5 text-[15px]" maxLength={10} />
                 </div>
               </div>
             </div>

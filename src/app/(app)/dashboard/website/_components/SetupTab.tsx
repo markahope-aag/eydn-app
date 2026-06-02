@@ -234,15 +234,15 @@ export function SetupTab({
         Pick a URL, add your details and photos below, then publish when you&apos;re ready. Everything saves automatically as you go.
       </p>
       <div>
-        <label className="text-[13px] font-semibold text-muted block mb-1">
+        <label htmlFor="website-slug" className="text-[13px] font-semibold text-muted block mb-1">
           Website URL <Tooltip text="This is the public link to your wedding website. Share it with guests so they can view details, RSVP, and upload photos." wide />
         </label>
         <div className="flex items-center gap-2">
           <span className="text-[13px] text-muted">eydn.app/w/</span>
           <input
+            id="website-slug"
             type="text"
             value={slug}
-            aria-label="Wedding website URL slug"
             onChange={(e) => {
               const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
               handleSlugChange(val);

@@ -851,16 +851,17 @@ export default function SeatingPage() {
                         onMouseDown={(e) => e.stopPropagation()}
                       >
                         <div>
-                          <label className="text-[11px] font-semibold text-muted">Table Name</label>
+                          <label htmlFor={`table-name-${table.id}`} className="text-[11px] font-semibold text-muted">Table Name</label>
                           <input
+                            id={`table-name-${table.id}`}
                             type="text"
                             value={table.name || ""}
                             onChange={(e) => updateTable(table.id, { name: e.target.value })}
                             className="mt-0.5 w-full rounded-[8px] border-border px-2 py-1 text-[13px]"
                           />
                         </div>
-                        <div>
-                          <label className="text-[11px] font-semibold text-muted">Shape</label>
+                        <div role="group" aria-labelledby={`table-shape-${table.id}`}>
+                          <span id={`table-shape-${table.id}`} className="text-[11px] font-semibold text-muted">Shape</span>
                           <div className="flex gap-1 mt-0.5">
                             <button
                               onClick={() => updateTable(table.id, { shape: "round" })}
@@ -876,8 +877,8 @@ export default function SeatingPage() {
                             </button>
                           </div>
                         </div>
-                        <div>
-                          <label className="text-[11px] font-semibold text-muted">Seats</label>
+                        <div role="group" aria-labelledby={`table-seats-${table.id}`}>
+                          <span id={`table-seats-${table.id}`} className="text-[11px] font-semibold text-muted">Seats</span>
                           <div className="flex items-center gap-2 mt-0.5">
                             <button
                               onClick={() => updateTable(table.id, { capacity: Math.max(1, table.capacity - 1) })}
@@ -899,8 +900,8 @@ export default function SeatingPage() {
                         </div>
                         {/* Seated guests list with seat assignment and remove */}
                         {tableGuests.length > 0 && (
-                          <div>
-                            <label className="text-[11px] font-semibold text-muted">Seated</label>
+                          <div role="group" aria-labelledby={`table-seated-${table.id}`}>
+                            <span id={`table-seated-${table.id}`} className="text-[11px] font-semibold text-muted">Seated</span>
                             <div className="mt-1 space-y-2">
                               {tableGuests.map((g) => {
                                 const assignment = assignments.find((a) => a.guest_id === g.id);
@@ -1221,9 +1222,10 @@ export default function SeatingPage() {
 
             {/* Add officiant */}
             <div className="mb-4">
-              <label className="text-[12px] font-semibold text-muted">Officiant</label>
+              <label htmlFor="ceremony-officiant" className="text-[12px] font-semibold text-muted">Officiant</label>
               <div className="mt-1 flex gap-2 flex-wrap">
                 <input
+                  id="ceremony-officiant"
                   type="text"
                   value={officiantName}
                   onChange={(e) => setOfficiantName(e.target.value)}
@@ -1246,14 +1248,16 @@ export default function SeatingPage() {
             </div>
 
             {/* Add to ceremony sides */}
-            <div>
-              <label className="text-[12px] font-semibold text-muted">Add a person</label>
+            <div role="group" aria-labelledby="ceremony-add-person-label">
+              <label id="ceremony-add-person-label" htmlFor="ceremony-add-name" className="text-[12px] font-semibold text-muted">Add a person</label>
               <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <input
+                  id="ceremony-add-name"
                   type="text"
                   value={ceremonyAddName}
                   onChange={(e) => setCeremonyAddName(e.target.value)}
                   placeholder="Name"
+                  aria-label="Name"
                   className="rounded-[8px] border-border px-3 py-2 text-[14px]"
                 />
                 <input
@@ -1261,6 +1265,7 @@ export default function SeatingPage() {
                   value={ceremonyAddRole}
                   onChange={(e) => setCeremonyAddRole(e.target.value)}
                   placeholder="Role (e.g. Attendant, Reader)"
+                  aria-label="Role"
                   className="rounded-[8px] border-border px-3 py-2 text-[14px]"
                 />
               </div>

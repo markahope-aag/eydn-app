@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { Tooltip } from "@/components/Tooltip";
@@ -74,6 +74,21 @@ export default function RehearsalDinnerPage() {
   // Bumped after a Google lookup so the venue/address inputs remount and
   // pick up the new values (they're uncontrolled / defaultValue).
   const [formVersion, setFormVersion] = useState(0);
+  // Stable ids so every <label> ties to its control via htmlFor/id.
+  const fid = useId();
+  const ids = {
+    venue: `${fid}-venue`,
+    date: `${fid}-date`,
+    time: `${fid}-time`,
+    address: `${fid}-address`,
+    hostedBy: `${fid}-hosted-by`,
+    dressCode: `${fid}-dress-code`,
+    notes: `${fid}-notes`,
+    capacity: `${fid}-capacity`,
+    timelineTime: `${fid}-timeline-time`,
+    timelineEvent: `${fid}-timeline-event`,
+    guestSearch: `${fid}-guest-search`,
+  };
 
   useEffect(() => {
     Promise.all([
@@ -308,8 +323,9 @@ export default function RehearsalDinnerPage() {
         <h2 className="text-[16px] font-semibold text-plum">Venue Details</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <label className="text-[12px] font-semibold text-muted">Venue Name</label>
+            <label htmlFor={ids.venue} className="text-[12px] font-semibold text-muted">Venue Name</label>
             <input
+              id={ids.venue}
               key={`venue-${formVersion}`}
               type="text"
               defaultValue={data.venue || ""}
@@ -327,8 +343,9 @@ export default function RehearsalDinnerPage() {
             </button>
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Date <Tooltip text="This date is automatically set to the night before your wedding when your wedding date changes. You can override it, but we'll warn you if it seems off." /></label>
+            <label htmlFor={ids.date} className="text-[12px] font-semibold text-muted">Date <Tooltip text="This date is automatically set to the night before your wedding when your wedding date changes. You can override it, but we'll warn you if it seems off." /></label>
             <input
+              id={ids.date}
               type="date"
               defaultValue={data.date || ""}
               onChange={(e) => updateField("date", e.target.value || null)}
@@ -348,8 +365,9 @@ export default function RehearsalDinnerPage() {
             )}
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Start Time <Tooltip text="Set your dinner start time to generate a suggested timeline. You can customize it after." /></label>
+            <label htmlFor={ids.time} className="text-[12px] font-semibold text-muted">Start Time <Tooltip text="Set your dinner start time to generate a suggested timeline. You can customize it after." /></label>
             <input
+              id={ids.time}
               type="time"
               defaultValue={data.time || ""}
               onChange={(e) => updateField("time", e.target.value || null)}
@@ -357,8 +375,9 @@ export default function RehearsalDinnerPage() {
             />
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Address</label>
+            <label htmlFor={ids.address} className="text-[12px] font-semibold text-muted">Address</label>
             <input
+              id={ids.address}
               key={`address-${formVersion}`}
               type="text"
               defaultValue={data.address || ""}
@@ -368,8 +387,9 @@ export default function RehearsalDinnerPage() {
             />
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Hosted By <Tooltip text="Traditionally hosted by the parents of one partner, but anyone can host. This appears on the printed version." /></label>
+            <label htmlFor={ids.hostedBy} className="text-[12px] font-semibold text-muted">Hosted By <Tooltip text="Traditionally hosted by the parents of one partner, but anyone can host. This appears on the printed version." /></label>
             <input
+              id={ids.hostedBy}
               type="text"
               defaultValue={data.hosted_by || ""}
               onBlur={(e) => updateField("hosted_by", e.target.value || null)}
@@ -378,8 +398,9 @@ export default function RehearsalDinnerPage() {
             />
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Dress Code <Tooltip text="Share this with your guests so they know what to wear. Common options: smart casual, cocktail, semi-formal." /></label>
+            <label htmlFor={ids.dressCode} className="text-[12px] font-semibold text-muted">Dress Code <Tooltip text="Share this with your guests so they know what to wear. Common options: smart casual, cocktail, semi-formal." /></label>
             <input
+              id={ids.dressCode}
               type="text"
               defaultValue={data.dress_code || ""}
               onBlur={(e) => updateField("dress_code", e.target.value || null)}
@@ -389,8 +410,9 @@ export default function RehearsalDinnerPage() {
           </div>
         </div>
         <div>
-          <label className="text-[12px] font-semibold text-muted">Notes</label>
+          <label htmlFor={ids.notes} className="text-[12px] font-semibold text-muted">Notes</label>
           <textarea
+            id={ids.notes}
             defaultValue={data.notes || ""}
             onBlur={(e) => updateField("notes", e.target.value || null)}
             placeholder="Menu selections, seating arrangements, special requests..."
@@ -447,6 +469,7 @@ export default function RehearsalDinnerPage() {
         <div className="flex gap-2">
           <input
             type="text"
+            aria-label="Timeline event time"
             value={newTimelineTime}
             onChange={(e) => setNewTimelineTime(e.target.value)}
             placeholder="e.g. 6:30 PM"
@@ -454,6 +477,7 @@ export default function RehearsalDinnerPage() {
           />
           <input
             type="text"
+            aria-label="Timeline event description"
             value={newTimelineEvent}
             onChange={(e) => setNewTimelineEvent(e.target.value)}
             placeholder="Event (e.g. Guests arrive)"
@@ -487,8 +511,9 @@ export default function RehearsalDinnerPage() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-[11px] text-muted">Capacity: <Tooltip text="How many guests the venue can seat. We'll warn you if your guest list exceeds this." /></label>
+            <label htmlFor={ids.capacity} className="text-[11px] text-muted">Capacity: <Tooltip text="How many guests the venue can seat. We'll warn you if your guest list exceeds this." /></label>
             <input
+              id={ids.capacity}
               type="number"
               defaultValue={data.capacity || ""}
               onBlur={(e) => updateField("capacity", e.target.value ? Number(e.target.value) : null)}
@@ -519,6 +544,7 @@ export default function RehearsalDinnerPage() {
                 <span className="text-[14px] text-plum font-medium flex-1">{guest.name}</span>
                 <select
                   value={guest.rsvp}
+                  aria-label={`RSVP status for ${guest.name}`}
                   onChange={(e) => updateGuestRsvp(i, e.target.value as "pending" | "accepted" | "declined")}
                   className={`rounded-full px-2 py-0.5 text-[12px] font-semibold border-0 cursor-pointer ${RSVP_BADGE[guest.rsvp] || ""}`}
                 >
@@ -548,6 +574,7 @@ export default function RehearsalDinnerPage() {
             <div className="relative flex-1">
               <input
                 type="text"
+                aria-label="Search your guest list"
                 value={guestSearch}
                 onChange={(e) => { setGuestSearch(e.target.value); setShowGuestDropdown(true); }}
                 onFocus={() => setShowGuestDropdown(true)}

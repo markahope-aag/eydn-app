@@ -90,6 +90,7 @@ export function ScheduleTab({
               <input
                 type="text"
                 value={item.time}
+                aria-label={`Schedule item ${i + 1} time`}
                 onChange={(e) => {
                   const updated = [...schedule];
                   updated[i] = { ...updated[i], time: e.target.value };
@@ -102,6 +103,7 @@ export function ScheduleTab({
               <input
                 type="text"
                 value={item.event}
+                aria-label={`Schedule item ${i + 1} description`}
                 onChange={(e) => {
                   const updated = [...schedule];
                   updated[i] = { ...updated[i], event: e.target.value };
@@ -180,6 +182,7 @@ export function ScheduleTab({
               <input
                 type="text"
                 value={hotel.name}
+                aria-label={`Hotel ${i + 1} name`}
                 onChange={(e) => updateHotel(i, { name: e.target.value })}
                 placeholder="Hotel name"
                 className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] font-semibold focus:outline-none focus:ring-2 focus:ring-violet/30"
@@ -188,6 +191,7 @@ export function ScheduleTab({
                 <input
                   type="url"
                   value={hotel.url || ""}
+                  aria-label={`Hotel ${i + 1} booking link`}
                   onChange={(e) => updateHotel(i, { url: e.target.value })}
                   placeholder="Booking link (https://...)"
                   className="rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
@@ -195,6 +199,7 @@ export function ScheduleTab({
                 <input
                   type="text"
                   value={hotel.discountCode || ""}
+                  aria-label={`Hotel ${i + 1} group rate or discount code`}
                   onChange={(e) => updateHotel(i, { discountCode: e.target.value })}
                   placeholder="Group rate / discount code"
                   className="rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
@@ -202,6 +207,7 @@ export function ScheduleTab({
               </div>
               <textarea
                 value={hotel.notes || ""}
+                aria-label={`Hotel ${i + 1} notes`}
                 onChange={(e) => updateHotel(i, { notes: e.target.value })}
                 placeholder="Notes — distance from venue, shuttle, booking deadline..."
                 rows={2}
@@ -236,6 +242,7 @@ export function ScheduleTab({
               <input
                 type="text"
                 value={item.question}
+                aria-label={`FAQ ${i + 1} question`}
                 onChange={(e) => {
                   const updated = [...faq];
                   updated[i] = { ...updated[i], question: e.target.value };
@@ -247,6 +254,7 @@ export function ScheduleTab({
               />
               <textarea
                 value={item.answer}
+                aria-label={`FAQ ${i + 1} answer`}
                 onChange={(e) => {
                   const updated = [...faq];
                   updated[i] = { ...updated[i], answer: e.target.value };

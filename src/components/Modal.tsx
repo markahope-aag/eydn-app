@@ -32,6 +32,11 @@ interface ModalProps {
   initialFocusRef?: RefObject<HTMLElement | null>;
   /** Extra classes on the panel. */
   className?: string;
+  /**
+   * Extra classes on the full-screen overlay — mainly to raise the z-index when
+   * a dialog must stack above another open dialog (defaults to z-50).
+   */
+  overlayClassName?: string;
 }
 
 /**
@@ -54,6 +59,7 @@ export function Modal({
   titleVisuallyHidden = false,
   initialFocusRef,
   className = "",
+  overlayClassName = "",
 }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -108,7 +114,7 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      className={`fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 ${overlayClassName}`}
       onClick={onClose}
       aria-hidden="true"
     >
