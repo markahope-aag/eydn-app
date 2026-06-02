@@ -38,7 +38,7 @@ export function WebsiteNudgeCard({ summary }: WebsiteNudgeCardProps) {
       <p className="mt-2 text-[13px] text-muted">
         {doneCount} of {totalCount} sections ready
         {overdueCount > 0 && (
-          <span className="font-semibold text-amber-600">
+          <span className="font-semibold text-amber-700">
             {" "}
             &middot; {overdueCount} {overdueCount === 1 ? "needs" : "need"} attention
           </span>

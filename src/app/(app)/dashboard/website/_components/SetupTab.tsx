@@ -272,7 +272,7 @@ export function SetupTab({
       {enabled ? (
         <div className="rounded-[14px] border border-emerald-200 bg-emerald-50/60 p-4">
           <p className="text-[15px] font-semibold text-plum flex items-center gap-1.5">
-            <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <svg className="w-4 h-4 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
             Your website is live

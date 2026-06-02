@@ -418,7 +418,7 @@ export default function MoodBoardPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sort_order: it.sort_order }),
-      }).catch(() => {});
+      }).catch((e) => console.error("[mood-board] reorder sync failed", e));
     });
   }
 

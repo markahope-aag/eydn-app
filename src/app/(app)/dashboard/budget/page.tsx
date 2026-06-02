@@ -613,7 +613,7 @@ export default function BudgetPage() {
                   <p className="text-[11px] text-muted mt-1">
                     Suggested: ~{recommendedPct}% (${recommendedAmt.toLocaleString()})
                     {catEstimated > 0 && catEstimated > recommendedAmt * 1.25 && (
-                      <span className="text-amber-600 ml-1">— above typical range</span>
+                      <span className="text-amber-700 ml-1">— above typical range</span>
                     )}
                   </p>
                 )}
@@ -708,7 +708,7 @@ export default function BudgetPage() {
                         const cost = exp.final_cost ?? exp.estimated ?? 0;
                         const left = Math.max(0, cost - (exp.amount_paid || 0));
                         return (
-                          <span className={`text-[15px] font-semibold ${left === 0 ? "text-emerald-600" : "text-plum"}`}>
+                          <span className={`text-[15px] font-semibold ${left === 0 ? "text-emerald-700" : "text-plum"}`}>
                             ${left.toLocaleString()}
                           </span>
                         );

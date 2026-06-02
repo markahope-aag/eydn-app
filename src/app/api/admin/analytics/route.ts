@@ -70,32 +70,25 @@ export async function GET() {
     .map(([week, ids]) => ({ week, count: ids.size }))
     .sort((a, b) => a.week.localeCompare(b.week));
 
-  // --- Onboarding funnel ---
-  const { count: signedUp } = await supabase
-    .from("weddings")
-    .select("*", { count: "exact", head: true });
-
-  const { count: completedOnboarding } = await supabase
-    .from("questionnaire_responses")
-    .select("*", { count: "exact", head: true })
-    .eq("completed", true);
-
-  const { count: startedOnboarding } = await supabase
-    .from("questionnaire_responses")
-    .select("*", { count: "exact", head: true });
-
-  // Weddings with at least 1 vendor (exclude deleted)
-  const { data: vendorWeddings } = await supabase
-    .from("vendors")
-    .select("wedding_id")
-    .is("deleted_at", null);
+  // --- Onboarding funnel (all five queries are independent — run in parallel) ---
+  const [
+    { count: signedUp },
+    { count: completedOnboarding },
+    { count: startedOnboarding },
+    { data: vendorWeddings },
+    { data: guestWeddings },
+  ] = await Promise.all([
+    supabase.from("weddings").select("*", { count: "exact", head: true }),
+    supabase
+      .from("questionnaire_responses")
+      .select("*", { count: "exact", head: true })
+      .eq("completed", true),
+    supabase.from("questionnaire_responses").select("*", { count: "exact", head: true }),
+    // Weddings with at least 1 vendor / guest (exclude deleted)
+    supabase.from("vendors").select("wedding_id").is("deleted_at", null),
+    supabase.from("guests").select("wedding_id").is("deleted_at", null),
+  ]);
   const uniqueVendorWeddings = new Set((vendorWeddings || []).map((r: { wedding_id: string }) => r.wedding_id));
-
-  // Weddings with at least 1 guest (exclude deleted)
-  const { data: guestWeddings } = await supabase
-    .from("guests")
-    .select("wedding_id")
-    .is("deleted_at", null);
   const uniqueGuestWeddings = new Set((guestWeddings || []).map((r: { wedding_id: string }) => r.wedding_id));
 
   const funnel = {

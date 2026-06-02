@@ -145,11 +145,11 @@ function StatCard({ label, value, warn }: { label: string; value: string; warn?:
   return (
     <div className={`card p-4 ${warn ? "border-amber-400 border-2" : ""}`}>
       <p className="text-[12px] text-muted">{label}</p>
-      <p className={`text-[22px] font-semibold mt-1 ${warn ? "text-amber-600" : "text-violet"}`}>
+      <p className={`text-[22px] font-semibold mt-1 ${warn ? "text-amber-700" : "text-violet"}`}>
         {value}
       </p>
       {warn && (
-        <p className="text-[11px] text-amber-600 font-medium mt-1">Needs attention</p>
+        <p className="text-[11px] text-amber-700 font-medium mt-1">Needs attention</p>
       )}
     </div>
   );

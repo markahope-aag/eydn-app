@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { usePremium } from "@/components/PremiumGate";
+import { formatLongDate } from "@/lib/date-utils";
 
 type Scheduled = {
   id: string;
@@ -11,18 +12,6 @@ type Scheduled = {
   scheduled_for: string;
   status: string;
 } | null;
-
-function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  } catch {
-    return iso.slice(0, 10);
-  }
-}
 
 export default function SaveCardCard() {
   const { loaded, isTrialing, trialDaysLeft, isPaid } = usePremium();
@@ -107,7 +96,7 @@ export default function SaveCardCard() {
 
   // State 1 — card already saved, scheduled to convert
   if (scheduled) {
-    const dateLabel = formatDate(scheduled.scheduled_for);
+    const dateLabel = formatLongDate(scheduled.scheduled_for);
     const planLabel =
       scheduled.plan === "lifetime" ? "$79 one-time" : "$14.99 / month";
     return (

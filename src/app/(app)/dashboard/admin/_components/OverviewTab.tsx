@@ -83,12 +83,12 @@ export default function OverviewTab({
           <div className="bg-emerald-50 rounded-[12px] p-4 text-center">
             <p className="text-[12px] font-semibold text-emerald-700">Active Trials</p>
             <p className="text-[28px] font-bold text-emerald-700 mt-1">{stats.trials_active}</p>
-            <p className="text-[11px] text-emerald-600 mt-1">Within 14-day window</p>
+            <p className="text-[11px] text-emerald-700 mt-1">Within 14-day window</p>
           </div>
           <div className="bg-amber-50 rounded-[12px] p-4 text-center">
             <p className="text-[12px] font-semibold text-amber-700">Expired (No Purchase)</p>
             <p className="text-[28px] font-bold text-amber-700 mt-1">{stats.trials_expired_unconverted}</p>
-            <p className="text-[11px] text-amber-600 mt-1">Trial ended without converting</p>
+            <p className="text-[11px] text-amber-700 mt-1">Trial ended without converting</p>
           </div>
           <div className="bg-violet/10 rounded-[12px] p-4 text-center">
             <p className="text-[12px] font-semibold text-violet">Paid Subscriptions</p>

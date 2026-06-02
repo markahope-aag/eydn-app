@@ -1,4 +1,19 @@
 /**
+ * Format an ISO date or timestamp as a long US date, e.g. "September 14, 2026".
+ * Accepts date-only strings ("2026-09-14") without a UTC day-shift, full
+ * timestamps, and null/undefined (returns `fallback`); never throws.
+ */
+export function formatLongDate(iso: string | null | undefined, fallback = ""): string {
+  if (!iso) return fallback;
+  try {
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(iso + "T00:00:00") : new Date(iso);
+    return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  } catch {
+    return iso.slice(0, 10);
+  }
+}
+
+/**
  * Format a due date with a friendly relative label.
  * Examples: "Sep 14, 2026 · 6 months away", "Mar 25, 2026 · 3 days away",
  *           "Mar 20, 2026 · 2 days ago", "Today"

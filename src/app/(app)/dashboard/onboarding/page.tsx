@@ -205,7 +205,7 @@ function WeddingDate({
         <p className="mt-2 text-[13px] text-red-600">{error}</p>
       )}
       {warning && (
-        <p className="mt-2 text-[13px] text-amber-600 bg-amber-50 rounded-[10px] px-3 py-2">{warning}</p>
+        <p className="mt-2 text-[13px] text-amber-700 bg-amber-50 rounded-[10px] px-3 py-2">{warning}</p>
       )}
       <p className="mt-3 text-[13px] text-muted leading-relaxed">
         Don&apos;t have an exact date yet? Put in your target month and we&apos;ll work from there. You can update it anytime.

@@ -53,7 +53,7 @@ export function WebsiteProgressPanel({ summary, onJumpToTab }: WebsiteProgressPa
       <p className="mt-3 text-[14px] text-muted leading-relaxed">{stageInfo.focus}</p>
 
       {isComplete && (
-        <p className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-emerald-600">
+        <p className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-emerald-700">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>

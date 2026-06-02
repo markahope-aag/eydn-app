@@ -373,13 +373,13 @@ export default function SeatingPage() {
             const saved = await res.json();
             setAssignments((prev) => prev.map((a) => (a.id === tempId ? saved : a)));
           }
-        } catch { /* best effort */ }
+        } catch (e) { console.error("[seating] restore failed", e); }
       } else {
         // Was unassigned — remove assignment
         setAssignments((a) => a.filter((x) => x.guest_id !== action.guestId));
         try {
           await fetch(`/api/seating/assignments?guest_id=${action.guestId}`, { method: "DELETE" });
-        } catch { /* best effort */ }
+        } catch (e) { console.error("[seating] restore failed", e); }
       }
     } else {
       // Undo an unassign: reassign to the table they were on
@@ -399,7 +399,7 @@ export default function SeatingPage() {
             const saved = await res.json();
             setAssignments((prev) => prev.map((a) => (a.id === tempId ? saved : a)));
           }
-        } catch { /* best effort */ }
+        } catch (e) { console.error("[seating] restore failed", e); }
       }
     }
     toast("Undone");

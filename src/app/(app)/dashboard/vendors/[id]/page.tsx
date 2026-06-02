@@ -320,7 +320,7 @@ export default function VendorDetailPage({
           <label className="text-[12px] font-semibold text-muted">Remaining</label>
           <div className="mt-1 flex items-center gap-1 h-[42px]">
             {remaining !== null ? (
-              <span className={`text-[18px] font-semibold ${remaining > 0 ? "text-plum" : remaining === 0 ? "text-emerald-600" : "text-error"}`}>
+              <span className={`text-[18px] font-semibold ${remaining > 0 ? "text-plum" : remaining === 0 ? "text-emerald-700" : "text-error"}`}>
                 {remaining === 0 ? "Paid in full" : `$${Math.abs(remaining).toLocaleString()}`}
                 {remaining < 0 && <span className="text-[12px] font-normal ml-1">overpaid</span>}
               </span>

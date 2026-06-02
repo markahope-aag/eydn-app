@@ -268,8 +268,8 @@ export default function HomePage() {
               {[1, 2, 3, 4, 5].map((n) => (
                 <Image
                   key={n}
-                  src={`https://i.pravatar.cc/72?img=${n + 10}`}
-                  alt="Eydn user"
+                  src={`/images/avatars/avatar-${n}.jpg`}
+                  alt=""
                   width={36}
                   height={36}
                   style={{

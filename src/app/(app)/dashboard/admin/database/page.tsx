@@ -138,7 +138,7 @@ export default function DatabasePage() {
         </div>
         <div className="rounded-[12px] border border-border bg-white p-4">
           <p className="text-[13px] text-muted">Soft-Deleted Records</p>
-          <p className={`text-[28px] font-bold ${totalSoftDeleted > 0 ? "text-amber-600" : "text-plum"}`}>
+          <p className={`text-[28px] font-bold ${totalSoftDeleted > 0 ? "text-amber-700" : "text-plum"}`}>
             {totalSoftDeleted.toLocaleString()}
           </p>
           <p className="text-[11px] text-muted mt-1">Potential cleanup</p>
@@ -231,7 +231,7 @@ export default function DatabasePage() {
                   <td className="py-2 px-3 text-plum">{table}</td>
                   <td
                     className={`py-2 px-3 text-right font-semibold ${
-                      count > 0 ? "text-amber-600" : "text-muted"
+                      count > 0 ? "text-amber-700" : "text-muted"
                     }`}
                   >
                     {count}

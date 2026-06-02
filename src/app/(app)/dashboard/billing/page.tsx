@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { formatLongDate } from "@/lib/date-utils";
 
 type Scheduled = {
   id: string;
@@ -10,18 +11,6 @@ type Scheduled = {
   scheduled_for: string;
   status: string;
 } | null;
-
-function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  } catch {
-    return iso.slice(0, 10);
-  }
-}
 
 export default function BillingPage() {
   const [scheduled, setScheduled] = useState<Scheduled>(null);
@@ -116,7 +105,7 @@ export default function BillingPage() {
               Scheduled to start
             </div>
             <div className="text-[24px] font-semibold text-plum">
-              {formatDate(scheduled.scheduled_for)}
+              {formatLongDate(scheduled.scheduled_for)}
             </div>
             <div className="text-[15px] text-muted mt-1">
               {scheduled.plan === "lifetime"

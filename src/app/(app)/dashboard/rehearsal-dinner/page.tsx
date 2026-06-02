@@ -335,7 +335,7 @@ export default function RehearsalDinnerPage() {
               className="mt-1 w-full rounded-[10px] border-border px-3 py-2 text-[15px]"
             />
             {dateWarning && (
-              <p className="text-[11px] text-amber-600 mt-1">{dateWarning}</p>
+              <p className="text-[11px] text-amber-700 mt-1">{dateWarning}</p>
             )}
             {!data.date && weddingDate && (
               <button

@@ -2,6 +2,7 @@
  * Generates formatted vendor briefs from completed guide responses.
  * Returns { text, sections } where text is the copy-ready brief.
  */
+import { formatLongDate } from "@/lib/date-utils";
 
 type WeddingInfo = {
   partner1: string;
@@ -37,18 +38,7 @@ function buildVisualReferencesSection(images: MoodBoardImage[]): { title: string
   };
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "TBD";
-  try {
-    return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
-}
+const formatDate = (iso: string | null) => formatLongDate(iso, "TBD");
 
 function val(responses: Record<string, unknown>, key: string, fallback = "Not specified"): string {
   const v = responses[key];

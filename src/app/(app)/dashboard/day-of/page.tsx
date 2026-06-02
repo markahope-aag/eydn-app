@@ -150,7 +150,7 @@ export default function DayOfPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ceremony_time: ceremonyTime }),
-      }).catch(() => { /* day-of save already succeeded */ });
+      }).catch((e) => console.error("[day-of] ceremony_time sync failed", e));
     }
     toast.success("Timeline rebuilt — ceremony time synced across the app");
   }
@@ -254,7 +254,7 @@ export default function DayOfPage() {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ ceremony_time: finalTime }),
-                  }).catch(() => {});
+                  }).catch((e) => console.error("[day-of] ceremony_time sync failed", e));
                 }
                 toast.success("Day-of plan ready — ceremony time synced");
               } catch {

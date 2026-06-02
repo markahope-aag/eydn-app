@@ -50,7 +50,7 @@ export function DateSyncBanner() {
           role="alert"
         >
           <div className="flex items-start gap-3">
-            <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <svg className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
             </svg>
             <div className="flex-1">
@@ -70,7 +70,7 @@ export function DateSyncBanner() {
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
                         <span className="font-medium">{task.title}</span>
                         {task.due_date && (
-                          <span className="text-amber-600">
+                          <span className="text-amber-700">
                             (was {new Date(task.due_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })})
                           </span>
                         )}
@@ -88,7 +88,7 @@ export function DateSyncBanner() {
                 >
                   {acknowledging === alert.id ? "Acknowledging..." : "I understand — I will update affected appointments"}
                 </button>
-                <p className="text-[11px] text-amber-600">
+                <p className="text-[11px] text-amber-700">
                   This banner will remain until acknowledged.
                 </p>
               </div>

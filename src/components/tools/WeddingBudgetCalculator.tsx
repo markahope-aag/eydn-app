@@ -208,8 +208,8 @@ export default function WeddingBudgetCalculator() {
 
   const vsAvgLabel = (() => {
     if (Math.abs(diff) < 1500) return { text: "On par", cls: "text-plum" };
-    if (diff > 0) return { text: "+" + formatCurrency(diff), cls: "text-amber-600" };
-    return { text: formatCurrency(diff), cls: "text-emerald-600" };
+    if (diff > 0) return { text: "+" + formatCurrency(diff), cls: "text-amber-700" };
+    return { text: formatCurrency(diff), cls: "text-emerald-700" };
   })();
 
 
