@@ -88,7 +88,7 @@ const SCRAPER_SELECT =
  *  the directory for admin audit but with active=false so it's hidden. */
 const CLOSED_BUSINESS_STATUSES = new Set(["CLOSED_PERMANENTLY", "CLOSED_TEMPORARILY"]);
 
-function isOperational(row: ScraperVendor): boolean {
+export function isOperational(row: ScraperVendor): boolean {
   if (!row.business_status) return true;
   return !CLOSED_BUSINESS_STATUSES.has(row.business_status);
 }
@@ -96,7 +96,7 @@ function isOperational(row: ScraperVendor): boolean {
 /** Build the scraper_extras JSONB blob: scraper-only fields with no first-class column in suggested_vendors.
  *  lat/lng are promoted to top-level columns (added 2026-05-07 with the
  *  geo-search migration) and don't need to live in extras anymore. */
-function buildScraperExtras(row: ScraperVendor): Record<string, unknown> {
+export function buildScraperExtras(row: ScraperVendor): Record<string, unknown> {
   return {
     market: row.market || undefined,
     instagram: row.instagram || undefined,
