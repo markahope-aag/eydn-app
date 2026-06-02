@@ -28,6 +28,7 @@ Main wedding record. One per user (or per collaborator group).
 | key_decisions | text | Persistent context for AI assistant |
 | trial_started_at | timestamptz | Start of 14-day free trial |
 | tour_complete | boolean | Whether the user completed the onboarding tour |
+| quickstart_dismissed | boolean | Whether the couple opted out of the optional Quick Start walk-through (also auto-set once setup is complete) |
 | phase | text | active, post_wedding, archived, sunset |
 | memory_plan_active | boolean | $29/yr retention plan |
 | memory_plan_expires_at | timestamptz | |
@@ -42,6 +43,7 @@ Main wedding record. One per user (or per collaborator group).
 | website_headline | text | |
 | website_story | text | |
 | website_cover_url | text | |
+| website_cover_position | text | CSS object-position focal point for the cover photo, e.g. '50% 30%' (default '50% 50%') |
 | website_couple_photo_url | text | |
 | website_schedule | jsonb[] | |
 | website_travel_info | text | |

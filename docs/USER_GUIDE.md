@@ -47,6 +47,13 @@ Either plan gives you:
 
 ### First steps
 
+New couples can use the optional **Quick Start** walk-through on the dashboard:
+it shows one recommended next step at a time and a short setup checklist (date,
+budget, guest list, first vendor, tasks). Each step opens in a focused pop-up so
+you finish it in place and return to the checklist. Switch to the full dashboard
+any time — it also steps aside automatically once setup is done, and can be
+restarted later from **Help & Support**.
+
 1. **Complete onboarding** — names, date, budget, guest count, venue,
    already-booked vendors
 2. **Review your task timeline** — Eydn generates tasks based on your date and
@@ -241,6 +248,9 @@ The public vision board hides vendor tags and locations (kept private).
 - **Choose a URL** — your site lives at `eydn.app/w/your-slug`
 - **Pick a theme** with your wedding colors
 - **Add your story, schedule, travel info, hotels, FAQs**
+- **Set the cover photo's focal point** — after uploading a cover image, drag
+  (or tap) the dot on the preview to choose which part stays in view. Handy for
+  tall or vertical photos that would otherwise be cropped to the center.
 - **Live preview** updates as you edit
 - A **progress checklist** at the top tracks what's still to do, with
   completed sections visibly checked off

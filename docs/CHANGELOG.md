@@ -2,6 +2,20 @@
 
 This document tracks all notable changes, updates, and improvements to the eydn wedding planning platform.
 
+## [1.15.0] — June 2, 2026
+
+### New: optional Quick Start walk-through for new couples
+
+New couples landed on the full dashboard cold. They now get an optional, simplified getting-started view that leads with the single most useful next step and a short setup checklist — set your date, budget, guest list, first vendor, and explore your tasks.
+
+- Each step opens in a **focused overlay** where the couple completes the action in place (set the date, add a guest/vendor, tick a task) and returns to the walk-through — no bouncing between tabs. Each overlay also links to its full page for deeper work.
+- **"Switch to full dashboard"** is always available, and the walk-through **auto-graduates** once setup is complete. It can be re-launched any time from Help & Support.
+- Backed by a pure, unit-tested "next step" engine (`src/lib/onboarding/quick-start.ts`), a `weddings.quickstart_dismissed` flag, and a small `/api/quickstart-status` route. Migration `20260602000000_quickstart_dismissed.sql`.
+
+### New: adjustable focal point for the wedding-website cover image
+
+Tall or vertical cover photos were always centered by `object-cover`, which cut off the subject. Couples can now **drag (or tap) a focal-point dot** on the cover preview to choose which part of the photo stays in view. The choice is saved as a CSS `object-position` and applied to both hero layouts (full-screen and side-by-side) on the public site; uploading a new cover resets it to center. Stored in a new `weddings.website_cover_position` column (default `50% 50%`) — no image re-encoding, so it's instant and lossless. Migration `20260602100000_website_cover_position.sql`.
+
 ## [1.14.0] — June 1, 2026
 
 ### New: image library for email templates

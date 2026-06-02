@@ -757,7 +757,7 @@ Update ceremony information.
 Get public wedding website data.
 
 #### `PUT /api/wedding-website`
-Update wedding website settings.
+Update wedding website settings. Editable fields include `cover_url` and `cover_position` (CSS object-position focal point for the cover photo, e.g. `"50% 30%"`).
 
 #### `GET /api/wedding-website/photos`
 Get wedding photos for public display.
@@ -928,6 +928,14 @@ Get platform events and logs.
 Initialize admin configuration.
 
 ## Utilities
+
+### Onboarding
+
+#### `GET /api/quickstart-status`
+Returns `{ quickstart_dismissed }` — whether the couple has opted out of the optional Quick Start walk-through.
+
+#### `PUT /api/quickstart-status`
+Toggle the Quick Start walk-through. Body `{ dismissed: false }` re-launches it (e.g. from Help); anything else opts out into the full dashboard.
 
 ### Notifications
 
