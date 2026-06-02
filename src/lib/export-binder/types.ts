@@ -18,7 +18,7 @@ export type DayOfPlan = {
   music: { moment: string; song: string; artist: string }[];
   speeches: { speaker: string; role: string; topic: string }[];
   setupTasks: { task: string; assignedTo: string; notes: string }[];
-  attire: { person: string; description: string; photoUrl: string | null }[];
+  attire: { person: string; description: string; photoUrl: string | null; group?: string }[];
 };
 
 export type Vendor = {
