@@ -5,7 +5,7 @@ export type PackingItem = { item: string; notes: string };
 export type MusicEntry = { moment: string; song: string; artist: string };
 export type SpeechEntry = { speaker: string; role: string; topic: string };
 export type SetupTask = { task: string; assignedTo: string; notes: string };
-export type AttireItem = { person: string; description: string; photoUrl: string | null };
+export type AttireItem = { person: string; description: string; photoUrl: string | null; group?: string };
 
 export type DayOfPlan = {
   ceremonyTime: string;
