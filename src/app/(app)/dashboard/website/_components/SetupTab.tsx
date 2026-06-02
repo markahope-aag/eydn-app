@@ -8,6 +8,15 @@ import { trackWebsitePublished } from "@/lib/analytics";
 
 type SlugStatus = "idle" | "checking" | "available" | "taken";
 
+// Curated palettes for one-tap theming; couples can also pick custom colors.
+const COLOR_PRESETS: { name: string; primary: string; accent: string }[] = [
+  { name: "Forest & Blush", primary: "#2C3E2D", accent: "#D4A5A5" },
+  { name: "Plum & Champagne", primary: "#4A2C4A", accent: "#E8D5B7" },
+  { name: "Navy & Dusty Blue", primary: "#1F2D3D", accent: "#9DB4C0" },
+  { name: "Terracotta & Sand", primary: "#9C5B3B", accent: "#E0C8A8" },
+  { name: "Sage & Cream", primary: "#7A8B6F", accent: "#EDE7DF" },
+];
+
 interface SetupTabProps {
   slug: string;
   setSlug: (slug: string) => void;
@@ -27,6 +36,10 @@ interface SetupTabProps {
   setCouplePhotoUrl: (url: string) => void;
   heroLayout: "fullscreen" | "side-by-side";
   setHeroLayout: (layout: "fullscreen" | "side-by-side") => void;
+  primaryColor: string;
+  setPrimaryColor: (color: string) => void;
+  accentColor: string;
+  setAccentColor: (color: string) => void;
   autoSave: (fields: Record<string, unknown>, debounceMs?: number) => void;
   autoSaveImmediate: (fields: Record<string, unknown>) => void;
   originalSlug: React.RefObject<string>;
@@ -51,10 +64,24 @@ export function SetupTab({
   setCouplePhotoUrl,
   heroLayout,
   setHeroLayout,
+  primaryColor,
+  setPrimaryColor,
+  accentColor,
+  setAccentColor,
   autoSave,
   autoSaveImmediate,
   originalSlug,
 }: SetupTabProps) {
+  // Persist the whole theme object together — the API replaces website_theme
+  // wholesale, so partial saves would wipe the other theme fields.
+  function persistTheme(
+    overrides: Partial<{ heroLayout: string; primaryColor: string; accentColor: string }>,
+    immediate = false
+  ) {
+    const theme = { heroLayout, primaryColor, accentColor, ...overrides };
+    if (immediate) autoSaveImmediate({ website_theme: theme });
+    else autoSave({ website_theme: theme }, 500);
+  }
   const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
   const slugCheckTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
@@ -359,19 +386,66 @@ export function SetupTab({
         </p>
         <div className="flex gap-2">
           <button
-            onClick={() => { setHeroLayout("fullscreen"); autoSaveImmediate({ website_theme: { heroLayout: "fullscreen" } }); }}
+            onClick={() => { setHeroLayout("fullscreen"); persistTheme({ heroLayout: "fullscreen" }, true); }}
             className={`flex-1 px-3 py-2 text-[13px] font-semibold rounded-[10px] transition ${heroLayout === "fullscreen" ? "bg-violet text-white" : "bg-lavender text-violet"}`}
           >
             Full Screen
           </button>
           <button
-            onClick={() => { setHeroLayout("side-by-side"); autoSaveImmediate({ website_theme: { heroLayout: "side-by-side" } }); }}
+            onClick={() => { setHeroLayout("side-by-side"); persistTheme({ heroLayout: "side-by-side" }, true); }}
             className={`flex-1 px-3 py-2 text-[13px] font-semibold rounded-[10px] transition ${heroLayout === "side-by-side" ? "bg-violet text-white" : "bg-lavender text-violet"}`}
           >
             Side by Side
           </button>
         </div>
         <p className="text-[11px] text-muted mt-1">Full screen uses the cover image as a full-bleed background. Side by side shows the image next to your names.</p>
+      </div>
+
+      <div>
+        <p className="text-[13px] font-semibold text-muted block mb-1">Colors</p>
+        <p className="text-[12px] text-muted mb-2">
+          Sets the gradient and accent colors across your public site.
+        </p>
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="flex items-center gap-2 text-[13px] text-plum">
+            <input
+              type="color"
+              value={primaryColor}
+              onChange={(e) => { setPrimaryColor(e.target.value); persistTheme({ primaryColor: e.target.value }); }}
+              aria-label="Primary color"
+              className="h-9 w-12 rounded-[8px] border border-border bg-white p-0.5 cursor-pointer"
+            />
+            Primary
+          </label>
+          <label className="flex items-center gap-2 text-[13px] text-plum">
+            <input
+              type="color"
+              value={accentColor}
+              onChange={(e) => { setAccentColor(e.target.value); persistTheme({ accentColor: e.target.value }); }}
+              aria-label="Accent color"
+              className="h-9 w-12 rounded-[8px] border border-border bg-white p-0.5 cursor-pointer"
+            />
+            Accent
+          </label>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {COLOR_PRESETS.map((p) => {
+            const active = primaryColor.toLowerCase() === p.primary.toLowerCase() && accentColor.toLowerCase() === p.accent.toLowerCase();
+            return (
+              <button
+                key={p.name}
+                type="button"
+                onClick={() => { setPrimaryColor(p.primary); setAccentColor(p.accent); persistTheme({ primaryColor: p.primary, accentColor: p.accent }, true); }}
+                title={p.name}
+                aria-label={p.name}
+                className={`flex items-center gap-1 rounded-full border px-1.5 py-1 transition ${active ? "border-violet ring-1 ring-violet" : "border-border hover:border-violet/50"}`}
+              >
+                <span className="h-4 w-4 rounded-full" style={{ background: p.primary }} />
+                <span className="h-4 w-4 rounded-full" style={{ background: p.accent }} />
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div>

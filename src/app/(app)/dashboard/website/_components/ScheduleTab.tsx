@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 type ScheduleItem = { time: string; event: string };
 type FaqItem = { question: string; answer: string };
+type HotelItem = { name: string; url?: string; discountCode?: string; notes?: string };
 
 interface ScheduleTabProps {
   schedule: ScheduleItem[];
@@ -14,6 +15,8 @@ interface ScheduleTabProps {
   setTravel: (travel: string) => void;
   accommodations: string;
   setAccommodations: (accommodations: string) => void;
+  hotels: HotelItem[];
+  setHotels: (hotels: HotelItem[]) => void;
   faq: FaqItem[];
   setFaq: (faq: FaqItem[]) => void;
   autoSave: (fields: Record<string, unknown>, debounceMs?: number) => void;
@@ -26,10 +29,17 @@ export function ScheduleTab({
   setTravel,
   accommodations,
   setAccommodations,
+  hotels,
+  setHotels,
   faq,
   setFaq,
   autoSave,
 }: ScheduleTabProps) {
+  function updateHotel(i: number, patch: Partial<HotelItem>) {
+    const updated = hotels.map((h, j) => (j === i ? { ...h, ...patch } : h));
+    setHotels(updated);
+    autoSave({ hotels: updated }, 2000);
+  }
   const [importConfirmOpen, setImportConfirmOpen] = useState(false);
   const [importItems, setImportItems] = useState<ScheduleItem[]>([]);
 
@@ -157,6 +167,65 @@ export function ScheduleTab({
           rows={4}
           className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30 resize-none"
         />
+      </div>
+
+      <div>
+        <h3 className="text-[15px] font-semibold text-plum mb-1">Hotel blocks</h3>
+        <p className="text-[12px] text-muted mb-4">
+          Add specific hotels with a booking link and any group rate or discount code — these show as cards on your site.
+        </p>
+        <div className="space-y-3">
+          {hotels.map((hotel, i) => (
+            <div key={i} className="card p-4 space-y-2">
+              <input
+                type="text"
+                value={hotel.name}
+                onChange={(e) => updateHotel(i, { name: e.target.value })}
+                placeholder="Hotel name"
+                className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] font-semibold focus:outline-none focus:ring-2 focus:ring-violet/30"
+              />
+              <div className="grid gap-2 sm:grid-cols-2">
+                <input
+                  type="url"
+                  value={hotel.url || ""}
+                  onChange={(e) => updateHotel(i, { url: e.target.value })}
+                  placeholder="Booking link (https://...)"
+                  className="rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+                />
+                <input
+                  type="text"
+                  value={hotel.discountCode || ""}
+                  onChange={(e) => updateHotel(i, { discountCode: e.target.value })}
+                  placeholder="Group rate / discount code"
+                  className="rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+                />
+              </div>
+              <textarea
+                value={hotel.notes || ""}
+                onChange={(e) => updateHotel(i, { notes: e.target.value })}
+                placeholder="Notes — distance from venue, shuttle, booking deadline..."
+                rows={2}
+                className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30 resize-none"
+              />
+              <button
+                onClick={() => {
+                  const updated = hotels.filter((_, j) => j !== i);
+                  setHotels(updated);
+                  autoSave({ hotels: updated }, 0);
+                }}
+                className="btn-ghost btn-sm text-red-500"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => setHotels([...hotels, { name: "", url: "", discountCode: "", notes: "" }])}
+          className="btn-ghost btn-sm mt-3 text-violet"
+        >
+          + Add Hotel
+        </button>
       </div>
 
       <div>

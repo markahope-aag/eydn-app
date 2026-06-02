@@ -15,6 +15,7 @@ import { getWebsiteProgress } from "@/lib/website-milestones";
 type Tab = "setup" | "schedule" | "registry" | "rsvp" | "gallery";
 type ScheduleItem = { time: string; event: string };
 type FaqItem = { question: string; answer: string };
+type HotelItem = { name: string; url?: string; discountCode?: string; notes?: string };
 type RegistryLink = { id: string; name: string; url: string; sort_order: number };
 type RsvpToken = {
   id: string; token: string; responded: boolean; responded_at: string | null;
@@ -39,6 +40,8 @@ export default function WebsitePage() {
   const [coverPosition, setCoverPosition] = useState("50% 50%");
   const [couplePhotoUrl, setCouplePhotoUrl] = useState("");
   const [heroLayout, setHeroLayout] = useState<"fullscreen" | "side-by-side">("fullscreen");
+  const [primaryColor, setPrimaryColor] = useState("#2C3E2D");
+  const [accentColor, setAccentColor] = useState("#D4A5A5");
   const originalSlug = useRef("");
 
   // Schedule state
@@ -46,6 +49,7 @@ export default function WebsitePage() {
   const [travel, setTravel] = useState("");
   const [accommodations, setAccommodations] = useState("");
   const [faq, setFaq] = useState<FaqItem[]>([]);
+  const [hotels, setHotels] = useState<HotelItem[]>([]);
 
   // Registry / RSVP / Gallery state
   const [registryLinks, setRegistryLinks] = useState<RegistryLink[]>([]);
@@ -57,6 +61,7 @@ export default function WebsitePage() {
 
   // Preview panel
   const [showPreview, setShowPreview] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const previewRef = useRef<HTMLIFrameElement>(null);
 
   function refreshPreview() {
@@ -137,11 +142,14 @@ export default function WebsitePage() {
       setSchedule(data.schedule || []);
       setTravel(data.travel || "");
       setAccommodations(data.accommodations || "");
+      setHotels(data.hotels || []);
       setFaq(data.faq || []);
       setRsvpDeadline(data.rsvp_deadline || "");
       setMealOptions(data.meal_options || []);
       setPhotoApprovalRequired(data.photo_approval_required || false);
       setHeroLayout(data.website_theme?.heroLayout || "fullscreen");
+      setPrimaryColor(data.website_theme?.primaryColor || "#2C3E2D");
+      setAccentColor(data.website_theme?.accentColor || "#D4A5A5");
       if (weddingRes.ok) {
         const weddingData = await weddingRes.json();
         setWeddingDate(weddingData?.date || null);
@@ -290,6 +298,10 @@ export default function WebsitePage() {
             setCouplePhotoUrl={setCouplePhotoUrl}
             heroLayout={heroLayout}
             setHeroLayout={setHeroLayout}
+            primaryColor={primaryColor}
+            setPrimaryColor={setPrimaryColor}
+            accentColor={accentColor}
+            setAccentColor={setAccentColor}
             autoSave={autoSave}
             autoSaveImmediate={autoSaveImmediate}
             originalSlug={originalSlug}
@@ -304,6 +316,8 @@ export default function WebsitePage() {
             setTravel={setTravel}
             accommodations={accommodations}
             setAccommodations={setAccommodations}
+            hotels={hotels}
+            setHotels={setHotels}
             faq={faq}
             setFaq={setFaq}
             autoSave={autoSave}
@@ -348,21 +362,49 @@ export default function WebsitePage() {
       <div className="hidden lg:flex flex-col w-[420px] flex-shrink-0 sticky top-0 h-[calc(100vh-4rem)]">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[12px] font-semibold text-muted uppercase tracking-wide">Preview</span>
-          <button
-            onClick={refreshPreview}
-            className="text-[11px] text-violet hover:underline"
-          >
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Device toggle — desktop vs mobile width */}
+            <div className="inline-flex rounded-full bg-lavender p-0.5">
+              {(["desktop", "mobile"] as const).map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setPreviewDevice(d)}
+                  aria-pressed={previewDevice === d}
+                  className={`px-2.5 py-1 text-[11px] font-semibold rounded-full transition ${
+                    previewDevice === d ? "bg-white text-violet shadow-sm" : "text-muted hover:text-violet"
+                  }`}
+                >
+                  {d === "desktop" ? "Desktop" : "Mobile"}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={refreshPreview}
+              className="text-[11px] text-violet hover:underline"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
         <div className="flex-1 rounded-[12px] border border-border overflow-hidden bg-white shadow-sm">
-          <iframe
-            ref={previewRef}
-            src={`/w/${slug}`}
-            className="w-full h-full"
-            title="Wedding website preview"
-            style={{ transform: "scale(0.55)", transformOrigin: "top left", width: "182%", height: "182%" }}
-          />
+          {/* Mobile shows a phone-width frame; desktop renders a wide viewport
+              scaled to fit the panel so couples can check both layouts. */}
+          {previewDevice === "mobile" ? (
+            <iframe
+              ref={previewRef}
+              src={`/w/${slug}`}
+              title="Wedding website preview (mobile)"
+              style={{ width: "390px", height: "100%", border: "none", display: "block", margin: "0 auto" }}
+            />
+          ) : (
+            <iframe
+              ref={previewRef}
+              src={`/w/${slug}`}
+              className="w-full h-full"
+              title="Wedding website preview (desktop)"
+              style={{ transform: "scale(0.38)", transformOrigin: "top left", width: "263%", height: "263%" }}
+            />
+          )}
         </div>
       </div>
     )}

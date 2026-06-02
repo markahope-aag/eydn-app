@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 
@@ -22,9 +23,62 @@ export function GalleryTab({
   setPhotoApprovalRequired,
   autoSaveImmediate,
 }: GalleryTabProps) {
+  const [downloading, setDownloading] = useState(false);
+
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
     toast.success("Link copied");
+  }
+
+  // Zip every gallery photo client-side and download it in one go. JSZip is
+  // imported lazily so it doesn't weigh down the page until used.
+  async function downloadAll() {
+    if (photos.length === 0) return;
+    setDownloading(true);
+    try {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      let added = 0;
+      await Promise.all(
+        photos.map(async (photo, i) => {
+          try {
+            const res = await fetch(photo.file_url);
+            if (!res.ok) return;
+            const blob = await res.blob();
+            const ext = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg");
+            const base =
+              (photo.caption || photo.uploader_name || `photo-${i + 1}`)
+                .replace(/[^a-z0-9-_ ]/gi, "")
+                .trim()
+                .slice(0, 40) || `photo-${i + 1}`;
+            zip.file(`${String(i + 1).padStart(3, "0")}-${base}.${ext}`, blob);
+            added++;
+          } catch {
+            // Skip any photo that fails to fetch; others still download.
+          }
+        })
+      );
+      if (added === 0) {
+        toast.error("Couldn't download the photos. Try again.");
+        return;
+      }
+      const content = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "wedding-photos.zip";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(
+        added < photos.length ? `Downloaded ${added} of ${photos.length} photos` : "Photos downloaded"
+      );
+    } catch {
+      toast.error("Couldn't build the download. Try again.");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   async function deletePhoto(id: string) {
@@ -82,6 +136,22 @@ export function GalleryTab({
       </div>
 
       {photos.length > 0 ? (
+        <>
+        <div className="flex items-center justify-between">
+          <p className="text-[13px] text-muted">
+            {photos.length} photo{photos.length === 1 ? "" : "s"}
+          </p>
+          <button
+            onClick={downloadAll}
+            disabled={downloading}
+            className="btn-secondary btn-sm inline-flex items-center gap-1.5 disabled:opacity-60"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 2v8M5 7l3 3 3-3M3 13h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {downloading ? "Preparing…" : "Download all"}
+          </button>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {photos.map((photo) => (
             <div key={photo.id} className="card overflow-hidden">
@@ -121,6 +191,7 @@ export function GalleryTab({
             </div>
           ))}
         </div>
+        </>
       ) : (
         <p className="text-[15px] text-muted">
           No photos uploaded yet. Share the wedding website link with your guests so they can upload photos.
