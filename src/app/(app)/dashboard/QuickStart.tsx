@@ -1,28 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { QuickStartStep } from "@/lib/onboarding/quick-start";
+import { QuickStartStepModal } from "./QuickStartStepModal";
 
 /**
  * Optional getting-started walk-through shown to new couples in place of the
- * full dashboard. Leads with the single next step, shows a short setup
- * checklist, and lets the couple switch to the full dashboard at any time.
+ * full dashboard. Leads with the single next step and a short setup checklist.
+ * Tapping a step opens a focused overlay so the couple completes it in place and
+ * returns here — no full-page navigation. They can switch to the full dashboard
+ * any time, and it auto-graduates once setup is complete.
  */
 export function QuickStart({
   partnerName,
   steps,
+  weddingId,
 }: {
   partnerName: string;
   steps: QuickStartStep[];
+  weddingId: string;
 }) {
   const router = useRouter();
   const [leaving, setLeaving] = useState(false);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
 
   const doneCount = steps.filter((s) => s.done).length;
   const next = steps.find((s) => !s.done) ?? null;
+  const activeStep = steps.find((s) => s.key === activeKey) ?? null;
 
   async function switchToFull() {
     setLeaving(true);
@@ -57,10 +63,14 @@ export function QuickStart({
           </p>
           <h2 className="mt-1 text-[18px] text-plum">{next.label}</h2>
           <p className="mt-1 text-[15px] text-muted">{next.description}</p>
-          <Link href={next.href} className="btn-primary mt-4 inline-flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setActiveKey(next.key)}
+            className="btn-primary mt-4 inline-flex items-center gap-1"
+          >
             {next.cta}
             <span aria-hidden="true">→</span>
-          </Link>
+          </button>
         </div>
       )}
 
@@ -70,9 +80,10 @@ export function QuickStart({
           const isNext = step.key === next?.key;
           return (
             <li key={step.key}>
-              <Link
-                href={step.href}
-                className={`flex items-center gap-3 rounded-[12px] px-3 py-2.5 transition ${
+              <button
+                type="button"
+                onClick={() => setActiveKey(step.key)}
+                className={`w-full flex items-center gap-3 rounded-[12px] px-3 py-2.5 text-left transition ${
                   isNext ? "bg-lavender/60" : "hover:bg-lavender/30"
                 }`}
               >
@@ -96,7 +107,7 @@ export function QuickStart({
                 {isNext && (
                   <span className="text-[12px] font-semibold text-violet">Start →</span>
                 )}
-              </Link>
+              </button>
             </li>
           );
         })}
@@ -115,6 +126,18 @@ export function QuickStart({
           You can always come back to this from Help &amp; Support.
         </p>
       </div>
+
+      {activeStep && (
+        <QuickStartStepModal
+          step={activeStep}
+          weddingId={weddingId}
+          onClose={() => setActiveKey(null)}
+          onSaved={() => {
+            setActiveKey(null);
+            router.refresh();
+          }}
+        />
+      )}
     </section>
   );
 }

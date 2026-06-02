@@ -468,7 +468,7 @@ export default async function DashboardPage() {
       )}
 
       {showQuickStart && (
-        <QuickStart partnerName={wedding.partner1_name} steps={quickStartSteps} />
+        <QuickStart partnerName={wedding.partner1_name} steps={quickStartSteps} weddingId={wedding.id} />
       )}
 
       {!showQuickStart && (
