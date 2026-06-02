@@ -95,6 +95,46 @@ export const aestheticStyleQuiz: ArchetypeQuiz = {
     },
   ],
   tieBreaker: "CL",
+  landing: {
+    heroSubhead:
+      "Answer eight quick questions and we'll pinpoint your wedding aesthetic — plus a starting color palette and the details that make it feel like yours.",
+    benefits: [
+      {
+        title: "Your style, named",
+        body: "A clear aesthetic direction, so every choice — flowers, venue, palette — pulls in the same direction.",
+      },
+      {
+        title: "A starting palette",
+        body: "Colors to build from, ready to carry onto your vision board and wedding website.",
+      },
+      {
+        title: "The signature details",
+        body: "The specific touches that bring your style to life, so you know exactly where to focus.",
+      },
+    ],
+    resultsTeaserTitle: "The styles you might be",
+    resultsTeaser: [
+      { label: "Classic & Timeless", blurb: "Elegant, structured, and built to never date." },
+      { label: "Modern & Minimal", blurb: "Clean lines, negative space, design-forward." },
+      { label: "Rustic & Natural", blurb: "Warm, relaxed, rooted in nature." },
+      { label: "Boho & Free-Spirited", blurb: "Earthy, eclectic, and personal." },
+      { label: "Romantic & Garden", blurb: "Soft, dreamy, full of florals and candlelight." },
+      { label: "Glam & Luxe", blurb: "Bold, opulent, and impossible to forget." },
+    ],
+    socialProof: "From Eydn — the AI wedding planner that actually does things.",
+    faq: [
+      { q: "How long does it take?", a: "About two minutes — eight questions, no overthinking required." },
+      {
+        q: "Do I need an account?",
+        a: "No. We'll ask for your email so we can send your result and a weekly planning tip — unsubscribe anytime.",
+      },
+      {
+        q: "What if we're between styles?",
+        a: "Totally normal — most weddings blend two. We'll give you your strongest match as a starting point.",
+      },
+      { q: "Is it free?", a: "Completely free." },
+    ],
+  },
   results: {
     CL: {
       key: "CL",

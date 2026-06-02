@@ -88,19 +88,93 @@ export function QuizRunner({ quiz }: Props) {
 
   // ─── Intro stage ──────────────────────────────────────────
   if (stage === "intro") {
+    const landing = quiz.landing;
+
+    // Minimal intro (quizzes without landing content).
+    if (!landing) {
+      return (
+        <div className="max-w-xl mx-auto text-center">
+          <h1 className="font-serif text-[44px] leading-tight text-plum">{quiz.title}</h1>
+          <p className="mt-4 text-[17px] text-muted leading-relaxed">{quiz.subtitle}</p>
+          <button onClick={start} className="mt-10 btn-primary px-10 py-4 text-[15px]">
+            Start quiz
+          </button>
+          <p className="mt-4 text-[12px] text-muted">
+            Takes 2 minutes. We&apos;ll ask for your email before showing your result.
+          </p>
+        </div>
+      );
+    }
+
+    // Full lead-magnet landing page.
     return (
-      <div className="max-w-xl mx-auto text-center">
-        <h1 className="font-serif text-[44px] leading-tight text-plum">{quiz.title}</h1>
-        <p className="mt-4 text-[17px] text-muted leading-relaxed">{quiz.subtitle}</p>
-        <button
-          onClick={start}
-          className="mt-10 btn-primary px-10 py-4 text-[15px]"
-        >
-          Start quiz
-        </button>
-        <p className="mt-4 text-[12px] text-muted">
-          Takes 2 minutes. We&apos;ll ask for your email before showing your result.
-        </p>
+      <div>
+        {/* Hero */}
+        <div className="max-w-2xl mx-auto text-center">
+          <h1 className="font-serif text-[44px] leading-tight text-plum">{quiz.title}</h1>
+          <p className="mt-4 text-[17px] text-muted leading-relaxed">
+            {landing.heroSubhead || quiz.subtitle}
+          </p>
+          <button onClick={start} className="mt-8 btn-primary px-10 py-4 text-[15px]">
+            Start the quiz
+          </button>
+          <p className="mt-4 text-[12px] text-muted">
+            Free · about 2 minutes · we&apos;ll email your result
+          </p>
+        </div>
+
+        {/* Benefits — what you'll get */}
+        <div className="mt-16 grid gap-6 sm:grid-cols-3">
+          {landing.benefits.map((b, i) => (
+            <div key={i} className="rounded-2xl border border-border bg-white p-6">
+              <div className="text-[15px] font-semibold text-plum">{b.title}</div>
+              <p className="mt-2 text-[14px] text-muted leading-relaxed">{b.body}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Result teaser */}
+        {landing.resultsTeaser && landing.resultsTeaser.length > 0 && (
+          <div className="mt-16 max-w-2xl mx-auto">
+            <h2 className="font-serif text-[28px] text-plum text-center">
+              {landing.resultsTeaserTitle || "Your possible results"}
+            </h2>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {landing.resultsTeaser.map((r, i) => (
+                <div key={i} className="rounded-xl bg-lavender/30 px-4 py-3">
+                  <div className="text-[14px] font-semibold text-plum">{r.label}</div>
+                  <p className="text-[13px] text-muted">{r.blurb}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {landing.socialProof && (
+          <p className="mt-12 text-center text-[14px] text-muted">{landing.socialProof}</p>
+        )}
+
+        {/* FAQ */}
+        {landing.faq.length > 0 && (
+          <div className="mt-16 max-w-2xl mx-auto">
+            <h2 className="font-serif text-[28px] text-plum text-center">Questions</h2>
+            <div className="mt-6 space-y-4">
+              {landing.faq.map((f, i) => (
+                <div key={i} className="rounded-xl border border-border bg-white p-5">
+                  <div className="text-[15px] font-semibold text-plum">{f.q}</div>
+                  <p className="mt-1.5 text-[14px] text-muted leading-relaxed">{f.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Closing CTA */}
+        <div className="mt-12 text-center">
+          <button onClick={start} className="btn-primary px-10 py-4 text-[15px]">
+            Start the quiz
+          </button>
+        </div>
       </div>
     );
   }

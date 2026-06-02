@@ -18,6 +18,20 @@ export type QuizResult = {
   eydnAngle: string;
 };
 
+/**
+ * Optional lead-magnet landing content rendered on the quiz intro screen.
+ * When present, the intro becomes a fuller landing page (hero, benefits,
+ * result teaser, FAQ); when absent, the minimal intro is shown.
+ */
+export type QuizLanding = {
+  heroSubhead?: string;
+  benefits: { title: string; body: string }[];
+  resultsTeaser?: { label: string; blurb: string }[];
+  resultsTeaserTitle?: string;
+  socialProof?: string;
+  faq: { q: string; a: string }[];
+};
+
 export type ArchetypeQuiz = {
   id: "planning_style" | "aesthetic_style";
   slug: "wedding-planning-style" | "wedding-style";
@@ -27,6 +41,7 @@ export type ArchetypeQuiz = {
   results: Record<string, QuizResult>;
   // Ordered list of archetype keys for tie-breaker resolution
   tieBreaker: string;
+  landing?: QuizLanding;
 };
 
 export type ScoreBandQuiz = {
@@ -38,6 +53,7 @@ export type ScoreBandQuiz = {
   results: QuizResult[];
   // Score ranges (inclusive) mapped to result index
   bands: { min: number; max: number; resultIndex: number }[];
+  landing?: QuizLanding;
 };
 
 export type Quiz = ArchetypeQuiz | ScoreBandQuiz;
