@@ -513,6 +513,27 @@ export default function MoodBoardPage() {
         </div>
       </div>
 
+      {/* Entry point to the public style quiz — helps couples find their
+          aesthetic and a starting palette. Opens in a new tab to keep the
+          dashboard session intact. */}
+      <a
+        href="/tools/wedding-style"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 flex items-center gap-3 rounded-[14px] border border-violet/20 bg-lavender/30 px-4 py-3 hover:bg-lavender/50 transition"
+      >
+        <span aria-hidden="true" className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-violet/10 text-[18px]">
+          🎨
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block text-[14px] font-semibold text-plum">Not sure of your style?</span>
+          <span className="block text-[12px] text-muted">
+            Take the 2-minute wedding style quiz to find your aesthetic and a starting palette.
+          </span>
+        </span>
+        <span className="text-[13px] font-semibold text-violet whitespace-nowrap">Take the quiz →</span>
+      </a>
+
       {/* Add form */}
       {showAdd && (
         <div className="mt-4 card p-5 space-y-4">
