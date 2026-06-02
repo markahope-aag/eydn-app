@@ -397,7 +397,7 @@ export default function BudgetPage() {
 
       {/* Progress bar */}
       {budget > 0 && (
-        <div className="progress-track mt-4" role="progressbar" aria-valuenow={totalPaid} aria-valuemin={0} aria-valuemax={budget}>
+        <div className="progress-track mt-4" role="progressbar" aria-label={`Budget spent: ${totalPaid} of ${budget}`} aria-valuenow={totalPaid} aria-valuemin={0} aria-valuemax={budget}>
           <div
             className={`progress-fill ${totalPaid > budget ? "!bg-error" : ""}`}
             style={{ width: `${Math.min((totalPaid / budget) * 100, 100)}%` }}

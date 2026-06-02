@@ -422,9 +422,15 @@ function TemplateEditor({
             <summary className="cursor-pointer text-[14px] font-medium">Live preview</summary>
             <div className="mt-3 p-4 bg-whisper rounded-md">
               <p className="text-[12px] text-muted mb-2">Subject: {subject}</p>
-              <div
-                className="email-preview text-[14px]"
-                dangerouslySetInnerHTML={{ __html: html }}
+              {/* Rendered in a fully sandboxed iframe (sandbox="" disables
+                  scripts, forms, and same-origin) so template HTML from the DB
+                  cannot execute script in the admin's session. */}
+              <iframe
+                title="Email preview"
+                sandbox=""
+                srcDoc={html}
+                className="email-preview w-full bg-white rounded"
+                style={{ minHeight: 400, border: 0 }}
               />
             </div>
           </details>

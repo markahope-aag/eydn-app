@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { apiError } from "@/lib/api-error";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin";
 import { submitToIndexNow } from "@/lib/indexnow";
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
       .select("id, slug, title, excerpt, category, tags, status, published_at, read_time_minutes, created_at, updated_at, cover_image, author_name")
       .order("created_at", { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return apiError(error.message, 500);
     return NextResponse.json(data);
   }
 
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
   return NextResponse.json(data);
 }
 
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
 
   // Submit to IndexNow when a post is published immediately
   if (status === "published") {

@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { apiError } from "@/lib/api-error";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
@@ -41,7 +42,7 @@ export async function PATCH(request: Request) {
       .update({ status: "cancelled", updated_at: new Date().toISOString() })
       .eq("user_id", userId)
       .eq("status", "pending");
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return apiError(error.message, 500);
     return NextResponse.json({ ok: true });
   }
 
@@ -51,7 +52,7 @@ export async function PATCH(request: Request) {
       .update({ plan: body.plan, updated_at: new Date().toISOString() })
       .eq("user_id", userId)
       .eq("status", "pending");
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return apiError(error.message, 500);
     return NextResponse.json({ ok: true });
   }
 

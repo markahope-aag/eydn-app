@@ -92,7 +92,7 @@ export async function GET() {
 }
 
 /** Trigger a manual backup */
-export async function POST(request: Request) {
+export async function POST() {
   const result = await requireAdmin();
   if ("error" in result) return result.error;
 
@@ -102,13 +102,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Backup service not configured" }, { status: 503 });
   }
 
-  // Call the backup cron endpoint internally
-  const origin = request.headers.get("origin") || request.headers.get("host") || "localhost:3000";
-  const protocol = origin.includes("localhost") ? "http" : "https";
-  const baseUrl = origin.startsWith("http") ? origin : `${protocol}://${origin}`;
+  // Call the backup cron endpoint internally. The base URL MUST come from a
+  // trusted env var — never from request headers (origin/host), which a caller
+  // can spoof to exfiltrate BACKUP_SECRET to an attacker-controlled host.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://eydn.app";
 
   try {
-    const res = await fetch(`${baseUrl}/api/cron/backup`, {
+    const res = await fetch(new URL("/api/cron/backup", appUrl).toString(), {
       method: "POST",
       headers: { Authorization: `Bearer ${secret}` },
     });

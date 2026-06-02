@@ -27,13 +27,14 @@ export async function requireAdmin() {
 }
 
 /**
- * Checks if a user is an admin (non-blocking, for UI).
+ * Checks if a known user id is an admin. Lets callers that have already
+ * resolved `userId` (and optionally a Supabase client) avoid a second
+ * `auth()` round-trip.
  */
-export async function isAdmin(): Promise<boolean> {
-  const { userId } = await auth();
-  if (!userId) return false;
-
-  const supabase = createSupabaseAdmin();
+export async function isAdminById(
+  userId: string,
+  supabase: ReturnType<typeof createSupabaseAdmin> = createSupabaseAdmin()
+): Promise<boolean> {
   const { data } = await supabase
     .from("user_roles")
     .select("role")
@@ -41,4 +42,13 @@ export async function isAdmin(): Promise<boolean> {
     .single();
 
   return data?.role === "admin";
+}
+
+/**
+ * Checks if the current user is an admin (non-blocking, for UI).
+ */
+export async function isAdmin(): Promise<boolean> {
+  const { userId } = await auth();
+  if (!userId) return false;
+  return isAdminById(userId);
 }

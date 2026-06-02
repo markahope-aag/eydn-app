@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/admin";
+import { apiError } from "@/lib/api-error";
 import { NextResponse } from "next/server";
 
 /**
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
   else if (status === "overridden") query = query.not("overridden_at", "is", null);
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
 
   return NextResponse.json({ rejections: data || [] });
 }

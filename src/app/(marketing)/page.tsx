@@ -507,7 +507,7 @@ export default function HomePage() {
         >
           <Image
             src="/images/home/ai-planner.jpg"
-            alt="A bride by the coast on her wedding day"
+            alt="A couple by the coast on their wedding day"
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
             style={{ objectFit: "cover", objectPosition: "30% center", zIndex: 0 }}
@@ -871,7 +871,7 @@ export default function HomePage() {
         >
           <Image
             src="/images/home/final-cta.jpg"
-            alt="A bride with her wedding party on the wedding day"
+            alt="A couple with their wedding party on the wedding day"
             fill
             sizes="100vw"
             style={{ objectFit: "cover", objectPosition: "center 30%", zIndex: 0 }}

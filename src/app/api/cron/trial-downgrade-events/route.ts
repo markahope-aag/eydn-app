@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiError } from "@/lib/api-error";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { captureServer } from "@/lib/analytics-server";
 import { requireCronAuth } from "@/lib/cron-auth";
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
     .lte("created_at", windowEnd.toISOString());
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(error.message, 500);
   }
 
   let emitted = 0;

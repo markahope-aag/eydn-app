@@ -135,10 +135,11 @@ describe("PATCH /api/subscribe/scheduled", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns 500 when the cancel update fails", async () => {
+  it("returns 500 with a generic message when the cancel update fails", async () => {
     mockUpdateResult.mockReturnValueOnce({ error: { message: "db down" } });
     const res = await PATCH(patchReq({ action: "cancel" }));
     expect(res.status).toBe(500);
-    expect((await res.json()).error).toBe("db down");
+    // The raw DB error must not leak to the client.
+    expect((await res.json()).error).toBe("Internal server error");
   });
 });

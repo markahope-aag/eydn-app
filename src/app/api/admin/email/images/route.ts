@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { apiError } from "@/lib/api-error";
 import { requireAdmin } from "@/lib/admin";
 import { untypedClient } from "@/lib/supabase/server";
 import type { EmailImage } from "@/lib/images/email-image";
@@ -56,7 +57,7 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(error.message, 500);
   }
 
   const images: EmailImage[] = (data as Row[]).map((row) => ({
@@ -142,7 +143,7 @@ export async function POST(request: NextRequest) {
   if (insertError) {
     // Roll back the orphaned upload so storage and metadata stay consistent.
     await db.storage.from(BUCKET).remove([path]);
-    return NextResponse.json({ error: insertError.message }, { status: 500 });
+    return apiError(insertError.message, 500);
   }
 
   const image: EmailImage = {

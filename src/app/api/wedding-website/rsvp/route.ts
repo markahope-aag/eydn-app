@@ -1,7 +1,7 @@
 import { getWeddingForUser } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import { supabaseError } from "@/lib/api-error";
+import { supabaseError, apiError } from "@/lib/api-error";
 
 export async function GET() {
   const result = await getWeddingForUser();
@@ -32,7 +32,7 @@ export async function POST() {
     .eq("wedding_id", wedding.id);
 
   if (guestsError) {
-    return NextResponse.json({ error: guestsError.message }, { status: 500 });
+    return apiError(guestsError.message, 500);
   }
 
   // Get existing tokens

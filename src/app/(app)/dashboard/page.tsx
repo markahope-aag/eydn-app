@@ -1,8 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
-import { isAdmin } from "@/lib/admin";
-import type { Wedding } from "@/lib/types";
+import { isAdminById } from "@/lib/admin";
+import { resolveWeddingForUserId } from "@/lib/auth";
 import { formatDueDate } from "@/lib/date-utils";
 import Link from "next/link";
 import Image from "next/image";
@@ -114,19 +114,18 @@ function buildGreeting(ctx: { name: string; both: string; days: number | null; t
 }
 
 export default async function DashboardPage() {
-  // Admins go straight to the admin panel
-  if (await isAdmin()) redirect("/dashboard/admin");
-
   const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
   const supabase = createSupabaseAdmin();
-  const { data } = await supabase
-    .from("weddings")
-    .select()
-    .eq("user_id", userId!)
-    .single();
 
-  const wedding = data as Wedding | null;
+  // Admins go straight to the admin panel (single auth() + role lookup).
+  if (await isAdminById(userId, supabase)) redirect("/dashboard/admin");
+
+  // Collaborator-aware resolution so partners/coordinators see the dashboard,
+  // not just the owner (shared with getWeddingForUser).
+  const resolved = await resolveWeddingForUserId(supabase, userId);
+  const wedding = resolved?.wedding ?? null;
 
   if (!wedding) {
     return (

@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/admin";
+import { apiError } from "@/lib/api-error";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
 
@@ -17,7 +18,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ slug: string }
     .eq("slug", slug)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
   if (!data) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   return NextResponse.json({ template: data });
@@ -55,7 +56,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ slug: string 
     .select("*")
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
   if (!data) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   return NextResponse.json({ template: data });

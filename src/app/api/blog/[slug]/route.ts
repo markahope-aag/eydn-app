@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { apiError } from "@/lib/api-error";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin";
 import { submitToIndexNow } from "@/lib/indexnow";
@@ -71,7 +72,7 @@ export async function PATCH(
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
 
   // Submit to IndexNow when a published post is updated
   const finalSlug = (data as { slug: string }).slug;
@@ -97,6 +98,6 @@ export async function DELETE(
     .delete()
     .eq("slug", slug);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiError(error.message, 500);
   return NextResponse.json({ ok: true });
 }

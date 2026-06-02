@@ -540,9 +540,11 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    // Log the detail server-side; never forward the SDK error text (it can
+    // include rate-limit / API-key hints) to the client.
     console.error("[CHAT] Claude API error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Couldn't reach Eydn. Try again." },
+      { error: "Couldn't reach Eydn. Try again." },
       { status: 500 }
     );
   }

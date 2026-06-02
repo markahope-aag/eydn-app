@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/admin";
+import { apiError } from "@/lib/api-error";
 import { NextResponse } from "next/server";
 
 /**
@@ -17,7 +18,7 @@ export async function GET() {
     .order("slug", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiError(error.message, 500);
   }
 
   return NextResponse.json({ templates: data || [] });

@@ -23,14 +23,21 @@ export function invalidateWeddingCache(_userId: string) {
   // Intentionally empty — kept for API compatibility
 }
 
-export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
-  const { userId } = await auth();
-  if (!userId) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
-  }
+type ResolvedWedding = {
+  wedding: Wedding;
+  role: "owner" | "partner" | "coordinator";
+};
 
-  const supabase = createSupabaseAdmin();
-
+/**
+ * Collaborator-aware wedding resolution for a known user id. Returns the
+ * wedding the user owns or collaborates on (auto-accepting a pending email
+ * invite on first sign-in), or null if none. Shared by `getWeddingForUser`
+ * (API routes) and server components so tenant resolution lives in one place.
+ */
+export async function resolveWeddingForUserId(
+  supabase: SupabaseClient<Database>,
+  userId: string
+): Promise<ResolvedWedding | null> {
   // 1. Try direct ownership
   const { data: owned } = await supabase
     .from("weddings")
@@ -39,7 +46,7 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
     .single();
 
   if (owned) {
-    return { wedding: owned as Wedding, supabase, userId, role: "owner" };
+    return { wedding: owned as Wedding, role: "owner" };
   }
 
   // 2. Try accepted collaborator lookup
@@ -58,8 +65,7 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
       .single();
 
     if (wedding) {
-      const role = collab.role as "partner" | "coordinator";
-      return { wedding: wedding as Wedding, supabase, userId, role };
+      return { wedding: wedding as Wedding, role: collab.role as "partner" | "coordinator" };
     }
   }
 
@@ -91,14 +97,28 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
           .single();
 
         if (wedding) {
-          const role = pending.role as "partner" | "coordinator";
-          return { wedding: wedding as Wedding, supabase, userId, role };
+          return { wedding: wedding as Wedding, role: pending.role as "partner" | "coordinator" };
         }
       }
     }
   } catch {
-    // Clerk lookup failed — fall through to 404
+    // Clerk lookup failed — fall through to "not found"
   }
 
-  return { error: NextResponse.json({ error: "Wedding not found" }, { status: 404 }) };
+  return null;
+}
+
+export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+
+  const supabase = createSupabaseAdmin();
+  const resolved = await resolveWeddingForUserId(supabase, userId);
+  if (!resolved) {
+    return { error: NextResponse.json({ error: "Wedding not found" }, { status: 404 }) };
+  }
+
+  return { wedding: resolved.wedding, supabase, userId, role: resolved.role };
 }
