@@ -498,19 +498,19 @@ export default function HomePage() {
             background: "#0F1525",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            padding: "80px 40px",
+            justifyContent: "flex-end",
+            padding: "80px 56px",
             position: "relative",
             overflow: "hidden",
           }}
-          className="max-lg:!p-10"
+          className="max-lg:!p-10 max-lg:!justify-center"
         >
           <Image
             src="/images/home/ai-planner.jpg"
-            alt="A couple by the coast"
+            alt="A bride by the coast on her wedding day"
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
-            style={{ objectFit: "cover", zIndex: 0 }}
+            style={{ objectFit: "cover", objectPosition: "30% center", zIndex: 0 }}
           />
           <div
             style={{
