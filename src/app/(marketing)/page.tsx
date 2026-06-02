@@ -24,6 +24,7 @@ import {
   featureScriptLabels,
   featureBullets,
   darkRowIndices,
+  featureImages,
 } from "@/app/_components/landing/data";
 
 /* ── Fonts —————————————————————————————————————————————————
@@ -109,101 +110,117 @@ export default function HomePage() {
       <BetaPopup />
 
       {/* ─── HERO ─── */}
-      <section style={{ minHeight: "100vh", display: "flex" }}>
-        {/* Left Column */}
+      <section
+        style={{
+          minHeight: "100vh",
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          overflow: "hidden",
+          background: "#2A2018",
+        }}
+      >
+        {/* Full-width hero photo — save the couple image to
+            public/images/home/hero.jpg */}
+        <Image
+          src="/images/home/hero.jpg"
+          alt="A couple embracing on their wedding day"
+          fill
+          priority
+          sizes="100vw"
+          style={{ objectFit: "cover", objectPosition: "center 25%", zIndex: 0 }}
+        />
+        {/* Left-weighted scrim so the text stays legible over the photo */}
         <div
           style={{
-            flex: "0 0 55%",
-            background: "#FAF6F1",
-            display: "flex",
-            alignItems: "center",
-            padding: "80px 60px 80px 80px",
-            position: "relative",
-            overflow: "hidden",
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(100deg, rgba(20,16,12,0.80) 0%, rgba(20,16,12,0.58) 35%, rgba(20,16,12,0.22) 62%, rgba(20,16,12,0.06) 100%)",
+            zIndex: 0,
           }}
-          className="max-lg:!flex-[1_1_100%] max-lg:!p-8 max-lg:!pt-20"
-        >
-          <BotanicalOverlay color="#D4A5A5" opacity={0.08} />
-          <BotanicalOverlay color="#C9A84C" opacity={0.05} />
-          <div style={{ maxWidth: 600, position: "relative", zIndex: 1 }}>
-            <ScrollReveal immediate>
-              <p style={{ fontFamily: "var(--font-script)", fontSize: 32, color: "#D4A5A5" }}>
-                Your wedding, beautifully planned
-              </p>
-            </ScrollReveal>
-            <ScrollReveal immediate>
-              <h1
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 86,
-                  fontWeight: 600,
-                  color: "#2A2018",
-                  lineHeight: 1.02,
-                  marginTop: 16,
-                }}
-                className="max-lg:!text-[48px] max-sm:!text-[34px] max-sm:!leading-[1.1]"
-              >
-                Plan your wedding,
-                <br />
-                not your stress.
-              </h1>
-            </ScrollReveal>
-            <ScrollReveal immediate>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 18, color: "#6B5E50", lineHeight: 1.65, marginTop: 28, maxWidth: 480 }}>
-                From guest lists to vendor outreach to your day-of binder — everything in one beautiful place, guided by an AI that knows your wedding inside and out.
-              </p>
-            </ScrollReveal>
-            <ScrollReveal immediate>
-              <div style={{ marginTop: 36, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16 }}>
-                <AuthCTA
-                  variant="hero"
-                  signedOutSecondary={
-                    <Link
-                      href="/#how-it-works"
-                      style={{
-                        fontFamily: "var(--font-body)",
-                        fontSize: 15,
-                        fontWeight: 500,
-                        color: "#2C3E2D",
-                        textDecoration: "none",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                      }}
-                    >
-                      <span style={{ fontSize: 18 }}>&rarr;</span> See how it works
-                    </Link>
-                  }
-                />
-              </div>
-            </ScrollReveal>
-            <ScrollReveal immediate>
-              <p style={{ marginTop: 24, fontFamily: "var(--font-body)", fontSize: 13, color: "#6B5E50", letterSpacing: "0.02em" }}>
-                <span style={{ color: "#8B6D14" }}>&#10022;</span> 50+ Tasks &middot;{" "}
-                <span style={{ color: "#8B6D14" }}>&#10022;</span> AI That Knows You &middot;{" "}
-                <span style={{ color: "#8B6D14" }}>&#10022;</span> $79 lifetime &middot; $14.99/mo
-              </p>
-            </ScrollReveal>
-          </div>
-        </div>
+        />
 
-        {/* Right Column — warm gradient */}
-        <div
-          style={{
-            flex: "0 0 45%",
-            background: "linear-gradient(145deg, #F7EDED 0%, #F0E4CC 40%, #F3EAE0 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            position: "relative",
-            overflow: "hidden",
-            padding: 40,
-          }}
-          className="max-lg:!hidden"
-        >
-          <BotanicalOverlay color="#D4A5A5" opacity={0.1} />
-          <BotanicalOverlay color="#C9A84C" opacity={0.06} />
-          <div style={{ position: "relative", width: "100%", height: "100%", minHeight: 500 }}>
+        {/* Content over the photo */}
+        <div style={{ position: "relative", zIndex: 1, width: "100%", display: "flex", alignItems: "center" }}>
+          {/* Left — text */}
+          <div
+            style={{
+              flex: "0 0 55%",
+              display: "flex",
+              alignItems: "center",
+              padding: "80px 60px 80px 80px",
+            }}
+            className="max-lg:!flex-[1_1_100%] max-lg:!p-8 max-lg:!pt-24"
+          >
+            <div style={{ maxWidth: 600 }}>
+              <ScrollReveal immediate>
+                <p style={{ fontFamily: "var(--font-script)", fontSize: 32, color: "#E8B7B7" }}>
+                  Your wedding, beautifully planned
+                </p>
+              </ScrollReveal>
+              <ScrollReveal immediate>
+                <h1
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: 86,
+                    fontWeight: 600,
+                    color: "#FAF6F1",
+                    lineHeight: 1.02,
+                    marginTop: 16,
+                    textShadow: "0 2px 28px rgba(0,0,0,0.35)",
+                  }}
+                  className="max-lg:!text-[48px] max-sm:!text-[34px] max-sm:!leading-[1.1]"
+                >
+                  Plan your wedding,
+                  <br />
+                  not your stress.
+                </h1>
+              </ScrollReveal>
+              <ScrollReveal immediate>
+                <p style={{ fontFamily: "var(--font-body)", fontSize: 18, color: "rgba(250,246,241,0.92)", lineHeight: 1.65, marginTop: 28, maxWidth: 480 }}>
+                  From guest lists to vendor outreach to your day-of binder — everything in one beautiful place, guided by an AI that knows your wedding inside and out.
+                </p>
+              </ScrollReveal>
+              <ScrollReveal immediate>
+                <div style={{ marginTop: 36, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16 }}>
+                  <AuthCTA
+                    variant="hero"
+                    signedOutSecondary={
+                      <Link
+                        href="/#how-it-works"
+                        style={{
+                          fontFamily: "var(--font-body)",
+                          fontSize: 15,
+                          fontWeight: 500,
+                          color: "#FAF6F1",
+                          textDecoration: "none",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
+                      >
+                        <span style={{ fontSize: 18 }}>&rarr;</span> See how it works
+                      </Link>
+                    }
+                  />
+                </div>
+              </ScrollReveal>
+              <ScrollReveal immediate>
+                <p style={{ marginTop: 24, fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.85)", letterSpacing: "0.02em" }}>
+                  <span style={{ color: "#E2C275" }}>&#10022;</span> 50+ Tasks &middot;{" "}
+                  <span style={{ color: "#E2C275" }}>&#10022;</span> AI That Knows You &middot;{" "}
+                  <span style={{ color: "#E2C275" }}>&#10022;</span> $79 lifetime &middot; $14.99/mo
+                </p>
+              </ScrollReveal>
+            </div>
+          </div>
+
+          {/* Right — floating UI cards over the photo */}
+          <div
+            style={{ flex: "0 0 45%", position: "relative", minHeight: 500, padding: 40 }}
+            className="max-lg:!hidden"
+          >
             <HeroTaskCard />
             <HeroBudgetCard />
             <HeroAIChatCard />
@@ -291,6 +308,7 @@ export default function HomePage() {
           const bulletColor = isDark ? "#E8C97A" : "#C9A84C";
           const numColor = isDark ? "rgba(250,246,241,0.05)" : "rgba(42,32,24,0.05)";
           const VisualComponent = featureVisuals[i];
+          const featureImage = featureImages[i];
           const scriptLabel = featureScriptLabels[i];
           const bullets = featureBullets[i];
           const num = String(i + 1).padStart(2, "0");
@@ -360,7 +378,7 @@ export default function HomePage() {
                   </div>
                 </ScrollReveal>
               </div>
-              {/* Visual panel */}
+              {/* Visual panel — optional background photo with the UI card over it */}
               <div
                 style={{
                   flex: "0 0 50%",
@@ -369,12 +387,37 @@ export default function HomePage() {
                   alignItems: "center",
                   justifyContent: "center",
                   padding: "60px 40px",
+                  position: "relative",
+                  overflow: "hidden",
                   order: isEven ? 1 : 0,
                 }}
                 className="max-lg:!order-none max-lg:!p-10"
               >
+                {featureImage && (
+                  <>
+                    <Image
+                      src={featureImage}
+                      alt={`${f.title} — wedding inspiration`}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      style={{ objectFit: "cover", zIndex: 0 }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        background: isDark
+                          ? "linear-gradient(160deg, rgba(20,24,18,0.35), rgba(20,24,18,0.55))"
+                          : "linear-gradient(160deg, rgba(42,32,24,0.18), rgba(42,32,24,0.34))",
+                        zIndex: 0,
+                      }}
+                    />
+                  </>
+                )}
                 <ScrollReveal direction={isEven ? "left" : "right"}>
-                  <VisualComponent />
+                  <div style={{ position: "relative", zIndex: 1 }}>
+                    <VisualComponent />
+                  </div>
                 </ScrollReveal>
               </div>
             </div>
@@ -448,20 +491,39 @@ export default function HomePage() {
 
       {/* ─── AI SPOTLIGHT ─── */}
       <section style={{ display: "flex", minHeight: 600 }} className="max-lg:!flex-col">
-        {/* Left: dark panel with chat */}
+        {/* Left: couple photo with the chat card over it */}
         <div
           style={{
             flex: "0 0 50%",
-            background: "linear-gradient(165deg, #1A1A2E 0%, #0F1525 100%)",
+            background: "#0F1525",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             padding: "80px 40px",
+            position: "relative",
+            overflow: "hidden",
           }}
           className="max-lg:!p-10"
         >
+          <Image
+            src="/images/home/ai-planner.jpg"
+            alt="A couple by the coast"
+            fill
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            style={{ objectFit: "cover", zIndex: 0 }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(165deg, rgba(15,21,37,0.55) 0%, rgba(15,21,37,0.72) 100%)",
+              zIndex: 0,
+            }}
+          />
           <ScrollReveal>
-            <SpotlightChat />
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <SpotlightChat />
+            </div>
           </ScrollReveal>
         </div>
         {/* Right: blush-pale with text */}

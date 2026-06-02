@@ -90,3 +90,18 @@ export const featureBullets: string[][] = [
 
 /** Dark row indices for the feature grid — 1 (Budget) and 5 (Day-of Binder). */
 export const darkRowIndices = new Set([1, 5]);
+
+/**
+ * Optional background photo for each feature row's visual panel (the UI card
+ * floats over it). Save files to public/images/home/. null = gradient only.
+ * Order matches `features` (0 Task timeline … 6 Vision board).
+ */
+export const featureImages: (string | null)[] = [
+  "/images/home/task-timeline.jpg", // 0 Task timeline
+  "/images/home/budget-tracker.jpg", // 1 Budget tracker
+  "/images/home/guest-management.jpg", // 2 Guest management
+  "/images/home/vendor-tracker.jpg", // 3 Vendor tracker
+  "/images/home/wedding-website.jpg", // 4 Wedding website
+  "/images/home/day-of-binder.jpg", // 5 Complete day-of binder
+  "/images/home/vision-board.jpg", // 6 Vision board
+];
