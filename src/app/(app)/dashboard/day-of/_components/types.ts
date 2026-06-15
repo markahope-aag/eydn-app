@@ -13,6 +13,9 @@ export type DayOfPlan = {
   vendorContacts: VendorContact[];
   partyAssignments: PartyAssignment[];
   packingChecklist: PackingItem[];
+  /** Item labels that have been checked off the packing list. Persisted so
+   *  the checked state survives a refresh. */
+  checkedPackingItems?: string[];
   ceremonyScript: string;
   processionalOrder: string[];
   officiantNotes: string;

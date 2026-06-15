@@ -67,6 +67,8 @@ export default function DayOfPage() {
         if (!content.setupTasks) content.setupTasks = [];
         if (!content.attire) content.attire = [];
         setPlan(content);
+        // Restore checked packing items so they survive a refresh.
+        setCheckedItems(new Set(content.checkedPackingItems ?? []));
         // Canonical ceremony time: prefer weddings table, fall back to plan content
         const canonicalTime = weddingData?.ceremony_time || content.ceremonyTime || "";
         setCeremonyTime(canonicalTime);
@@ -177,12 +179,13 @@ export default function DayOfPage() {
   }
 
   function toggleCheckItem(item: string) {
-    setCheckedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(item)) next.delete(item);
-      else next.add(item);
-      return next;
-    });
+    if (!plan) return;
+    const next = new Set(checkedItems);
+    if (next.has(item)) next.delete(item);
+    else next.add(item);
+    setCheckedItems(next);
+    // Persist alongside the rest of the plan so checks survive a refresh.
+    savePlan({ ...plan, checkedPackingItems: [...next] });
   }
 
   if (loading) {

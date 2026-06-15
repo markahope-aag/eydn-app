@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { PhotoUpload } from "@/app/(marketing)/w/[slug]/PhotoUpload";
 
 type Photo = { id: string; file_url: string; caption: string | null; uploader_name: string | null; approved: boolean; created_at: string };
 
@@ -24,10 +25,22 @@ export function GalleryTab({
   autoSaveImmediate,
 }: GalleryTabProps) {
   const [downloading, setDownloading] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
     toast.success("Link copied");
+  }
+
+  // Pull the latest photos after a preview upload so the couple sees their
+  // test shot land in the gallery without a manual refresh.
+  async function refreshPhotos() {
+    try {
+      const res = await fetch("/api/wedding-website/photos");
+      if (res.ok) setPhotos(await res.json());
+    } catch {
+      /* Non-fatal — the photo still uploaded; the list just won't auto-refresh. */
+    }
   }
 
   // Zip every gallery photo client-side and download it in one go. JSZip is
@@ -92,6 +105,21 @@ export function GalleryTab({
     }
   }
 
+  async function setApproved(id: string, approved: boolean) {
+    try {
+      const res = await fetch("/api/wedding-website/photos", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, approved }),
+      });
+      if (!res.ok) throw new Error();
+      setPhotos(photos.map((p) => (p.id === id ? { ...p, approved } : p)));
+      toast.success(approved ? "Photo approved — now visible on your site" : "Photo set back to pending");
+    } catch {
+      toast.error("Couldn't update that photo. Try again.");
+    }
+  }
+
   return (
     <div className="space-y-6">
       {slug && (
@@ -106,6 +134,35 @@ export function GalleryTab({
           >
             Copy Link
           </button>
+        </div>
+      )}
+
+      {/* Owner preview — guests only see the upload form on the public site
+          from the wedding day onward, so give the couple the same form here to
+          test the flow anytime. Uploads go through the real public endpoint and
+          appear in the gallery below. */}
+      {slug && (
+        <div className="card p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[15px] font-semibold text-plum">Preview guest photo upload</p>
+              <p className="text-[12px] text-muted mt-0.5">
+                This is the exact form guests use. It appears on your public site from the
+                wedding day on — preview and test it here anytime.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowPreview((v) => !v)}
+              className="btn-ghost btn-sm text-violet flex-shrink-0"
+            >
+              {showPreview ? "Hide" : "Preview"}
+            </button>
+          </div>
+          {showPreview && (
+            <div className="mt-4 max-w-md">
+              <PhotoUpload weddingSlug={slug} hasPhotos={photos.length > 0} onUploaded={refreshPhotos} />
+            </div>
+          )}
         </div>
       )}
 
@@ -171,7 +228,7 @@ export function GalleryTab({
                 <p className="text-[12px] text-muted">
                   By {photo.uploader_name || "Anonymous"}
                 </p>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-1">
                   <span
                     className={`badge text-[12px] ${
                       photo.approved
@@ -181,12 +238,20 @@ export function GalleryTab({
                   >
                     {photo.approved ? "Approved" : "Pending"}
                   </span>
-                  <button
-                    onClick={() => deletePhoto(photo.id)}
-                    className="btn-ghost btn-sm text-red-500 text-[12px]"
-                  >
-                    Remove
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setApproved(photo.id, !photo.approved)}
+                      className="btn-ghost btn-sm text-[12px] text-violet"
+                    >
+                      {photo.approved ? "Unapprove" : "Approve"}
+                    </button>
+                    <button
+                      onClick={() => deletePhoto(photo.id)}
+                      className="btn-ghost btn-sm text-red-500 text-[12px]"
+                    >
+                      {photo.approved ? "Remove" : "Reject"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

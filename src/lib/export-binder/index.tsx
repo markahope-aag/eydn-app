@@ -34,7 +34,13 @@ export async function exportWeddingBinder(): Promise<void> {
     View,
     Image,
     StyleSheet,
+    Font,
   } = await import("@react-pdf/renderer");
+
+  // Disable @react-pdf's default mid-word hyphenation, which breaks words at
+  // awkward points (e.g. "pain reliev-er"). Returning the whole word makes text
+  // wrap on word boundaries instead.
+  Font.registerHyphenationCallback((word: string) => [word]);
 
   // 3. Create styles
   const s = createStyles(StyleSheet);

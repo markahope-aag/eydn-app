@@ -13,6 +13,10 @@ interface RegistryTabProps {
 export function RegistryTab({ registryLinks, loadRegistry }: RegistryTabProps) {
   const [newRegistryName, setNewRegistryName] = useState("");
   const [newRegistryUrl, setNewRegistryUrl] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+  const [reordering, setReordering] = useState(false);
 
   async function addRegistryLink() {
     if (!newRegistryName || !newRegistryUrl) return;
@@ -43,30 +47,147 @@ export function RegistryTab({ registryLinks, loadRegistry }: RegistryTabProps) {
     }
   }
 
+  function startEdit(link: RegistryLink) {
+    setEditingId(link.id);
+    setEditName(link.name);
+    setEditUrl(link.url);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditName("");
+    setEditUrl("");
+  }
+
+  async function saveEdit(id: string) {
+    const name = editName.trim();
+    const url = editUrl.trim();
+    if (!name || !url) {
+      toast.error("Name and URL are both required");
+      return;
+    }
+    try {
+      const res = await fetch("/api/wedding-website/registry", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, name, url }),
+      });
+      if (!res.ok) throw new Error();
+      cancelEdit();
+      loadRegistry();
+      toast.success("Registry link updated");
+    } catch {
+      toast.error("Couldn't save that change. Try again.");
+    }
+  }
+
+  // Reorder by swapping a link's sort_order with its neighbour's, then reload.
+  async function moveLink(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (reordering || target < 0 || target >= registryLinks.length) return;
+    const current = registryLinks[index];
+    const neighbour = registryLinks[target];
+    setReordering(true);
+    try {
+      const patch = (id: string, sort_order: number) =>
+        fetch("/api/wedding-website/registry", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, sort_order }),
+        });
+      const [a, b] = await Promise.all([
+        patch(current.id, neighbour.sort_order),
+        patch(neighbour.id, current.sort_order),
+      ]);
+      if (!a.ok || !b.ok) throw new Error();
+      loadRegistry();
+    } catch {
+      toast.error("Couldn't reorder. Try again.");
+    } finally {
+      setReordering(false);
+    }
+  }
+
   return (
     <div className="max-w-lg space-y-6">
       <div className="space-y-3">
-        {registryLinks.map((link) => (
-          <div key={link.id} className="card p-4 flex items-center justify-between">
-            <div>
-              <p className="text-[15px] font-semibold text-plum">{link.name}</p>
-              <a
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[13px] text-violet hover:underline"
-              >
-                {link.url}
-              </a>
+        {registryLinks.map((link, index) =>
+          editingId === link.id ? (
+            <div key={link.id} className="card p-4 space-y-2">
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                aria-label="Edit registry name"
+                placeholder="Registry name"
+                className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+              />
+              <input
+                type="url"
+                value={editUrl}
+                onChange={(e) => setEditUrl(e.target.value)}
+                aria-label="Edit registry URL"
+                placeholder="https://..."
+                className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
+              />
+              <div className="flex gap-2">
+                <button onClick={() => saveEdit(link.id)} className="btn-primary btn-sm">
+                  Save
+                </button>
+                <button onClick={cancelEdit} className="btn-ghost btn-sm">
+                  Cancel
+                </button>
+              </div>
             </div>
-            <button
-              onClick={() => removeRegistryLink(link.id)}
-              className="btn-ghost btn-sm text-red-500"
-            >
-              Remove
-            </button>
-          </div>
-        ))}
+          ) : (
+            <div key={link.id} className="card p-4 flex items-center gap-3">
+              {/* Reorder controls */}
+              <div className="flex flex-col">
+                <button
+                  onClick={() => moveLink(index, -1)}
+                  disabled={index === 0 || reordering}
+                  aria-label={`Move ${link.name} up`}
+                  className="text-muted hover:text-plum disabled:opacity-30 disabled:cursor-not-allowed leading-none"
+                >
+                  ▲
+                </button>
+                <button
+                  onClick={() => moveLink(index, 1)}
+                  disabled={index === registryLinks.length - 1 || reordering}
+                  aria-label={`Move ${link.name} down`}
+                  className="text-muted hover:text-plum disabled:opacity-30 disabled:cursor-not-allowed leading-none"
+                >
+                  ▼
+                </button>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[15px] font-semibold text-plum truncate">{link.name}</p>
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[13px] text-violet hover:underline break-all"
+                >
+                  {link.url}
+                </a>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={() => startEdit(link)}
+                  className="btn-ghost btn-sm text-violet"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => removeRegistryLink(link.id)}
+                  className="btn-ghost btn-sm text-red-500"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          )
+        )}
 
         {registryLinks.length === 0 && (
           <p className="text-[15px] text-muted">No registry links yet. Add one below.</p>

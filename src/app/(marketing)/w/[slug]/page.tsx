@@ -195,6 +195,9 @@ export default async function WeddingWebsitePage({
         day: "numeric",
       })
     : null;
+  // Hero location line: prefer the named venue, fall back to the city so
+  // couples who only set venue_city (e.g. "still looking") still see a place.
+  const venueDisplay = wedding.venue || wedding.venue_city || null;
 
   // Countdown — computed at request time (server component renders once per request)
   const requestTime = new Date();
@@ -208,7 +211,7 @@ export default async function WeddingWebsitePage({
   if (wedding.website_couple_photo_url) sections.push({ id: "couple", label: "The Couple" });
   if (weddingParty.length > 0) sections.push({ id: "wedding-party", label: "Wedding Party" });
   if (schedule.length > 0) sections.push({ id: "schedule", label: "Schedule" });
-  if (wedding.venue || wedding.website_travel_info) sections.push({ id: "travel", label: "Travel" });
+  if (venueDisplay || wedding.website_travel_info) sections.push({ id: "travel", label: "Travel" });
   if (wedding.website_accommodations || hotels.length > 0) sections.push({ id: "accommodations", label: "Stay" });
   if (faq.length > 0) sections.push({ id: "faq", label: "FAQ" });
   if (registryLinks.length > 0) sections.push({ id: "registry", label: "Registry" });
@@ -243,8 +246,8 @@ export default async function WeddingWebsitePage({
               {weddingDate && (
                 <p className="mt-4 text-[18px] text-white/90 tracking-wide">{weddingDate}</p>
               )}
-              {wedding.venue && (
-                <p className="mt-1 text-[16px] text-white/85">{wedding.venue}</p>
+              {venueDisplay && (
+                <p className="mt-1 text-[16px] text-white/85">{venueDisplay}</p>
               )}
               {wedding.website_headline && (
                 <p className="mt-4 text-[16px] text-white/85 max-w-sm italic">{wedding.website_headline}</p>
@@ -279,8 +282,8 @@ export default async function WeddingWebsitePage({
               {weddingDate && (
                 <p className="mt-4 text-[18px] text-white/90 drop-shadow tracking-wide">{weddingDate}</p>
               )}
-              {wedding.venue && (
-                <p className="mt-1 text-[16px] text-white/85 drop-shadow">{wedding.venue}</p>
+              {venueDisplay && (
+                <p className="mt-1 text-[16px] text-white/85 drop-shadow">{venueDisplay}</p>
               )}
               {wedding.website_headline && (
                 <p className="mt-4 text-[16px] text-white/85 max-w-lg drop-shadow italic">
@@ -306,8 +309,8 @@ export default async function WeddingWebsitePage({
               {weddingDate && (
                 <p className="mt-4 text-[18px] text-white/90 tracking-wide">{weddingDate}</p>
               )}
-              {wedding.venue && (
-                <p className="mt-1 text-[16px] text-white/85">{wedding.venue}</p>
+              {venueDisplay && (
+                <p className="mt-1 text-[16px] text-white/85">{venueDisplay}</p>
               )}
               {wedding.website_headline && (
                 <p className="mt-4 text-[16px] text-white/85 max-w-lg mx-auto italic">
@@ -416,15 +419,15 @@ export default async function WeddingWebsitePage({
         )}
 
         {/* Travel */}
-        {(wedding.venue || wedding.website_travel_info) && (
+        {(venueDisplay || wedding.website_travel_info) && (
           <section id="travel" className="text-center">
             <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Travel</h2>
             <SectionDivider />
             <div className="mt-8 max-w-2xl mx-auto space-y-6">
-              {wedding.venue && (
+              {venueDisplay && (
                 <div className="bg-white rounded-[20px] border border-border p-8">
                   <p className="text-[13px] font-semibold text-violet uppercase tracking-widest">Venue</p>
-                  <p className="mt-2 text-[20px] font-[family-name:var(--font-serif)] text-plum">{wedding.venue}</p>
+                  <p className="mt-2 text-[20px] font-[family-name:var(--font-serif)] text-plum">{venueDisplay}</p>
                 </div>
               )}
               {wedding.website_travel_info && (
@@ -595,7 +598,7 @@ export default async function WeddingWebsitePage({
       <footer className="border-t border-border/50 py-12 text-center space-y-2">
         <p className="text-[18px] font-[family-name:var(--font-serif)] text-plum/60">{coupleNames}</p>
         {weddingDate && <p className="text-[13px] text-muted/60">{weddingDate}</p>}
-        {wedding.venue && <p className="text-[13px] text-muted/50">{wedding.venue}</p>}
+        {venueDisplay && <p className="text-[13px] text-muted/50">{venueDisplay}</p>}
         <p className="text-[11px] text-muted/40 pt-4">
           Made with love using{" "}
           <Link href="/" className="text-violet/60 hover:underline">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 // Pulls live vendor and wedding-party data rather than the snapshot baked
 // into the day-of plan — so removed vendors no longer linger here.
@@ -144,7 +145,28 @@ export function VendorsTab() {
 
       {party.length > 0 && (
         <div>
-          <h2 className="text-[15px] font-semibold text-plum mb-3">Wedding Party Jobs</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[15px] font-semibold text-plum">Wedding Party Jobs</h2>
+            <Link
+              href="/dashboard/wedding-party"
+              className="text-[13px] font-semibold text-violet hover:text-soft-violet"
+            >
+              Assign jobs →
+            </Link>
+          </div>
+          {/* Members appear here regardless, but day-of jobs are set on the
+              Wedding Party page — guide the couple there when none are assigned
+              so an all-"—" table doesn't read as broken. */}
+          {party.every((p) => (p.job_assignment ?? "").trim() === "") && (
+            <p className="mb-3 rounded-[12px] border border-amber-200 bg-amber-50 px-4 py-2.5 text-[13px] text-amber-800">
+              No day-of jobs assigned yet. Open{" "}
+              <Link href="/dashboard/wedding-party" className="font-semibold underline">
+                Wedding Party
+              </Link>{" "}
+              to give each person a role (processional, gift table, toasts…) and
+              it&apos;ll show here for your coordinator.
+            </p>
+          )}
           <div className="overflow-hidden rounded-[16px] border border-border bg-white">
             <table className="w-full text-[15px]">
               <thead className="border-b border-border bg-lavender">

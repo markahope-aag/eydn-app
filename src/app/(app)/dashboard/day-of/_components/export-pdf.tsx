@@ -3,7 +3,11 @@ import { toast } from "sonner";
 import { DayOfPlan } from "./types";
 
 export async function exportDayOfPDF(plan: DayOfPlan) {
-  const { pdf, Document, Page: PdfPage, Text, View, Image, StyleSheet, Svg, Rect, Defs, LinearGradient, Stop, Circle } = await import("@react-pdf/renderer");
+  const { pdf, Document, Page: PdfPage, Text, View, Image, StyleSheet, Svg, Rect, Defs, LinearGradient, Stop, Circle, Font } = await import("@react-pdf/renderer");
+
+  // Disable @react-pdf's default mid-word hyphenation so words wrap whole
+  // rather than breaking at awkward points (e.g. "pain reliev-er").
+  Font.registerHyphenationCallback((word: string) => [word]);
 
   // Couple names for the header — fetched here so the export stays a
   // single call from the page.

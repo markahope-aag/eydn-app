@@ -6,9 +6,12 @@ import { toast } from "sonner";
 type Props = {
   weddingSlug: string;
   hasPhotos?: boolean;
+  /** Called after a successful upload — lets an embedding view (e.g. the
+   *  couple's dashboard preview) refresh its photo list. */
+  onUploaded?: () => void;
 };
 
-export function PhotoUpload({ weddingSlug, hasPhotos = false }: Props) {
+export function PhotoUpload({ weddingSlug, hasPhotos = false, onUploaded }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploaderName, setUploaderName] = useState("");
   const [caption, setCaption] = useState("");
@@ -77,6 +80,7 @@ export function PhotoUpload({ weddingSlug, hasPhotos = false }: Props) {
       setFileName("");
       setPreview(null);
       if (fileRef.current) fileRef.current.value = "";
+      onUploaded?.();
     } catch {
       toast.error("Photo didn't upload. Try again.");
     } finally {

@@ -52,6 +52,44 @@ export async function POST(request: Request) {
   return NextResponse.json(data, { status: 201 });
 }
 
+export async function PATCH(request: Request) {
+  const result = await getWeddingForUser();
+  if ("error" in result) return result.error;
+  const { wedding, supabase } = result;
+
+  const parsed = await safeParseJSON(request);
+  if (isParseError(parsed)) return parsed;
+  const body = parsed;
+
+  const id = body.id as string | undefined;
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  }
+
+  // Supports both editing (name/url) and reordering (sort_order).
+  const updates: Record<string, unknown> = {};
+  if (typeof body.name === "string") updates.name = body.name;
+  if (typeof body.url === "string") updates.url = body.url;
+  if (typeof body.sort_order === "number") updates.sort_order = body.sort_order;
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+  }
+
+  const { data, error } = await supabase
+    .from("registry_links")
+    .update(updates)
+    .eq("id", id)
+    .eq("wedding_id", wedding.id)
+    .select()
+    .single();
+
+  const err = supabaseError(error, "wedding-website/registry");
+  if (err) return err;
+
+  return NextResponse.json(data);
+}
+
 export async function DELETE(request: NextRequest) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
