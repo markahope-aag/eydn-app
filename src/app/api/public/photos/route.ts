@@ -52,15 +52,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid file type. Only JPEG, PNG, WebP, GIF, and HEIC images are allowed." }, { status: 400 });
   }
 
-  // Look up wedding by slug
+  // Look up wedding by slug. Pull photo_approval_required so we can honour the
+  // couple's moderation setting on insert.
   const { data: weddingRaw, error: weddingError } = await supabase
     .from("weddings")
-    .select("id")
+    .select("id, photo_approval_required")
     .eq("website_slug", weddingSlug)
     .eq("website_enabled", true)
     .maybeSingle();
 
-  const wedding = weddingRaw as { id: string } | null;
+  const wedding = weddingRaw as { id: string; photo_approval_required: boolean | null } | null;
 
   if (weddingError || !wedding) {
     return NextResponse.json({ error: "Wedding not found" }, { status: 404 });
@@ -90,6 +91,10 @@ export async function POST(request: Request) {
     .from("wedding-photos")
     .getPublicUrl(fileName);
 
+  // Honour the couple's moderation setting: when approval is required the photo
+  // stays hidden until they approve it; otherwise it appears publicly right away.
+  const approved = !wedding.photo_approval_required;
+
   // Create photo record
   const { error: photoError } = await supabase
     .from("wedding_photos")
@@ -99,7 +104,7 @@ export async function POST(request: Request) {
       uploader_name: uploaderName || "Anonymous",
       file_url: urlData.publicUrl,
       caption: caption || null,
-      approved: false,
+      approved,
     });
 
   if (photoError) {
@@ -107,5 +112,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true }, { status: 201 });
+  return NextResponse.json({ success: true, approved }, { status: 201 });
 }

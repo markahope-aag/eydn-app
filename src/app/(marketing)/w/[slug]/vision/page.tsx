@@ -108,9 +108,19 @@ export default async function PublicVisionBoardPage({
     >
       {/* Header */}
       <header
-        className="text-center py-16 px-6"
+        className="relative text-center py-16 px-6"
         style={{ background: `linear-gradient(135deg, var(--theme-primary), var(--theme-accent))` }}
       >
+        {/* Prominent, always-visible back control. A translucent white pill
+            reads clearly on any theme gradient, light or dark — unlike the
+            previous faint underlined text at the foot of the header. */}
+        <Link
+          href={`/w/${wedding.website_slug}`}
+          className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3.5 py-1.5 text-[13px] font-semibold text-white backdrop-blur-sm hover:bg-white/30 transition"
+        >
+          <span aria-hidden="true">&larr;</span>
+          Back to website
+        </Link>
         <p className="text-[13px] uppercase tracking-[0.25em] text-white/70 font-semibold">
           Vision Board
         </p>
@@ -120,12 +130,6 @@ export default async function PublicVisionBoardPage({
         <p className="mt-3 text-[15px] text-white/80 max-w-md mx-auto">
           Inspiration we&apos;re drawing from for our wedding day.
         </p>
-        <Link
-          href={`/w/${wedding.website_slug}`}
-          className="mt-6 inline-block text-[13px] text-white/80 hover:text-white underline underline-offset-4"
-        >
-          Back to our wedding website
-        </Link>
       </header>
 
       {/* Grid */}

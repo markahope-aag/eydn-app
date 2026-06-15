@@ -61,6 +61,13 @@ export function PhotoUpload({ weddingSlug, hasPhotos = false, onUploaded }: Prop
       return;
     }
 
+    // Reject non-images up front with a clear message rather than waiting for
+    // the server to bounce them with a generic error.
+    if (!file.type.startsWith("image/")) {
+      toast.error("That file isn't an image. Please upload a JPG, PNG, or WebP.");
+      return;
+    }
+
     setUploading(true);
     const formData = new FormData();
     formData.append("file", file);
@@ -73,16 +80,26 @@ export function PhotoUpload({ weddingSlug, hasPhotos = false, onUploaded }: Prop
         method: "POST",
         body: formData,
       });
-      if (!res.ok) throw new Error();
-      toast.success("Photo uploaded. It'll appear once reviewed.");
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        // Surface the server's specific reason (invalid type, too large, etc.)
+        // instead of a generic failure message.
+        throw new Error(data?.error || "Photo didn't upload. Try again.");
+      }
+      // Tailor the confirmation to whether the couple moderates photos.
+      toast.success(
+        data?.approved === false
+          ? "Photo uploaded. It'll appear once the couple approves it."
+          : "Photo uploaded — thanks for sharing!"
+      );
       setCaption("");
       setUploaderName("");
       setFileName("");
       setPreview(null);
       if (fileRef.current) fileRef.current.value = "";
       onUploaded?.();
-    } catch {
-      toast.error("Photo didn't upload. Try again.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Photo didn't upload. Try again.");
     } finally {
       setUploading(false);
     }

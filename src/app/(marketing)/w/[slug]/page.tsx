@@ -124,7 +124,7 @@ export default async function WeddingWebsitePage({
   }
 
   // Parallel data fetches
-  const [{ data: registryLinksRaw }, { data: photosRaw }, { data: weddingPartyRaw }] =
+  const [{ data: registryLinksRaw }, { data: photosRaw }, { data: weddingPartyRaw }, { count: visionCount }] =
     await Promise.all([
       supabase
         .from("registry_links")
@@ -143,6 +143,13 @@ export default async function WeddingWebsitePage({
         .eq("wedding_id", wedding.id)
         .is("deleted_at", null)
         .order("sort_order", { ascending: true }),
+      // Whether the couple has any vision-board pins — drives a link to the
+      // public vision board page (otherwise that page is undiscoverable).
+      supabase
+        .from("mood_board_items")
+        .select("id", { count: "exact", head: true })
+        .eq("wedding_id", wedding.id)
+        .is("deleted_at", null),
     ]);
 
   const registryLinks = (registryLinksRaw ?? []) as RegistryLink[];
@@ -216,6 +223,8 @@ export default async function WeddingWebsitePage({
   if (faq.length > 0) sections.push({ id: "faq", label: "FAQ" });
   if (registryLinks.length > 0) sections.push({ id: "registry", label: "Registry" });
   if (photos.length > 0) sections.push({ id: "photos", label: "Photos" });
+  const hasVisionBoard = (visionCount ?? 0) > 0;
+  if (hasVisionBoard) sections.push({ id: "vision", label: "Vision" });
   sections.push({ id: "rsvp", label: "RSVP" });
 
   return (
@@ -540,6 +549,26 @@ export default async function WeddingWebsitePage({
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* Vision board link — the full Pinterest-style board lives on its own
+            page; surface it here so guests can actually find it. */}
+        {hasVisionBoard && (
+          <section id="vision" className="text-center">
+            <h2 className="text-[32px] font-[family-name:var(--font-serif)]" style={{ color: 'var(--theme-primary)' }}>Our Vision</h2>
+            <SectionDivider />
+            <p className="mt-4 text-[16px] text-muted max-w-lg mx-auto">
+              A peek at the looks, colors, and details inspiring our celebration.
+            </p>
+            <Link
+              href={`/w/${slug}/vision`}
+              className="mt-6 inline-flex items-center gap-1.5 rounded-full px-6 py-2.5 text-[14px] font-semibold text-white transition hover:opacity-90"
+              style={{ background: 'var(--theme-primary)' }}
+            >
+              View our vision board
+              <span aria-hidden="true">→</span>
+            </Link>
           </section>
         )}
 

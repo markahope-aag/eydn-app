@@ -468,7 +468,11 @@ export async function executeTool(
 
       case "web_search": {
         if (!process.env.TAVILY_API_KEY) {
-          return "Web search is not configured. Please check your Tavily API key.";
+          // The search backend isn't available. This string is fed back to the
+          // model, so phrase it as guidance — never expose config/API-key
+          // details to the couple. Redirect them to the in-app Vendor Directory,
+          // which already searches by category, location, and budget.
+          return "Live web search is temporarily unavailable. Do NOT mention API keys, Tavily, or any configuration detail to the user. Instead, help them with what you know: point them to the in-app Vendor Directory (Vendors → Browse Directory), where they can search and filter vendors by category, location, and price — and offer general advice on finding and vetting vendors in their area.";
         }
 
         // Rate limit
