@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Tooltip } from "@/components/Tooltip";
 import BudgetOptimizerBanner from "@/components/BudgetOptimizerBanner";
 import { BUDGET_CATEGORIES, BUDGET_TEMPLATE, BUDGET_ALLOCATIONS } from "@/lib/budget/budget-template";
@@ -39,6 +40,8 @@ export default function BudgetPage() {
   const [budgetInput, setBudgetInput] = useState("");
   const [budgetFocused, setBudgetFocused] = useState(false);
   const [loading, setLoading] = useState(true);
+  // The line item awaiting delete confirmation (null = no dialog open).
+  const [pendingDelete, setPendingDelete] = useState<Expense | null>(null);
   const budgetTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const fieldTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
@@ -715,7 +718,7 @@ export default function BudgetPage() {
                       })()}
                     </div>
                     <button
-                      onClick={() => removeExpense(exp.id)}
+                      onClick={() => setPendingDelete(exp)}
                       aria-label={`Remove ${exp.description}`}
                       className="opacity-0 group-hover/row:opacity-100 transition-opacity text-muted hover:text-error flex justify-end"
                     >
@@ -736,6 +739,22 @@ export default function BudgetPage() {
           </p>
         )}
       </div>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="Delete line item?"
+        message={
+          pendingDelete
+            ? `"${pendingDelete.description}" and its estimated, paid, and final-cost amounts will be permanently removed.`
+            : ""
+        }
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (pendingDelete) removeExpense(pendingDelete.id);
+          setPendingDelete(null);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

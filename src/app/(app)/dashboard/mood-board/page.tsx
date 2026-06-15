@@ -26,6 +26,7 @@ import { Modal } from "@/components/Modal";
 import { trackMoodBoardAdd } from "@/lib/analytics";
 import { Tooltip } from "@/components/Tooltip";
 import { GuideLink } from "@/components/GuideLink";
+import Link from "next/link";
 import { extractPalette, pickThemeColors } from "@/lib/images/palette";
 
 type MoodItem = {
@@ -429,15 +430,23 @@ export default function MoodBoardPage() {
     const summary = `Check out our wedding vision board — ${items.length} pins across ${catCounts.size} categories.`;
 
     if (weddingSlug && websitePublished) {
+      // Copy the public vision board URL itself so it pastes cleanly into a
+      // browser bar, text, or link field — previously the link was appended
+      // after the summary line, so pasting into a single-line field dropped it
+      // and it read as "only a summary".
       const url = `${window.location.origin}/w/${weddingSlug}/vision`;
-      navigator.clipboard.writeText(`${summary}\n${url}`);
+      navigator.clipboard.writeText(url);
       toast.success("Vision board link copied to clipboard");
     } else if (weddingSlug && !websitePublished) {
       navigator.clipboard.writeText(summary);
-      toast("Summary copied — publish your wedding website to share a public link");
+      toast.warning("Your wedding website isn't published — there's no public link to share yet", {
+        description: "Publish it under Website, then Share will copy your vision board link. A text summary was copied for now.",
+      });
     } else {
       navigator.clipboard.writeText(summary);
-      toast.success("Board summary copied — set up your wedding website to share a link");
+      toast.warning("No public link yet — your wedding website isn't set up", {
+        description: "Create and publish your website to get a shareable vision board link. A text summary was copied for now.",
+      });
     }
   }
 
@@ -490,18 +499,24 @@ export default function MoodBoardPage() {
         </div>
         <div className="flex items-center gap-2">
           {items.length > 0 && (
-            <div className="inline-flex items-center gap-1.5">
+            <div className="inline-flex items-center gap-2">
               <button onClick={shareBoard} className="btn-secondary btn-sm inline-flex items-center gap-1.5">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M5 7L8 4L11 7M8 4V11M3 13H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 Share
               </button>
-              {!websitePublished && (
-                <Tooltip
-                  text="Publish your wedding website to share a public link your vendors can open. Until then, Share copies a summary you can paste into an email."
-                  wide
-                />
+              {websitePublished === false && (
+                // Visible (not hover-only) marker so it's obvious why Share
+                // can't produce a public link, with a one-click path to fix it.
+                <Link
+                  href="/dashboard/website"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-[12px] font-semibold text-amber-800 hover:bg-amber-100 transition"
+                  title="Your wedding website isn't published yet — publish it to share a public vision board link."
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" aria-hidden="true" />
+                  Website not published — publish to share a link
+                </Link>
               )}
             </div>
           )}

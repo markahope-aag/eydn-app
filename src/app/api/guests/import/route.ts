@@ -24,6 +24,17 @@ function sanitizeCell(value: string): string {
   return s.trim();
 }
 
+// Lightweight email shape check — enough to reject obvious garbage without
+// rejecting valid-but-unusual addresses.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Human-readable summary of the first few row problems, for error/warning copy. */
+function formatRowErrors(errors: { line: number; reason: string }[], max = 3): string {
+  const shown = errors.slice(0, max).map((e) => `row ${e.line} (${e.reason})`).join(", ");
+  const extra = errors.length > max ? ` and ${errors.length - max} more` : "";
+  return shown + extra;
+}
+
 /** Parse a CSV line respecting quoted fields (handles commas inside quotes). */
 function parseCsvLine(line: string): string[] {
   const fields: string[] = [];
@@ -101,20 +112,38 @@ export async function POST(request: Request) {
   const minColumns = requiredIndices.length > 0 ? Math.max(...requiredIndices) + 1 : 1;
 
   const guests = [];
-  let skippedCount = 0;
+  // `dropped` = rows that couldn't be imported at all (structural problems).
+  // `cleaned` = rows imported but with bad data removed (e.g. invalid email).
+  // Both are reported back with 1-based line numbers so malformed rows surface
+  // as feedback instead of being silently imported or silently discarded.
+  const dropped: { line: number; reason: string }[] = [];
+  const cleaned: { line: number; reason: string }[] = [];
   for (let i = 1; i < lines.length; i++) {
+    const lineNo = i + 1; // header is line 1
     const cols = parseCsvLine(lines[i]);
+
     if (cols.length < minColumns) {
-      skippedCount++;
+      dropped.push({ line: lineNo, reason: "too few columns" });
       continue;
     }
+
     const name = cols[nameIdx];
-    if (!name) continue;
+    if (!name) {
+      dropped.push({ line: lineNo, reason: "missing name" });
+      continue;
+    }
+
+    let email = emailIdx >= 0 ? cols[emailIdx] || "" : "";
+    if (email && !EMAIL_RE.test(email)) {
+      // Don't lose the guest over a bad email — import them without it and flag it.
+      cleaned.push({ line: lineNo, reason: `invalid email "${email}" — imported without it` });
+      email = "";
+    }
 
     guests.push({
       wedding_id: wedding.id,
       name,
-      email: emailIdx >= 0 ? cols[emailIdx] || null : null,
+      email: email || null,
       group_name: groupIdx >= 0 ? cols[groupIdx] || null : null,
       // Bulk-imported guests are people the couple is considering, not yet
       // invited — match the single-add UI which uses "Save for Later" rather
@@ -125,7 +154,11 @@ export async function POST(request: Request) {
   }
 
   if (guests.length === 0) {
-    return NextResponse.json({ error: "No valid guests found in CSV" }, { status: 400 });
+    const detail = dropped.length ? ` Problems: ${formatRowErrors(dropped)}.` : "";
+    return NextResponse.json(
+      { error: `No valid guests found in CSV.${detail}`, errors: dropped },
+      { status: 400 }
+    );
   }
 
   const { error } = await supabase.from("guests").insert(guests);
@@ -135,5 +168,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to import guests" }, { status: 500 });
   }
 
-  return NextResponse.json({ imported: guests.length, skipped: skippedCount }, { status: 201 });
+  const issues = [...dropped, ...cleaned].sort((a, b) => a.line - b.line);
+  return NextResponse.json(
+    { imported: guests.length, skipped: dropped.length, errors: issues.slice(0, 50) },
+    { status: 201 }
+  );
 }

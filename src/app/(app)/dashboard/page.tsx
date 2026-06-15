@@ -253,9 +253,9 @@ export default async function DashboardPage() {
   const nudges: { message: string; type: "urgent" | "tip" | "celebrate"; link?: string }[] = [];
 
   // Overdue tasks are surfaced once, by <CatchUpBanner /> at the top of the
-  // page — we deliberately don't add a second overdue nudge here so the
-  // messaging isn't duplicated. (Individual overdue items still show, in red,
-  // in the Upcoming tasks list below.)
+  // page — we deliberately don't add a second overdue nudge here, and the
+  // Upcoming tasks list below shows due dates neutrally (no red re-flag) so the
+  // "you're behind" messaging lives in exactly one place.
 
   // Vendor gaps — key categories not yet booked
   const vendorCategories = (allVendors || []).map((v) => (v as { category: string }).category);
@@ -561,7 +561,6 @@ export default async function DashboardPage() {
           <div className="mt-3 space-y-2">
             {(upcomingTasks as { title: string; due_date: string | null; category: string | null; completed: boolean; priority: string }[]).map((task, i) => {
               const dueDateInfo = task.due_date ? formatDueDate(task.due_date) : null;
-              const isOverdue = dueDateInfo?.isOverdue;
               return (
                 <div key={i} className="card-list px-4 py-3">
                   <div className="flex items-center gap-2">
@@ -580,7 +579,10 @@ export default async function DashboardPage() {
                       <span className="badge badge-booked text-[11px]">{task.category}</span>
                     )}
                     {dueDateInfo && (
-                      <span className={`text-[12px] ${isOverdue ? "text-error font-semibold" : dueDateInfo.isToday ? "text-violet font-semibold" : "text-muted"}`}>
+                      // Overdue isn't re-flagged in red here — the CatchUpBanner
+                      // above is the single overdue surface. The relative date
+                      // ("3 days overdue") still conveys it without a second alarm.
+                      <span className={`text-[12px] ${dueDateInfo.isToday ? "text-violet font-semibold" : "text-muted"}`}>
                         {dueDateInfo.formatted} · {dueDateInfo.relative}
                       </span>
                     )}

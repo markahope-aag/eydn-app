@@ -60,36 +60,42 @@ export function TasksQuickStart() {
     </>,
   ];
 
+  // Collapsed by default to keep the top of the page light — the summary row is
+  // a single line; couples expand it only if they want the walkthrough.
   return (
-    <div className="rounded-xl px-5 py-4 mb-4 border border-violet/20 bg-lavender/30">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <p className="text-[15px] font-semibold text-plum">
-            New here? Here&apos;s how your checklist works
-          </p>
-          <ul className="mt-2 space-y-1.5 text-[13px] text-muted">
-            {tips.map((tip, i) => (
-              <li key={i} className="flex gap-2">
-                <span aria-hidden="true" className="text-violet font-semibold">
-                  {i + 1}.
-                </span>
-                <span>{tip}</span>
-              </li>
-            ))}
-          </ul>
-          <button type="button" onClick={dismiss} className="btn-secondary btn-sm mt-3">
-            Got it
-          </button>
-        </div>
+    <details className="group rounded-xl mb-4 border border-violet/20 bg-lavender/30 [&_svg]:open:rotate-90">
+      <summary className="flex items-center gap-2 px-4 py-2.5 cursor-pointer list-none text-[14px] font-semibold text-plum">
+        <svg
+          width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"
+          className="text-violet transition-transform flex-shrink-0"
+        >
+          <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="flex-1">New here? How your checklist works</span>
         <button
           type="button"
-          onClick={dismiss}
+          onClick={(e) => { e.preventDefault(); dismiss(); }}
           aria-label="Dismiss quick start"
-          className="text-muted hover:text-plum text-xl leading-none px-2"
+          className="text-muted hover:text-plum text-xl leading-none px-1"
         >
           &times;
         </button>
+      </summary>
+      <div className="px-4 pb-4 pt-0">
+        <ul className="space-y-1.5 text-[13px] text-muted pl-6">
+          {tips.map((tip, i) => (
+            <li key={i} className="flex gap-2">
+              <span aria-hidden="true" className="text-violet font-semibold">
+                {i + 1}.
+              </span>
+              <span>{tip}</span>
+            </li>
+          ))}
+        </ul>
+        <button type="button" onClick={dismiss} className="btn-secondary btn-sm mt-3 ml-6">
+          Got it
+        </button>
       </div>
-    </div>
+    </details>
   );
 }

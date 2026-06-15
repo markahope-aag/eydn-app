@@ -70,6 +70,7 @@ type Props = {
   onUpdatePriority: (_id: string, _priority: "high" | "medium" | "low") => void;
   onUpdateStatus: (_id: string, _status: "not_started" | "in_progress" | "done") => void;
   onUpdateDueDate: (_id: string, _dueDate: string | null) => void;
+  onUpdateTitle: (_id: string, _title: string) => void;
 };
 
 const STATUS_OPTIONS: { value: "not_started" | "in_progress" | "done"; label: string }[] = [
@@ -94,7 +95,10 @@ export function TaskDetail({
   onUpdatePriority,
   onUpdateStatus,
   onUpdateDueDate,
+  onUpdateTitle,
 }: Props) {
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(task.title);
   const [resources, setResources] = useState<TaskResource[]>([]);
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
   const [relatedTasks, setRelatedTasks] = useState<RelatedTask[]>([]);
@@ -227,9 +231,58 @@ export function TaskDetail({
       </span>
     ) : undefined;
 
+  function saveTitle() {
+    const trimmed = titleDraft.trim();
+    if (!trimmed) {
+      toast.error("Task title can't be empty");
+      return;
+    }
+    if (trimmed !== task.title) onUpdateTitle(task.id, trimmed);
+    setEditingTitle(false);
+  }
+
+  function cancelTitle() {
+    setTitleDraft(task.title);
+    setEditingTitle(false);
+  }
+
+  // task.title stays the dialog's accessible name (titleVisuallyHidden keeps it
+  // for screen readers); the visible, inline-editable title lives in the body.
   return (
-    <Modal open onClose={onClose} title={task.title} description={badges} size="3xl">
+    <Modal open onClose={onClose} title={task.title} titleVisuallyHidden size="3xl">
       <div>
+          {/* Title — inline editable */}
+          <div className="mb-3">
+            {editingTitle ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); saveTitle(); }
+                    if (e.key === "Escape") { e.preventDefault(); cancelTitle(); }
+                  }}
+                  aria-label="Task title"
+                  className="flex-1 min-w-0 rounded-[10px] border-border px-3 py-2 text-[18px] font-semibold text-plum"
+                  autoFocus
+                />
+                <button onClick={saveTitle} className="btn-primary btn-sm">Save</button>
+                <button onClick={cancelTitle} className="btn-ghost btn-sm">Cancel</button>
+              </div>
+            ) : (
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-[18px] font-semibold text-plum min-w-0">{task.title}</h2>
+                <button
+                  onClick={() => { setTitleDraft(task.title); setEditingTitle(true); }}
+                  className="text-[12px] text-violet hover:text-soft-violet font-semibold transition flex-shrink-0"
+                >
+                  Edit
+                </button>
+              </div>
+            )}
+            {badges && <div className="mt-1.5">{badges}</div>}
+          </div>
 
           {/* Due date — editable, with a heads-up that the timeline is data-driven */}
           <div className="mt-4">

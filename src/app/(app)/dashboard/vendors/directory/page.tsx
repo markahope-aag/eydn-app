@@ -260,9 +260,29 @@ export default function VendorDirectoryPage() {
           setWeddingCity(city);
           setFilterLocation(city);
         }
-        if (typeof w?.lat === "number" && typeof w?.lng === "number") {
-          setWeddingLat(w.lat);
-          setWeddingLng(w.lng);
+        const hasCoords = typeof w?.lat === "number" && typeof w?.lng === "number";
+        if (hasCoords) {
+          setWeddingLat(w!.lat as number);
+          setWeddingLng(w!.lng as number);
+        } else if (w?.id && w?.venue_city && w.venue_city.trim()) {
+          // City set but never geocoded (e.g. saved during onboarding). Backfill
+          // the coordinates so the distance/radius filter can activate. The PATCH
+          // route geocodes when coords are missing, even for an unchanged city.
+          fetch(`/api/weddings/${w.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ venue_city: w.venue_city.trim() }),
+          })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((updated: { lat?: number | null; lng?: number | null } | null) => {
+              if (typeof updated?.lat === "number" && typeof updated?.lng === "number") {
+                setWeddingLat(updated.lat);
+                setWeddingLng(updated.lng);
+              }
+            })
+            .catch(() => {
+              /* Non-fatal — directory still works with city-name matching. */
+            });
         }
         setWeddingLoaded(true);
       })

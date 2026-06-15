@@ -673,6 +673,12 @@ const BUDGET_ALLOCATIONS = [
 const TOTAL_STEPS = 8;
 const PROGRESS_STEPS = TOTAL_STEPS - 1; // exclude Welcome
 
+// Onboarding progress lives only in React state and isn't written server-side
+// until the couple finishes, so a mid-flow refresh would otherwise drop them
+// back to Welcome. Mirror step + form to localStorage so a refresh resumes in
+// place. Scoped to the initial (non-review) flow only.
+const ONBOARDING_STORAGE_KEY = "eydn:onboarding_progress";
+
 export default function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -689,6 +695,10 @@ export default function OnboardingPage() {
   const [submittedToChat, setSubmittedToChat] = useState(false);
   const [ready, setReady] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  // Track the step the browser history is synced to, and flag step changes
+  // that originate from a popstate so we don't push a redundant entry.
+  const historyStepRef = useRef<number | null>(null);
+  const poppingRef = useRef(false);
 
   // Fire the GTM sign_up event the first time a freshly-created Clerk user
   // lands on onboarding. We dedupe per Clerk userId via sessionStorage so a
@@ -709,6 +719,27 @@ export default function OnboardingPage() {
     sessionStorage.setItem(key, "1");
     trackSignUp();
   }, [userLoaded, user, isReview]);
+
+  // Restore any in-progress onboarding saved before a refresh. Runs only in
+  // the initial flow; review mode loads from the server instead.
+  const restoreSavedProgress = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as {
+        step?: number;
+        form?: Partial<FormData>;
+        aiInput?: string;
+      };
+      if (saved.form) setForm((prev) => ({ ...prev, ...saved.form }));
+      if (typeof saved.aiInput === "string") setAIInput(saved.aiInput);
+      if (typeof saved.step === "number" && saved.step > 0 && saved.step < TOTAL_STEPS) {
+        setStep(saved.step);
+      }
+    } catch {
+      // Corrupt or unavailable storage — start fresh rather than crash.
+    }
+  }, []);
 
   // Check if already onboarded → redirect (unless reviewing)
   useEffect(() => {
@@ -740,19 +771,95 @@ export default function OnboardingPage() {
     fetch("/api/weddings")
       .then((r) => {
         if (r.ok) {
+          // Already onboarded — drop any stale progress and open the app.
+          try { localStorage.removeItem(ONBOARDING_STORAGE_KEY); } catch {}
           router.replace("/dashboard");
         } else {
+          restoreSavedProgress();
           setReady(true);
         }
       })
-      .catch(() => setReady(true));
-  }, [router, isReview]);
+      .catch(() => {
+        restoreSavedProgress();
+        setReady(true);
+      });
+  }, [router, isReview, restoreSavedProgress]);
+
+  // Persist progress on every step/field change so a refresh resumes in place.
+  // Guarded on `ready` so we never overwrite saved data before restoring it.
+  useEffect(() => {
+    if (!ready || isReview || showSnapshot) return;
+    try {
+      localStorage.setItem(
+        ONBOARDING_STORAGE_KEY,
+        JSON.stringify({ step, form, aiInput })
+      );
+    } catch {
+      // Storage full or unavailable — non-fatal; progress just won't persist.
+    }
+  }, [ready, isReview, showSnapshot, step, form, aiInput]);
 
   // Scroll to top on step change
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [step]);
+
+  // Surface the amber "changing your date moves milestones" warning whenever
+  // the date differs from what was loaded in review mode. Derived from state
+  // (rather than set inside the field's onChange) so it can't silently miss a
+  // change — it reacts to the latest date and originalDate every render.
+  useEffect(() => {
+    const changed =
+      isReview &&
+      !!originalDate &&
+      !!form.date &&
+      form.date.slice(0, 10) !== originalDate.slice(0, 10);
+    setDateChangeWarning(
+      changed
+        ? "Changing your wedding date will automatically update your rehearsal dinner date and shift planning milestone dates. Any appointments you've added (fittings, tastings, trials) will NOT be moved — you'll need to reschedule those with your vendors."
+        : ""
+    );
+  }, [isReview, originalDate, form.date]);
+
+  // Mirror each step into browser history so the Back button walks back
+  // through onboarding instead of exiting to the auth/account screen. Forward
+  // moves push a tagged entry; back moves (browser or the in-app Back button)
+  // go through the popstate handler below. We spread the existing history
+  // state so Next's own router fields survive.
+  useEffect(() => {
+    if (!ready) return;
+    if (historyStepRef.current === null) {
+      // First sync — tag the current entry rather than adding a new one.
+      window.history.replaceState({ ...window.history.state, onboardingStep: step }, "");
+      historyStepRef.current = step;
+      return;
+    }
+    if (poppingRef.current) {
+      // This change came from popstate; history is already in sync.
+      poppingRef.current = false;
+      historyStepRef.current = step;
+      return;
+    }
+    if (step > historyStepRef.current) {
+      window.history.pushState({ ...window.history.state, onboardingStep: step }, "");
+    } else if (step < historyStepRef.current) {
+      window.history.replaceState({ ...window.history.state, onboardingStep: step }, "");
+    }
+    historyStepRef.current = step;
+  }, [step, ready]);
+
+  useEffect(() => {
+    function onPop(e: PopStateEvent) {
+      const s = (e.state as { onboardingStep?: number } | null)?.onboardingStep;
+      if (typeof s === "number") {
+        poppingRef.current = true;
+        setStep(s);
+      }
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   function update<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -854,6 +961,8 @@ export default function OnboardingPage() {
       });
 
       if (res.ok) {
+        // Wedding is saved server-side now — the local progress copy is stale.
+        try { localStorage.removeItem(ONBOARDING_STORAGE_KEY); } catch {}
         trackOnboardingComplete();
         // Trial begins the moment the wedding row exists (server stamps
         // trial_started_at). Only fire on initial submit, not when reviewing
@@ -1072,11 +1181,6 @@ export default function OnboardingPage() {
           onChange={(v) => {
             update("date", v);
             validateDate(v);
-            if (isReview && originalDate && v && v !== originalDate) {
-              setDateChangeWarning("Changing your wedding date will automatically update your rehearsal dinner date and shift planning milestone dates. Any appointments you've added (fittings, tastings, trials) will NOT be moved — you'll need to reschedule those with your vendors.");
-            } else {
-              setDateChangeWarning("");
-            }
           }}
           error={dateError}
           warning={dateChangeWarning}
@@ -1140,7 +1244,7 @@ export default function OnboardingPage() {
           {step > 1 && (
             <button
               type="button"
-              onClick={() => setStep((s) => s - 1)}
+              onClick={() => window.history.back()}
               className="block mx-auto mt-4 text-[14px] text-muted hover:text-plum transition"
             >
               Back

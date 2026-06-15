@@ -49,23 +49,31 @@ export async function PATCH(
     if (v > MAX_GUEST_COUNT) return NextResponse.json({ error: `Guest count cannot exceed ${MAX_GUEST_COUNT.toLocaleString()}` }, { status: 400 });
   }
 
-  // Geocode venue_city when it changes so vendor relevance is distance-based.
-  // Done before the update so the lat/lng land in the same write.
+  // Geocode venue_city so vendor relevance can be distance-based. Done before
+  // the update so the lat/lng land in the same write. We geocode both when the
+  // city changes AND when the row is missing coordinates entirely — the latter
+  // backfills weddings whose city was set before geocoding existed (e.g. during
+  // onboarding), so the directory's distance filter can activate without making
+  // the couple re-enter their city.
   let extraUpdates: Record<string, unknown> = {};
-  if (
-    typeof updates.venue_city !== "undefined" &&
-    updates.venue_city !== null &&
-    String(updates.venue_city).trim() &&
-    String(updates.venue_city).trim() !== (wedding as { venue_city: string | null }).venue_city
-  ) {
-    const geo = await geocodeAddress(String(updates.venue_city).trim());
-    if (geo) {
-      extraUpdates = {
-        lat: geo.lat,
-        lng: geo.lng,
-        geocoded_address: geo.formattedAddress,
-        geocoded_at: new Date().toISOString(),
-      };
+  const nextCity =
+    typeof updates.venue_city !== "undefined" && updates.venue_city !== null
+      ? String(updates.venue_city).trim()
+      : "";
+  if (nextCity) {
+    const w = wedding as { venue_city: string | null; lat: number | null; lng: number | null };
+    const cityChanged = nextCity !== w.venue_city;
+    const missingCoords = w.lat == null || w.lng == null;
+    if (cityChanged || missingCoords) {
+      const geo = await geocodeAddress(nextCity);
+      if (geo) {
+        extraUpdates = {
+          lat: geo.lat,
+          lng: geo.lng,
+          geocoded_address: geo.formattedAddress,
+          geocoded_at: new Date().toISOString(),
+        };
+      }
     }
   }
 

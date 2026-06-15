@@ -7,6 +7,7 @@ import { BUDGET_TEMPLATE } from "@/lib/budget/budget-template";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
 import { supabaseError } from "@/lib/api-error";
 import { captureServer } from "@/lib/analytics-server";
+import { geocodeAddress } from "@/lib/geocoding";
 
 export async function POST(request: Request) {
   const { userId } = await auth();
@@ -58,6 +59,22 @@ export async function POST(request: Request) {
 
   let weddingId: string;
 
+  // Geocode the venue city up front so the vendor directory's distance filter
+  // works immediately — otherwise venue_city is saved without coordinates and
+  // the radius control never appears. Failure is non-fatal (we just skip it).
+  let geoFields: Record<string, unknown> = {};
+  if (venue_city) {
+    const geo = await geocodeAddress(venue_city);
+    if (geo) {
+      geoFields = {
+        lat: geo.lat,
+        lng: geo.lng,
+        geocoded_address: geo.formattedAddress,
+        geocoded_at: new Date().toISOString(),
+      };
+    }
+  }
+
   const weddingFields = {
     partner1_name,
     partner2_name,
@@ -71,6 +88,7 @@ export async function POST(request: Request) {
     wedding_party_count,
     has_pre_wedding_events,
     has_honeymoon,
+    ...geoFields,
     updated_at: new Date().toISOString(),
   };
 

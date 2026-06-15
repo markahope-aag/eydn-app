@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { PhotoWithFallback } from "@/components/PhotoWithFallback";
 import { toast } from "sonner";
@@ -63,6 +63,10 @@ export default function VendorsPage() {
   const [newCity, setNewCity] = useState("");
   const [newState, setNewState] = useState("");
   const [weddingCity, setWeddingCity] = useState<string>("");
+  // The add form renders at the top of the page, but couples open it from the
+  // category checklist further down (empty state). Scroll it into view when it
+  // opens so its Cancel/close controls are actually visible where they land.
+  const addFormRef = useRef<HTMLFormElement>(null);
 
   // Lookup state — typeahead against the directory + Google Places fallback
   type DirMatch = {
@@ -160,6 +164,14 @@ export default function VendorsPage() {
       setNewCity((c) => c || weddingCity);
     }
   }, [showAdd, weddingCity]);
+
+  // Bring the form into view whenever it opens (it's anchored at the top of
+  // the page, well above the category checklist that triggers it).
+  useEffect(() => {
+    if (showAdd) {
+      addFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [showAdd]);
 
   async function pickFromDirectory(match: DirMatch) {
     try {
@@ -578,6 +590,7 @@ export default function VendorsPage() {
 
       {showAdd && (
         <form
+          ref={addFormRef}
           onSubmit={addVendor}
           onKeyDown={(e) => {
             // Enter in a field must NOT create the vendor — only the

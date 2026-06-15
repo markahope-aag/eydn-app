@@ -375,6 +375,29 @@ export default function TasksPage() {
     }
   }
 
+  async function updateTitle(id: string, title: string) {
+    const prevTasks = tasks;
+    const prevSelected = selectedTask;
+    setTasks((t) => t.map((x) => (x.id === id ? { ...x, title } : x)));
+    if (selectedTask?.id === id) {
+      setSelectedTask((s) => (s ? { ...s, title } : s));
+    }
+
+    try {
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Task title updated");
+    } catch {
+      setTasks(prevTasks);
+      setSelectedTask(prevSelected);
+      toast.error("Title didn't save. Try again.");
+    }
+  }
+
   async function fetchCalendarToken() {
     setCalendarLoading(true);
     try {
@@ -711,7 +734,7 @@ export default function TasksPage() {
       {viewMode === "list" && tasks.length > 0 && <TasksQuickStart />}
 
       {/* View */}
-      <div className="mt-6">
+      <div className="mt-4">
         {viewMode === "list" ? (
           filteredTasks.length > 0 ? (
             <TaskList
@@ -753,6 +776,7 @@ export default function TasksPage() {
           onUpdatePriority={updatePriority}
           onUpdateStatus={updateStatus}
           onUpdateDueDate={updateDueDate}
+          onUpdateTitle={updateTitle}
         />
       )}
     </div>

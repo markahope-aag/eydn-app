@@ -362,9 +362,21 @@ export default function GuestsPage() {
         const err = await res.json();
         throw new Error(err.error);
       }
-      const { imported } = await res.json();
+      const { imported, skipped = 0, errors = [] } = await res.json();
       trackGuestImport(imported);
-      toast.success(`Imported ${imported} guests`);
+      toast.success(`Imported ${imported} guest${imported === 1 ? "" : "s"}`);
+      // Surface any malformed rows — dropped (structural) or imported with bad
+      // data removed — rather than quietly importing/discarding them.
+      if (Array.isArray(errors) && errors.length > 0) {
+        const detail = errors
+          .slice(0, 3)
+          .map((e: { line: number; reason: string }) => `row ${e.line}: ${e.reason}`)
+          .join("; ");
+        const heading = skipped > 0
+          ? `Skipped ${skipped} malformed row${skipped === 1 ? "" : "s"}`
+          : `${errors.length} row${errors.length === 1 ? "" : "s"} need attention`;
+        toast.warning(heading, { description: detail });
+      }
       const reload = await fetch("/api/guests");
       if (reload.ok) setGuests(await reload.json());
     } catch (err) {
