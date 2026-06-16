@@ -149,6 +149,42 @@ describe("PATCH /api/weddings/[id]", () => {
     expect(json.error).toMatch(/forbidden/i);
   });
 
+  it("returns 403 when a coordinator tries to edit the wedding record", async () => {
+    const supabase = createMockSupabase();
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: mockWedding,
+      supabase,
+      userId: "coordinator-1",
+      role: "coordinator",
+    });
+
+    const res = await PATCH(mockRequest({ date: "2027-01-01" }), makeCtx());
+    const json = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(json.error).toMatch(/coordinator/i);
+    // The wedding row must never be written when a coordinator is blocked.
+    expect(supabase._weddingSingle).not.toHaveBeenCalled();
+  });
+
+  it("allows a partner to edit the wedding record", async () => {
+    const supabase = createMockSupabase({
+      weddingData: { id: "wedding-1", venue: "Lakeside Barn" },
+    });
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: mockWedding,
+      supabase,
+      userId: "partner-1",
+      role: "partner",
+    });
+
+    const res = await PATCH(mockRequest({ venue: "Lakeside Barn" }), makeCtx());
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.venue).toBe("Lakeside Barn");
+  });
+
   it("returns 400 when no allowed fields are provided", async () => {
     const supabase = createMockSupabase();
     mockGetWeddingForUser.mockResolvedValue({

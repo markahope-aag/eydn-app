@@ -20,12 +20,24 @@ export async function PATCH(
 ) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
-  const { wedding, supabase, userId } = result;
+  const { wedding, supabase, userId, role } = result;
 
   const { id } = await ctx.params;
 
   if (wedding.id !== id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // Coordinators help manage tasks, vendors, and guests but may not edit the
+  // couple's core wedding record (date, budget, partner names, venue, ceremony
+  // time, website settings). Changing the date in particular cascades across
+  // the rehearsal dinner and every system-generated task due date, so editing
+  // the wedding record is restricted to the couple (owner / partner).
+  if (role === "coordinator") {
+    return NextResponse.json(
+      { error: "Coordinators can't change the wedding details — ask the couple to update this." },
+      { status: 403 }
+    );
   }
 
   const parsed = await safeParseJSON(request);
