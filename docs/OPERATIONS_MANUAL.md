@@ -309,6 +309,10 @@ All schedules are defined in `vercel.json` and run on Vercel's cron infrastructu
 | `vendor-reminders` | Mondays 10:00 UTC | Weekly vendor payment reminders |
 | `weekly-conversion-report` | Mondays 13:00 UTC | Conversion summary email to admin |
 | `indexnow` | Sundays 06:00 UTC | Submits new blog posts to search engines |
+| `health-monitor` | Daily 16:00 UTC | Dead-man's-switch — emails ops if any logged cron is stale or last errored |
+| `model-health` | Daily 17:00 UTC | Pings every Claude model the app uses; emails ops if one stops resolving (retired) or is within 30 days of a known retirement date |
+
+> **If `model-health` alerts:** a Claude model the app calls has been (or is about to be) retired. Update the model ID in `src/lib/config.ts` (`AI.MODEL`) and/or `src/lib/ai/model-registry.ts`, then redeploy. The Anthropic models API exposes no retirement date, so known dates are kept by hand in `MODEL_RETIREMENT_DATES` (`model-registry.ts`) — add an entry there when you adopt a new model so you get the ~30-day-ahead warning. Ops alert emails go to the addresses in the `ADMIN_EMAILS` environment variable.
 
 ### How do I view recent cron history?
 

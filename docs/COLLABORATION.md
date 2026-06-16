@@ -30,7 +30,13 @@ The collaboration system enables wedding owners to invite partners and professio
 - **Timeline Management**: Can create and update day-of timelines
 - **Guest Coordination**: Can manage guest list and RSVPs
 - **Day-of Planning**: Full access to ceremony and reception planning tools
-- **Limited Settings**: Cannot modify core wedding details, subscription, or collaborator management
+- **Limited Settings**: Cannot modify the core wedding record (date, budget, partner names, venue, ceremony time, website). The wedding record is **couple-only** — owner/partner. Changing the date cascades across the rehearsal dinner and every system task due date, so it is deliberately out of a coordinator's reach. Also cannot manage subscription or collaborators.
+
+### Parent (read-only)
+- **View-only Access**: Can browse the entire dashboard — tasks, guests, vendors, budget, seating, day-of plans, mood board, the wedding website — but **cannot edit anything**.
+- **Enforced server-side**: Every wedding-data mutation endpoint returns a graceful `403` ("Your access is view-only. Ask the couple to make this change.") for parents. Read (`GET`) endpoints stay fully open.
+- **One exception**: a parent may register their own device push subscription (their own per-user record), so they can opt into update notifications.
+- **UI**: a persistent "view-only access" banner appears on every dashboard page for parents, and the main dashboard hides its create affordances (Add Task/Guest/Vendor, couple-photo uploader). See [Read-only enforcement](#read-only-enforcement-parent-role).
 
 ## Invitation Process
 
@@ -38,7 +44,7 @@ The collaboration system enables wedding owners to invite partners and professio
 
 1. **Owner Access Required**: Only wedding owners can send invitations
 2. **Email-Based Invitations**: Collaborators are invited via email address
-3. **Role Selection**: Owner chooses between "partner" or "coordinator" role
+3. **Role Selection**: Owner chooses between "partner", "coordinator", or "parent" (read-only) role
 4. **Automatic Notifications**: Invitees receive email notifications (planned feature)
 
 ```typescript
@@ -74,7 +80,7 @@ create table wedding_collaborators (
   id uuid primary key default gen_random_uuid(),
   wedding_id uuid not null references weddings(id) on delete cascade,
   email text not null,
-  role text not null check (role in ('partner', 'coordinator')),
+  role text not null check (role in ('partner', 'coordinator', 'parent')),
   invite_status text not null default 'pending' check (invite_status in ('pending', 'accepted')),
   invited_by text not null,  -- Clerk user ID of inviter
   user_id text,              -- Clerk user ID when accepted
@@ -135,33 +141,52 @@ export async function getWeddingForUser(): Promise<AuthSuccess | AuthError> {
 ## Feature Access Control
 
 ### Owner-Only Features
-- **Collaborator Management**: Invite, remove, and manage collaborators
 - **Subscription Management**: Upgrade, downgrade, and billing
 - **Wedding Deletion**: Permanently delete wedding data
-- **Core Settings**: Wedding date, venue, basic details
 
-### Shared Features (All Roles)
+### Couple-Only (Owner + Partner)
+- **Collaborator Management**: Invite, remove, and manage collaborators (owner only)
+- **Core Wedding Record**: Wedding date, budget, partner names, venue, ceremony time, and website settings — edited via `PATCH /api/weddings/[id]`. Coordinators and parents are both blocked here.
+
+### Shared Features (Owner / Partner / Coordinator)
 - **Task Management**: Create, update, complete tasks with comments
 - **Vendor Pipeline**: Manage vendor relationships and communications
 - **Guest Management**: Manage guest list, RSVPs, and seating charts
-- **Budget Tracking**: View and update expenses and budget (Owner + Partner only)
+- **Budget Tracking**: View and update expenses and budget
 - **AI Assistant**: Chat with eydn for planning guidance (premium feature)
 - **Day-of Planning**: Create and update day-of timelines
 - **Mood Board**: Add and organize wedding inspiration
 - **File Uploads**: Upload and manage wedding documents (premium feature)
 - **Comments**: Collaborate on tasks, vendors, and other entities
 
+> **Parents** can **view** all of the above but cannot create, update, or delete any of it.
+
 ### Role-Based Restrictions
 
+Three enforcement layers, all server-side:
+
 ```typescript
-// Example: Restrict collaborator management to owners
+// 1. Owner-only — collaborator management
 if (role !== "owner") {
   return NextResponse.json(
-    { error: "Only the wedding owner can manage collaborators" }, 
+    { error: "Only the wedding owner can manage collaborators" },
     { status: 403 }
   );
 }
+
+// 2. Couple-only — the core wedding record (PATCH /api/weddings/[id])
+if (role === "coordinator") { /* coordinator-specific 403 */ }
+if (role === "parent") return readOnlyError();
+
+// 3. Read-only — parents on every wedding-data mutation route
+const result = await getWeddingForUser();
+if ("error" in result) return result.error;
+if (result.role === "parent") return readOnlyError(); // 403, view-only message
 ```
+
+#### Read-only enforcement (parent role)
+
+`readOnlyError()` lives in `src/lib/auth.ts` and returns the standard view-only `403`. Every wedding-data mutation handler (`POST`/`PATCH`/`PUT`/`DELETE` — ~50 routes across tasks, vendors, guests, budget, comments, mood board, seating, day-of, the wedding record, and the website) calls it immediately after resolving the wedding. `GET` handlers do **not**, so reads stay open. The only mutation a parent is allowed is their own push subscription. The client mirrors this: `/api/subscription-status` returns the caller's `role`, `usePremium()` exposes `isReadOnly`, and `ReadOnlyBanner` plus the dashboard's hidden create buttons reflect it in the UI.
 
 ## User Experience
 
@@ -192,7 +217,8 @@ Collaborators see the same dashboard interface as owners, with appropriate restr
 - **Scoped Access**: Collaborators can only access invited wedding data
 - **No Cross-Wedding Access**: Cannot access other weddings
 - **Secure Invitations**: Invitation tokens prevent unauthorized access
-- **Role Limitations**: Coordinators cannot modify core wedding details
+- **Role Limitations**: Coordinators cannot modify the core wedding record; parents cannot modify anything (read-only, enforced on every mutation route)
+- **Cache Safety**: Authenticated dashboard pages are served `Cache-Control: no-store`, so a removed collaborator (or a signed-out user) cannot see a stale dashboard from the browser's back/forward cache after a reload
 
 ## API Endpoints
 
@@ -204,7 +230,7 @@ GET /api/collaborators
 Response: Array<{
   id: string;
   email: string;
-  role: "partner" | "coordinator";
+  role: "partner" | "coordinator" | "parent";
   invite_status: "pending" | "accepted";
   user_id?: string;
   created_at: string;
@@ -214,7 +240,7 @@ Response: Array<{
 POST /api/collaborators
 Body: {
   email: string;
-  role: "partner" | "coordinator";
+  role: "partner" | "coordinator" | "parent";
 }
 
 // Remove collaborator (owner only)

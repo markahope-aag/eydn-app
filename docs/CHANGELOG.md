@@ -2,6 +2,25 @@
 
 This document tracks all notable changes, updates, and improvements to the eydn wedding planning platform.
 
+## [1.16.0] — June 16, 2026
+
+### Fixed: AI chat was down (retired model)
+
+The chat model `claude-sonnet-4-20250514` reached its retirement date and started returning a 404, which took down all of Ask Eydn — plus the budget optimizer, task personalizer, and catch-up plan generator, which shared the model. All four now run on the current `claude-sonnet-4-6`, with chat tuned to medium reasoning effort to keep per-turn cost in check. Web search ("find me photographers in Austin under $3K") works again once the model was restored.
+
+### New: daily model-health monitor
+
+Because the Anthropic models API exposes no retirement date, a model silently 404s the day it's retired. A new daily cron (`/api/cron/model-health`, 17:00 UTC) pings every model the app uses and emails ops the moment one stops resolving — and warns ~30 days ahead of any date recorded in `src/lib/ai/model-registry.ts`. It's wired into the cron dead-man's-switch so a stalled monitor is itself caught. (Also fixed: `ADMIN_EMAILS` was unset in production, so prior ops alerts were silently going nowhere.)
+
+### New: read-only Parent collaborator role
+
+Couples can now invite a **Parent** as a view-only collaborator. Parents can browse the whole dashboard — tasks, guests, budget, plans — but cannot edit anything; every wedding-data mutation is blocked server-side with a friendly "view-only" message. A persistent view-only banner and hidden create buttons make the limitation clear. The role was already in the UI but had never been wired to the backend (the invite failed); it's now complete end to end. Migration `20260616120000_allow_parent_collaborator_role.sql`. See `COLLABORATION.md`.
+
+### Fixed: collaborator permissions and access revocation
+
+- **Coordinators can no longer change the wedding record** (date, budget, names, venue). This was unenforced — any collaborator could edit it, and changing the date cascades across the rehearsal dinner and all task due dates. It's now couple-only (owner/partner).
+- **Removed collaborators lose access immediately on reload.** Access was already revoked server-side, but authenticated dashboard pages carried no cache headers, so a removed user's browser could show a stale dashboard from its back/forward cache. Dashboard responses are now `Cache-Control: no-store`.
+
 ## [1.15.0] — June 2, 2026
 
 ### New: optional Quick Start walk-through for new couples

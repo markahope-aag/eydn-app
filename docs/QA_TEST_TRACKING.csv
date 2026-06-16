@@ -224,9 +224,9 @@ Pass,Pass Name,Section,Test ID,Test Step,Status,Notes,Bug Link,Tester,Date
 12,AI chat,Chat,A2,"Send a question about your wedding (""What's my budget?"") — references your actual data",,,,,
 12,AI chat,Chat,A3,"Ask Eydn to add a guest (""Add Jane Doe"") — guest appears in guest list",,,,,
 12,AI chat,Chat,A4,Ask to mark a task complete — task is marked complete,,,,,
-12,AI chat,Chat,A5,"Ask for vendor recommendations (""Find me photographers in Austin under $3K"") — uses web search, returns specific options",,,,,
-12,AI chat,Chat,A6,"Send a question on free tier — tool-call meter decrements; on Pro, no meter visible",,,,,
-12,AI chat,Chat,A7,"Hit the free-tier tool cap — get a friendly ""monthly cap reached"" message with upgrade CTA",,,,,
+12,AI chat,Chat,A5,"Ask for vendor recommendations (""Find me photographers in Austin under $3K"") — uses web search, returns specific options",Fixed,"Root cause was the retired chat model (404), not web search; restored to claude-sonnet-4-6 (commit ec7717d). Tavily key present; verified returns Austin vendors.",,Claude,2026-06-16
+12,AI chat,Chat,A6,"Send a question on free tier — tool-call meter decrements; on Pro, no meter visible",Pass,"Verified by code: non-free tiers return limit=null so the meter pill is hidden across all three UI paths; free tier shows the decrementing pill.",,Claude,2026-06-16
+12,AI chat,Chat,A7,"Hit the free-tier tool cap — get a friendly ""monthly cap reached"" message with upgrade CTA",Pass,"Verified: friendly 403 with ""See pricing"" CTA and the meter flips to 0 left. Regression test added (commit 0a41e09).",,Claude,2026-06-16
 12,AI chat,Chat,A8,Long conversation (10+ messages) — context preserved,,,,,
 12,AI chat,Chat,A9,Reload the page — chat history reloads from server,,,,,
 13,Collaboration,Collaboration,C1,Settings → Collaborators → invite an email as Partner,,,,,
@@ -234,9 +234,9 @@ Pass,Pass Name,Section,Test ID,Test Step,Status,Notes,Bug Link,Tester,Date
 13,Collaboration,Collaboration,C3,Recipient signs up / signs in and accepts — appears in collaborators list,,,,,
 13,Collaboration,Collaboration,C4,Recipient lands on the same wedding's dashboard,,,,,
 13,Collaboration,Collaboration,C5,Both users edit a guest simultaneously — both see updates without conflicts,,,,,
-13,Collaboration,Collaboration,C6,Remove a collaborator — they lose access on next page load,,,,,
-13,Collaboration,Collaboration,C7,Invite a Coordinator — they can edit tasks/vendors/guests but NOT the wedding date,,,,,
-13,Collaboration,Collaboration,C8,"Invite a Parent — read-only, attempts to edit fail gracefully",,,,,
+13,Collaboration,Collaboration,C6,Remove a collaborator — they lose access on next page load,Fixed,"Access was revoked server-side already; the browser's back/forward cache showed a stale dashboard. Dashboard responses are now Cache-Control: no-store (commit e229959). Retest with a hard reload.",,Claude,2026-06-16
+13,Collaboration,Collaboration,C7,Invite a Coordinator — they can edit tasks/vendors/guests but NOT the wedding date,Fixed,"Coordinators are now blocked from the wedding record (couple-only); the date/budget/venue edits return 403. Regression tests added (commit b7ee311).",,Claude,2026-06-16
+13,Collaboration,Collaboration,C8,"Invite a Parent — read-only, attempts to edit fail gracefully",Fixed,"Parent role implemented end-to-end: invitable (was UI-only), read-only enforced on ~50 mutation routes with a graceful 403, plus a view-only banner and hidden create buttons (commits 9eb2a1f, d9367ff).",,Claude,2026-06-16
 13,Collaboration,Collaboration,C9,Try the same email twice — handled gracefully,,,,,
 14,Payments & billing,Pro Monthly,PB1,Click upgrade → Pro Monthly → Stripe Checkout opens,,,,,
 14,Payments & billing,Pro Monthly,PB2,"Pay with 4242 4242 4242 4242 → redirected back to app, success state",,,,,
