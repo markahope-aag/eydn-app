@@ -85,13 +85,21 @@ export async function GET() {
     .order("created_at", { ascending: false })
     .limit(20);
 
-  // Real off-platform backup status: R2 listing + the last backup cron run.
-  const [r2Status, { data: lastBackupRun }] = await Promise.all([
+  // Real off-platform backup status: R2 listing + the last backup cron run +
+  // the last independent watchdog verification.
+  const [r2Status, { data: lastBackupRun }, { data: lastWatchdogRun }] = await Promise.all([
     getR2Status(),
     supabase
       .from("cron_log")
       .select("status, started_at, duration_ms, error_message, details")
       .eq("job_name", "backup")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("cron_log")
+      .select("status, started_at, error_message")
+      .eq("job_name", "backup-watchdog")
       .order("started_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -148,6 +156,13 @@ export async function GET() {
             at: lastBackupRun.started_at,
             durationMs: lastBackupRun.duration_ms,
             error: lastBackupRun.error_message,
+          }
+        : null,
+      lastVerification: lastWatchdogRun
+        ? {
+            status: lastWatchdogRun.status,
+            at: lastWatchdogRun.started_at,
+            error: lastWatchdogRun.error_message,
           }
         : null,
     },

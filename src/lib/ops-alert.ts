@@ -23,3 +23,40 @@ export async function alertOps(subject: string, html: string): Promise<void> {
     )
   );
 }
+
+/**
+ * POST a plain-text alert to OPS_ALERT_WEBHOOK_URL if configured. The body
+ * carries the message under several common keys so the same URL works for
+ * Slack (`text`), Discord (`content`), and generic webhooks (`message`) —
+ * point it at whatever channel makes the loudest noise (Slack, a phone push
+ * via Pushover/ntfy, an SMS gateway, PagerDuty, etc.). Best-effort.
+ */
+export async function alertWebhook(message: string): Promise<void> {
+  const url = process.env.OPS_ALERT_WEBHOOK_URL;
+  if (!url) return;
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: message, content: message, message }),
+    });
+  } catch {
+    // never throw from an alert path
+  }
+}
+
+/**
+ * Highest-severity alert: fan out to BOTH the admin email list and the
+ * loud webhook channel. Use for things that need someone woken up — e.g. a
+ * failed nightly backup that leaves user data unprotected.
+ */
+export async function alertOpsCritical(
+  subject: string,
+  html: string,
+  plainText?: string
+): Promise<void> {
+  await Promise.all([
+    alertOps(subject, html),
+    alertWebhook(plainText ?? subject),
+  ]);
+}

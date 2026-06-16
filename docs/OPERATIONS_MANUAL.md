@@ -304,6 +304,7 @@ All schedules are defined in `vercel.json` and run on Vercel's cron infrastructu
 | `trial-reminders` | Daily 15:00 UTC | 3-day trial expiry reminder emails |
 | `trial-downgrade-events` | Daily 06:00 UTC | Records trial downgrade analytics events |
 | `backup` | Daily 03:00 UTC | Full data export to Cloudflare R2 (bucket `eydn-app`) |
+| `backup-watchdog` | Daily 06:00 UTC | Independently downloads + validates last night's R2 backup; fires a CRITICAL alarm if it's missing, stale, empty, or unreadable |
 | `storage-cleanup` | Sundays 05:00 UTC | Removes orphaned storage files |
 | `vendor-reminders` | Mondays 10:00 UTC | Weekly vendor payment reminders |
 | `weekly-conversion-report` | Mondays 13:00 UTC | Conversion summary email to admin |
@@ -463,6 +464,18 @@ LIMIT 100;
 ```
 2. If the data was permanently deleted, recover it from the daily off-platform backup stored in **Cloudflare R2** (bucket `eydn-app`). See [§Restore from backup](#how-do-i-restore-data-from-a-backup) below for the exact commands.
 3. Supabase's own Point-in-Time Recovery (PITR) is a second line of defence if you're on a plan that includes it. Confirm the plan in the Supabase dashboard (Settings → Add-ons) before relying on it, then contact Supabase support to restore a specific table to a point before the deletion.
+
+### How do I know backups are healthy?
+
+Three layers watch the backup, so a failure can't pass silently:
+
+1. **Real-time:** if the backup job errors, the cron logger emails `ADMIN_EMAILS` immediately.
+2. **Dead-man's switch (`health-monitor`, 16:00 UTC):** emails ops if the `backup` job didn't run within 26h or last errored.
+3. **Content watchdog (`backup-watchdog`, 06:00 UTC):** independently downloads last night's R2 backup, parses it, and checks it's recent, non-trivial in size, and contains at least as many weddings as the live DB. **Any** problem fires a CRITICAL alert.
+
+The CRITICAL alert goes to `ADMIN_EMAILS` **and** to `OPS_ALERT_WEBHOOK_URL` if set. Point that webhook at whatever is loudest for you — a Slack/Discord incoming webhook, a phone push via [ntfy](https://ntfy.sh)/[Pushover](https://pushover.net), an SMS gateway, or PagerDuty. The body is posted as JSON with the message under `text`, `content`, and `message` keys, so most webhook receivers work as-is. Without it, you still get the email; with it, you get the loud ping.
+
+Check status any time on the admin **Data & Security** tab — the Latest Backup card shows the last run and the last verification result (`✓ passed` / `✗ FAILED`). To verify on demand, POST to `/api/cron/backup-watchdog` with the cron auth header.
 
 ### How do I restore data from a backup?
 

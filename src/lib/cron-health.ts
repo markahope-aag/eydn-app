@@ -16,6 +16,7 @@ export const EXPECTED_MAX_AGE_HOURS: Record<string, number> = {
   "check-deadlines": 26,
   "trial-reminders": 26,
   backup: 26,
+  "backup-watchdog": 26,
   lifecycle: 26,
   "recompute-featured": 26,
   "model-health": 26,

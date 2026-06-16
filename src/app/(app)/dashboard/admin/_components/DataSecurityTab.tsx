@@ -91,6 +91,13 @@ export default function DataSecurityTab({
                     Last run: {backup.lastRun.status}
                   </p>
                 )}
+                {backup.lastVerification ? (
+                  <p className={`text-[13px] ${backup.lastVerification.status === "success" ? "text-green-700" : "text-red-600 font-semibold"}`}>
+                    Verified: {backup.lastVerification.status === "success" ? "✓ passed" : "✗ FAILED"}
+                  </p>
+                ) : (
+                  <p className="text-[13px] text-muted">Verification: not yet run</p>
+                )}
               </>
             ) : (
               <p className="mt-1 text-[15px] font-semibold text-plum">No backup yet</p>

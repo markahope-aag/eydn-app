@@ -105,6 +105,11 @@ export type BackupInfo = {
       durationMs: number;
       error: string | null;
     } | null;
+    lastVerification: {
+      status: string;
+      at: string;
+      error: string | null;
+    } | null;
   };
   recentActivity: Array<{
     action: string;
