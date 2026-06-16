@@ -261,7 +261,7 @@ Pass,Pass Name,Section,Test ID,Test Step,Status,Notes,Bug Link,Tester,Date
 15,Cross-cutting,Accessibility,X8,Visible focus indicator on every interactive element,,,,,
 15,Cross-cutting,Accessibility,X9,Screen reader (VoiceOver / NVDA) announces form labels correctly,,,,,
 15,Cross-cutting,Accessibility,X10,Color contrast hits AA on every text element (run Lighthouse / Axe),,,,,
-15,Cross-cutting,Accessibility,X11,All images have alt text,,,,,
+15,Cross-cutting,Accessibility,X11,All images have alt text,Pass,"Verified: eslint jsx-a11y/alt-text reports 0 violations across all 59 image tags in src/; published blog content audited (18/18 inline images have non-empty alt); react-pdf export images are PDF, not web. Alt presence enforced by the linter.",,Claude,2026-06-16
 15,Cross-cutting,Accessibility,X12,Sidebar collapse / expand announces state to screen readers,,,,,
 15,Cross-cutting,Accessibility,X13,Wedding website hero text readable over the gradient/photo (AA),,,,,
 15,Cross-cutting,Performance,X14,Dashboard initial load < 3 seconds on a fast connection,,,,,
