@@ -17,6 +17,14 @@ vi.mock("@/lib/tool-call-counter", () => ({
   getToolCallMeter: (...args: unknown[]) => mockGetMeter(...args),
 }));
 
+const mockResolve = vi.fn();
+vi.mock("@/lib/auth", () => ({
+  resolveWeddingForUserId: (...args: unknown[]) => mockResolve(...args),
+}));
+vi.mock("@/lib/supabase/server", () => ({
+  createSupabaseAdmin: () => ({}),
+}));
+
 import { GET } from "./route";
 
 beforeEach(() => {
@@ -28,6 +36,7 @@ beforeEach(() => {
     features: { aiChat: true },
   });
   mockGetMeter.mockResolvedValue({ used: 4, limit: 100, remaining: 96 });
+  mockResolve.mockResolvedValue({ wedding: { id: "wed_1" }, role: "owner" });
 });
 
 describe("GET /api/subscription-status", () => {
@@ -38,7 +47,15 @@ describe("GET /api/subscription-status", () => {
     expect(body.tier).toBe("trial");
     expect(body.features.aiChat).toBe(true);
     expect(body.toolCalls).toEqual({ used: 4, limit: 100, remaining: 96 });
+    expect(body.role).toBe("owner");
     expect(mockGetMeter).toHaveBeenCalledWith("user_123", "trial");
+  });
+
+  it("reports the read-only parent role", async () => {
+    mockResolve.mockResolvedValue({ wedding: { id: "wed_1" }, role: "parent" });
+    const res = await GET();
+    const body = await res.json();
+    expect(body.role).toBe("parent");
   });
 
   it("returns a zeroed meter for unauthenticated callers", async () => {

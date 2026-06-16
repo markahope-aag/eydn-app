@@ -8,6 +8,7 @@ const ArchiveBanner = dynamic(() => import("@/components/ArchiveBanner"));
 const DateSyncBanner = dynamic(() => import("@/components/DateSyncBanner").then((m) => ({ default: m.DateSyncBanner })));
 const TrialBanner = dynamic(() => import("@/components/TrialBanner"));
 const SaveCardCard = dynamic(() => import("@/components/SaveCardCard"));
+const ReadOnlyBanner = dynamic(() => import("@/components/ReadOnlyBanner"));
 
 export default async function DashboardLayout({
   children,
@@ -23,6 +24,7 @@ export default async function DashboardLayout({
       {/* Main content — add left padding on mobile for hamburger button */}
       <main id="main-content" className="flex-1 bg-whisper p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 overflow-x-hidden">
         <Suspense fallback={<SkeletonList count={5} />}>
+          <ReadOnlyBanner />
           <TrialBanner />
           <SaveCardCard />
           <ArchiveBanner />

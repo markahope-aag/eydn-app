@@ -33,6 +33,8 @@ export default async function DashboardPage() {
   // not just the owner (shared with getWeddingForUser).
   const resolved = await resolveWeddingForUserId(supabase, userId);
   const wedding = resolved?.wedding ?? null;
+  // Parent collaborators are view-only — hide create/edit affordances.
+  const isReadOnly = resolved?.role === "parent";
 
   if (!wedding) {
     return (
@@ -446,7 +448,7 @@ export default async function DashboardPage() {
           <div className="hidden sm:block flex-shrink-0 w-24 h-24 rounded-full overflow-hidden relative border-2 border-lavender shadow-sm">
             <Image src={couplePhotoUrl} alt={`${wedding.partner1_name} & ${wedding.partner2_name}`} fill className="object-cover" unoptimized />
           </div>
-        ) : (
+        ) : isReadOnly ? null : (
           <AddCouplePhoto />
         )}
 
@@ -530,18 +532,20 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      {/* Quick-add buttons */}
-      <div className="mt-6 flex gap-3 flex-wrap">
-        <Link href="/dashboard/tasks" className="btn-ghost btn-sm flex items-center gap-1.5">
-          <span className="text-violet">+</span> Add Task
-        </Link>
-        <Link href="/dashboard/guests" className="btn-ghost btn-sm flex items-center gap-1.5">
-          <span className="text-violet">+</span> Add Guest
-        </Link>
-        <Link href="/dashboard/vendors" className="btn-ghost btn-sm flex items-center gap-1.5">
-          <span className="text-violet">+</span> Add Vendor
-        </Link>
-      </div>
+      {/* Quick-add buttons — hidden for view-only parents */}
+      {!isReadOnly && (
+        <div className="mt-6 flex gap-3 flex-wrap">
+          <Link href="/dashboard/tasks" className="btn-ghost btn-sm flex items-center gap-1.5">
+            <span className="text-violet">+</span> Add Task
+          </Link>
+          <Link href="/dashboard/guests" className="btn-ghost btn-sm flex items-center gap-1.5">
+            <span className="text-violet">+</span> Add Guest
+          </Link>
+          <Link href="/dashboard/vendors" className="btn-ghost btn-sm flex items-center gap-1.5">
+            <span className="text-violet">+</span> Add Vendor
+          </Link>
+        </div>
+      )}
 
       {/* Things Eydn Should Know — inline-editable */}
       <KeyDecisionsCard weddingId={wedding.id} initialValue={wedding.key_decisions} />

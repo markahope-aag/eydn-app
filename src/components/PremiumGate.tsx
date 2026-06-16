@@ -7,9 +7,15 @@ import type { ToolCallMeter } from "@/lib/tool-call-counter";
 
 export type { FeatureKey, Tier, Features };
 
+export type CollaboratorRole = "owner" | "partner" | "coordinator" | "parent";
+
 // Shape returned by /api/subscription-status — the base status plus the
-// monthly tool-call meter (non-free tiers report limit/remaining as null).
-type SubscriptionStatusResponse = SubscriptionStatus & { toolCalls: ToolCallMeter };
+// monthly tool-call meter (non-free tiers report limit/remaining as null) and
+// the caller's collaborator role (null until a wedding is resolved).
+type SubscriptionStatusResponse = SubscriptionStatus & {
+  toolCalls: ToolCallMeter;
+  role: CollaboratorRole | null;
+};
 
 // Cached subscription status — fetched once, shared across all consumers
 let cachedStatus: SubscriptionStatusResponse | null = null;
@@ -92,6 +98,9 @@ export function usePremium() {
     tier: status?.tier ?? ("trialing" as Tier),
     features: status?.features ?? null,
     toolCalls: status?.toolCalls ?? null,
+    role: status?.role ?? null,
+    // Parent collaborators have view-only access — used to hide edit controls.
+    isReadOnly: status?.role === "parent",
     hasAccess: status?.hasAccess ?? true,
     isTrialing: status?.isTrialing ?? false,
     trialDaysLeft: status?.trialDaysLeft ?? 0,
