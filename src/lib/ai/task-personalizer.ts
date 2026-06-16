@@ -34,7 +34,7 @@ export type PersonalizationContext = {
 };
 
 const TIMEOUT_MS = 15_000;
-const MODEL = "claude-sonnet-4-20250514";
+const MODEL = "claude-sonnet-4-6";
 const MAX_TOKENS = 4096;
 
 function buildPrompt(tasks: TaskInsert[], ctx: PersonalizationContext): string {

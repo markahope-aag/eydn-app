@@ -18,6 +18,7 @@ export const EXPECTED_MAX_AGE_HOURS: Record<string, number> = {
   backup: 26,
   lifecycle: 26,
   "recompute-featured": 26,
+  "model-health": 26,
   "geocode-vendors": 3,
   "import-vendors": 3,
   "sync-vendor-photos": 3,

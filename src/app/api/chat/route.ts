@@ -413,6 +413,9 @@ export async function POST(request: Request) {
       const response = await claude.messages.create({
         model: AI.MODEL,
         max_tokens: AI.MAX_TOKENS,
+        // Sonnet 4.6 defaults to "high" effort, which is costlier per turn than
+        // the old Sonnet 4 — "medium" keeps this tool-looping chat efficient.
+        output_config: { effort: "medium" },
         system: systemPrompt,
         messages: currentMessages as Parameters<typeof claude.messages.create>[0]["messages"],
         tools: availableTools,

@@ -2,7 +2,7 @@
 
 // ── AI / Claude ─────────────────────────────────────────────────
 export const AI = {
-  MODEL: "claude-sonnet-4-20250514",
+  MODEL: "claude-sonnet-4-6",
   MAX_TOKENS: 1024,
   MAX_TOOL_ITERATIONS: 5,
   MAX_MESSAGE_LENGTH: 10_000,
