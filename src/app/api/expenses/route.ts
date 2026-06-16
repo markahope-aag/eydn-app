@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, requireFields, isValidNumber, MAX_MONETARY_AMOUNT } from "@/lib/validation";
 import { supabaseError } from "@/lib/api-error";
@@ -45,6 +45,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase } = result;
 
   const parsed = await safeParseJSON(request);

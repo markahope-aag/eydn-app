@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { logRequest } from "@/lib/api-logger";
 import { NextResponse } from "next/server";
 
@@ -23,6 +23,7 @@ export async function POST() {
   const start = Date.now();
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase } = result;
 
   // Revoke any existing active token

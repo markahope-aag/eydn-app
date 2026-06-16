@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
@@ -40,6 +40,7 @@ import type { Database, Json } from "@/lib/supabase/types";
 export async function POST(request: Request) {
   const ctx = await getWeddingForUser();
   if ("error" in ctx) return ctx.error;
+  if (ctx.role === "parent") return readOnlyError();
   const { wedding, supabase, userId } = ctx;
 
   const parsed = await safeParseJSON(request);

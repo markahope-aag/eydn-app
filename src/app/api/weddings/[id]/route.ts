@@ -1,4 +1,4 @@
-import { getWeddingForUser, invalidateWeddingCache } from "@/lib/auth";
+import { getWeddingForUser, invalidateWeddingCache, readOnlyError } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { pickFields, safeParseJSON, isParseError, MAX_MONETARY_AMOUNT, MAX_GUEST_COUNT } from "@/lib/validation";
 import { TASK_TIMELINE } from "@/lib/tasks/task-timeline";
@@ -38,6 +38,11 @@ export async function PATCH(
       { error: "Coordinators can't change the wedding details — ask the couple to update this." },
       { status: 403 }
     );
+  }
+
+  // Parents are view-only.
+  if (role === "parent") {
+    return readOnlyError();
   }
 
   const parsed = await safeParseJSON(request);

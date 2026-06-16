@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { INSPIRATION_FALLBACK } from "@/lib/inspiration-fallback";
 
@@ -123,6 +123,7 @@ function toImage(p: UnsplashPhoto, query: string): InspirationImage {
 export async function POST() {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase } = result;
 
   const key = process.env.UNSPLASH_ACCESS_KEY;

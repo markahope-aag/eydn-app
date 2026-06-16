@@ -32,7 +32,14 @@ function createMockSupabase(overrides: { selectData?: unknown[]; insertData?: un
 }
 
 const mockGetWeddingForUser = vi.fn();
-vi.mock("@/lib/auth", () => ({ getWeddingForUser: (...args: unknown[]) => mockGetWeddingForUser(...args) }));
+vi.mock("@/lib/auth", () => ({
+  getWeddingForUser: (...args: unknown[]) => mockGetWeddingForUser(...args),
+  readOnlyError: () =>
+    NextResponse.json(
+      { error: "Your access is view-only. Ask the couple to make this change." },
+      { status: 403 }
+    ),
+}));
 
 vi.mock("@/lib/audit", () => ({
   logActivity: vi.fn(),
@@ -72,6 +79,18 @@ describe("POST /api/tasks", () => {
 
     expect(res.status).toBe(201);
     expect(json).toEqual(created);
+  });
+
+  it("returns 403 (view-only) when a parent tries to create a task", async () => {
+    const supabase = createMockSupabase();
+    mockGetWeddingForUser.mockResolvedValue({ wedding: mockWedding, supabase, userId: "parent-1", role: "parent" });
+
+    const res = await POST(mockRequest({ title: "Sneak in a task" }));
+    const json = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(json.error).toMatch(/view-only/i);
+    expect(supabase._chain.insert).not.toHaveBeenCalled();
   });
 
   it("returns 400 when title missing", async () => {

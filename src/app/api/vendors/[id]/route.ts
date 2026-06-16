@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { pickFields, safeParseJSON, isParseError } from "@/lib/validation";
 import { softDelete, logActivity } from "@/lib/audit";
@@ -22,6 +22,7 @@ export async function PATCH(
 ) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase, userId } = result;
 
   const { id } = await ctx.params;
@@ -115,6 +116,7 @@ export async function DELETE(
 ) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase, userId } = result;
 
   const { id } = await ctx.params;

@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { untypedClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError, isValidEmail } from "@/lib/validation";
@@ -28,6 +28,7 @@ type BulkGuestInput = {
 export async function POST(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase, userId } = result;
 
   const parsed = await safeParseJSON(request);
@@ -132,6 +133,7 @@ type GuestUpdate = Database["public"]["Tables"]["guests"]["Update"];
 export async function PATCH(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase, userId } = result;
 
   const parsed = await safeParseJSON(request);
@@ -197,6 +199,7 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase, userId } = result;
 
   const url = new URL(request.url);

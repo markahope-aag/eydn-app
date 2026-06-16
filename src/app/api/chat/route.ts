@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { getSubscriptionStatus } from "@/lib/subscription";
 import { getToolCallMeter, incrementToolCallCount } from "@/lib/tool-call-counter";
@@ -110,6 +110,7 @@ export async function POST(request: Request) {
 
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding: weddingData, supabase, userId } = result;
 
   // Free-tier monthly tool-call cap enforcement. Trial/Pro/Beta/Admin

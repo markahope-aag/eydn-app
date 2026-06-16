@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { supabaseError } from "@/lib/api-error";
 
@@ -13,6 +13,7 @@ export async function GET() {
 export async function PUT() {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase } = result;
 
   const { error } = await supabase

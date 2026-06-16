@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseError } from "@/lib/api-error";
 
@@ -22,6 +22,7 @@ export async function GET() {
 export async function DELETE(request: NextRequest) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase } = result;
 
   const id = request.nextUrl.searchParams.get("id");
@@ -44,6 +45,7 @@ export async function DELETE(request: NextRequest) {
 export async function PATCH(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase } = result;
 
   const body = await request.json();

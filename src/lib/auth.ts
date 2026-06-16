@@ -10,12 +10,28 @@ type AuthSuccess = {
   wedding: Wedding;
   supabase: SupabaseClient<Database>;
   userId: string;
-  role: "owner" | "partner" | "coordinator";
+  role: "owner" | "partner" | "coordinator" | "parent";
 };
 
 type AuthError = {
   error: NextResponse;
 };
+
+/**
+ * Standard 403 for the read-only "parent" collaborator role. Mutating API
+ * routes call this right after resolving the wedding, so view-only access is
+ * enforced consistently in one place:
+ *
+ *   const result = await getWeddingForUser();
+ *   if ("error" in result) return result.error;
+ *   if (result.role === "parent") return readOnlyError();
+ */
+export function readOnlyError(): NextResponse {
+  return NextResponse.json(
+    { error: "Your access is view-only. Ask the couple to make this change." },
+    { status: 403 }
+  );
+}
 
 /** @deprecated No-op — in-memory cache removed (ineffective on serverless). */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -25,7 +41,7 @@ export function invalidateWeddingCache(_userId: string) {
 
 type ResolvedWedding = {
   wedding: Wedding;
-  role: "owner" | "partner" | "coordinator";
+  role: "owner" | "partner" | "coordinator" | "parent";
 };
 
 /**
@@ -65,7 +81,7 @@ export async function resolveWeddingForUserId(
       .single();
 
     if (wedding) {
-      return { wedding: wedding as Wedding, role: collab.role as "partner" | "coordinator" };
+      return { wedding: wedding as Wedding, role: collab.role as "partner" | "coordinator" | "parent" };
     }
   }
 
@@ -97,7 +113,7 @@ export async function resolveWeddingForUserId(
           .single();
 
         if (wedding) {
-          return { wedding: wedding as Wedding, role: pending.role as "partner" | "coordinator" };
+          return { wedding: wedding as Wedding, role: pending.role as "partner" | "coordinator" | "parent" };
         }
       }
     }

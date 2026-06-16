@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 const MAX_CSV_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -70,6 +70,7 @@ function parseCsvLine(line: string): string[] {
 export async function POST(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase } = result;
 
   const formData = await request.formData();

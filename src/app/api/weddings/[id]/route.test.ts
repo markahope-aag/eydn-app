@@ -126,6 +126,11 @@ const mockInvalidateWeddingCache = vi.fn();
 vi.mock("@/lib/auth", () => ({
   getWeddingForUser: (...args: unknown[]) => mockGetWeddingForUser(...args),
   invalidateWeddingCache: (...args: unknown[]) => mockInvalidateWeddingCache(...args),
+  readOnlyError: () =>
+    NextResponse.json(
+      { error: "Your access is view-only. Ask the couple to make this change." },
+      { status: 403 }
+    ),
 }));
 
 import { PATCH } from "./route";
@@ -147,6 +152,23 @@ describe("PATCH /api/weddings/[id]", () => {
 
     expect(res.status).toBe(403);
     expect(json.error).toMatch(/forbidden/i);
+  });
+
+  it("returns 403 (view-only) when a parent tries to edit the wedding record", async () => {
+    const supabase = createMockSupabase();
+    mockGetWeddingForUser.mockResolvedValue({
+      wedding: mockWedding,
+      supabase,
+      userId: "parent-1",
+      role: "parent",
+    });
+
+    const res = await PATCH(mockRequest({ date: "2027-01-01" }), makeCtx());
+    const json = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(json.error).toMatch(/view-only/i);
+    expect(supabase._weddingSingle).not.toHaveBeenCalled();
   });
 
   it("returns 403 when a coordinator tries to edit the wedding record", async () => {

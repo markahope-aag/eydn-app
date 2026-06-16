@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { untypedClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { requireFeature } from "@/lib/subscription";
@@ -92,6 +92,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase } = result;
 
   const formData = await request.formData();

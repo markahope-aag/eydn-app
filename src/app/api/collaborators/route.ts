@@ -38,14 +38,14 @@ export async function POST(request: Request) {
   if (isParseError(parsed)) return parsed;
   const body = parsed;
   const email = body.email as string | undefined;
-  const collabRole = body.role as "partner" | "coordinator" | undefined;
+  const collabRole = body.role as "partner" | "coordinator" | "parent" | undefined;
 
   if (!email || !collabRole) {
     return NextResponse.json({ error: "Email and role are required" }, { status: 400 });
   }
 
-  if (!["partner", "coordinator"].includes(collabRole)) {
-    return NextResponse.json({ error: "Role must be partner or coordinator" }, { status: 400 });
+  if (!["partner", "coordinator", "parent"].includes(collabRole)) {
+    return NextResponse.json({ error: "Role must be partner, coordinator, or parent" }, { status: 400 });
   }
 
   const { data, error } = await supabase

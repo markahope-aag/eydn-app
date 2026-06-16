@@ -1,4 +1,4 @@
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { restoreRecord, logActivity } from "@/lib/audit";
 import { NextResponse } from "next/server";
 import { safeParseJSON, isParseError } from "@/lib/validation";
@@ -17,6 +17,7 @@ const ENTITY_TYPE_TO_TABLE: Record<string, string> = {
 export async function POST(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase, userId } = result;
 
   const parsed = await safeParseJSON(request);

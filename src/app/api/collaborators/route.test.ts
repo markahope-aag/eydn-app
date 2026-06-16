@@ -208,6 +208,20 @@ describe("POST /api/collaborators", () => {
     expect(response.status).toBe(201);
   });
 
+  it("accepts parent role", async () => {
+    const collabData = { id: "c1", email: "mom@example.com", role: "parent" };
+    mockSupabase = createMockSupabase({ insertData: collabData });
+    vi.mocked(getWeddingForUser).mockResolvedValue({
+      wedding: mockWedding,
+      supabase: mockSupabase,
+      userId: "user-1",
+      role: "owner",
+    } as unknown as AuthResult);
+
+    const response = await POST(mockRequest({ email: "mom@example.com", role: "parent" }));
+    expect(response.status).toBe(201);
+  });
+
   it("returns 409 when inviting a duplicate email", async () => {
     mockSupabase = createMockSupabase({
       insertError: { message: "duplicate key", code: "23505" },

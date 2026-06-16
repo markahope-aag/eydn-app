@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getWeddingForUser } from "@/lib/auth";
+import { getWeddingForUser, readOnlyError } from "@/lib/auth";
 import { getSubscriptionStatus } from "@/lib/subscription";
 import {
   generateCatchUpPlan,
@@ -66,6 +66,7 @@ export async function POST() {
 
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase } = result;
 
   const { data: tasks } = await supabase
@@ -122,6 +123,7 @@ export async function POST() {
 export async function PATCH(request: Request) {
   const result = await getWeddingForUser();
   if ("error" in result) return result.error;
+  if (result.role === "parent") return readOnlyError();
   const { wedding, supabase } = result;
 
   const body = (await request.json().catch(() => null)) as { id?: string } | null;
