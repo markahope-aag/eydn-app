@@ -4,7 +4,9 @@ export default defineConfig({
   testDir: "./__tests__/visual",
   timeout: 30000,
   use: {
-    baseURL: "http://localhost:3000",
+    // Defaults to a local dev server; override to test a deployed URL, e.g.
+    // PLAYWRIGHT_BASE_URL=https://eydn.app npx playwright test
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
     screenshot: "on",
     trace: "off",
   },
