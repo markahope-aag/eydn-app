@@ -140,13 +140,30 @@ describe("POST /api/public/photos", () => {
       )
     );
     expect(res.status).toBe(201);
+    // The default mock wedding has no photo_approval_required, so the photo is
+    // auto-approved (approved = !photo_approval_required).
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         wedding_id: "wed_1",
         uploader_name: "Carol",
         caption: "fun times",
-        approved: false,
+        approved: true,
       })
+    );
+  });
+
+  it("holds the photo for approval when the couple requires moderation", async () => {
+    mockWeddingLookup.mockResolvedValue({
+      data: { id: "wed_1", photo_approval_required: true },
+      error: null,
+    });
+    const res = await POST(
+      buildReq(makeForm({ file: pngFile(), slug: "alice-bob", uploaderName: "Carol" }))
+    );
+    expect(res.status).toBe(201);
+    expect(await res.json()).toMatchObject({ approved: false });
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ approved: false })
     );
   });
 
