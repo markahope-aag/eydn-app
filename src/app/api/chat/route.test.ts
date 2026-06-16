@@ -51,6 +51,8 @@ vi.mock("@/lib/ai/edyn-system-prompt", () => ({
 
 import { getWeddingForUser } from "@/lib/auth";
 import { getSubscriptionStatus } from "@/lib/subscription";
+import { getToolCallMeter } from "@/lib/tool-call-counter";
+import { getClaudeClient } from "@/lib/ai/claude-client";
 import { GET, POST } from "./route";
 
 const TRIALING_STATUS = {
@@ -79,6 +81,22 @@ const FREE_STATUS_NO_CHAT = {
   isTrialing: false,
   trialDaysLeft: 0,
   trialExpired: true,
+};
+
+// Free tier WITH chat access (metered) — the state a free user is in until
+// they exhaust their monthly tool-call allowance.
+const FREE_STATUS_WITH_CHAT = {
+  tier: "free" as const,
+  features: {
+    chat: true, webSearch: false, exportBinder: false, emailTemplates: false,
+    attachments: false, catchUpPlans: false, budgetOptimizer: false, vendorLookup: false,
+  },
+  hasAccess: true,
+  isPaid: false,
+  isBeta: false,
+  isTrialing: false,
+  trialDaysLeft: 0,
+  trialExpired: false,
 };
 
 // --- Helpers ---
@@ -156,6 +174,25 @@ describe("POST /api/chat", () => {
 
     expect(response.status).toBe(403);
     expect(data.error).toMatch(/premium/i);
+  });
+
+  it("returns a friendly cap message with upgrade fields when the free-tier tool cap is reached", async () => {
+    vi.mocked(getSubscriptionStatus).mockResolvedValue(FREE_STATUS_WITH_CHAT);
+    // Meter exhausted: 10 of 10 used, 0 remaining.
+    vi.mocked(getToolCallMeter).mockResolvedValueOnce({ used: 10, limit: 10, remaining: 0 });
+
+    const response = await POST(mockRequest({ message: "Add a task to call the florist" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    // Friendly, on-brand copy that names the monthly cap and the upgrade path.
+    expect(data.error).toMatch(/free AI actions/i);
+    expect(data.error).toMatch(/upgrade to pro/i);
+    // Fields the chat UI reads to show the "See pricing" CTA and flip the meter to 0 left.
+    expect(data.toolCallsLimit).toBe(10);
+    expect(data.toolCallsUsed).toBe(10);
+    // The cap must block before any (paid) model call is made.
+    expect(getClaudeClient).not.toHaveBeenCalled();
   });
 
   it("returns 400 when message is empty", async () => {
