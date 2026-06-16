@@ -303,7 +303,7 @@ All schedules are defined in `vercel.json` and run on Vercel's cron infrastructu
 | `check-deadlines` | Daily 09:00 UTC | Task deadline reminder emails |
 | `trial-reminders` | Daily 15:00 UTC | 3-day trial expiry reminder emails |
 | `trial-downgrade-events` | Daily 06:00 UTC | Records trial downgrade analytics events |
-| `backup` | Daily 03:00 UTC | Full data export to Hetzner via SFTP |
+| `backup` | Daily 03:00 UTC | Full data export to Cloudflare R2 (bucket `eydn-app`) |
 | `storage-cleanup` | Sundays 05:00 UTC | Removes orphaned storage files |
 | `vendor-reminders` | Mondays 10:00 UTC | Weekly vendor payment reminders |
 | `weekly-conversion-report` | Mondays 13:00 UTC | Conversion summary email to admin |
@@ -332,7 +332,7 @@ You can also trigger any job from the Vercel Dashboard: go to your project → *
 
 1. In the Cron Jobs tab, click the failed job's execution row in the history table. The **Details** column shows the error message.
 2. For more detail, go to Vercel Dashboard → **Logs** → filter by the cron route (e.g., `/api/cron/backup`). You'll see the full server log output.
-3. For the `backup` job specifically: if SFTP is not configured, the job will succeed but note "SFTP not configured" in the details. This is expected if you haven't set the `BACKUP_SFTP_*` environment variables.
+3. For the `backup` job specifically: a backup is only "real" once it lands in R2, so if R2 is not configured (or the upload fails) the job is logged as an **error** with a note — it does not silently pass. Required env vars: `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`.
 4. Common causes:
    - **Auth failure (401):** The `CRON_SECRET` or `BACKUP_SECRET` environment variable is missing or mismatched in Vercel.
    - **Database timeout:** Supabase was briefly unreachable. Re-run the job; it's safe to re-run any of these.
@@ -461,8 +461,43 @@ WHERE wedding_id = (
 ORDER BY created_at DESC
 LIMIT 100;
 ```
-2. If the data was permanently deleted and the backup ran, you may be able to recover it from the Hetzner SFTP backup (daily JSON export). The file is at `/backups/eydn/eydn-backup-YYYY-MM-DD.json`.
-3. Supabase Pro plan includes 7-day Point-in-Time Recovery (PITR). Contact Supabase support to restore a specific table to a point before the deletion.
+2. If the data was permanently deleted, recover it from the daily off-platform backup stored in **Cloudflare R2** (bucket `eydn-app`). See [§Restore from backup](#how-do-i-restore-data-from-a-backup) below for the exact commands.
+3. Supabase's own Point-in-Time Recovery (PITR) is a second line of defence if you're on a plan that includes it. Confirm the plan in the Supabase dashboard (Settings → Add-ons) before relying on it, then contact Supabase support to restore a specific table to a point before the deletion.
+
+### How do I restore data from a backup?
+
+Daily backups are written to Cloudflare R2 (`eydn-app` bucket) every night at 03:00 UTC:
+
+- `backups/eydn-backup-YYYY-MM-DD.json` — full export of every wedding (retained 30 daily, then 1/month for 12 months).
+- `sunset/<weddingId>-YYYY-MM-DD.json` — the final export captured the moment a wedding was purged at end-of-life.
+
+Restores are **idempotent** — rows are upserted by primary key, so re-running is safe and a restore never duplicates data.
+
+**One-time setup on the machine you restore from:**
+
+```bash
+# Pull the R2 + Supabase service-role creds into .env.local
+npx vercel env pull .env.local
+```
+
+**Steps:**
+
+```bash
+# 1. See what backups exist
+node scripts/restore-backup.mjs --list
+
+# 2. Preview a restore (no writes) — whole backup or a single wedding
+node scripts/restore-backup.mjs --source r2 --key backups/eydn-backup-2026-06-16.json --dry-run
+node scripts/restore-backup.mjs --source r2 --key backups/eydn-backup-2026-06-16.json --wedding <weddingId> --dry-run
+
+# 3. Run it for real (drop --dry-run). To recover one user's data, always scope with --wedding.
+node scripts/restore-backup.mjs --source r2 --key backups/eydn-backup-2026-06-16.json --wedding <weddingId>
+
+# Restore a purged (sunset) wedding from its final backup:
+node scripts/restore-backup.mjs --source r2 --key sunset/<weddingId>-2026-05-01.json
+```
+
+> Prefer the most recent backup *before* the data loss. For a single user who erased their own data, scope with `--wedding <id>` so you don't touch anyone else's records. Run `--dry-run` first and confirm the row counts look right.
 
 ### "The user wants to delete their account"
 
@@ -504,8 +539,8 @@ Copy the results to a spreadsheet and send it to the user. For GDPR export reque
 
 ### Quarterly
 
-- **Rotate secrets:** Rotate `CRON_SECRET`, `BACKUP_SECRET`, and `SUPABASE_SERVICE_ROLE_KEY` in Vercel environment variables. Update them one at a time so the running app always has a valid key. See [SECURITY.md](SECURITY.md) for the full secret inventory.
-- **Verify backup:** Download the latest backup file from the Hetzner server (`/backups/eydn/eydn-backup-YYYY-MM-DD.json`), open it, and confirm it contains wedding records with guest data. You can trigger a manual backup from the **Data & Security** tab and verify the toast message shows a non-zero wedding count.
+- **Rotate secrets:** Rotate `CRON_SECRET`, `BACKUP_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, and the R2 token (`R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`) in Vercel environment variables. Update them one at a time so the running app always has a valid key. See [SECURITY.md](SECURITY.md) for the full secret inventory.
+- **Verify backup:** On the **Data & Security** tab, confirm the "Latest Backup" card shows a recent timestamp and the last run is `success`. For a deeper check, run `node scripts/restore-backup.mjs --list` then `--dry-run` against the newest `backups/eydn-backup-YYYY-MM-DD.json` and confirm it reports a non-zero wedding/row count. You can also trigger a manual backup with the **Run Manual Backup** button.
 - **Verify Cadence sync:** In the Leads page, sort by date and confirm recent calculator submissions show **Cadence ✓**. A streak of "Cadence failed" or "Cadence pending" badges means the env var is missing or Cadence is rejecting requests — verify `CADENCE_URL` and `CADENCE_NEWSLETTER_FORM_ID` in Vercel and check the Cadence dashboard.
 - **Review admin users:** Go to the Subscribers tab, filter by **Admins**. Remove admin role from anyone who no longer needs it.
 - **Check Clerk dashboard:** Review active sessions and look for any accounts with unusual behavior.

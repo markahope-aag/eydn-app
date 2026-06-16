@@ -51,36 +51,56 @@ export default function DataSecurityTab({
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="card p-4">
-            <p className="text-[12px] font-semibold text-muted uppercase tracking-wide">Supabase</p>
-            <p className="mt-1 text-[15px] font-semibold text-plum">{backup.supabasePlan} Plan</p>
-            <p className="text-[13px] text-muted">PITR: {backup.supabasePITR ? "Enabled" : "Disabled"}</p>
-            <p className="text-[13px] text-muted">Retention: {backup.supabaseRetention}</p>
-          </div>
-          <div className="card p-4">
-            <p className="text-[12px] font-semibold text-muted uppercase tracking-wide">Off-Platform (SFTP)</p>
+            <p className="text-[12px] font-semibold text-muted uppercase tracking-wide">Off-Platform ({backup.provider})</p>
             <div className="mt-1 flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${backup.sftpConfigured ? "bg-green-500" : "bg-red-500"}`} />
+              <span className={`w-2 h-2 rounded-full ${backup.configured ? "bg-green-500" : "bg-red-500"}`} />
               <p className="text-[15px] font-semibold text-plum">
-                {backup.sftpConfigured ? "Connected" : "Not Configured"}
+                {backup.configured ? "Connected" : "Not Configured"}
               </p>
             </div>
-            {backup.sftpConfigured && (
+            {backup.configured ? (
               <>
-                <p className="text-[13px] text-muted">Host: {backup.sftpHost}</p>
-                <p className="text-[13px] text-muted">Path: {backup.sftpPath}</p>
+                <p className="text-[13px] text-muted">Bucket: {backup.bucket}</p>
+                <p className="text-[13px] text-muted">
+                  {backup.dailyBackupCount} daily · {backup.sunsetBackupCount} archived
+                </p>
+                {backup.listError && (
+                  <p className="text-[12px] text-red-600 mt-1">List error: {backup.listError}</p>
+                )}
               </>
-            )}
-            {!backup.sftpConfigured && (
+            ) : (
               <p className="text-[12px] text-muted mt-1">
-                Set BACKUP_SFTP_HOST, BACKUP_SFTP_USER, BACKUP_SFTP_PASSWORD env vars
+                Set R2_ENDPOINT, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY env vars
               </p>
+            )}
+          </div>
+          <div className="card p-4">
+            <p className="text-[12px] font-semibold text-muted uppercase tracking-wide">Latest Backup</p>
+            {backup.latestBackupAt ? (
+              <>
+                <p className="mt-1 text-[15px] font-semibold text-plum">
+                  {new Date(backup.latestBackupAt).toLocaleString()}
+                </p>
+                {backup.latestBackupBytes != null && (
+                  <p className="text-[13px] text-muted">
+                    {(backup.latestBackupBytes / 1024).toFixed(0)} KB
+                  </p>
+                )}
+                {backup.lastRun && (
+                  <p className={`text-[13px] ${backup.lastRun.status === "success" ? "text-muted" : "text-red-600"}`}>
+                    Last run: {backup.lastRun.status}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="mt-1 text-[15px] font-semibold text-plum">No backup yet</p>
             )}
           </div>
           <div className="card p-4">
             <p className="text-[12px] font-semibold text-muted uppercase tracking-wide">Schedule</p>
             <p className="mt-1 text-[15px] font-semibold text-plum">{backup.cronSchedule}</p>
-            <p className="text-[13px] text-muted">Full data export to Hetzner</p>
-            <p className="text-[13px] text-muted">All weddings included</p>
+            <p className="text-[13px] text-muted">All weddings exported to R2</p>
+            <p className="text-[13px] text-muted">Retention: {backup.retentionPolicy}</p>
           </div>
         </div>
       </div>

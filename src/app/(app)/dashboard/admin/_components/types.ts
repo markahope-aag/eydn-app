@@ -88,13 +88,23 @@ export type BackupInfo = {
     activityLogEntries: number;
   };
   backup: {
-    sftpConfigured: boolean;
-    sftpHost: string | null;
-    sftpPath: string;
+    provider: string;
+    configured: boolean;
+    bucket: string | null;
     cronSchedule: string;
-    supabasePlan: string;
-    supabasePITR: boolean;
-    supabaseRetention: string;
+    retentionPolicy: string;
+    dailyBackupCount: number;
+    sunsetBackupCount: number;
+    latestBackupKey: string | null;
+    latestBackupAt: string | null;
+    latestBackupBytes: number | null;
+    listError: string | null;
+    lastRun: {
+      status: string;
+      at: string;
+      durationMs: number;
+      error: string | null;
+    } | null;
   };
   recentActivity: Array<{
     action: string;

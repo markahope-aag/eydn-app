@@ -1,8 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 import { logger } from "@/lib/logger";
+import { isR2Configured, putObject, objectExists } from "@/lib/backup/r2";
 
 type AdminClient = SupabaseClient<Database>;
+
+/**
+ * Thrown when a sunset purge cannot safely proceed because the final backup
+ * was not confirmed stored off-platform. Hard deletion is skipped — the data
+ * is left intact so the run can be retried once backups are healthy.
+ */
+export class PurgeBackupError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PurgeBackupError";
+  }
+}
 
 /**
  * Child tables purged when a wedding is sunsetted, in FK-safe order (children
@@ -28,17 +41,26 @@ export const SUNSET_PURGE_TABLES = [
 ] as const;
 
 /**
- * Purge all child data for a sunsetted wedding. Builds a final backup export
- * first (logged), then deletes the associated rows. The wedding row itself is
- * preserved (phase = "sunset") for record-keeping.
+ * Purge all child data for a sunsetted wedding. Builds a final backup export,
+ * stores it off-platform in R2, VERIFIES it landed, and only then hard-deletes
+ * the associated rows. The wedding row itself is preserved (phase = "sunset")
+ * for record-keeping.
+ *
+ * Fail-safe: if R2 is not configured, the upload fails, or the stored object
+ * cannot be verified, this throws PurgeBackupError WITHOUT deleting anything.
+ * Losing user data is far worse than deferring a purge, so no confirmed backup
+ * means no delete.
  *
  * Note: despite the historical "soft delete" framing, the child rows are hard
- * deleted — the backup payload is the record of what was removed.
+ * deleted — the R2 backup is the only record of what was removed, so it must
+ * exist before we touch the data.
+ *
+ * @returns the R2 key of the stored final backup
  */
 export async function purgeWeddingData(
   supabase: AdminClient,
   weddingId: string
-): Promise<void> {
+): Promise<string> {
   const [
     { data: guests },
     { data: vendors },
@@ -52,6 +74,9 @@ export async function purgeWeddingData(
     { data: dayOfPlan },
     { data: moodBoard },
     { data: registryLinks },
+    { data: activityLog },
+    { data: attachments },
+    { data: seatAssignments },
   ] = await Promise.all([
     supabase.from("guests").select("*").eq("wedding_id", weddingId),
     supabase.from("vendors").select("*").eq("wedding_id", weddingId),
@@ -65,6 +90,12 @@ export async function purgeWeddingData(
     supabase.from("day_of_plans").select("*").eq("wedding_id", weddingId).single(),
     supabase.from("mood_board_items").select("*").eq("wedding_id", weddingId),
     supabase.from("registry_links").select("*").eq("wedding_id", weddingId),
+    supabase.from("activity_log").select("*").eq("wedding_id", weddingId),
+    supabase.from("attachments").select("*").eq("wedding_id", weddingId),
+    supabase
+      .from("seat_assignments")
+      .select("*, seating_tables!inner(wedding_id)")
+      .eq("seating_tables.wedding_id", weddingId),
   ]);
 
   const backupPayload = {
@@ -84,12 +115,46 @@ export async function purgeWeddingData(
       dayOfPlan: dayOfPlan || null,
       moodBoard: moodBoard || [],
       registryLinks: registryLinks || [],
+      activityLog: activityLog || [],
+      attachments: attachments || [],
+      seatAssignments: seatAssignments || [],
     },
   };
 
+  const backupJson = JSON.stringify(backupPayload);
+
+  // FAIL-SAFE: the final backup MUST be stored off-platform and verified before
+  // any row is deleted. No confirmed backup → abort the purge, leave data intact.
+  if (!isR2Configured()) {
+    throw new PurgeBackupError(
+      `Sunset purge aborted for ${weddingId}: R2 not configured, cannot store final backup. Data left intact.`
+    );
+  }
+
+  const date = new Date().toISOString().split("T")[0];
+  const backupKey = `sunset/${weddingId}-${date}.json`;
+
+  try {
+    await putObject(backupKey, backupJson, "application/json");
+  } catch (uploadError) {
+    throw new PurgeBackupError(
+      `Sunset purge aborted for ${weddingId}: final backup upload to R2 failed (${
+        uploadError instanceof Error ? uploadError.message : String(uploadError)
+      }). Data left intact.`
+    );
+  }
+
+  // Verify the object actually landed before we destroy the source data.
+  const stored = await objectExists(backupKey);
+  if (!stored) {
+    throw new PurgeBackupError(
+      `Sunset purge aborted for ${weddingId}: final backup ${backupKey} could not be verified in R2. Data left intact.`
+    );
+  }
+
   logger.info(
-    { weddingId, bytes: JSON.stringify(backupPayload).length },
-    `Final backup for sunset wedding ${weddingId}`
+    { weddingId, key: backupKey, bytes: backupJson.length },
+    `Final backup stored for sunset wedding ${weddingId} → r2:${backupKey}`
   );
 
   for (const table of SUNSET_PURGE_TABLES) {
@@ -114,4 +179,6 @@ export async function purgeWeddingData(
       );
     }
   }
+
+  return backupKey;
 }

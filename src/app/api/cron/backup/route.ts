@@ -2,22 +2,25 @@ import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logCronExecution } from "@/lib/cron-logger";
 import { requireCronAuth } from "@/lib/cron-auth";
+import { isR2Configured, putObject, listObjects, deleteObject } from "@/lib/backup/r2";
+import { selectBackupsToDelete } from "@/lib/backup/retention";
 
 /**
  * Nightly off-platform backup endpoint.
- * Exports all wedding data as JSON and uploads via SFTP to the Hetzner/Coolify server.
+ * Exports all wedding data as JSON and uploads it to Cloudflare R2.
  *
- * Intended to be called by a cron job (e.g., Vercel Cron, GitHub Actions, or external scheduler).
- * Protected by a shared secret in the Authorization header.
+ * Intended to be called by a cron job (Vercel Cron). Protected by a shared
+ * secret in the Authorization header (see requireCronAuth).
  *
- * Env vars required:
- *   BACKUP_SECRET        — shared secret to authorize the cron call
- *   BACKUP_SFTP_HOST     — Hetzner server hostname/IP
- *   BACKUP_SFTP_PORT     — SFTP port (default 22)
- *   BACKUP_SFTP_USER     — SSH username
- *   BACKUP_SFTP_PASSWORD — SSH password (or use key-based auth)
- *   BACKUP_SFTP_PATH     — Remote directory for backups (e.g., /backups/eydn)
+ * A backup is only "real" if it lands off-platform, so a missing R2 config or a
+ * failed upload is logged as an ERROR — that way the cron dead-man's switch and
+ * ops alerting surface it instead of silently storing nothing.
+ *
+ * Env vars required (see src/lib/backup/r2.ts):
+ *   R2_ENDPOINT, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
  */
+
+const BACKUP_PREFIX = "backups/";
 
 export async function GET(request: Request) {
   const unauthorized = requireCronAuth(request);
@@ -27,10 +30,12 @@ export async function GET(request: Request) {
   const startTime = Date.now();
 
   try {
-    // Get all weddings
+    // Get all weddings. Select the FULL row (not just id + names) so a restore
+    // can recreate the wedding record itself — user_id, date, phase and every
+    // other column must be in the backup or a full restore hits NOT NULL errors.
     const { data: weddings, error: weddingsError } = await supabase
       .from("weddings")
-      .select("id, partner1_name, partner2_name");
+      .select("*");
 
     if (weddingsError) throw new Error(`Failed to fetch weddings: ${weddingsError.message}`);
 
@@ -51,6 +56,7 @@ export async function GET(request: Request) {
         { data: registryLinks },
         { data: collaborators },
         { data: activityLog },
+        { data: attachments },
       ] = await Promise.all([
         supabase.from("guests").select("*").eq("wedding_id", wedding.id),
         supabase.from("vendors").select("*").eq("wedding_id", wedding.id),
@@ -67,6 +73,7 @@ export async function GET(request: Request) {
         supabase.from("registry_links").select("*").eq("wedding_id", wedding.id),
         supabase.from("wedding_collaborators").select("*").eq("wedding_id", wedding.id),
         supabase.from("activity_log").select("*").eq("wedding_id", wedding.id).order("created_at", { ascending: false }).limit(500),
+        supabase.from("attachments").select("*").eq("wedding_id", wedding.id),
       ]);
 
       return {
@@ -95,6 +102,7 @@ export async function GET(request: Request) {
           registryLinks: registryLinks || [],
           collaborators: collaborators || [],
           activityLog: activityLog || [],
+          attachments: attachments || [],
         },
       };
     }
@@ -120,50 +128,37 @@ export async function GET(request: Request) {
     const backupJson = JSON.stringify(fullBackup, null, 2);
     const date = new Date().toISOString().split("T")[0];
     const filename = `eydn-backup-${date}.json`;
+    const key = `${BACKUP_PREFIX}${filename}`;
 
-    // Upload via SFTP (off-platform). A backup is only real if it lands
-    // off-platform, so a missing destination or a failed upload is treated as
-    // an ERROR below — that way the cron dead-man's switch and ops alerting
-    // surface it. (Previously the no-SFTP path returned BEFORE logging, so the
-    // job never appeared in cron_log and silently stored nothing.)
-    const sftpHost = process.env.BACKUP_SFTP_HOST;
-    const sftpPort = process.env.BACKUP_SFTP_PORT || "22";
-    const sftpUser = process.env.BACKUP_SFTP_USER;
-    const sftpPassword = process.env.BACKUP_SFTP_PASSWORD;
-    const sftpPath = process.env.BACKUP_SFTP_PATH || "/backups/eydn";
-
-    let sftpUploaded = false;
+    let uploaded = false;
+    let pruned: string[] = [];
     let note: string | undefined;
 
-    if (!sftpHost || !sftpUser) {
-      note = "SFTP not configured — backup generated but NOT stored off-platform. Set BACKUP_SFTP_HOST / BACKUP_SFTP_USER / BACKUP_SFTP_PASSWORD.";
+    if (!isR2Configured()) {
+      note =
+        "R2 not configured — backup generated but NOT stored off-platform. Set R2_ENDPOINT / R2_BUCKET / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY.";
       console.warn(`[BACKUP] ${filename}: ${backups.length} weddings, ${backupJson.length} bytes (${note})`);
     } else {
       try {
-        const SftpClient = (await import("ssh2-sftp-client")).default;
-        const sftp = new SftpClient();
+        await putObject(key, backupJson, "application/json");
+        uploaded = true;
+        console.info(`[BACKUP] ${filename}: ${backups.length} weddings, ${backupJson.length} bytes → r2:${key}`);
 
-        await sftp.connect({
-          host: sftpHost,
-          port: parseInt(sftpPort, 10),
-          username: sftpUser,
-          password: sftpPassword || undefined,
-        });
-
-        const remotePath = `${sftpPath}/${filename}`;
+        // Apply retention (best-effort; failure here does not fail the backup).
         try {
-          await sftp.mkdir(sftpPath, true);
-        } catch {
-          // Directory may already exist
+          const existing = await listObjects(BACKUP_PREFIX);
+          const toDelete = selectBackupsToDelete(
+            existing.map((o) => o.key),
+            { referenceDate: new Date() }
+          );
+          for (const k of toDelete) await deleteObject(k);
+          pruned = toDelete;
+          if (toDelete.length) console.info(`[BACKUP] retention pruned ${toDelete.length} old backups`);
+        } catch (retErr) {
+          console.error("[BACKUP] retention failed (non-fatal):", retErr instanceof Error ? retErr.message : retErr);
         }
-
-        await sftp.put(Buffer.from(backupJson, "utf-8"), remotePath);
-        await sftp.end();
-        sftpUploaded = true;
-
-        console.info(`[BACKUP] ${filename}: ${backups.length} weddings, ${backupJson.length} bytes → ${sftpHost}:${remotePath}`);
-      } catch (sftpError) {
-        note = `SFTP upload failed: ${sftpError instanceof Error ? sftpError.message : String(sftpError)}`;
+      } catch (uploadError) {
+        note = `R2 upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`;
         console.error("[BACKUP]", note);
       }
     }
@@ -172,18 +167,20 @@ export async function GET(request: Request) {
     // so it's logged as an error to trigger the ops alert + dead-man's switch.
     await logCronExecution({
       jobName: "backup",
-      status: sftpUploaded ? "success" : "error",
+      status: uploaded ? "success" : "error",
       durationMs: Date.now() - startTime,
-      details: { filename, weddings: backups.length, bytes: backupJson.length, sftp: sftpUploaded, note },
-      errorMessage: sftpUploaded ? undefined : note,
+      details: { filename, key, weddings: backups.length, bytes: backupJson.length, stored: uploaded, pruned: pruned.length, note },
+      errorMessage: uploaded ? undefined : note,
     });
 
     return NextResponse.json({
-      success: sftpUploaded,
+      success: uploaded,
       filename,
+      key,
       weddings: backups.length,
       bytes: backupJson.length,
-      sftp: sftpUploaded,
+      stored: uploaded,
+      pruned: pruned.length,
       note,
     });
   } catch (error) {

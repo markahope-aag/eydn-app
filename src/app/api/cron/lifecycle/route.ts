@@ -79,7 +79,14 @@ export async function GET(request: Request) {
         const newPhase = calculatePhase(wedding.date, memoryPlanActive);
         const oldPhase = wedding.phase ?? "active";
 
-        if (newPhase !== oldPhase) {
+        // The sunset transition is special: it triggers a destructive purge that
+        // must store a verified backup first. We defer persisting phase="sunset"
+        // until the purge succeeds (handled below), so a failed/aborted purge
+        // leaves the wedding in its current phase and is retried next run.
+        const isSunsetPurge =
+          newPhase === "sunset" && !memoryPlanActive && oldPhase !== "sunset";
+
+        if (newPhase !== oldPhase && !isSunsetPurge) {
           const { error: updateError } = await supabase
             .from("weddings")
             .update({ phase: newPhase })
@@ -199,12 +206,26 @@ export async function GET(request: Request) {
           }
         }
 
-        // Sunset: soft-delete data for weddings without memory plan.
-        if (newPhase === "sunset" && !memoryPlanActive && oldPhase !== "sunset") {
+        // Sunset: purge data for weddings without a memory plan. purgeWeddingData
+        // stores a verified final backup in R2 before deleting; if it can't, it
+        // throws and we leave the wedding intact (not marked sunset) to retry.
+        if (isSunsetPurge) {
           try {
-            await purgeWeddingData(supabase, wedding.id);
+            const backupKey = await purgeWeddingData(supabase, wedding.id);
+
+            // Backup confirmed + data purged — now persist phase = sunset.
+            const { error: phaseError } = await supabase
+              .from("weddings")
+              .update({ phase: "sunset" })
+              .eq("id", wedding.id);
+            if (phaseError) {
+              results.errors.push(`Sunset phase update failed for ${wedding.id}: ${phaseError.message}`);
+            } else {
+              results.phaseChanges.push({ weddingId: wedding.id, from: oldPhase, to: "sunset" });
+            }
+
             results.sunsetted.push(wedding.id);
-            console.info(`[LIFECYCLE] Sunset: soft-deleted data for wedding ${wedding.id}`);
+            console.info(`[LIFECYCLE] Sunset: purged wedding ${wedding.id} (backup r2:${backupKey})`);
           } catch (sunsetError) {
             results.errors.push(
               `Sunset failed for ${wedding.id}: ${sunsetError instanceof Error ? sunsetError.message : String(sunsetError)}`
