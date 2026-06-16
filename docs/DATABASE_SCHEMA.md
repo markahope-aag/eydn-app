@@ -527,14 +527,14 @@ Records which users redeemed which codes.
 ## Growth & Leads
 
 ### `waitlist`
-Beta overflow waitlist signups.
+Waitlist / lead-capture signups (e.g. newsletter).
 
 | Column | Type | Notes |
 |--------|------|-------|
 | id | uuid | PK |
 | name | text | |
 | email | text | Unique, case-insensitive |
-| source | text | e.g. "beta" |
+| source | text | e.g. "newsletter", "waitlist" |
 | discount_code_sent | boolean | Whether WAITLIST20 email was sent |
 | notes | text | |
 | created_at | timestamptz | |
@@ -672,10 +672,10 @@ Role assignments for access control.
 |--------|------|-------|
 | id | uuid | PK |
 | user_id | text | Clerk user ID |
-| role | text | user, admin, vendor, beta |
+| role | text | user, admin, vendor |
 | created_at | timestamptz | |
 
-Roles: `user` (default), `admin` (platform admin), `vendor` (vendor portal), `beta` (free lifetime access).
+Roles: `user` (default), `admin` (platform admin), `vendor` (vendor portal).
 
 ### `activity_log`
 Audit trail for all create/update/delete/restore actions.

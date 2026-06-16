@@ -1,5 +1,7 @@
 # Eydn Beta Launch Plan
 
+> **ARCHIVED (2026-06-16):** The beta program described in this document has been removed. The paid pricing structure replaces it, and the existing beta users were migrated to comped lifetime Pro access. Kept for historical reference only.
+
 ## Overview
 
 Eydn's pre-launch strategy uses a two-tier approach to build early traction:

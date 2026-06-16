@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ScrollReveal } from "@/app/_components/ScrollReveal";
 import { LandingNavStatic as LandingNav } from "@/app/_components/LandingNavStatic";
 import { NewsletterSignup } from "@/app/_components/NewsletterSignup";
-import { BetaPopup } from "@/app/_components/BetaPopup";
 import { AuthCTAStatic as AuthCTA } from "@/app/_components/AuthCTAStatic";
 import {
   HeroTaskCard,
@@ -106,7 +105,6 @@ export default function HomePage() {
     >
       <style dangerouslySetInnerHTML={{ __html: keyframeCSS }} />
       <LandingNav />
-      <BetaPopup />
 
       {/* ─── HERO ─── */}
       <section
@@ -949,7 +947,6 @@ export default function HomePage() {
                 <Link href="/#how-it-works" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>How It Works</Link>
                 <Link href="/blog" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#E8C97A", textDecoration: "none" }}>The Playbook</Link>
                 <Link href="/tools" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Free Tools</Link>
-                <Link href="/beta" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "rgba(250,246,241,0.65)", textDecoration: "none" }}>Beta Program</Link>
               </div>
             </div>
             <div>

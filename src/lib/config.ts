@@ -7,7 +7,7 @@ export const AI = {
   MAX_TOOL_ITERATIONS: 5,
   MAX_MESSAGE_LENGTH: 10_000,
   SEARCH_DAILY_LIMIT: 10,
-  // Free tier tool-call cap per calendar month. Pro/trial/beta/admin
+  // Free tier tool-call cap per calendar month. Pro/trial/admin
   // tiers are unlimited. Tune after launch based on conversion data.
   FREE_TIER_TOOL_CALL_LIMIT: 10,
 } as const;

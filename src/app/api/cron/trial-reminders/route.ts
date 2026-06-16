@@ -2,7 +2,7 @@
  * Daily cron: send the 3-day trial-expiry reminder.
  *
  * Finds weddings whose trial is ending in ~3 days (trial_started_at
- * between 10-12 days ago), skips paid / beta / admin users, respects
+ * between 10-12 days ago), skips paid / admin users, respects
  * lifecycle_emails + unsubscribed_all preferences, sends the reminder
  * via Resend, and records trial_reminder_sent_at as a dedupe key so
  * the same couple never gets emailed twice.
@@ -150,12 +150,12 @@ export async function GET(request: Request) {
         continue;
       }
 
-      // Skip if the user is admin or beta (full access, no expiry).
+      // Skip if the user is an admin (full access, no expiry).
       const { data: privileged } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", wedding.user_id)
-        .in("role", ["admin", "beta"])
+        .in("role", ["admin"])
         .limit(1)
         .maybeSingle();
       if (privileged) {

@@ -2,7 +2,7 @@
  * Per-user monthly tool-call counter for chat cap enforcement.
  *
  * Free tier users have a limited number of tool calls per calendar month.
- * Trial, Pro, Beta, and Admin tiers are unlimited — no counter is touched
+ * Trial, Pro, and Admin tiers are unlimited — no counter is touched
  * for them. Counter is keyed by userId + YYYY-MM, uses Upstash Redis via
  * INCR with a 40-day TTL (comfortably covers the next month rollover).
  * Falls back to an in-memory map when Redis is not configured.

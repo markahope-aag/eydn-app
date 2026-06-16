@@ -104,29 +104,9 @@ describe("getSubscriptionStatus", () => {
       features: FEATURES_FREE,
       hasAccess: false,
       isPaid: false,
-      isBeta: false,
       isTrialing: false,
       trialDaysLeft: 0,
       trialExpired: true,
-    });
-  });
-
-  it("returns hasAccess=true, isPaid=true for beta role users", async () => {
-    mockAuth.mockResolvedValue({ userId: "user_beta" } as Awaited<ReturnType<typeof auth>>);
-    const mockSupabase = buildMockSupabase({ roleData: { role: "beta" } });
-    mockCreateSupabaseAdmin.mockReturnValue(mockSupabase);
-
-    const status = await getSubscriptionStatus();
-
-    expect(status).toEqual({
-      tier: "beta",
-      features: FEATURES_ON,
-      hasAccess: true,
-      isPaid: true,
-      isBeta: true,
-      isTrialing: false,
-      trialDaysLeft: 0,
-      trialExpired: false,
     });
   });
 
@@ -142,7 +122,6 @@ describe("getSubscriptionStatus", () => {
       features: FEATURES_ON,
       hasAccess: true,
       isPaid: true,
-      isBeta: false,
       isTrialing: false,
       trialDaysLeft: 0,
       trialExpired: false,
@@ -161,7 +140,6 @@ describe("getSubscriptionStatus", () => {
       features: FEATURES_ON,
       hasAccess: true,
       isPaid: true,
-      isBeta: false,
       isTrialing: false,
       trialDaysLeft: 0,
       trialExpired: false,
@@ -184,7 +162,6 @@ describe("getSubscriptionStatus", () => {
       features: FEATURES_FREE,
       hasAccess: false,
       isPaid: false,
-      isBeta: false,
       isTrialing: false,
       trialDaysLeft: 0,
       trialExpired: true,
@@ -230,7 +207,6 @@ describe("getSubscriptionStatus", () => {
       features: FEATURES_FREE,
       hasAccess: false,
       isPaid: false,
-      isBeta: false,
       isTrialing: false,
       trialDaysLeft: 0,
       trialExpired: true,
@@ -345,17 +321,6 @@ describe("feature flags by tier", () => {
     expect(status.features).toEqual(FEATURES_FREE);
   });
 
-  it("beta users get every feature and isBeta=true", async () => {
-    mockAuth.mockResolvedValue({ userId: "user_123" } as Awaited<ReturnType<typeof auth>>);
-    mockCreateSupabaseAdmin.mockReturnValue(
-      buildMockSupabase({ roleData: { role: "beta" } })
-    );
-
-    const status = await getSubscriptionStatus();
-    expect(status.tier).toBe("beta");
-    expect(status.isBeta).toBe(true);
-    expect(status.features).toEqual(FEATURES_ON);
-  });
 });
 
 describe("pricing constants", () => {

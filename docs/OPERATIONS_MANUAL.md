@@ -44,18 +44,17 @@ This manual is for the **platform operator** — the founder, an ops manager, or
 
 ## 2. User management
 
-### How do I promote a user to admin or grant beta access?
+### How do I promote a user to admin?
 
 The Subscribers tab in the admin panel is your primary tool.
 
 1. Go to `/dashboard/admin?tab=subscribers`.
 2. Search for the user by name or email using the search box.
 3. In the **Role** column, click the dropdown next to their name.
-4. Select **Admin** (full admin panel access) or **Beta** (permanent full feature access, no payment required) and the change saves immediately.
+4. Select **Admin** (full admin panel access) and the change saves immediately.
 
 The allowed roles are:
 - **Subscriber** — a normal user (may be trialing, free tier, or paid)
-- **Beta** — permanent full access, no Stripe charge ever required
 - **Admin** — full access plus access to `/dashboard/admin`
 
 ### How do I comp a Lifetime account (grant paid access without charging)?
@@ -547,7 +546,7 @@ WHERE email = 'user@example.com';
 ### How do I view leads and export them?
 
 Go to `/dashboard/admin/leads` (left sidebar: **Operations → Leads**). This page aggregates leads from two sources:
-- **Waitlist** — people who signed up on the beta waitlist
+- **Waitlist** — people who signed up to be notified
 - **Budget Calculator** — people who saved a budget calculation (includes their state, budget range, and guest count)
 
 You can filter by source and search by name, email, or details. Click **Export CSV** to download the current filtered view.
@@ -563,16 +562,6 @@ Each calculator lead also shows a **Cadence** column with one of three states:
 | **Cadence failed** | Sync errored. Hover the badge to see the error message. | Most common cause is a missing `CADENCE_NEWSLETTER_FORM_ID` env var — verify in Vercel |
 
 Newsletter and quiz signups also push to Cadence but their per-row status isn't currently surfaced in the admin UI (only calculator leads have a destination row to record on). To verify those flows end-to-end, check the Cadence list directly.
-
-### How do I send beta invites?
-
-Eydn has no in-app "send invite" flow. The current process is:
-
-1. Create a promo code for the invitee (e.g., `BETA-INVITE` at 100% discount) in `/dashboard/admin/promo-codes`.
-2. Send an email manually from your email client with the signup link (`https://eydn.app/sign-up`) and the promo code.
-3. When they sign up and use the code, grant them the `beta` role in the Subscribers tab so they have permanent full access without needing to pay.
-
-Alternatively, if you want to give someone permanent free access without the promo flow, just set their role to **Beta** directly in the Subscribers tab after they've signed up.
 
 ### How do I turn invite-only mode on or off?
 
@@ -805,4 +794,4 @@ For bulk operations (deactivate everything in a category, etc.), use SQL via the
 
 3. **Do not edit `seed_source` after the fact.** It's an audit trail of where the row came from, not a control flag. The runner doesn't read it; admin curation goes through the per-row featured/active toggles instead.
 
-**Note:** Invite-only mode is a flag but there is no invite-token generation UI — this setting paired with manual outreach is the intended workflow for beta periods.
+**Note:** Invite-only mode is a flag but there is no invite-token generation UI — this setting pairs with manual outreach.

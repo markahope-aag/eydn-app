@@ -11,8 +11,8 @@
 ## Playwright + axe-core Visual & Accessibility Tests
 
 - **Package**: `@axe-core/playwright` for combined layout + WCAG auditing
-- `__tests__/visual/responsive.spec.ts` — **21 tests** (7 public pages x 3 viewports)
-  - Pages: `/`, `/sign-in`, `/sign-up`, `/beta`, `/privacy`, `/terms`, `/blog`
+- `__tests__/visual/responsive.spec.ts` — **18 tests** (6 public pages x 3 viewports)
+  - Pages: `/`, `/sign-in`, `/sign-up`, `/privacy`, `/terms`, `/blog`
 - `__tests__/visual/dashboard.spec.ts` — **45 tests** (15 dashboard pages x 3 viewports)
   - Pages: overview, tasks, vendors, budget, guests, wedding-party, seating, mood-board, day-of, rehearsal-dinner, website, settings, chat, guides, help
 - Each test at each viewport (mobile 375px, tablet 768px, desktop 1280px):

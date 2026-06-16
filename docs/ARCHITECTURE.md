@@ -451,10 +451,10 @@ The `getWeddingForUser()` function supports multi-role access control:
 
 **Subscription tier and feature gating (`src/lib/subscription.ts`):**
 
-The subscription system uses an explicit `Tier` enum (`trialing | free | pro | beta | admin`) as its source of truth, replacing the previous single `hasAccess` boolean. Each tier maps to a `Features` record of per-feature booleans:
+The subscription system uses an explicit `Tier` enum (`trialing | free | pro | admin`) as its source of truth, replacing the previous single `hasAccess` boolean. Each tier maps to a `Features` record of per-feature booleans:
 
-| Feature key | Free | Trialing | Pro / Beta / Admin |
-|-------------|------|----------|--------------------|
+| Feature key | Free | Trialing | Pro / Admin |
+|-------------|------|----------|-------------|
 | `chat` | capped | unlimited | unlimited |
 | `webSearch` | no | yes | yes |
 | `exportBinder` | no | yes | yes |
@@ -467,7 +467,7 @@ Free-tier `chat` is capped on tool calls (not messages). The cap is tracked in `
 
 New routes should use `requireFeature(featureKey)` from `src/lib/subscription.ts`. The legacy `requirePremium()` function is retained for backward compatibility and is equivalent to checking `tier !== "free"`.
 
-The legacy fields on `SubscriptionStatus` (`hasAccess`, `isPaid`, `isBeta`, `isTrialing`, `trialDaysLeft`, `trialExpired`) are derived from `tier` automatically.
+The legacy fields on `SubscriptionStatus` (`hasAccess`, `isPaid`, `isTrialing`, `trialDaysLeft`, `trialExpired`) are derived from `tier` automatically.
 
 Collaborators inherit the wedding owner's subscription tier.
 

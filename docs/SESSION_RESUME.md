@@ -92,7 +92,7 @@ is to make Lifetime look like a deal, not to be the primary path.
 
 ### Full feature matrix
 
-| Feature | Free | Trialing | Pro | Beta/Admin |
+| Feature | Free | Trialing | Pro | Admin |
 |---|---|---|---|---|
 | Guest list, budget, task timeline, collaboration, website | ✅ | ✅ | ✅ | ✅ |
 | AI-personalized task timeline (at onboarding) | ✅ | ✅ | ✅ | ✅ |

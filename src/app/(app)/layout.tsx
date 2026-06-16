@@ -6,7 +6,7 @@ import { PostHogProvider } from "@/components/PostHogProvider";
 
 /**
  * App route-group layout — wraps everything behind auth (dashboard, sign-in,
- * sign-up, beta/claim). ClerkProvider lives here instead of the root layout
+ * sign-up). ClerkProvider lives here instead of the root layout
  * so marketing routes skip ~216 KiB of Clerk JS. PostHogProvider piggybacks
  * — it uses useUser() from Clerk for identified events, so it only needs to
  * be in the auth tree.

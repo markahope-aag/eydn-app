@@ -10,7 +10,6 @@ How users move from free trial to paid access, and how access is enforced across
 |------|--------|----------|------|
 | Free trial | All features | 14 days from wedding creation | $0 |
 | Premium | All features | Lifetime | $79 one-time |
-| Beta | All features | Lifetime | $0 (invite only) |
 
 ---
 
@@ -27,7 +26,7 @@ A persistent banner appears at the top of every dashboard page during the trial:
 - Shows "X days left in your free trial" with an "Upgrade — $79" button
 - Subtle styling (lavender border) for most of the trial
 - Turns more prominent (thicker violet border) when 3 or fewer days remain
-- Hidden for paid users, beta users, and admins
+- Hidden for paid users and admins
 
 **Component:** `src/components/TrialBanner.tsx`
 **Rendered in:** `src/app/dashboard/layout.tsx`
@@ -109,7 +108,6 @@ Three mechanisms, used depending on the UX pattern:
 {
   "hasAccess": true,
   "isPaid": false,
-  "isBeta": false,
   "isTrialing": true,
   "trialDaysLeft": 9,
   "trialExpired": false
@@ -120,7 +118,7 @@ Three mechanisms, used depending on the UX pattern:
 
 `getSubscriptionStatus()` in `src/lib/subscription.ts` checks in this order:
 
-1. **Admin or beta role** in `user_roles` — full access (`isBeta: true` for beta)
+1. **Admin role** in `user_roles` — full access
 2. **Active purchase** in `subscriber_purchases` — full access
 3. **Owned wedding trial** — compute days remaining from `trial_started_at`
 4. **Collaborator inheritance** — check the wedding owner's purchase or trial status
@@ -134,7 +132,6 @@ Three mechanisms, used depending on the UX pattern:
 |-------|------|-------------|
 | `hasAccess` | boolean | Whether the user can use premium features |
 | `isPaid` | boolean | Whether access comes from a purchase or privileged role |
-| `isBeta` | boolean | Whether the user has the beta role |
 | `isTrialing` | boolean | Whether the user is in an active trial |
 | `trialDaysLeft` | number | Days remaining in trial (0 if not trialing) |
 | `loaded` | boolean | Whether the status has been fetched |
@@ -150,7 +147,6 @@ The Settings page (`/dashboard/settings`) shows a Subscription section:
 
 | State | What the user sees |
 |-------|--------------------|
-| Beta user | Green dot + "Beta access — full features" |
 | Paid user | Green dot + "Premium — lifetime access" |
 | Active trial | "Free trial — X days remaining" + Upgrade button |
 | Expired trial | "Your free trial has ended" + Upgrade button |

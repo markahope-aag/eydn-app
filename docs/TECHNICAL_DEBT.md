@@ -1,6 +1,6 @@
 # Technical Debt & Post-Launch Todos
 
-Items identified during development that are not blocking beta launch but should be addressed.
+Items identified during development that are not blocking launch but should be addressed.
 
 ## Major Features (Post-Launch)
 
@@ -26,7 +26,7 @@ Items identified during development that are not blocking beta launch but should
 - Data model: new `events` table with event_type (honeymoon,
   bachelorette, bachelor, bridal_shower, etc.), each with their own
   guests, tasks, and budget
-- Priority: Medium — differentiating feature, but not blocking beta
+- Priority: Medium — differentiating feature, but not blocking launch
 
 ## Wedding Website (Post-Launch)
 

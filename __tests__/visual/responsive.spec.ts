@@ -17,7 +17,6 @@ const PAGES = [
   "/",
   "/sign-in",
   "/sign-up",
-  "/beta",
   "/privacy",
   "/terms",
   "/blog",

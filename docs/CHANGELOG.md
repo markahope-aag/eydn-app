@@ -2,6 +2,18 @@
 
 This document tracks all notable changes, updates, and improvements to the eydn wedding planning platform.
 
+## [1.17.0] — June 16, 2026
+
+### Removed: the Beta program
+
+The beta program — a free permanent-access tier (the `beta` role), a 50-slot signup/claim flow, the `/beta` marketing page, and the overflow waitlist — has been retired now that the paid pricing structure stands on its own.
+
+- The `beta` subscription tier and the `isBeta` flag are gone; `Tier` is now `trialing | free | pro | admin`.
+- Removed the `/beta` page, the beta claim flow, and the beta signup/availability API. Sitemap, robots, and the IndexNow feed no longer list `/beta`.
+- **Existing beta users keep full access**: the 4 users who held the beta role were first migrated to a comped lifetime Pro purchase, then the tier was removed — no one lost access.
+- The waitlist data and its admin view are **kept** (the newsletter signup still feeds it); only the beta-specific signup was removed. Admin labels were relabeled from "Beta" to "Waitlist".
+- `BETA_LAUNCH_PLAN.md` is archived for historical reference.
+
 ## [1.16.0] — June 16, 2026
 
 ### Fixed: AI chat was down (retired model)

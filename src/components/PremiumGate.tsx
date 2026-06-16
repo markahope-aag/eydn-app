@@ -105,7 +105,6 @@ export function usePremium() {
     isTrialing: status?.isTrialing ?? false,
     trialDaysLeft: status?.trialDaysLeft ?? 0,
     isPaid: status?.isPaid ?? false,
-    isBeta: status?.isBeta ?? false,
     loaded: status !== null,
     can,
     guardAction,

@@ -495,22 +495,6 @@ Complete a planning style or planner assessment quiz.
 }
 ```
 
-### Beta Program
-
-#### `POST /api/beta/claim`
-Claim a beta access slot (limited to 50 users).
-
-**Access:** Authenticated users
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Beta access granted",
-  "slotsRemaining": 23
-}
-```
-
 ### Push Notifications
 
 #### `POST /api/push-subscription`
@@ -564,7 +548,7 @@ Returns the latest active (non-dismissed) catch-up plan for the authenticated we
 `plan` is `null` if no active plan exists.
 
 #### `POST /api/catch-up`
-Generate a new catch-up plan. Requires the `catchUpPlans` feature (Pro, trialing, beta, admin).
+Generate a new catch-up plan. Requires the `catchUpPlans` feature (Pro, trialing, admin).
 
 **403 response:**
 ```json
@@ -841,16 +825,15 @@ Get current subscription status.
   },
   "hasAccess": true,
   "isPaid": false,
-  "isBeta": false,
   "isTrialing": true,
   "trialDaysLeft": 11,
   "trialExpired": false
 }
 ```
 
-`tier` is the canonical field. Possible values: `trialing | free | pro | beta | admin`. The legacy boolean fields (`hasAccess`, `isPaid`, `isTrialing`, `trialDaysLeft`, `trialExpired`) are derived from `tier` and retained for backward compatibility.
+`tier` is the canonical field. Possible values: `trialing | free | pro | admin`. The legacy boolean fields (`hasAccess`, `isPaid`, `isTrialing`, `trialDaysLeft`, `trialExpired`) are derived from `tier` and retained for backward compatibility.
 
-`toolCalls.limit` and `toolCalls.remaining` are `null` for tiers with no cap (trialing, pro, beta, admin).
+`toolCalls.limit` and `toolCalls.remaining` are `null` for tiers with no cap (trialing, pro, admin).
 
 #### `POST /api/subscribe`
 Create Stripe checkout session for subscription.
@@ -985,7 +968,7 @@ Daily cron job that sends the 3-day trial-expiry reminder email to couples whose
 
 **Authentication:** `Authorization: Bearer <CRON_SECRET>`
 
-**Skip conditions:** user has an active purchase, user has a `beta` or `admin` role, user has opted out of lifecycle emails, no primary email address found in Clerk.
+**Skip conditions:** user has an active purchase, user has an `admin` role, user has opted out of lifecycle emails, no primary email address found in Clerk.
 
 **Deduplication:** `weddings.trial_reminder_sent_at` is set after a successful send; the query filters on `IS NULL` so each couple can receive at most one reminder.
 

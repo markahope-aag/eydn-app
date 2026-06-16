@@ -28,7 +28,7 @@ export default function ChatPage() {
 
   // Hydrate the meter from the initial /api/subscription-status fetch
   // (via usePremium). Only shown when the tier actually has a cap —
-  // trial/pro/beta/admin return limit=null and render no pill.
+  // trial/pro/admin return limit=null and render no pill.
   useEffect(() => {
     if (toolCalls && toolCalls.limit !== null && toolCalls.remaining !== null) {
       setMeter({ used: toolCalls.used, limit: toolCalls.limit, remaining: toolCalls.remaining });

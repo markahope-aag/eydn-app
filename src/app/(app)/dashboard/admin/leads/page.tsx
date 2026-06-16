@@ -21,7 +21,7 @@ const CADENCE_BADGE: Record<NonNullable<Lead["cadenceStatus"]>, { label: string;
 
 const SOURCE_LABELS: Record<string, string> = {
   newsletter: "Newsletter",
-  beta: "Beta Waitlist",
+  beta: "Waitlist",
   waitlist: "Waitlist",
   calculator: "Budget Calculator",
   quiz: "Quiz",
@@ -99,7 +99,7 @@ export default function LeadsPage() {
   const newsletterCount = leads.filter((l) => l.source.includes("newsletter")).length;
   const calculatorCount = leads.filter((l) => l.source.includes("calculator")).length;
   const quizCount = leads.filter((l) => l.source.includes("quiz")).length;
-  const betaCount = leads.filter((l) => l.source.includes("beta") || l.source.includes("waitlist")).length;
+  const waitlistCount = leads.filter((l) => l.source.includes("beta") || l.source.includes("waitlist")).length;
 
   return (
     <div>
@@ -129,8 +129,8 @@ export default function LeadsPage() {
           <p className="mt-1 text-[28px] font-bold text-plum">{quizCount}</p>
         </div>
         <div className="card p-5">
-          <p className="text-[13px] text-muted">Beta / Waitlist</p>
-          <p className="mt-1 text-[28px] font-bold text-plum">{betaCount}</p>
+          <p className="text-[13px] text-muted">Waitlist</p>
+          <p className="mt-1 text-[28px] font-bold text-plum">{waitlistCount}</p>
         </div>
       </div>
 

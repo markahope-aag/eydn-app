@@ -159,13 +159,13 @@ export default function HelpPage() {
         </button>
       </div>
 
-      {/* Beta feedback banner */}
+      {/* Feedback banner */}
       <div className="mt-4 rounded-[16px] bg-violet/5 border border-violet/20 p-4 flex items-center gap-4">
         <div className="flex-1">
-          <p className="text-[14px] font-semibold text-plum">Beta feedback welcome!</p>
+          <p className="text-[14px] font-semibold text-plum">Feedback welcome</p>
           <p className="text-[12px] text-muted mt-0.5">Found a bug or have a suggestion? We want to hear it.</p>
         </div>
-        <a href="mailto:feedback@eydn.app?subject=Eydn Beta Feedback" className="btn-primary btn-sm flex-shrink-0">
+        <a href="mailto:feedback@eydn.app?subject=Eydn Feedback" className="btn-primary btn-sm flex-shrink-0">
           Send Feedback
         </a>
       </div>

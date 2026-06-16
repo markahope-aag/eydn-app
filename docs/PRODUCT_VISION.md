@@ -120,7 +120,6 @@
 - **Pro Monthly — $14.99/month** (secondary hedge, not yet wired to Stripe): for users who won't commit upfront; anchors the lifetime price as a deal
 - **Memory Plan — $29/year**: post-wedding retention, orthogonal to Pro (keeps the wedding website live)
 - **Free tier (post-trial)**: guest list, budget tracker, AI-personalized task timeline, partner collaboration, wedding website, and capped AI chat; loses web search, day-of binder, vendor email templates, file attachments, catch-up plans, and budget optimizer
-- **Beta role**: permanent full access with no payment — assigned via `/beta/claim`
 - **Stripe Integration**: Secure payment processing and webhooks
 
 ### ✅ Admin & Platform Management
@@ -188,7 +187,6 @@
    - $79 one-time purchase for lifetime access
    - Monthly subscription option for flexible payment
    - Premium features behind paywall
-   - Beta program for early access users
 
 2. **Lead Generation & Tools**
    - Wedding budget calculator with lead capture

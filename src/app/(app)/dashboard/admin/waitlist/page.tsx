@@ -32,7 +32,7 @@ export default function WaitlistPage() {
     <div className="max-w-4xl">
       <h1>Waitlist</h1>
       <p className="mt-1 text-[15px] text-muted">
-        People who signed up after the beta was full. Each received a 20% discount code.
+        People who signed up to be notified. Each received a 20% discount code.
       </p>
 
       {/* Stats */}
@@ -54,7 +54,7 @@ export default function WaitlistPage() {
       {/* List */}
       {entries.length === 0 ? (
         <p className="text-[15px] text-muted text-center py-12">
-          No waitlist signups yet. Share your beta page to start collecting interest.
+          No waitlist signups yet.
         </p>
       ) : (
         <div className="mt-6 rounded-[12px] border border-border bg-white overflow-hidden">

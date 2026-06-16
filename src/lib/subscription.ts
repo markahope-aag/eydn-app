@@ -10,7 +10,7 @@ export { PRICE as SUBSCRIPTION_PRICE, PRO_MONTHLY as PRO_MONTHLY_PRICE };
 
 // Explicit tier — source of truth for everything downstream. All legacy
 // boolean fields on SubscriptionStatus are derived from this.
-export type Tier = "trialing" | "free" | "pro" | "beta" | "admin";
+export type Tier = "trialing" | "free" | "pro" | "admin";
 
 // Per-feature gates. Callers should prefer these over the legacy
 // hasAccess boolean. See project_pricing_model.md for the full matrix.
@@ -38,7 +38,6 @@ export type SubscriptionStatus = {
   // `features` in new code.
   hasAccess: boolean;
   isPaid: boolean;
-  isBeta: boolean;
   isTrialing: boolean;
   trialDaysLeft: number;
   trialExpired: boolean;
@@ -46,7 +45,7 @@ export type SubscriptionStatus = {
 
 // Feature map per tier. Free tier can chat (the cap is enforced separately
 // in the /api/chat route via tool-call-counter.ts); everything else is
-// gated. Trial, Pro, Beta, and Admin get full access to every feature.
+// gated. Trial, Pro, and Admin get full access to every feature.
 const ALL_ON: Features = {
   chat: true,
   webSearch: true,
@@ -73,7 +72,6 @@ const TIER_FEATURES: Record<Tier, Features> = {
   trialing: ALL_ON,
   free: FREE_FEATURES,
   pro: ALL_ON,
-  beta: ALL_ON,
   admin: ALL_ON,
 };
 
@@ -82,8 +80,7 @@ function deriveStatus(tier: Tier, trialDaysLeft = 0): SubscriptionStatus {
     tier,
     features: TIER_FEATURES[tier],
     hasAccess: tier !== "free",
-    isPaid: tier === "pro" || tier === "beta" || tier === "admin",
-    isBeta: tier === "beta",
+    isPaid: tier === "pro" || tier === "admin",
     isTrialing: tier === "trialing",
     trialDaysLeft,
     trialExpired: tier === "free",
@@ -127,19 +124,16 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
 
   const supabase = createSupabaseAdmin();
 
-  // Admin and beta users always have full access
-  const { data: privilegedRole } = await supabase
+  // Admin users always have full access
+  const { data: adminRole } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
-    .in("role", ["admin", "beta"])
+    .eq("role", "admin")
     .limit(1)
     .single();
 
-  if (privilegedRole) {
-    const role = (privilegedRole as { role: string }).role;
-    return deriveStatus(role === "beta" ? "beta" : "admin");
-  }
+  if (adminRole) return deriveStatus("admin");
 
   // Check for active purchase by this user
   const { data: purchase } = await supabase

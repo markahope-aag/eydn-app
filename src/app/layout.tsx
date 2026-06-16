@@ -152,7 +152,7 @@ export default function RootLayout({
           src="https://analytics.ahrefs.com/analytics.js"
           data-key="N0UcdeuFPyyC4uaXyXmywA"
         />
-        {/* Termly consent banner disabled for beta launch — re-enable for EU/GDPR expansion */}
+        {/* Termly consent banner disabled — re-enable for EU/GDPR expansion */}
         <Script
           id="gtm-script"
           strategy="afterInteractive"

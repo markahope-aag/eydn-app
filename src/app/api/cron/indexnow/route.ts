@@ -19,7 +19,6 @@ export async function GET(request: Request) {
     const staticUrls = [
       "/",
       "/blog",
-      "/beta",
       "/privacy",
       "/terms",
       "/cookies",

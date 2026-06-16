@@ -113,7 +113,7 @@ export async function POST(request: Request) {
   if (result.role === "parent") return readOnlyError();
   const { wedding: weddingData, supabase, userId } = result;
 
-  // Free-tier monthly tool-call cap enforcement. Trial/Pro/Beta/Admin
+  // Free-tier monthly tool-call cap enforcement. Trial/Pro/Admin
   // tiers return { limit: null, remaining: null } and skip the counter.
   const meter = await getToolCallMeter(userId, status.tier);
   if (meter.remaining !== null && meter.remaining <= 0) {

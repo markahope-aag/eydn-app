@@ -151,7 +151,7 @@ describe("GET /api/cron/trial-reminders", () => {
     expect(mockSendEmail).not.toHaveBeenCalled();
   });
 
-  it("skips candidates with a privileged (admin/beta) role", async () => {
+  it("skips candidates with an admin role", async () => {
     const elevenDaysAgo = new Date(Date.now() - 11 * 24 * 60 * 60 * 1000).toISOString();
     mockCandidates.mockResolvedValue({
       data: [
@@ -165,7 +165,7 @@ describe("GET /api/cron/trial-reminders", () => {
         },
       ],
     });
-    mockRoleLookup.mockResolvedValue({ data: { role: "beta" } });
+    mockRoleLookup.mockResolvedValue({ data: { role: "admin" } });
 
     const res = await GET(cronReq("Bearer test-cron-secret"));
     expect((await res.json()).skippedPrivileged).toBe(1);

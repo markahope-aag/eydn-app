@@ -31,13 +31,12 @@ Unlike traditional SaaS models with recurring monthly fees, eydn's one-time purc
 | `trialing` | First 14 days after signup |
 | `free` | After trial expires with no purchase |
 | `pro` | Active row in `subscriber_purchases` |
-| `beta` | `user_roles` row with `role = 'beta'` |
 | `admin` | `user_roles` row with `role = 'admin'` |
 
 ### Feature matrix
 
-| Feature | Free | Trialing | Pro / Beta / Admin |
-|---------|------|----------|--------------------|
+| Feature | Free | Trialing | Pro / Admin |
+|---------|------|----------|-------------|
 | Guest list | yes | yes | yes |
 | Budget tracker | yes | yes | yes |
 | AI-personalized task timeline | yes | yes | yes |
@@ -65,10 +64,6 @@ A 3-day trial-expiry reminder email is sent automatically by the `/api/cron/tria
 - No expiration
 - Memory Plan ($29/yr) is a separate optional add-on for post-wedding website retention
 
-### Beta access
-
-Beta users get permanent full access with no payment. Access is a role in `user_roles`, not a purchase record. See `docs/BETA_LAUNCH_PLAN.md` for the full beta program details.
-
 ## Technical Implementation
 
 ### Subscription Status Tracking
@@ -91,7 +86,7 @@ create table public.subscriber_purchases (
 ```typescript
 // GET /api/subscription-status
 {
-  "tier": "trialing" | "free" | "pro" | "beta" | "admin",
+  "tier": "trialing" | "free" | "pro" | "admin",
   "features": {
     "chat": boolean,
     "webSearch": boolean,
@@ -105,7 +100,6 @@ create table public.subscriber_purchases (
   // Legacy fields (derived from tier, kept for backward compat):
   "hasAccess": boolean,
   "isPaid": boolean,
-  "isBeta": boolean,
   "isTrialing": boolean,
   "trialDaysLeft": number,
   "trialExpired": boolean

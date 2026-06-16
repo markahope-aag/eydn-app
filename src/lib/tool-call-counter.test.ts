@@ -44,7 +44,7 @@ describe("tool-call-counter", () => {
     await incrementToolCallCount("user_trial");
 
     // Non-free tiers should not even read the counter — limit/remaining null.
-    for (const tier of ["trialing", "pro", "beta", "admin"] as const) {
+    for (const tier of ["trialing", "pro", "admin"] as const) {
       const meter = await getToolCallMeter("user_trial", tier);
       expect(meter.limit).toBeNull();
       expect(meter.remaining).toBeNull();

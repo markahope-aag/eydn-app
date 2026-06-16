@@ -154,7 +154,6 @@ export const config = {
     "/dashboard/:path*",
     "/sign-in/:path*",
     "/sign-up/:path*",
-    "/beta/claim/:path*",
     "/tools/wedding-budget-calculator/s/:path*",
   ],
 };

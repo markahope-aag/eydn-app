@@ -92,7 +92,7 @@ export default function SettingsPage() {
   const [activityLoading, setActivityLoading] = useState(true);
 
   // Subscription
-  const { loaded: subLoaded, isTrialing, trialDaysLeft, isPaid, isBeta } = usePremium();
+  const { loaded: subLoaded, isTrialing, trialDaysLeft, isPaid } = usePremium();
 
   // Export
   const [exporting, setExporting] = useState(false);
@@ -475,7 +475,7 @@ export default function SettingsPage() {
             <div className="mt-3 card p-5 flex items-center gap-3">
               <span className="w-2 h-2 rounded-full bg-confirmed-text flex-shrink-0" />
               <p className="text-[15px] text-plum font-semibold">
-                {isBeta ? "Beta access — full features" : "Premium — lifetime access"}
+                Premium — lifetime access
               </p>
             </div>
           ) : isTrialing ? (
