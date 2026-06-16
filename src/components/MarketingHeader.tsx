@@ -5,15 +5,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 /**
- * Clerk-free header used by non-homepage marketing pages (legal pages, etc.).
- * Pages that render their own nav (/, /blog, /tools) suppress this via the
- * same PAGES_WITH_OWN_NAV pattern GlobalHeader used originally.
+ * Clerk-free header used by non-homepage marketing pages (legal pages, tools,
+ * etc.). The homepage and blog render their own nav, so they suppress this.
+ * The budget-calculator embed is iframed into other sites and stays chrome-less.
  */
-const PAGES_WITH_OWN_NAV = ["/", "/blog", "/tools"];
+const PAGES_WITH_OWN_NAV = ["/", "/blog"];
+const CHROMELESS_PAGES = ["/tools/wedding-budget-calculator/embed"];
 
 export function MarketingHeader() {
   const pathname = usePathname();
-  if (PAGES_WITH_OWN_NAV.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+  const matches = (prefixes: string[]) =>
+    prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  if (matches(PAGES_WITH_OWN_NAV) || matches(CHROMELESS_PAGES)) {
     return null;
   }
 
