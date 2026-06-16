@@ -58,14 +58,20 @@ describe("POST /api/cron/backup", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns success with sftp:false when SFTP is unconfigured", async () => {
-    const spy = vi.spyOn(console, "info").mockImplementation(() => {});
+  it("logs an error and reports sftp:false when SFTP is unconfigured", async () => {
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const res = await POST(cronReq("Bearer test-cron-secret"));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.success).toBe(true);
+    // An export that isn't stored off-platform is not a successful backup.
+    expect(body.success).toBe(false);
     expect(body.sftp).toBe(false);
     expect(body.weddings).toBe(0);
+    // Must log as an error so the ops alert + dead-man's switch surface it
+    // (the original bug: this path returned before logging at all).
+    expect(mockLogCron).toHaveBeenCalledWith(
+      expect.objectContaining({ jobName: "backup", status: "error" })
+    );
     spy.mockRestore();
   });
 

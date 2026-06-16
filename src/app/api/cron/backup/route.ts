@@ -121,71 +121,70 @@ export async function GET(request: Request) {
     const date = new Date().toISOString().split("T")[0];
     const filename = `eydn-backup-${date}.json`;
 
-    // Upload via SFTP
+    // Upload via SFTP (off-platform). A backup is only real if it lands
+    // off-platform, so a missing destination or a failed upload is treated as
+    // an ERROR below — that way the cron dead-man's switch and ops alerting
+    // surface it. (Previously the no-SFTP path returned BEFORE logging, so the
+    // job never appeared in cron_log and silently stored nothing.)
     const sftpHost = process.env.BACKUP_SFTP_HOST;
     const sftpPort = process.env.BACKUP_SFTP_PORT || "22";
     const sftpUser = process.env.BACKUP_SFTP_USER;
     const sftpPassword = process.env.BACKUP_SFTP_PASSWORD;
     const sftpPath = process.env.BACKUP_SFTP_PATH || "/backups/eydn";
 
-    if (!sftpHost || !sftpUser) {
-      // No SFTP configured — log the backup locally and return
-      console.info(`[BACKUP] ${filename}: ${backups.length} weddings, ${backupJson.length} bytes (SFTP not configured)`);
-      return NextResponse.json({
-        success: true,
-        filename,
-        weddings: backups.length,
-        bytes: backupJson.length,
-        sftp: false,
-        message: "Backup created but SFTP not configured. Set BACKUP_SFTP_HOST and BACKUP_SFTP_USER env vars.",
-      });
-    }
-
-    // Dynamic import ssh2-sftp-client (only needed at runtime)
     let sftpUploaded = false;
-    try {
-      const SftpClient = (await import("ssh2-sftp-client")).default;
-      const sftp = new SftpClient();
+    let note: string | undefined;
 
-      await sftp.connect({
-        host: sftpHost,
-        port: parseInt(sftpPort, 10),
-        username: sftpUser,
-        password: sftpPassword || undefined,
-      });
-
-      // Ensure directory exists
-      const remotePath = `${sftpPath}/${filename}`;
+    if (!sftpHost || !sftpUser) {
+      note = "SFTP not configured — backup generated but NOT stored off-platform. Set BACKUP_SFTP_HOST / BACKUP_SFTP_USER / BACKUP_SFTP_PASSWORD.";
+      console.warn(`[BACKUP] ${filename}: ${backups.length} weddings, ${backupJson.length} bytes (${note})`);
+    } else {
       try {
-        await sftp.mkdir(sftpPath, true);
-      } catch {
-        // Directory may already exist
+        const SftpClient = (await import("ssh2-sftp-client")).default;
+        const sftp = new SftpClient();
+
+        await sftp.connect({
+          host: sftpHost,
+          port: parseInt(sftpPort, 10),
+          username: sftpUser,
+          password: sftpPassword || undefined,
+        });
+
+        const remotePath = `${sftpPath}/${filename}`;
+        try {
+          await sftp.mkdir(sftpPath, true);
+        } catch {
+          // Directory may already exist
+        }
+
+        await sftp.put(Buffer.from(backupJson, "utf-8"), remotePath);
+        await sftp.end();
+        sftpUploaded = true;
+
+        console.info(`[BACKUP] ${filename}: ${backups.length} weddings, ${backupJson.length} bytes → ${sftpHost}:${remotePath}`);
+      } catch (sftpError) {
+        note = `SFTP upload failed: ${sftpError instanceof Error ? sftpError.message : String(sftpError)}`;
+        console.error("[BACKUP]", note);
       }
-
-      // Upload
-      await sftp.put(Buffer.from(backupJson, "utf-8"), remotePath);
-      await sftp.end();
-      sftpUploaded = true;
-
-      console.info(`[BACKUP] ${filename}: ${backups.length} weddings, ${backupJson.length} bytes → ${sftpHost}:${remotePath}`);
-    } catch (sftpError) {
-      console.error("[BACKUP] SFTP upload failed:", sftpError instanceof Error ? sftpError.message : sftpError);
-      // Don't fail the whole request — backup data was still generated
     }
 
+    // Always log. An export that wasn't stored off-platform is a failed backup,
+    // so it's logged as an error to trigger the ops alert + dead-man's switch.
     await logCronExecution({
       jobName: "backup",
-      status: "success",
+      status: sftpUploaded ? "success" : "error",
       durationMs: Date.now() - startTime,
-      details: { filename, weddings: backups.length, bytes: backupJson.length, sftp: sftpUploaded },
+      details: { filename, weddings: backups.length, bytes: backupJson.length, sftp: sftpUploaded, note },
+      errorMessage: sftpUploaded ? undefined : note,
     });
 
     return NextResponse.json({
-      success: true,
+      success: sftpUploaded,
       filename,
       weddings: backups.length,
       bytes: backupJson.length,
       sftp: sftpUploaded,
+      note,
     });
   } catch (error) {
     console.error("[BACKUP] Failed:", error instanceof Error ? error.message : error);
