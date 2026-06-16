@@ -77,6 +77,18 @@ function checkMemory(key: string, limit: number, windowMs: number): boolean {
 export default clerkMiddleware(async (_auth, request) => {
   const path = request.nextUrl.pathname;
 
+  // Authenticated app pages must never be served from the browser's
+  // back/forward or disk cache. Otherwise a user whose access was just
+  // revoked — a removed collaborator, or someone who signed out — could
+  // still see a previously-rendered dashboard after a reload, even though
+  // the server would deny them on a fresh request. no-store forces every
+  // load to hit the server, which re-checks access on each request.
+  if (path.startsWith("/dashboard")) {
+    const res = NextResponse.next();
+    res.headers.set("Cache-Control", "no-store, must-revalidate");
+    return res;
+  }
+
   // Rate-limit API routes plus a narrow set of public pages that read
   // from the DB by guessable identifier (calculator share links).
   // Everything else bypasses the limiter.
