@@ -66,7 +66,7 @@ export default function SignInPage() {
           </Link>
         </div>
 
-        <div>
+        <div style={{ width: "100%", maxWidth: 400 }}>
         <SignIn
           forceRedirectUrl="/dashboard"
           appearance={{
@@ -82,7 +82,9 @@ export default function SignInPage() {
               fontFamily: "'DM Sans', sans-serif",
             },
             elements: {
-              card: { boxShadow: "0 4px 24px rgba(0,0,0,0.06)", border: "1px solid #E8D5B7", borderRadius: 16 },
+              rootBox: { width: "100%" },
+              cardBox: { width: "100%", maxWidth: "100%" },
+              card: { width: "100%", maxWidth: "100%", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", border: "1px solid #E8D5B7", borderRadius: 16 },
               headerTitle: { fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 600, color: "#1A1A2E" },
               headerSubtitle: { fontFamily: "'DM Sans', sans-serif", color: "#6B6B6B" },
               formButtonPrimary: { background: "#2C3E2D", borderRadius: 100, fontWeight: 600, fontSize: 15, height: 48 },
