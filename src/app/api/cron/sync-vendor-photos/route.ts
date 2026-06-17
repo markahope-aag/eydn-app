@@ -25,6 +25,13 @@ import type { Database } from "@/lib/supabase/types";
  */
 
 const PER_RUN_CAP = 1000;
+/**
+ * Max scraper_ids per `.in()` lookup. A single `.in()` with ~1000 UUIDs
+ * builds a ~37KB query string that the scraper's Supabase gateway rejects
+ * with HTTP 400 Bad Request (URL too long). Chunking keeps each request's
+ * URL well within limits. Mirrors the cap proven safe by runScraperRefresh.
+ */
+const SCRAPER_IN_CHUNK = 200;
 
 interface ScraperPhoto {
   url: string;
@@ -95,28 +102,33 @@ export async function GET(request: Request) {
   const scraperIds = needPhotos
     .map((r) => r.scraper_id)
     .filter((id): id is string => Boolean(id));
-  const { data: scraperRows, error: scraperErr } = await scraper
-    .from("vendors")
-    .select("id, photos")
-    .in("id", scraperIds)
-    .neq("photos", "[]");
-
-  if (scraperErr) {
-    await logCronExecution({
-      jobName: "sync-vendor-photos",
-      status: "error",
-      durationMs: Date.now() - start,
-      errorMessage: `Fetch from scraper failed: ${scraperErr.message}`,
-    });
-    return NextResponse.json({ error: scraperErr.message }, { status: 500 });
-  }
 
   // Build scraper_id → photos map. Use the scraper's photos array verbatim
   // (same shape as suggested_vendors.photos — that's the contract enforced
-  // by the import code).
+  // by the import code). Chunk the `.in()` lookup so a large backlog can't
+  // blow the gateway's URL-length limit (see SCRAPER_IN_CHUNK).
   const photosByScraperId = new Map<string, ScraperPhoto[]>();
-  for (const row of scraperRows ?? []) {
-    photosByScraperId.set(row.id, row.photos as ScraperPhoto[]);
+  for (let i = 0; i < scraperIds.length; i += SCRAPER_IN_CHUNK) {
+    const chunk = scraperIds.slice(i, i + SCRAPER_IN_CHUNK);
+    const { data: scraperRows, error: scraperErr } = await scraper
+      .from("vendors")
+      .select("id, photos")
+      .in("id", chunk)
+      .neq("photos", "[]");
+
+    if (scraperErr) {
+      await logCronExecution({
+        jobName: "sync-vendor-photos",
+        status: "error",
+        durationMs: Date.now() - start,
+        errorMessage: `Fetch from scraper failed: ${scraperErr.message}`,
+      });
+      return NextResponse.json({ error: scraperErr.message }, { status: 500 });
+    }
+
+    for (const row of scraperRows ?? []) {
+      photosByScraperId.set(row.id, row.photos as ScraperPhoto[]);
+    }
   }
 
   let synced = 0;
