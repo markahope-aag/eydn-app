@@ -195,4 +195,34 @@ describe("POST /api/guests/import", () => {
     expect(response.status).toBe(201);
     expect(data.imported).toBe(1);
   });
+
+  it("strips a leading UTF-8 BOM so the 'name' header still matches", async () => {
+    mockAuthSuccess();
+    const csv = "\uFEFFname,email\nAlice,alice@example.com";
+    const response = await POST(csvRequest(csv));
+    const data = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(data.imported).toBe(1);
+  });
+
+  it("rejects a binary file (NUL bytes) with a clear, non-CSV message", async () => {
+    mockAuthSuccess();
+    const binary = "PK\u0000\u0000\u0000garbage\u0000\u0000xls";
+    const response = await POST(csvRequest(binary));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toMatch(/doesn't look like a csv/i);
+  });
+
+  it("lists the columns it found when the name column is missing", async () => {
+    mockAuthSuccess();
+    const response = await POST(csvRequest("email,group\nalice@example.com,Family"));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toMatch(/columns found/i);
+    expect(data.error).toContain("email");
+  });
 });

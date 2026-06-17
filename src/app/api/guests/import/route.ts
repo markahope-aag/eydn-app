@@ -92,8 +92,30 @@ export async function POST(request: Request) {
     );
   }
 
-  const text = await file.text();
-  const lines = text.split("\n").filter((l) => l.trim());
+  const raw = await file.text();
+  // Strip a leading UTF-8 BOM (Excel adds one) so the first header still
+  // matches "name" instead of a BOM-prefixed header.
+  const text = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
+
+  // Reject binary / non-CSV uploads up front with a clear message. On Windows
+  // a real .xls/.xlsx can carry a CSV-ish MIME type and slip past the type
+  // check above; decoded as text it's riddled with NUL bytes (and, as a
+  // backstop, a high share of UTF-8 replacement characters). Without this the
+  // user gets a confusing "no 'name' column" error on a file that isn't a CSV
+  // at all. The replacement-char threshold is deliberately high so legitimate
+  // accented names in a mis-encoded CSV aren't rejected.
+  const replacementChars = (text.match(/\uFFFD/g) || []).length;
+  if (text.includes("\u0000") || replacementChars > Math.max(20, text.length * 0.2)) {
+    return NextResponse.json(
+      {
+        error:
+          "This file doesn't look like a CSV. If it's an Excel file, open it and choose File → Save As → CSV (UTF-8), then upload that.",
+      },
+      { status: 400 }
+    );
+  }
+
+  const lines = text.split(/\r?\n/).filter((l) => l.trim());
 
   if (lines.length < 2) {
     return NextResponse.json({ error: "CSV must have a header row and at least one data row" }, { status: 400 });
@@ -105,7 +127,13 @@ export async function POST(request: Request) {
   const groupIdx = headers.findIndex((h) => h === "group" || h === "group_name");
 
   if (nameIdx === -1) {
-    return NextResponse.json({ error: "CSV must have a 'name' column" }, { status: 400 });
+    const found = headers.filter(Boolean).join(", ") || "(none)";
+    return NextResponse.json(
+      {
+        error: `CSV must have a 'name' column. Columns found: ${found}. Make sure the first row is a header, e.g. name,email,group`,
+      },
+      { status: 400 }
+    );
   }
 
   // Determine the minimum number of columns each row must have
