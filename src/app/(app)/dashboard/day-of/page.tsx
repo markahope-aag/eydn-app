@@ -130,6 +130,26 @@ export default function DayOfPage() {
     savePlan({ ...plan, timeline: plan.timeline.filter((_, i) => i !== index) });
   }
 
+  // Manual reorder: swap two rows by their index in the full timeline array.
+  // The child computes the neighbour index within the currently-visible
+  // (filtered) list, so this works correctly whether or not a group filter
+  // is active. Note: editing a row's time still re-sorts chronologically
+  // (see updateTimeline) — manual order persists until the next time edit.
+  function moveTimelineItem(indexA: number, indexB: number) {
+    if (!plan) return;
+    const { timeline } = plan;
+    if (
+      indexA === indexB ||
+      indexA < 0 || indexB < 0 ||
+      indexA >= timeline.length || indexB >= timeline.length
+    ) {
+      return;
+    }
+    const updated = [...timeline];
+    [updated[indexA], updated[indexB]] = [updated[indexB], updated[indexA]];
+    savePlan({ ...plan, timeline: updated });
+  }
+
   function handleCeremonyTimeSet() {
     if (!plan || !ceremonyTime) return;
     if (plan.timeline.length > 0 && plan.ceremonyTime !== ceremonyTime) {
@@ -367,6 +387,7 @@ export default function DayOfPage() {
           updateTimeline={updateTimeline}
           addTimelineItem={addTimelineItem}
           removeTimelineItem={removeTimelineItem}
+          moveTimelineItem={moveTimelineItem}
         />
       )}
 
