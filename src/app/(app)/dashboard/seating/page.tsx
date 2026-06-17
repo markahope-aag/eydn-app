@@ -91,7 +91,11 @@ export default function SeatingPage() {
   }, []);
 
   // --- Table dragging ---
-  const handleTableMouseDown = useCallback((e: React.MouseEvent, tableId: string, tableX: number, tableY: number) => {
+  // Pointer events (not mouse events) so dragging works on touch devices too —
+  // iPhone/iPad Safari never fired the old mousemove/mouseup handlers, making
+  // tables impossible to reposition there. touch-action:none on the draggable
+  // elements (see JSX) stops the browser from scrolling mid-drag.
+  const handleTablePointerDown = useCallback((e: React.PointerEvent, tableId: string, tableX: number, tableY: number) => {
     e.preventDefault();
     setDraggingTable(tableId);
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -104,7 +108,7 @@ export default function SeatingPage() {
   useEffect(() => {
     if (!draggingTable) return;
 
-    function onMouseMove(e: MouseEvent) {
+    function onPointerMove(e: PointerEvent) {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (!rect) return;
       const newX = Math.max(0, e.clientX - rect.left - dragOffset.current.x);
@@ -114,7 +118,7 @@ export default function SeatingPage() {
       );
     }
 
-    function onMouseUp() {
+    function endDrag() {
       // Save final position
       setTables((prev) => {
         const table = prev.find((t) => t.id === draggingTable);
@@ -130,18 +134,20 @@ export default function SeatingPage() {
       setDraggingTable(null);
     }
 
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", endDrag);
+      window.removeEventListener("pointercancel", endDrag);
     };
   }, [draggingTable]);
 
   // --- Table resizing (mirrors the floor-object resize) ---
   useEffect(() => {
     if (!resizingTable) return;
-    function onMouseMove(e: MouseEvent) {
+    function onPointerMove(e: PointerEvent) {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (!rect) return;
       setTables((prev) =>
@@ -162,7 +168,7 @@ export default function SeatingPage() {
         })
       );
     }
-    function onMouseUp() {
+    function endResize() {
       setTables((prev) => {
         const t = prev.find((x) => x.id === resizingTable);
         if (t) {
@@ -176,22 +182,24 @@ export default function SeatingPage() {
       });
       setResizingTable(null);
     }
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", endResize);
+    window.addEventListener("pointercancel", endResize);
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", endResize);
+      window.removeEventListener("pointercancel", endResize);
     };
   }, [resizingTable]);
 
-  function handleTableResizeMouseDown(e: React.MouseEvent, tableId: string) {
+  function handleTableResizePointerDown(e: React.PointerEvent, tableId: string) {
     e.preventDefault();
     e.stopPropagation();
     setResizingTable(tableId);
   }
 
   // --- Floor-plan object dragging & resizing ---
-  const handleObjectMouseDown = useCallback((e: React.MouseEvent, objId: string, ox: number, oy: number) => {
+  const handleObjectPointerDown = useCallback((e: React.PointerEvent, objId: string, ox: number, oy: number) => {
     e.preventDefault();
     setDraggingObject(objId);
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -203,7 +211,7 @@ export default function SeatingPage() {
 
   useEffect(() => {
     if (!draggingObject) return;
-    function onMouseMove(e: MouseEvent) {
+    function onPointerMove(e: PointerEvent) {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (!rect) return;
       const newX = Math.max(0, e.clientX - rect.left - dragOffset.current.x);
@@ -212,7 +220,7 @@ export default function SeatingPage() {
         prev.map((o) => (o.id === draggingObject ? { ...o, x: newX, y: newY } : o))
       );
     }
-    function onMouseUp() {
+    function endDrag() {
       setFloorObjects((prev) => {
         const o = prev.find((x) => x.id === draggingObject);
         if (o) {
@@ -226,17 +234,19 @@ export default function SeatingPage() {
       });
       setDraggingObject(null);
     }
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", endDrag);
+      window.removeEventListener("pointercancel", endDrag);
     };
   }, [draggingObject]);
 
   useEffect(() => {
     if (!resizingObject) return;
-    function onMouseMove(e: MouseEvent) {
+    function onPointerMove(e: PointerEvent) {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (!rect) return;
       setFloorObjects((prev) =>
@@ -248,7 +258,7 @@ export default function SeatingPage() {
         })
       );
     }
-    function onMouseUp() {
+    function endResize() {
       setFloorObjects((prev) => {
         const o = prev.find((x) => x.id === resizingObject);
         if (o) {
@@ -262,15 +272,17 @@ export default function SeatingPage() {
       });
       setResizingObject(null);
     }
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", endResize);
+    window.addEventListener("pointercancel", endResize);
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", endResize);
+      window.removeEventListener("pointercancel", endResize);
     };
   }, [resizingObject]);
 
-  function handleObjectResizeMouseDown(e: React.MouseEvent, objId: string) {
+  function handleObjectResizePointerDown(e: React.PointerEvent, objId: string) {
     e.preventDefault();
     e.stopPropagation();
     setResizingObject(objId);
@@ -756,7 +768,7 @@ export default function SeatingPage() {
               {floorObjects.map((obj) => (
                 <div
                   key={obj.id}
-                  className="absolute select-none rounded-[10px] border-2 border-dashed border-violet/40 bg-violet/5 flex items-center justify-center"
+                  className="absolute select-none touch-none rounded-[10px] border-2 border-dashed border-violet/40 bg-violet/5 flex items-center justify-center"
                   style={{
                     left: obj.x,
                     top: obj.y,
@@ -764,7 +776,7 @@ export default function SeatingPage() {
                     height: obj.height,
                     cursor: draggingObject === obj.id ? "grabbing" : "grab",
                   }}
-                  onMouseDown={(e) => handleObjectMouseDown(e, obj.id, obj.x, obj.y)}
+                  onPointerDown={(e) => handleObjectPointerDown(e, obj.id, obj.x, obj.y)}
                 >
                   <input
                     type="text"
@@ -775,13 +787,13 @@ export default function SeatingPage() {
                       )
                     }
                     onBlur={(e) => updateFloorObject(obj.id, { label: e.target.value.trim() || "New area" })}
-                    onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
                     aria-label="Area label"
                     className="bg-transparent text-center text-[12px] font-semibold text-violet/80 border-0 px-2 w-[88%] focus:outline-none focus:bg-white/70 rounded-[6px]"
                   />
                   <button
                     onClick={(e) => { e.stopPropagation(); deleteFloorObject(obj.id); }}
-                    onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
                     aria-label={`Delete ${obj.label}`}
                     className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-border text-muted hover:text-error hover:border-error rounded-full flex items-center justify-center transition"
                   >
@@ -790,10 +802,10 @@ export default function SeatingPage() {
                     </svg>
                   </button>
                   <div
-                    onMouseDown={(e) => handleObjectResizeMouseDown(e, obj.id)}
+                    onPointerDown={(e) => handleObjectResizePointerDown(e, obj.id)}
                     role="button"
                     aria-label={`Resize ${obj.label}`}
-                    className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize flex items-end justify-end p-0.5"
+                    className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize touch-none flex items-end justify-end p-0.5"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                       <path d="M11 4L4 11M11 8L8 11" stroke="var(--violet, #7C6BA6)" strokeWidth="1.5" strokeLinecap="round"/>
@@ -816,9 +828,9 @@ export default function SeatingPage() {
                 return (
                   <div
                     key={table.id}
-                    className="group/table absolute select-none"
+                    className="group/table absolute select-none touch-none"
                     style={{ left: table.x, top: table.y, cursor: draggingTable === table.id ? "grabbing" : "grab" }}
-                    onMouseDown={(e) => handleTableMouseDown(e, table.id, table.x, table.y)}
+                    onPointerDown={(e) => handleTablePointerDown(e, table.id, table.x, table.y)}
                     onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                     onDrop={(e) => {
                       e.preventDefault();
@@ -925,7 +937,7 @@ export default function SeatingPage() {
                     <button
                       ref={editingTable === table.id ? editButtonRef : undefined}
                       onClick={(e) => { e.stopPropagation(); setEditingTable(editingTable === table.id ? null : table.id); }}
-                      onMouseDown={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
                       className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-muted hover:text-violet transition bg-white border border-border rounded-full px-2 py-0.5 z-10"
                     >
                       {editingTable === table.id ? "Done" : "Edit"}
@@ -934,11 +946,11 @@ export default function SeatingPage() {
                     {/* Resize handle — drag to make the table bigger or
                         smaller (round stays circular). Revealed on hover. */}
                     <div
-                      onMouseDown={(e) => handleTableResizeMouseDown(e, table.id)}
+                      onPointerDown={(e) => handleTableResizePointerDown(e, table.id)}
                       role="button"
                       aria-label={`Resize ${table.name || `Table ${table.table_number}`}`}
                       title="Drag to resize"
-                      className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize opacity-0 group-hover/table:opacity-100 transition-opacity flex items-end justify-end z-10"
+                      className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize touch-none opacity-0 group-hover/table:opacity-100 transition-opacity flex items-end justify-end z-10"
                     >
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                         <path d="M11 4L4 11M11 8L8 11" stroke="var(--violet, #7C6BA6)" strokeWidth="1.5" strokeLinecap="round"/>
@@ -951,7 +963,7 @@ export default function SeatingPage() {
                         ref={editPopoverRef}
                         className="absolute top-full left-0 mt-4 z-20 bg-white border border-border rounded-[12px] shadow-lg p-3 space-y-3 w-64 sm:w-72"
                         onClick={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
                       >
                         <div>
                           <label htmlFor={`table-name-${table.id}`} className="text-[11px] font-semibold text-muted">Table Name</label>
