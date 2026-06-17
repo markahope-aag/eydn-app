@@ -2,12 +2,18 @@ import { auth } from "@clerk/nextjs/server";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { generateTasks } from "@/lib/tasks/seed-tasks";
-import { personalizeTaskMessages } from "@/lib/ai/task-personalizer";
+import { personalizeTaskMessages, applyDeterministicMessages } from "@/lib/ai/task-personalizer";
 import { BUDGET_TEMPLATE } from "@/lib/budget/budget-template";
 import { safeParseJSON, isParseError, requireFields } from "@/lib/validation";
 import { supabaseError } from "@/lib/api-error";
 import { captureServer } from "@/lib/analytics-server";
 import { geocodeAddress } from "@/lib/geocoding";
+
+// Onboarding seeds tasks + budget and runs the (blocking) AI personalization
+// pass. The default ~15s function budget left no room for the Claude call, so
+// give it headroom. The deterministic baseline still applies even if the AI
+// pass times out within this window.
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const { userId } = await auth();
@@ -182,12 +188,7 @@ export async function POST(request: Request) {
       bookedVendors: booked_vendors,
     });
 
-    // AI personalization pass — rewrites each task's edyn_message in the
-    // couple's voice, referencing their venue, budget, style, etc. where
-    // natural. Date math, categories, and phases stay deterministic.
-    // Any failure (no API key, Claude down, malformed response, timeout)
-    // returns the original tasks unchanged.
-    const personalizedTasks = await personalizeTaskMessages(tasks, {
+    const personalizationCtx = {
       partner1_name,
       partner2_name,
       date,
@@ -200,7 +201,18 @@ export async function POST(request: Request) {
       has_pre_wedding_events,
       has_honeymoon,
       booked_vendors,
-    });
+    };
+
+    // 1) Deterministic baseline — always weaves the couple's venue, budget,
+    //    guest count, date, and style into the tasks where those matter. No
+    //    API call, never fails.
+    const baseTasks = applyDeterministicMessages(tasks, personalizationCtx);
+
+    // 2) AI pass on top — refines the voice across the whole timeline when
+    //    Claude is available. Any failure (no API key, Claude down, malformed
+    //    response, timeout) returns the deterministic baseline unchanged, so
+    //    personalization survives regardless.
+    const personalizedTasks = await personalizeTaskMessages(baseTasks, personalizationCtx);
 
     const batchSize = 50;
     for (let i = 0; i < personalizedTasks.length; i += batchSize) {

@@ -33,9 +33,13 @@ export type PersonalizationContext = {
   booked_vendors: string[];
 };
 
-const TIMEOUT_MS = 15_000;
+const TIMEOUT_MS = 25_000;
 const MODEL = "claude-sonnet-4-6";
-const MAX_TOKENS = 4096;
+// One JSON entry per task across the full timeline (~66 tasks incl. subtasks).
+// 4096 truncated the array mid-response → invalid JSON → silent fallback every
+// time, which is why AI personalization never landed in production. 8192 leaves
+// comfortable headroom for the whole array.
+const MAX_TOKENS = 8192;
 
 function buildPrompt(tasks: TaskInsert[], ctx: PersonalizationContext): string {
   const details: string[] = [];
@@ -69,6 +73,92 @@ Respond with ONLY a JSON array in this exact shape, no prose before or after:
 [{"index": 0, "edynMessage": "..."}, {"index": 1, "edynMessage": "..."}, ...]
 
 Include one entry per task, using the same indices as above.`;
+}
+
+// ─── Deterministic personalization ──────────────────────────────────────────
+// A guaranteed baseline that weaves the couple's real details (venue, budget,
+// guest count, date, style, names) into the tasks where those details actually
+// matter — no API call, never fails. The AI pass runs on top of this and
+// refines the voice when it's available; when it isn't, these messages still
+// make the timeline feel personalized. Brand voice: warm, direct, calm — no
+// exclamation points, no cheerleader copy.
+
+function formatWeddingDate(date: string | null): string | null {
+  if (!date) return null;
+  // Anchor at midday so the YYYY-MM-DD value doesn't shift a day across
+  // timezones when formatted.
+  const d = new Date(`${date}T12:00:00`);
+  if (isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+
+/** title → builder that returns a personalized message, or null to keep the
+ *  default (when the relevant detail is missing — the "where relevant" rule). */
+const DETERMINISTIC_BUILDERS: Record<string, (c: PersonalizationContext) => string | null> = {
+  "Set Budget": (c) =>
+    c.budget
+      ? `Let's lock in your $${c.budget.toLocaleString()} budget, ${c.partner1_name} & ${c.partner2_name}. Breaking it into categories now keeps everything in control — no stress later.`
+      : null,
+  "Choose Wedding Date": (c) => {
+    const d = formatWeddingDate(c.date);
+    return d
+      ? `${d} it is. Worth holding loosely until your venue's locked — the right space is worth a small tweak.`
+      : null;
+  },
+  "Create Guest List Draft": (c) =>
+    c.guest_count_estimate
+      ? `Around ${c.guest_count_estimate} to start — pull together family, friends, and plus-ones. You can refine the list anytime.`
+      : null,
+  "Book Venue": (c) => {
+    const where = c.venue ? ` ${c.venue}` : c.venue_city ? ` a venue in ${c.venue_city}` : null;
+    return where
+      ? `Time to book${where}. Once it's set, your date and the rest of the plan settle around it.`
+      : null;
+  },
+  "Choose Wedding Colors/Theme": (c) =>
+    c.style_description
+      ? `You described your style as "${c.style_description}". Let's turn that into a palette and theme you both love.`
+      : null,
+  "Plan Seating Chart Draft": (c) =>
+    c.guest_count_estimate
+      ? `With about ${c.guest_count_estimate} guests, a rough seating draft now saves a scramble later.`
+      : null,
+  "Finalize Seating Chart": (c) => {
+    const at = c.venue ? ` at ${c.venue}` : "";
+    return c.guest_count_estimate
+      ? `Lock in where your ${c.guest_count_estimate} guests sit${at}. Everyone needs their spot.`
+      : null;
+  },
+  "Final Guest Count": (c) =>
+    c.guest_count_estimate
+      ? `Your final headcount drives catering, rentals, and the venue. You estimated around ${c.guest_count_estimate} — time to confirm the real number.`
+      : null,
+  "Send Save-the-Dates": (c) =>
+    c.guest_count_estimate
+      ? `Give your ~${c.guest_count_estimate} guests a heads-up, especially anyone traveling in.`
+      : null,
+  "Order Invitations": (c) =>
+    c.guest_count_estimate
+      ? `Order enough for your ~${c.guest_count_estimate} guests, plus a few extras for keepsakes and slips of the pen.`
+      : null,
+};
+
+/**
+ * Apply the deterministic personalization baseline. Returns a new task array
+ * with edyn_message rewritten for the tasks where a relevant detail exists;
+ * all other tasks are returned unchanged. Pure and synchronous — safe to run
+ * before the AI pass on every onboarding.
+ */
+export function applyDeterministicMessages(
+  tasks: TaskInsert[],
+  ctx: PersonalizationContext
+): TaskInsert[] {
+  return tasks.map((task) => {
+    const builder = task.title ? DETERMINISTIC_BUILDERS[task.title] : undefined;
+    if (!builder) return task;
+    const message = builder(ctx);
+    return message ? { ...task, edyn_message: message } : task;
+  });
 }
 
 type PersonalizedMessage = { index: number; edynMessage: string };
@@ -128,7 +218,14 @@ export async function personalizeTaskMessages(
       .join("");
 
     const personalized = parseResponse(text);
-    if (!personalized) return tasks;
+    if (!personalized) {
+      // Most likely a truncated array (max_tokens) or non-JSON prose. Log the
+      // reason so this can't silently regress to generic messages again.
+      console.warn(
+        `[task-personalizer] unparseable response (stop_reason=${response.stop_reason}); keeping deterministic messages`
+      );
+      return tasks;
+    }
 
     const byIndex = new Map(personalized.map((p) => [p.index, p.edynMessage]));
     return tasks.map((task, i) => {
