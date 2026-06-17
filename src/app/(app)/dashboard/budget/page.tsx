@@ -677,7 +677,7 @@ export default function BudgetPage() {
                         min="0"
                         step="0.01"
                         aria-label={`Estimated cost for ${exp.description}`}
-                        className="w-20 text-right text-[15px] font-semibold text-plum bg-transparent border-0 outline-none"
+                        className="w-20 no-spinner text-right text-[15px] font-semibold text-plum bg-transparent border-0 outline-none"
                       />
                     </div>
                     <div className="flex items-center justify-end gap-0.5">
@@ -690,7 +690,7 @@ export default function BudgetPage() {
                         min="0"
                         step="0.01"
                         aria-label={`Paid amount for ${exp.description}`}
-                        className="w-20 text-right text-[15px] font-semibold text-violet bg-transparent border-0 outline-none"
+                        className="w-20 no-spinner text-right text-[15px] font-semibold text-violet bg-transparent border-0 outline-none"
                       />
                     </div>
                     <div className="flex items-center justify-end gap-0.5">
@@ -703,7 +703,7 @@ export default function BudgetPage() {
                         min="0"
                         step="0.01"
                         aria-label={`Final cost for ${exp.description}`}
-                        className="w-20 text-right text-[15px] font-semibold text-plum bg-transparent border-0 outline-none"
+                        className="w-20 no-spinner text-right text-[15px] font-semibold text-plum bg-transparent border-0 outline-none"
                       />
                     </div>
                     <div className="flex items-center justify-end">

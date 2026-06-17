@@ -236,6 +236,18 @@ input:focus, textarea:focus, select:focus {
   border-color: var(--violet);
   border-width: 2px;
 }
+/* Opt-in: hide the native up/down spin buttons on number inputs. Used for
+   currency fields where the penny-step arrows are useless and overlap the
+   value as you type. */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
 /* WCAG 2.4.7 — visible focus indicators */
 .btn-primary:focus-visible,
 .btn-secondary:focus-visible,
