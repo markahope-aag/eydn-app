@@ -48,7 +48,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `capacity must be between 1 and ${MAX_CAPACITY}` }, { status: 400 });
   }
 
-  const allowed = pickFields(body, ["name", "x", "y", "shape", "capacity"]);
+  // Table footprint (canvas px). Bounded so a stray drag can't persist a
+  // degenerate or runaway size.
+  for (const dim of ["width", "height"] as const) {
+    if (body[dim] !== undefined && !isValidNumber(body[dim], 20, 2000)) {
+      return NextResponse.json({ error: `${dim} must be between 20 and 2000` }, { status: 400 });
+    }
+  }
+
+  const allowed = pickFields(body, ["name", "x", "y", "shape", "capacity", "width", "height"]);
   const { data, error } = await supabase
     .from("seating_tables")
     .insert({

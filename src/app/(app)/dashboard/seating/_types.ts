@@ -6,6 +6,10 @@ export type Table = {
   y: number;
   shape: "round" | "rectangle";
   capacity: number;
+  /** Explicit footprint in canvas px. Null means "use the shape default"
+   *  (round 140, rectangle 200x90) — set once the table is resized. */
+  width: number | null;
+  height: number | null;
 };
 
 export type Guest = {

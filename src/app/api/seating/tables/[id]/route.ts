@@ -4,7 +4,7 @@ import { pickFields, safeParseJSON, isParseError } from "@/lib/validation";
 import { softDelete, logActivity } from "@/lib/audit";
 import { supabaseError } from "@/lib/api-error";
 
-const ALLOWED_FIELDS = ["table_number", "name", "x", "y", "shape", "capacity"];
+const ALLOWED_FIELDS = ["table_number", "name", "x", "y", "shape", "capacity", "width", "height"];
 
 export async function PATCH(
   request: Request,

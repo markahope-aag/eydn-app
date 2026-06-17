@@ -1663,33 +1663,39 @@ export type Database = {
         Row: {
           capacity: number
           deleted_at: string | null
+          height: number | null
           id: string
           name: string | null
           shape: string
           table_number: number
           wedding_id: string
+          width: number | null
           x: number
           y: number
         }
         Insert: {
           capacity?: number
           deleted_at?: string | null
+          height?: number | null
           id?: string
           name?: string | null
           shape?: string
           table_number: number
           wedding_id: string
+          width?: number | null
           x?: number
           y?: number
         }
         Update: {
           capacity?: number
           deleted_at?: string | null
+          height?: number | null
           id?: string
           name?: string | null
           shape?: string
           table_number?: number
           wedding_id?: string
+          width?: number | null
           x?: number
           y?: number
         }

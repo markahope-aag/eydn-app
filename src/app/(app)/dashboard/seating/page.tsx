@@ -22,6 +22,15 @@ import {
 } from "./_helpers";
 import { printCeremony as printCeremonyHelper } from "./_ceremony-print";
 
+// Default table footprints (canvas px) used when a table has no explicit
+// width/height yet, plus the floor each can be dragged down to.
+const ROUND_DEFAULT_SIZE = 140;
+const RECT_DEFAULT_WIDTH = 200;
+const RECT_DEFAULT_HEIGHT = 90;
+const ROUND_MIN_SIZE = 90;
+const RECT_MIN_WIDTH = 120;
+const RECT_MIN_HEIGHT = 70;
+
 export default function SeatingPage() {
   const [tab, setTab] = useState<Tab>("reception");
   const [tables, setTables] = useState<Table[]>([]);
@@ -39,6 +48,8 @@ export default function SeatingPage() {
   const dragOffset = useRef({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
   const [confirmDeleteTable, setConfirmDeleteTable] = useState<string | null>(null);
+  const [addingTable, setAddingTable] = useState(false);
+  const [resizingTable, setResizingTable] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [unassignedSearch, setUnassignedSearch] = useState("");
   const [newGuestName, setNewGuestName] = useState("");
@@ -126,6 +137,58 @@ export default function SeatingPage() {
       window.removeEventListener("mouseup", onMouseUp);
     };
   }, [draggingTable]);
+
+  // --- Table resizing (mirrors the floor-object resize) ---
+  useEffect(() => {
+    if (!resizingTable) return;
+    function onMouseMove(e: MouseEvent) {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setTables((prev) =>
+        prev.map((t) => {
+          if (t.id !== resizingTable) return t;
+          const rawW = e.clientX - rect.left - t.x;
+          const rawH = e.clientY - rect.top - t.y;
+          if (t.shape === "round") {
+            // Keep round tables circular: one diameter from the larger drag.
+            const size = Math.max(ROUND_MIN_SIZE, rawW, rawH);
+            return { ...t, width: size, height: size };
+          }
+          return {
+            ...t,
+            width: Math.max(RECT_MIN_WIDTH, rawW),
+            height: Math.max(RECT_MIN_HEIGHT, rawH),
+          };
+        })
+      );
+    }
+    function onMouseUp() {
+      setTables((prev) => {
+        const t = prev.find((x) => x.id === resizingTable);
+        if (t) {
+          fetch(`/api/seating/tables/${t.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ width: t.width, height: t.height }),
+          }).catch(() => toast.error("Couldn't save that size. Try again."));
+        }
+        return prev;
+      });
+      setResizingTable(null);
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [resizingTable]);
+
+  function handleTableResizeMouseDown(e: React.MouseEvent, tableId: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingTable(tableId);
+  }
 
   // --- Floor-plan object dragging & resizing ---
   const handleObjectMouseDown = useCallback((e: React.MouseEvent, objId: string, ox: number, oy: number) => {
@@ -263,7 +326,17 @@ export default function SeatingPage() {
 
   // --- Reception functions ---
   async function addTable() {
-    const nextNum = tables.length + 1;
+    // Guard against a double-click (or slow network) firing two creates with
+    // the same number before state updates — that's how duplicate tables end
+    // up in the data.
+    if (addingTable) return;
+    setAddingTable(true);
+
+    // Derive the next number from the highest existing table_number, not the
+    // array length. After a table is deleted the length no longer matches the
+    // numbering, so length+1 can re-create a number that already exists.
+    const nextNum =
+      tables.reduce((max, t) => Math.max(max, t.table_number || 0), 0) + 1;
     try {
       const res = await fetch("/api/seating/tables", {
         method: "POST",
@@ -275,11 +348,23 @@ export default function SeatingPage() {
           y: 50 + Math.floor((nextNum - 1) / 4) * 180,
         }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        // Surface the server's actual reason (validation, read-only role,
+        // wedding-not-found, etc.) instead of a generic message so the
+        // failure is diagnosable rather than silently swallowed.
+        const detail = await res.json().catch(() => null);
+        const reason = detail?.error || `request failed (${res.status})`;
+        console.error("[seating] addTable failed:", reason);
+        toast.error(`Table didn't save: ${reason}`);
+        return;
+      }
       const saved = await res.json();
       setTables((prev) => [...prev, saved]);
-    } catch {
-      toast.error("Table didn't save. Try again.");
+    } catch (err) {
+      console.error("[seating] addTable network error", err);
+      toast.error("Table didn't save. Check your connection and try again.");
+    } finally {
+      setAddingTable(false);
     }
   }
 
@@ -641,7 +726,7 @@ export default function SeatingPage() {
                   </button>
                 </div>
                 <button onClick={addFloorObject} className="btn-secondary btn-sm">Add Area</button>
-                <button onClick={addTable} className="btn-primary btn-sm">Add Table</button>
+                <button onClick={addTable} disabled={addingTable} className="btn-primary btn-sm disabled:opacity-50">{addingTable ? "Adding…" : "Add Table"}</button>
               </div>
             </div>
 
@@ -722,12 +807,16 @@ export default function SeatingPage() {
                 const seatMap = getSeatMap(table.id, table.capacity);
                 const isFull = tableGuests.length >= table.capacity;
                 const isRound = table.shape === "round";
-                const tableSize = isRound ? 140 : undefined;
+                // Footprint: explicit size if the table has been resized,
+                // otherwise the shape default.
+                const tableSize = isRound ? (table.width ?? ROUND_DEFAULT_SIZE) : undefined;
+                const rectWidth = table.width ?? RECT_DEFAULT_WIDTH;
+                const rectHeight = table.height ?? RECT_DEFAULT_HEIGHT;
 
                 return (
                   <div
                     key={table.id}
-                    className="absolute select-none"
+                    className="group/table absolute select-none"
                     style={{ left: table.x, top: table.y, cursor: draggingTable === table.id ? "grabbing" : "grab" }}
                     onMouseDown={(e) => handleTableMouseDown(e, table.id, table.x, table.y)}
                     onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -786,7 +875,7 @@ export default function SeatingPage() {
                       /* Rectangle table — wider, more elongated */
                       <div
                         className={`relative border-2 bg-[#FAF8FC] shadow-sm rounded-[12px] ${isFull ? "border-violet" : "border-border"}`}
-                        style={{ width: 200, minHeight: 90 }}
+                        style={{ width: rectWidth, minHeight: rectHeight }}
                       >
                         {/* Seat dots along top and bottom edges */}
                         {seatMap.map((guest, i) => {
@@ -841,6 +930,20 @@ export default function SeatingPage() {
                     >
                       {editingTable === table.id ? "Done" : "Edit"}
                     </button>
+
+                    {/* Resize handle — drag to make the table bigger or
+                        smaller (round stays circular). Revealed on hover. */}
+                    <div
+                      onMouseDown={(e) => handleTableResizeMouseDown(e, table.id)}
+                      role="button"
+                      aria-label={`Resize ${table.name || `Table ${table.table_number}`}`}
+                      title="Drag to resize"
+                      className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize opacity-0 group-hover/table:opacity-100 transition-opacity flex items-end justify-end z-10"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path d="M11 4L4 11M11 8L8 11" stroke="var(--violet, #7C6BA6)" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </div>
 
                     {/* Edit popover */}
                     {editingTable === table.id && (
