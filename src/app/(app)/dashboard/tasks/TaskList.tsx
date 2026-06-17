@@ -79,11 +79,14 @@ function SortableTaskItem({
   onToggle,
   onDelete,
   onSelect,
+  disabled = false,
 }: {
   task: Task;
   onToggle: (_id: string) => void;
   onDelete: (_id: string) => void;
   onSelect: (_task: Task) => void;
+  /** Done tasks live in the collapsed "Done" group and aren't reorderable. */
+  disabled?: boolean;
 }) {
   const {
     attributes,
@@ -92,7 +95,7 @@ function SortableTaskItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({ id: task.id, disabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -146,24 +149,26 @@ function SortableTaskItem({
       )}
       {/* Top row: drag handle, priority, status, title, due date, open chevron */}
       <div className="flex items-center gap-2">
-        {/* Drag handle — hidden on mobile */}
-        <button
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
-          className="hidden sm:block flex-shrink-0 cursor-grab active:cursor-grabbing text-muted hover:text-plum p-0.5 touch-none"
-          aria-label="Drag to reorder"
-          title="Drag to reorder tasks"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <circle cx="5" cy="3" r="1.5" />
-            <circle cx="11" cy="3" r="1.5" />
-            <circle cx="5" cy="8" r="1.5" />
-            <circle cx="11" cy="8" r="1.5" />
-            <circle cx="5" cy="13" r="1.5" />
-            <circle cx="11" cy="13" r="1.5" />
-          </svg>
-        </button>
+        {/* Drag handle — hidden on mobile and on done (non-reorderable) rows */}
+        {!disabled && (
+          <button
+            {...attributes}
+            {...listeners}
+            onClick={(e) => e.stopPropagation()}
+            className="hidden sm:block flex-shrink-0 cursor-grab active:cursor-grabbing text-muted hover:text-plum p-0.5 touch-none"
+            aria-label="Drag to reorder"
+            title="Drag to reorder tasks"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="5" cy="3" r="1.5" />
+              <circle cx="11" cy="3" r="1.5" />
+              <circle cx="5" cy="8" r="1.5" />
+              <circle cx="11" cy="8" r="1.5" />
+              <circle cx="5" cy="13" r="1.5" />
+              <circle cx="11" cy="13" r="1.5" />
+            </svg>
+          </button>
+        )}
 
         {/* High-priority flag — the left accent bar carries medium/low */}
         {task.priority === "high" && task.status !== "done" && (
@@ -301,6 +306,18 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect, onReorder }: Pro
   const [collapsedPhases, setCollapsedPhases] = useState<Set<string>>(
     new Set()
   );
+  // Per-phase "Done" group, collapsed by default so completed tasks drop out
+  // of the active list when checked off (expand to review them).
+  const [expandedDone, setExpandedDone] = useState<Set<string>>(new Set());
+
+  function toggleDone(phase: string) {
+    setExpandedDone((prev) => {
+      const next = new Set(prev);
+      if (next.has(phase)) next.delete(phase);
+      else next.add(phase);
+      return next;
+    });
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -366,6 +383,17 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect, onReorder }: Pro
         const collapsed = collapsedPhases.has(phase);
         const phaseInfo = PHASE_LABELS[phase] || { label: phase, hint: "" };
 
+        // Completed tasks move into a collapsed "Done" group so checking one
+        // off drops it out of the active list. Phase progress (completed/total
+        // above) still counts them.
+        const activeTasks = phaseTasks.filter((t) => t.status !== "done");
+        const doneTasks = phaseTasks.filter((t) => t.status === "done");
+        // Auto-expand when there's nothing active to show — covers a fully
+        // complete phase and the case where a "Done" status filter is active
+        // (otherwise the filtered-for results would hide in a collapsed group).
+        const doneOpen = expandedDone.has(phase) || activeTasks.length === 0;
+        const renderedTasks = doneOpen ? [...activeTasks, ...doneTasks] : activeTasks;
+
         return (
           <div key={phase} className="rounded-[16px] border-border bg-white overflow-hidden">
             <button
@@ -423,14 +451,14 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect, onReorder }: Pro
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd(phaseTasks)}
+                onDragEnd={handleDragEnd(renderedTasks)}
               >
                 <SortableContext
-                  items={phaseTasks.map((t) => t.id)}
+                  items={renderedTasks.map((t) => t.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="divide-y divide-border">
-                    {phaseTasks.map((task) => (
+                    {activeTasks.map((task) => (
                       <SortableTaskItem
                         key={task.id}
                         task={task}
@@ -439,6 +467,43 @@ export function TaskList({ tasks, onToggle, onDelete, onSelect, onReorder }: Pro
                         onSelect={onSelect}
                       />
                     ))}
+
+                    {/* Collapsed "Done" group — completed tasks land here. The
+                        toggle only collapses when there are active tasks above
+                        it (otherwise the group stays open via doneOpen). */}
+                    {doneTasks.length > 0 && activeTasks.length > 0 && (
+                      <button
+                        onClick={() => toggleDone(phase)}
+                        aria-expanded={doneOpen}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold text-muted hover:bg-lavender/40 transition text-left"
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          className={`flex-shrink-0 transition-transform ${doneOpen ? "rotate-180" : ""}`}
+                        >
+                          <path d="M3 4.5L6 7.5L9 4.5" />
+                        </svg>
+                        Done ({doneTasks.length})
+                      </button>
+                    )}
+
+                    {doneOpen &&
+                      doneTasks.map((task) => (
+                        <SortableTaskItem
+                          key={task.id}
+                          task={task}
+                          onToggle={onToggle}
+                          onDelete={onDelete}
+                          onSelect={onSelect}
+                          disabled
+                        />
+                      ))}
                   </div>
                 </SortableContext>
               </DndContext>
