@@ -148,6 +148,35 @@ export async function POST(request: Request) {
         .from("rehearsal_dinner")
         .update({ date: dayBefore.toISOString().slice(0, 10) })
         .eq("wedding_id", weddingId);
+
+      // Raise the same date-change alert the /api/weddings cascade does, so the
+      // dashboard warning banner appears consistently regardless of which path
+      // changed the date. System milestones are regenerated below with the new
+      // date; user-added tasks (fittings, tastings, trials) keep their old due
+      // dates and may need rescheduling. Only alert on a real change from a
+      // previously-set date — not the first time a date is entered.
+      if (currentWedding?.date) {
+        const { data: userTasks } = await supabase
+          .from("tasks")
+          .select("id, title, due_date")
+          .eq("wedding_id", weddingId)
+          .eq("is_system_generated", false)
+          .is("deleted_at", null)
+          .not("due_date", "is", null);
+        const affected = (userTasks ?? []) as { id: string; title: string; due_date: string | null }[];
+        const message =
+          affected.length > 0
+            ? `Your wedding date changed from ${currentWedding.date} to ${date}. Your rehearsal dinner and planning milestones have been updated automatically. However, ${affected.length} task(s) may have appointments that need rescheduling — please review and update them with your vendors.`
+            : `Your wedding date changed from ${currentWedding.date} to ${date}. Your rehearsal dinner date and all planning milestone dates have been updated automatically.`;
+        await supabase.from("date_change_alerts").insert({
+          wedding_id: weddingId,
+          change_type: "wedding_date",
+          old_value: currentWedding.date,
+          new_value: date,
+          affected_tasks: affected as unknown as import("@/lib/supabase/types").Json,
+          message,
+        });
+      }
     }
   } else {
     const { data: newWedding, error } = await supabase
