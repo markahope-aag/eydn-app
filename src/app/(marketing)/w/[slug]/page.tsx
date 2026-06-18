@@ -206,6 +206,33 @@ export default async function WeddingWebsitePage({
   // couples who only set venue_city (e.g. "still looking") still see a place.
   const venueDisplay = wedding.venue || wedding.venue_city || null;
 
+  // Hero text contrast safeguard. White hero text fails WCAG AA once the theme
+  // gradient gets light. When BOTH theme colors are light, switch the hero text
+  // to dark ink (which clears AA over the whole light gradient); dark/default
+  // themes keep white. The cover-photo layout always keeps white — its dark
+  // scrim already guarantees contrast over any image.
+  const heroLuminance = (hex: string): number => {
+    const m = (hex || "").replace("#", "").trim();
+    const full = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
+    if (!/^[0-9a-fA-F]{6}$/.test(full)) return 0; // unknown → treat as dark
+    const toLin = (v: number) => {
+      const s = v / 255;
+      return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    };
+    return (
+      0.2126 * toLin(parseInt(full.slice(0, 2), 16)) +
+      0.7152 * toLin(parseInt(full.slice(2, 4), 16)) +
+      0.0722 * toLin(parseInt(full.slice(4, 6), 16))
+    );
+  };
+  const isLightHero =
+    heroLuminance(theme.primaryColor || "#2C3E2D") > 0.3 &&
+    heroLuminance(theme.accentColor || "#D4A5A5") > 0.3;
+  const heroH = isLightHero ? "text-[#2A2233]" : "text-white";
+  const heroAmp = isLightHero ? "text-[#2A2233]/70" : "text-white/80";
+  const heroDate = isLightHero ? "text-[#2A2233]/85" : "text-white/90";
+  const heroMuted = isLightHero ? "text-[#2A2233]/75" : "text-white/85";
+
   // Countdown — computed at request time (server component renders once per request)
   const requestTime = new Date();
   const daysUntil = wedding.date
@@ -247,22 +274,22 @@ export default async function WeddingWebsitePage({
               />
             </div>
             <div className="w-full md:w-1/2 flex flex-col items-center justify-center text-center px-8 py-16" style={{ background: `linear-gradient(135deg, var(--theme-primary), var(--theme-accent))` }}>
-              <h1 className="text-[36px] sm:text-[48px] md:text-[60px] font-[family-name:var(--font-serif)] font-normal text-white leading-tight">
+              <h1 className={`text-[36px] sm:text-[48px] md:text-[60px] font-[family-name:var(--font-serif)] font-normal ${heroH} leading-tight`}>
                 {wedding.partner1_name}
-                <span className="block text-[22px] md:text-[26px] font-[family-name:var(--font-serif)] italic text-white/80 my-2">&</span>
+                <span className={`block text-[22px] md:text-[26px] font-[family-name:var(--font-serif)] italic ${heroAmp} my-2`}>&</span>
                 {wedding.partner2_name}
               </h1>
               {weddingDate && (
-                <p className="mt-4 text-[18px] text-white/90 tracking-wide">{weddingDate}</p>
+                <p className={`mt-4 text-[18px] ${heroDate} tracking-wide`}>{weddingDate}</p>
               )}
               {venueDisplay && (
-                <p className="mt-1 text-[16px] text-white/85">{venueDisplay}</p>
+                <p className={`mt-1 text-[16px] ${heroMuted}`}>{venueDisplay}</p>
               )}
               {wedding.website_headline && (
-                <p className="mt-4 text-[16px] text-white/85 max-w-sm italic">{wedding.website_headline}</p>
+                <p className={`mt-4 text-[16px] ${heroMuted} max-w-sm italic`}>{wedding.website_headline}</p>
               )}
               {daysUntil !== null && daysUntil > 0 && (
-                <p className="mt-4 text-[14px] text-white/85 tracking-widest uppercase">{daysUntil} days to go</p>
+                <p className={`mt-4 text-[14px] ${heroMuted} tracking-widest uppercase`}>{daysUntil} days to go</p>
               )}
             </div>
           </div>
@@ -314,24 +341,24 @@ export default async function WeddingWebsitePage({
             <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 20% 80%, white 0%, transparent 50%), radial-gradient(circle at 80% 20%, white 0%, transparent 50%)" }} />
             <div className="relative z-10">
-              <h1 className="text-[40px] sm:text-[56px] md:text-[72px] font-[family-name:var(--font-serif)] font-normal text-white leading-tight">
+              <h1 className={`text-[40px] sm:text-[56px] md:text-[72px] font-[family-name:var(--font-serif)] font-normal ${heroH} leading-tight`}>
                 {wedding.partner1_name}
-                <span className="block text-[24px] md:text-[28px] font-[family-name:var(--font-serif)] italic text-white/80 my-2">&</span>
+                <span className={`block text-[24px] md:text-[28px] font-[family-name:var(--font-serif)] italic ${heroAmp} my-2`}>&</span>
                 {wedding.partner2_name}
               </h1>
               {weddingDate && (
-                <p className="mt-4 text-[18px] text-white/90 tracking-wide">{weddingDate}</p>
+                <p className={`mt-4 text-[18px] ${heroDate} tracking-wide`}>{weddingDate}</p>
               )}
               {venueDisplay && (
-                <p className="mt-1 text-[16px] text-white/85">{venueDisplay}</p>
+                <p className={`mt-1 text-[16px] ${heroMuted}`}>{venueDisplay}</p>
               )}
               {wedding.website_headline && (
-                <p className="mt-4 text-[16px] text-white/85 max-w-lg mx-auto italic">
+                <p className={`mt-4 text-[16px] ${heroMuted} max-w-lg mx-auto italic`}>
                   {wedding.website_headline}
                 </p>
               )}
               {daysUntil !== null && daysUntil > 0 && (
-                <p className="mt-4 text-[14px] text-white/85 tracking-widest uppercase">{daysUntil} days to go</p>
+                <p className={`mt-4 text-[14px] ${heroMuted} tracking-widest uppercase`}>{daysUntil} days to go</p>
               )}
             </div>
           </div>
