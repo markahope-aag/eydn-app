@@ -9,10 +9,21 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockDeleteResult = vi.fn();
+const mockSelectResult = vi.fn();
 
+// The route first looks up the target row (select → eq → eq → maybeSingle) to
+// learn its email/user_id, then deletes the clicked row plus any other rows for
+// that collaborator (delete → eq → eq, called multiple times).
 function makeSupabase() {
   return {
     from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn(() => mockSelectResult()),
+          })),
+        })),
+      })),
       delete: vi.fn(() => ({
         eq: vi.fn(() => ({
           eq: vi.fn(() => mockDeleteResult()),
@@ -37,6 +48,7 @@ beforeEach(() => {
     role: "owner",
   });
   mockDeleteResult.mockResolvedValue({ error: null });
+  mockSelectResult.mockResolvedValue({ data: { email: "guest@example.com", user_id: "u_1" }, error: null });
 });
 
 describe("DELETE /api/collaborators/[id]", () => {
