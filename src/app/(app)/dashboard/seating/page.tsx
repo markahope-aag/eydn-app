@@ -771,8 +771,13 @@ export default function SeatingPage() {
               tabIndex={0}
               role="region"
               aria-label="Seating chart canvas"
-              style={{ minHeight: 500 }}
+              // WebkitTouchCallout:none stops iOS from popping the long-press
+              // selection/callout menu over a table mid-drag; onContextMenu
+              // suppresses the right-click/long-press menu so those gestures
+              // don't interrupt dragging on the canvas.
+              style={{ minHeight: 500, WebkitTouchCallout: "none" }}
               onDragOver={(e) => e.preventDefault()}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <div
                 style={{
