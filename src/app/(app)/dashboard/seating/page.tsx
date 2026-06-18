@@ -699,12 +699,15 @@ export default function SeatingPage() {
 
       {/* RECEPTION TAB */}
       {tab === "reception" && (
-        <div className="flex gap-6 h-[calc(100vh-10rem)]">
-          <div className="flex-1 flex flex-col">
-            {/* Toolbar */}
-            <div className="flex items-center justify-between mb-3 gap-3">
-              <p className="text-[13px] text-muted flex-1">Drag tables and areas to reposition. Drag guests onto tables.</p>
-              <div className="flex items-center gap-2">
+        // Stack on mobile so the guest sidebar is full-width and reachable;
+        // side-by-side with a fixed viewport height only from lg up.
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:h-[calc(100vh-10rem)]">
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Toolbar — stacks on mobile so the controls (incl. zoom) sit on
+                their own wrapping row instead of overflowing off-screen. */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-3">
+              <p className="text-[13px] text-muted sm:flex-1">Drag tables and areas to reposition. Assign a guest by dragging them onto a table, or use the table dropdown on each guest.</p>
+              <div className="flex items-center gap-2 flex-wrap">
                 {/* Undo */}
                 <button
                   onClick={handleUndo}
@@ -744,7 +747,7 @@ export default function SeatingPage() {
 
             <div
               ref={canvasRef}
-              className="relative bg-white rounded-[16px] border border-border flex-1 overflow-auto"
+              className="relative bg-white rounded-[16px] border border-border h-[55vh] lg:h-auto lg:flex-1 overflow-auto"
               tabIndex={0}
               role="region"
               aria-label="Seating chart canvas"
@@ -1086,8 +1089,9 @@ export default function SeatingPage() {
             </div>
           </div>
 
-          {/* Guest sidebar */}
-          <div className="w-56 flex-shrink-0 flex flex-col">
+          {/* Guest sidebar — full-width below the canvas on mobile, fixed
+              224px rail from lg up. */}
+          <div className="w-full lg:w-56 lg:flex-shrink-0 flex flex-col lg:min-h-0">
             <h2 className="text-[15px] font-semibold text-muted mb-2">Unassigned ({unassignedGuests.length})</h2>
             <input
               type="text"
@@ -1097,7 +1101,7 @@ export default function SeatingPage() {
               aria-label="Search unassigned guests"
               className="rounded-[10px] border-border px-3 py-1.5 text-[13px] mb-2"
             />
-            <div className="space-y-1 flex-1 overflow-y-auto" role="list" aria-label="Unassigned guests — drag to a table or use the dropdown to assign">
+            <div className="space-y-1 max-h-[40vh] lg:max-h-none lg:flex-1 overflow-y-auto" role="list" aria-label="Unassigned guests — drag to a table or use the dropdown to assign">
               {unassignedGuests
                 .filter((g) => !unassignedSearch || g.name.toLowerCase().includes(unassignedSearch.toLowerCase()))
                 .map((guest) => (
