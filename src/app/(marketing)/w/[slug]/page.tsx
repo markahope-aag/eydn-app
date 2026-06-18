@@ -247,7 +247,7 @@ export default async function WeddingWebsitePage({
               />
             </div>
             <div className="w-full md:w-1/2 flex flex-col items-center justify-center text-center px-8 py-16" style={{ background: `linear-gradient(135deg, var(--theme-primary), var(--theme-accent))` }}>
-              <h1 className="text-[48px] md:text-[60px] font-[family-name:var(--font-serif)] font-normal text-white leading-tight">
+              <h1 className="text-[36px] sm:text-[48px] md:text-[60px] font-[family-name:var(--font-serif)] font-normal text-white leading-tight">
                 {wedding.partner1_name}
                 <span className="block text-[22px] md:text-[26px] font-[family-name:var(--font-serif)] italic text-white/80 my-2">&</span>
                 {wedding.partner2_name}
@@ -268,7 +268,11 @@ export default async function WeddingWebsitePage({
           </div>
         ) : wedding.website_cover_url ? (
           /* Fullscreen layout: image background with text overlay */
-          <div className="relative h-[80vh] min-h-[520px]">
+          // Height is driven by the content (min 80vh) rather than a fixed
+          // h-[80vh] — on a short phone with long names/headline, a fixed
+          // height + justify-end + the section's overflow-hidden clipped the
+          // top of the hero text. Letting it grow keeps everything visible.
+          <div className="relative">
             <Image
               src={wedding.website_cover_url}
               alt={`${coupleNames} wedding cover photo`}
@@ -280,9 +284,9 @@ export default async function WeddingWebsitePage({
               unoptimized
             />
             <div className="absolute inset-0 bg-gradient-to-b from-[#1A1A2E]/20 via-transparent to-[#1A1A2E]/70" />
-            <div className="relative z-10 flex flex-col items-center justify-end h-full pb-20 text-center px-6">
+            <div className="relative z-10 flex flex-col items-center justify-end min-h-[80vh] pt-24 pb-12 sm:pb-20 text-center px-6">
               <h1
-                className="text-[56px] md:text-[72px] font-[family-name:var(--font-serif)] font-normal text-white drop-shadow-lg leading-tight"
+                className="text-[40px] sm:text-[56px] md:text-[72px] font-[family-name:var(--font-serif)] font-normal text-white drop-shadow-lg leading-tight"
               >
                 {wedding.partner1_name}
                 <span className="block text-[24px] md:text-[28px] font-[family-name:var(--font-serif)] italic text-white/80 my-2">&</span>
@@ -305,12 +309,12 @@ export default async function WeddingWebsitePage({
             </div>
           </div>
         ) : (
-          <div className="relative overflow-hidden py-32 text-center px-6" style={{ background: `linear-gradient(135deg, var(--theme-primary), var(--theme-accent))` }}>
+          <div className="relative overflow-hidden py-20 sm:py-32 text-center px-6" style={{ background: `linear-gradient(135deg, var(--theme-primary), var(--theme-accent))` }}>
             {/* Subtle decorative pattern */}
             <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 20% 80%, white 0%, transparent 50%), radial-gradient(circle at 80% 20%, white 0%, transparent 50%)" }} />
             <div className="relative z-10">
-              <h1 className="text-[56px] md:text-[72px] font-[family-name:var(--font-serif)] font-normal text-white leading-tight">
+              <h1 className="text-[40px] sm:text-[56px] md:text-[72px] font-[family-name:var(--font-serif)] font-normal text-white leading-tight">
                 {wedding.partner1_name}
                 <span className="block text-[24px] md:text-[28px] font-[family-name:var(--font-serif)] italic text-white/80 my-2">&</span>
                 {wedding.partner2_name}
