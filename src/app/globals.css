@@ -196,6 +196,13 @@ h3 { font-size: 15px; font-weight: 600; line-height: 1.4; color: var(--deep-plum
   border-radius: 16px 16px 0 0;
   background: linear-gradient(135deg, var(--violet), var(--soft-violet));
 }
+/* Featured card — a thicker, full-spectrum violet→blush accent so the top
+   card visibly outranks the standard cards. */
+.card-featured::before {
+  height: 9px;
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(90deg, var(--violet), var(--soft-violet), #D4A5A5);
+}
 
 .card-list {
   background: var(--surface);

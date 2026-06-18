@@ -51,17 +51,25 @@ export default function ToolsHubPage() {
           Wedding planning tools, free to use.
         </h1>
         <p className="mt-4 text-[17px] text-muted leading-relaxed">
-          Free and no account needed — the planning tools couples actually use to
-          plan smarter.
+          Free, no account needed — wedding-planning tools couples use to plan
+          smarter.
         </p>
       </div>
 
       <div className="mt-14 space-y-6">
         {/* Featured — full-width, dominant: the highest-intent tool */}
-        <Link
-          href={featured.href}
-          className="group relative block card-summary rounded-[20px] border-2 border-violet/40 hover:border-violet transition p-8 md:p-10"
-        >
+        <div>
+          {/* Subtle wayfinding for first-time visitors */}
+          <p className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide text-violet mb-2">
+            Start here
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="translate-y-px">
+              <path d="M8 3v9M4.5 8.5L8 12l3.5-3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </p>
+          <Link
+            href={featured.href}
+            className="group relative block card-summary card-featured rounded-[20px] border-2 border-violet/40 hover:border-violet transition p-8 md:p-10"
+          >
           <div className="flex flex-col md:flex-row md:items-center gap-7">
             <div className="flex-1">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-violet text-white text-[11px] font-semibold uppercase tracking-wide px-3 py-1">
@@ -83,7 +91,8 @@ export default function ToolsHubPage() {
               </span>
             </div>
           </div>
-        </Link>
+          </Link>
+        </div>
 
         {/* Quizzes */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
