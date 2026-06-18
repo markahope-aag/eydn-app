@@ -12,6 +12,7 @@ type VendorRow = {
   poc_name: string | null;
   poc_phone: string | null;
   meal_count: number | null;
+  arrival_time: string | null;
 };
 
 type PartyRow = {
@@ -124,6 +125,7 @@ export function VendorsTab() {
                 <tr>
                   <th className="px-4 py-2 text-left font-semibold text-muted">Vendor</th>
                   <th className="px-4 py-2 text-left font-semibold text-muted">Category</th>
+                  <th className="px-4 py-2 text-left font-semibold text-muted">Arrival</th>
                   <th className="px-4 py-2 text-left font-semibold text-muted">Contact</th>
                   <th className="px-4 py-2 text-left font-semibold text-muted">Phone</th>
                 </tr>
@@ -133,6 +135,7 @@ export function VendorsTab() {
                   <tr key={v.id}>
                     <td className="px-4 py-2 font-semibold text-plum">{v.name}</td>
                     <td className="px-4 py-2 text-muted">{v.category}</td>
+                    <td className="px-4 py-2 text-muted">{v.arrival_time || "—"}</td>
                     <td className="px-4 py-2 text-muted">{v.poc_name || "—"}</td>
                     <td className="px-4 py-2 text-muted">{v.poc_phone || "—"}</td>
                   </tr>
