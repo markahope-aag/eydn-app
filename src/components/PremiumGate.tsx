@@ -61,6 +61,26 @@ export function usePremium() {
     });
   }, []);
 
+  // Read-only enforcement for the "parent" collaborator role. `notifyReadOnly`
+  // is the single source of the message so every gated control reads the same.
+  const notifyReadOnly = useCallback(() => {
+    toast.error("You have view-only access — only the couple can make changes.");
+  }, []);
+
+  // Wrap an edit action: if the user is view-only, show the message and skip;
+  // otherwise run it. For onClick handlers. (Use `isReadOnly` + `notifyReadOnly`
+  // for early-returns in handlers that take events/args.)
+  const guardEdit = useCallback(
+    (action: () => void) => {
+      if (status?.role === "parent") {
+        notifyReadOnly();
+        return;
+      }
+      action();
+    },
+    [status, notifyReadOnly]
+  );
+
   // Legacy API: gate on the overall hasAccess boolean.
   const guardAction = useCallback(
     (action: () => void) => {
@@ -109,6 +129,8 @@ export function usePremium() {
     can,
     guardAction,
     guardFeature,
+    guardEdit,
+    notifyReadOnly,
   };
 }
 

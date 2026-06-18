@@ -6,6 +6,7 @@ import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Tooltip } from "@/components/Tooltip";
+import { usePremium } from "@/components/PremiumGate";
 import type {
   Table,
   Guest,
@@ -32,6 +33,7 @@ const RECT_MIN_WIDTH = 120;
 const RECT_MIN_HEIGHT = 70;
 
 export default function SeatingPage() {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [tab, setTab] = useState<Tab>("reception");
   const [tables, setTables] = useState<Table[]>([]);
   const [noWedding, setNoWedding] = useState(false);
@@ -96,6 +98,7 @@ export default function SeatingPage() {
   // tables impossible to reposition there. touch-action:none on the draggable
   // elements (see JSX) stops the browser from scrolling mid-drag.
   const handleTablePointerDown = useCallback((e: React.PointerEvent, tableId: string, tableX: number, tableY: number) => {
+    if (isReadOnly) { notifyReadOnly(); return; }
     e.preventDefault();
     setDraggingTable(tableId);
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -103,7 +106,7 @@ export default function SeatingPage() {
       x: e.clientX - (rect?.left || 0) - tableX,
       y: e.clientY - (rect?.top || 0) - tableY,
     };
-  }, []);
+  }, [isReadOnly, notifyReadOnly]);
 
   useEffect(() => {
     if (!draggingTable) return;
@@ -193,6 +196,7 @@ export default function SeatingPage() {
   }, [resizingTable]);
 
   function handleTableResizePointerDown(e: React.PointerEvent, tableId: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     e.preventDefault();
     e.stopPropagation();
     setResizingTable(tableId);
@@ -200,6 +204,7 @@ export default function SeatingPage() {
 
   // --- Floor-plan object dragging & resizing ---
   const handleObjectPointerDown = useCallback((e: React.PointerEvent, objId: string, ox: number, oy: number) => {
+    if (isReadOnly) { notifyReadOnly(); return; }
     e.preventDefault();
     setDraggingObject(objId);
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -207,7 +212,7 @@ export default function SeatingPage() {
       x: e.clientX - (rect?.left || 0) - ox,
       y: e.clientY - (rect?.top || 0) - oy,
     };
-  }, []);
+  }, [isReadOnly, notifyReadOnly]);
 
   useEffect(() => {
     if (!draggingObject) return;
@@ -283,12 +288,14 @@ export default function SeatingPage() {
   }, [resizingObject]);
 
   function handleObjectResizePointerDown(e: React.PointerEvent, objId: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     e.preventDefault();
     e.stopPropagation();
     setResizingObject(objId);
   }
 
   async function addFloorObject() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const offset = floorObjects.length % 5;
     try {
       const res = await fetch("/api/seating/floor-objects", {
@@ -311,6 +318,7 @@ export default function SeatingPage() {
   }
 
   async function updateFloorObject(id: string, updates: Partial<FloorObject>) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setFloorObjects((prev) => prev.map((o) => (o.id === id ? { ...o, ...updates } : o)));
     try {
       const res = await fetch(`/api/seating/floor-objects?id=${id}`, {
@@ -325,6 +333,7 @@ export default function SeatingPage() {
   }
 
   async function deleteFloorObject(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = floorObjects;
     setFloorObjects((o) => o.filter((x) => x.id !== id));
     try {
@@ -338,6 +347,7 @@ export default function SeatingPage() {
 
   // --- Reception functions ---
   async function addTable() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     // Guard against a double-click (or slow network) firing two creates with
     // the same number before state updates — that's how duplicate tables end
     // up in the data.
@@ -381,6 +391,7 @@ export default function SeatingPage() {
   }
 
   async function deleteTable(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = tables;
     setTables((t) => t.filter((x) => x.id !== id));
     setAssignments((a) => a.filter((x) => x.seating_table_id !== id));
@@ -393,6 +404,7 @@ export default function SeatingPage() {
   }
 
   async function assignGuest(guestId: string, tableId: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     // Track previous state for undo
     const prevAssignment = assignments.find((a) => a.guest_id === guestId);
     undoStack.current.push({
@@ -425,6 +437,7 @@ export default function SeatingPage() {
   }
 
   async function unassignGuest(guestId: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prevAssignment = assignments.find((a) => a.guest_id === guestId);
     if (prevAssignment) {
       undoStack.current.push({
@@ -447,6 +460,7 @@ export default function SeatingPage() {
   }
 
   async function handleUndo() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const action = undoStack.current.pop();
     if (!action) return;
     setUndoCount((c) => c + 1);
@@ -504,6 +518,7 @@ export default function SeatingPage() {
 
   // --- Ceremony functions ---
   async function addCeremonyPosition(personName: string, personType: "wedding_party" | "officiant" | "couple", side: "left" | "right" | "center", role?: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     try {
       const res = await fetch("/api/ceremony", {
         method: "POST",
@@ -525,6 +540,7 @@ export default function SeatingPage() {
   }
 
   async function removeCeremonyPosition(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = ceremonyPositions;
     setCeremonyPositions((p) => p.filter((x) => x.id !== id));
     try {
@@ -535,6 +551,7 @@ export default function SeatingPage() {
   }
 
   async function reorderPosition(id: string, side: "left" | "right" | "center", direction: "up" | "down") {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const sidePositions = ceremonyPositions
       .filter((p) => p.side === side)
       .sort((a, b) => a.position_order - b.position_order);
@@ -583,6 +600,7 @@ export default function SeatingPage() {
   const editButtonRef = useRef<HTMLButtonElement | null>(null);
 
   async function updateTable(id: string, updates: Partial<Table>) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setTables((prev) =>
       prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
     );
@@ -612,6 +630,7 @@ export default function SeatingPage() {
 
   // Quick-add a guest without leaving the seating chart.
   async function addGuestFromSeating() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const name = newGuestName.trim();
     if (!name) return;
     setNewGuestName("");
@@ -646,6 +665,7 @@ export default function SeatingPage() {
   }
 
   async function updateSeatNumber(guestId: string, tableId: string, seatNumber: number | null) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setAssignments((prev) =>
       prev.map((a) => a.guest_id === guestId ? { ...a, seat_number: seatNumber } : a)
     );
@@ -740,8 +760,8 @@ export default function SeatingPage() {
                     +
                   </button>
                 </div>
-                <button onClick={addFloorObject} className="btn-secondary btn-sm">Add Area</button>
-                <button onClick={addTable} disabled={addingTable} className="btn-primary btn-sm disabled:opacity-50">{addingTable ? "Adding…" : "Add Table"}</button>
+                <button onClick={addFloorObject} disabled={isReadOnly} className="btn-secondary btn-sm disabled:opacity-50">Add Area</button>
+                <button onClick={addTable} disabled={addingTable || isReadOnly} className="btn-primary btn-sm disabled:opacity-50">{addingTable ? "Adding…" : "Add Table"}</button>
               </div>
             </div>
 

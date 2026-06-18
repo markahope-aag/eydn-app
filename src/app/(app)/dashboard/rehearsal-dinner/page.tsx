@@ -4,6 +4,7 @@ import { useState, useEffect, useId } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { Tooltip } from "@/components/Tooltip";
+import { usePremium } from "@/components/PremiumGate";
 import { exportRehearsalPDF } from "./_export-pdf";
 
 type TimelineItem = { time: string; event: string };
@@ -59,6 +60,7 @@ function generateRehearsalTimeline(startTime: string): TimelineItem[] {
 }
 
 export default function RehearsalDinnerPage() {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [data, setData] = useState<RehearsalDinner | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -151,6 +153,7 @@ export default function RehearsalDinnerPage() {
   }
 
   function updateField(field: keyof RehearsalDinner, value: string | number | null) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!data) return;
 
     // Date sync warning
@@ -179,6 +182,7 @@ export default function RehearsalDinnerPage() {
   }
 
   function addTimelineItem() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!data || !newTimelineTime.trim() || !newTimelineEvent.trim()) return;
     const updated = {
       ...data,
@@ -190,11 +194,13 @@ export default function RehearsalDinnerPage() {
   }
 
   function removeTimelineItem(index: number) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!data) return;
     save({ ...data, timeline: data.timeline.filter((_, i) => i !== index) });
   }
 
   function generateTimeline() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!data?.time) {
       toast.error("Set a dinner time first");
       return;
@@ -209,6 +215,7 @@ export default function RehearsalDinnerPage() {
   }
 
   function addGuest(name: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!data) return;
     if (data.guest_list.some((g) => g.name === name)) {
       toast("Already on the list");
@@ -220,6 +227,7 @@ export default function RehearsalDinnerPage() {
   }
 
   function updateGuestRsvp(index: number, rsvp: "pending" | "accepted" | "declined") {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!data) return;
     const updated = [...data.guest_list];
     updated[index] = { ...updated[index], rsvp };
@@ -227,6 +235,7 @@ export default function RehearsalDinnerPage() {
   }
 
   function removeGuest(index: number) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!data) return;
     save({ ...data, guest_list: data.guest_list.filter((_, i) => i !== index) });
   }
@@ -234,6 +243,7 @@ export default function RehearsalDinnerPage() {
   // Look the venue up on Google Places and pull in its address. Reuses
   // the vendor lookup endpoint (subscriber feature, daily quota).
   async function lookupVenue() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!data) return;
     const name = (data.venue || "").trim();
     if (name.length < 2) {
@@ -336,7 +346,7 @@ export default function RehearsalDinnerPage() {
             <button
               type="button"
               onClick={lookupVenue}
-              disabled={venueLookupLoading}
+              disabled={venueLookupLoading || isReadOnly}
               className="mt-1 text-[11px] text-violet hover:text-plum disabled:opacity-50"
             >
               {venueLookupLoading ? "Searching Google…" : "Look up on Google — fills in the address"}
@@ -427,7 +437,7 @@ export default function RehearsalDinnerPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-[16px] font-semibold text-plum">Timeline</h2>
           {data.timeline.length === 0 && data.time && (
-            <button onClick={generateTimeline} className="btn-primary btn-sm">
+            <button onClick={generateTimeline} disabled={isReadOnly} className="btn-primary btn-sm disabled:opacity-50">
               Generate Suggested Timeline
             </button>
           )}
@@ -450,7 +460,7 @@ export default function RehearsalDinnerPage() {
               </div>
             ))}
             {data.time && (
-              <button onClick={generateTimeline} className="text-[12px] text-muted hover:text-violet transition mt-1">
+              <button onClick={generateTimeline} disabled={isReadOnly} className="text-[12px] text-muted hover:text-violet transition mt-1 disabled:opacity-50">
                 Regenerate suggested timeline
               </button>
             )}
@@ -458,7 +468,7 @@ export default function RehearsalDinnerPage() {
         ) : data.time ? (
           <div className="text-center py-6">
             <p className="text-[14px] text-muted mb-3">No timeline items yet</p>
-            <button onClick={generateTimeline} className="btn-primary">
+            <button onClick={generateTimeline} disabled={isReadOnly} className="btn-primary disabled:opacity-50">
               Generate Suggested Timeline
             </button>
             <p className="text-[11px] text-muted mt-2">Creates a typical rehearsal dinner flow based on your {data.time} start time</p>
@@ -486,7 +496,7 @@ export default function RehearsalDinnerPage() {
           />
           <button
             onClick={addTimelineItem}
-            disabled={!newTimelineTime.trim() || !newTimelineEvent.trim()}
+            disabled={!newTimelineTime.trim() || !newTimelineEvent.trim() || isReadOnly}
             className="btn-primary btn-sm disabled:opacity-40"
           >
             Add
@@ -605,7 +615,7 @@ export default function RehearsalDinnerPage() {
             </div>
             <button
               onClick={() => { if (guestSearch.trim()) addGuest(guestSearch.trim()); }}
-              disabled={!guestSearch.trim()}
+              disabled={!guestSearch.trim() || isReadOnly}
               className="btn-primary btn-sm disabled:opacity-40"
             >
               Add

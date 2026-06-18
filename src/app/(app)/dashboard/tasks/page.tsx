@@ -15,6 +15,7 @@ import { TasksQuickStart } from "./TasksQuickStart";
 import { Tooltip } from "@/components/Tooltip";
 import { Modal } from "@/components/Modal";
 import { Field } from "@/components/Field";
+import { usePremium } from "@/components/PremiumGate";
 import { trackTaskCreated, trackTaskCompleted } from "@/lib/analytics";
 import type { Task } from "./types";
 
@@ -40,6 +41,7 @@ const ADD_CATEGORIES = [
 ];
 
 export default function TasksPage() {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [weddingDate, setWeddingDate] = useState<string | null>(null);
   const [noWedding, setNoWedding] = useState(false);
@@ -146,6 +148,7 @@ export default function TasksPage() {
 
   async function addTask(e: React.FormEvent) {
     e.preventDefault();
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!title.trim()) return;
 
     const tempId = crypto.randomUUID();
@@ -193,6 +196,7 @@ export default function TasksPage() {
   }
 
   async function cycleStatus(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
 
@@ -278,6 +282,7 @@ export default function TasksPage() {
   }
 
   async function updateStatus(id: string, status: "not_started" | "in_progress" | "done") {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = tasks;
     const newCompleted = status === "done";
     setTasks((t) =>
@@ -303,6 +308,7 @@ export default function TasksPage() {
   }
 
   async function updatePriority(id: string, newPriority: "high" | "medium" | "low") {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = tasks;
     setTasks((t) =>
       t.map((x) => (x.id === id ? { ...x, priority: newPriority } : x))
@@ -325,6 +331,7 @@ export default function TasksPage() {
   }
 
   async function deleteTask(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = tasks;
     setTasks((t) => t.filter((x) => x.id !== id));
 
@@ -339,6 +346,7 @@ export default function TasksPage() {
   }
 
   async function updateNotes(id: string, notes: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     try {
       const res = await fetch(`/api/tasks/${id}`, {
         method: "PATCH",
@@ -355,6 +363,7 @@ export default function TasksPage() {
   }
 
   async function updateDueDate(id: string, dueDate: string | null) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = tasks;
     setTasks((t) => t.map((x) => (x.id === id ? { ...x, due_date: dueDate } : x)));
     if (selectedTask?.id === id) {
@@ -376,6 +385,7 @@ export default function TasksPage() {
   }
 
   async function updateTitle(id: string, title: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prevTasks = tasks;
     const prevSelected = selectedTask;
     setTasks((t) => t.map((x) => (x.id === id ? { ...x, title } : x)));
@@ -445,6 +455,7 @@ export default function TasksPage() {
   }
 
   async function handleRegenerateLink() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     try {
       const res = await fetch("/api/tasks/calendar-token", { method: "POST" });
       if (!res.ok) throw new Error();
@@ -457,6 +468,7 @@ export default function TasksPage() {
   }
 
   async function reorderTasks(orderedIds: string[]) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     // Update local state: reorder tasks to match the new order
     setTasks((prev) => {
       const taskMap = new Map(prev.map((t) => [t.id, t]));
@@ -655,7 +667,8 @@ export default function TasksPage() {
         <button
           type="button"
           onClick={() => setShowAddTask(true)}
-          className="btn-primary btn-sm flex items-center gap-1.5 ml-auto"
+          disabled={isReadOnly}
+          className="btn-primary btn-sm flex items-center gap-1.5 ml-auto disabled:opacity-50"
         >
           <span className="text-[16px] leading-none">+</span> Add Task
         </button>
@@ -723,7 +736,7 @@ export default function TasksPage() {
             >
               Cancel
             </button>
-            <button type="submit" className="btn-primary">
+            <button type="submit" disabled={isReadOnly} className="btn-primary disabled:opacity-50">
               Add Task
             </button>
           </div>

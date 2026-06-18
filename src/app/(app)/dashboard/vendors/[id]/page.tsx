@@ -61,7 +61,7 @@ export default function VendorDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
-  const { guardFeature } = usePremium();
+  const { guardFeature, isReadOnly, notifyReadOnly } = usePremium();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
   const [showEmail, setShowEmail] = useState(false);
@@ -94,6 +94,7 @@ export default function VendorDetailPage({
   }, [params, loadAttachments]);
 
   async function deleteAttachment(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setAttachments((prev) => prev.filter((a) => a.id !== id));
     try {
       const res = await fetch(`/api/attachments/${id}`, { method: "DELETE" });
@@ -105,6 +106,7 @@ export default function VendorDetailPage({
   }
 
   async function updateField(field: string, value: boolean | string | number | null) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!vendorId) return;
     const prev = vendor;
     setVendor((v) => (v ? { ...v, [field]: value } : v));
@@ -219,7 +221,8 @@ export default function VendorDetailPage({
             <button
               key={s.value}
               onClick={() => updateField("status", s.value)}
-              className={`flex-1 min-w-[60px] py-1.5 text-[11px] sm:text-[12px] font-semibold rounded-[10px] transition ${
+              disabled={isReadOnly}
+              className={`flex-1 min-w-[60px] py-1.5 text-[11px] sm:text-[12px] font-semibold rounded-[10px] transition disabled:opacity-50 ${
                 i <= statusIdx
                   ? STATUS_COLORS[vendor.status] || "bg-lavender"
                   : "bg-whisper text-muted"
@@ -417,7 +420,8 @@ export default function VendorDetailPage({
                   </a>
                   <button
                     onClick={() => deleteAttachment(a.id)}
-                    className="text-[12px] text-error hover:opacity-80"
+                    disabled={isReadOnly}
+                    className="text-[12px] text-error hover:opacity-80 disabled:opacity-50"
                   >
                     Remove
                   </button>
@@ -472,7 +476,8 @@ export default function VendorDetailPage({
                 </div>
                 <button
                   onClick={() => deleteAttachment(a.id)}
-                  className="text-[12px] text-error hover:opacity-80"
+                  disabled={isReadOnly}
+                  className="text-[12px] text-error hover:opacity-80 disabled:opacity-50"
                 >
                   Remove
                 </button>

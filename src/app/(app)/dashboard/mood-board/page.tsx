@@ -26,6 +26,7 @@ import { Modal } from "@/components/Modal";
 import { trackMoodBoardAdd } from "@/lib/analytics";
 import { Tooltip } from "@/components/Tooltip";
 import { GuideLink } from "@/components/GuideLink";
+import { usePremium } from "@/components/PremiumGate";
 import Link from "next/link";
 import { extractPalette, pickThemeColors } from "@/lib/images/palette";
 
@@ -98,6 +99,7 @@ const SUGGESTED_CATEGORIES: { label: string; icon: string }[] = [
 ];
 
 export default function MoodBoardPage() {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [items, setItems] = useState<MoodItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [noWedding, setNoWedding] = useState(false);
@@ -212,6 +214,7 @@ export default function MoodBoardPage() {
   }
 
   async function addFromUrl() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     // Multi-URL: accept newline-separated URLs so couples can paste a list
     // of pin links at once. Filter out blank lines and trim whitespace.
     const urls = imageUrl
@@ -261,6 +264,7 @@ export default function MoodBoardPage() {
   }
 
   async function addFromUpload() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const files = Array.from(fileRef.current?.files ?? []);
     if (files.length === 0) return;
     setUploading(true);
@@ -317,6 +321,7 @@ export default function MoodBoardPage() {
   }
 
   async function removeItem(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = items;
     setItems((i) => i.filter((x) => x.id !== id));
     try {
@@ -328,6 +333,7 @@ export default function MoodBoardPage() {
   }
 
   async function updateCaption(id: string, newCaption: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, caption: newCaption || null } : i)));
     await fetch(`/api/mood-board/${id}`, {
       method: "PATCH",
@@ -337,6 +343,7 @@ export default function MoodBoardPage() {
   }
 
   async function updateCategory(id: string, newCategory: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, category: newCategory } : i)));
     await fetch(`/api/mood-board/${id}`, {
       method: "PATCH",
@@ -346,6 +353,7 @@ export default function MoodBoardPage() {
   }
 
   async function updateLocation(id: string, newLocation: string | null) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, location: newLocation } : i)));
     await fetch(`/api/mood-board/${id}`, {
       method: "PATCH",
@@ -355,6 +363,7 @@ export default function MoodBoardPage() {
   }
 
   async function updateVendor(id: string, newVendorId: string | null) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, vendor_id: newVendorId } : i)));
     await fetch(`/api/mood-board/${id}`, {
       method: "PATCH",
@@ -364,6 +373,7 @@ export default function MoodBoardPage() {
   }
 
   async function updateSize(id: string, size: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, size } : i)));
     setLightbox((l) => (l && l.id === id ? { ...l, size } : l));
     await fetch(`/api/mood-board/${id}`, {
@@ -376,6 +386,7 @@ export default function MoodBoardPage() {
   // Push the image's extracted palette into the website theme. Fetches the
   // current theme first and merges, so other theme settings aren't lost.
   async function applyPaletteToWebsite() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const colors = pickThemeColors(palette);
     if (!colors) return;
     setApplyingColors(true);
@@ -404,6 +415,7 @@ export default function MoodBoardPage() {
 
   // Drag-to-reorder (only in the "All" view, where the full order is unambiguous).
   function handleDragEnd(event: DragEndEvent) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIndex = items.findIndex((i) => i.id === active.id);
@@ -522,7 +534,8 @@ export default function MoodBoardPage() {
           )}
           <button
             onClick={() => setShowAdd(!showAdd)}
-            className={showAdd || items.length === 0 ? "btn-secondary" : "btn-primary"}
+            disabled={isReadOnly}
+            className={`${showAdd || items.length === 0 ? "btn-secondary" : "btn-primary"} disabled:opacity-50`}
           >
             {showAdd ? "Cancel" : "Add Inspiration"}
           </button>
@@ -717,7 +730,7 @@ export default function MoodBoardPage() {
 
           <button
             onClick={addMode === "url" ? addFromUrl : () => { if (addMode === "upload" && fileRef.current?.files?.length) addFromUpload(); }}
-            disabled={uploading || (addMode === "url" && !imageUrl.trim())}
+            disabled={uploading || (addMode === "url" && !imageUrl.trim()) || isReadOnly}
             className="btn-primary disabled:opacity-50"
           >
             {uploading ? "Adding..." : "Add to Board"}
@@ -786,7 +799,8 @@ export default function MoodBoardPage() {
           <button
             type="button"
             onClick={() => { setAddMode("upload"); setShowAdd(true); }}
-            className="group w-full flex flex-col items-center justify-center text-center py-12 px-6 border-2 border-dashed border-violet/30 rounded-[20px] bg-lavender/20 hover:border-violet/60 hover:bg-lavender/40 transition"
+            disabled={isReadOnly}
+            className="group w-full flex flex-col items-center justify-center text-center py-12 px-6 border-2 border-dashed border-violet/30 rounded-[20px] bg-lavender/20 hover:border-violet/60 hover:bg-lavender/40 transition disabled:opacity-50"
           >
             <span className="flex items-center justify-center w-14 h-14 rounded-full bg-violet/10 text-violet">
               <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -814,7 +828,8 @@ export default function MoodBoardPage() {
                 key={label}
                 type="button"
                 onClick={() => { setCategory(label); setAddMode("upload"); setShowAdd(true); }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-3.5 py-2 text-[13px] text-plum hover:border-violet hover:bg-lavender/40 transition"
+                disabled={isReadOnly}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-3.5 py-2 text-[13px] text-plum hover:border-violet hover:bg-lavender/40 transition disabled:opacity-50"
               >
                 <span aria-hidden="true">{icon}</span>
                 {label}

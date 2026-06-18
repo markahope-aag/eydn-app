@@ -11,6 +11,7 @@ import { RsvpTab } from "./_components/RsvpTab";
 import { GalleryTab } from "./_components/GalleryTab";
 import { WebsiteProgressPanel } from "./_components/WebsiteProgressPanel";
 import { getWebsiteProgress } from "@/lib/website-milestones";
+import { usePremium } from "@/components/PremiumGate";
 
 type Tab = "setup" | "schedule" | "registry" | "rsvp" | "gallery";
 type ScheduleItem = { time: string; event: string };
@@ -24,6 +25,7 @@ type RsvpToken = {
 type Photo = { id: string; file_url: string; caption: string | null; uploader_name: string | null; approved: boolean; created_at: string };
 
 export default function WebsitePage() {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [tab, setTab] = useState<Tab>("setup");
   const [loading, setLoading] = useState(true);
   const [noWedding, setNoWedding] = useState(false);
@@ -77,6 +79,7 @@ export default function WebsitePage() {
 
   const autoSave = useCallback(
     (fields: Record<string, unknown>, debounceMs = 1500) => {
+      if (isReadOnly) { notifyReadOnly(); return; }
       if (saveTimer.current) clearTimeout(saveTimer.current);
       if (savedFadeTimer.current) clearTimeout(savedFadeTimer.current);
       setSaveStatus("saving");
@@ -100,7 +103,7 @@ export default function WebsitePage() {
         }
       }, debounceMs);
     },
-    []
+    [isReadOnly, notifyReadOnly]
   );
 
   const autoSaveImmediate = useCallback(

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { PhotoUpload } from "@/app/(marketing)/w/[slug]/PhotoUpload";
+import { usePremium } from "@/components/PremiumGate";
 
 type Photo = { id: string; file_url: string; caption: string | null; uploader_name: string | null; approved: boolean; created_at: string };
 
@@ -24,6 +25,7 @@ export function GalleryTab({
   setPhotoApprovalRequired,
   autoSaveImmediate,
 }: GalleryTabProps) {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [downloading, setDownloading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -95,6 +97,7 @@ export function GalleryTab({
   }
 
   async function deletePhoto(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     try {
       const res = await fetch(`/api/wedding-website/photos?id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
@@ -106,6 +109,7 @@ export function GalleryTab({
   }
 
   async function setApproved(id: string, approved: boolean) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     try {
       const res = await fetch("/api/wedding-website/photos", {
         method: "PATCH",
@@ -241,13 +245,15 @@ export function GalleryTab({
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => setApproved(photo.id, !photo.approved)}
-                      className="btn-ghost btn-sm text-[12px] text-violet"
+                      disabled={isReadOnly}
+                      className="btn-ghost btn-sm text-[12px] text-violet disabled:opacity-50"
                     >
                       {photo.approved ? "Unapprove" : "Approve"}
                     </button>
                     <button
                       onClick={() => deletePhoto(photo.id)}
-                      className="btn-ghost btn-sm text-red-500 text-[12px]"
+                      disabled={isReadOnly}
+                      className="btn-ghost btn-sm text-red-500 text-[12px] disabled:opacity-50"
                     >
                       {photo.approved ? "Remove" : "Reject"}
                     </button>

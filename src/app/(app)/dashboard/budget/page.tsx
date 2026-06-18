@@ -7,6 +7,7 @@ import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Tooltip } from "@/components/Tooltip";
 import BudgetOptimizerBanner from "@/components/BudgetOptimizerBanner";
+import { usePremium } from "@/components/PremiumGate";
 import { BUDGET_CATEGORIES, BUDGET_TEMPLATE, BUDGET_ALLOCATIONS } from "@/lib/budget/budget-template";
 
 type Expense = {
@@ -30,6 +31,7 @@ type Vendor = {
 };
 
 export default function BudgetPage() {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [budget, setBudget] = useState(0);
   const [noWedding, setNoWedding] = useState(false);
   const [weddingId, setWeddingId] = useState<string | null>(null);
@@ -93,6 +95,7 @@ export default function BudgetPage() {
   }, []);
 
   function handleBudgetChange(value: number) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setBudget(value);
     if (budgetTimer.current) clearTimeout(budgetTimer.current);
     budgetTimer.current = setTimeout(async () => {
@@ -111,6 +114,7 @@ export default function BudgetPage() {
   }
 
   function handleFieldChange(id: string, field: string, value: number | null) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setExpenses((prev) =>
       prev.map((e) => (e.id === id ? { ...e, [field]: value } : e))
     );
@@ -143,6 +147,7 @@ export default function BudgetPage() {
 
   async function addExpense(e: React.FormEvent) {
     e.preventDefault();
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!description.trim()) return;
 
     const tempId = crypto.randomUUID();
@@ -182,6 +187,7 @@ export default function BudgetPage() {
   }
 
   async function removeExpense(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = expenses;
     setExpenses((e) => e.filter((x) => x.id !== id));
 
@@ -195,6 +201,7 @@ export default function BudgetPage() {
   }
 
   async function linkVendor(expenseId: string, vendorId: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const vendor = vendors.find((v) => v.id === vendorId);
     if (!vendor) return;
 
@@ -232,6 +239,7 @@ export default function BudgetPage() {
   }
 
   async function unlinkVendor(expenseId: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = expenses;
     // Keep the estimated/amount_paid as-is — the couple may have edited them
     // after the link, and zeroing them out on unlink would silently destroy
@@ -566,7 +574,7 @@ export default function BudgetPage() {
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
-        <button type="submit" className="btn-primary">Add</button>
+        <button type="submit" disabled={isReadOnly} className="btn-primary disabled:opacity-50">Add</button>
       </form>
 
       {/* Grouped expense list */}
@@ -592,7 +600,8 @@ export default function BudgetPage() {
                     <h2 className="text-[15px] font-semibold text-plum">{cat}</h2>
                     <button
                       onClick={() => { setCategory(cat); setDescription(""); document.querySelector<HTMLInputElement>('input[aria-label="Add line item"]')?.focus(); }}
-                      className="text-[11px] text-violet hover:text-plum transition"
+                      disabled={isReadOnly}
+                      className="text-[11px] text-violet hover:text-plum transition disabled:opacity-50"
                       aria-label={`Add item to ${cat}`}
                       title={`Add item to ${cat}`}
                     >

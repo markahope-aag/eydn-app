@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { SkeletonList } from "@/components/Skeleton";
 import { NoWeddingState } from "@/components/NoWeddingState";
-import { PremiumButton } from "@/components/PremiumGate";
+import { PremiumButton, usePremium } from "@/components/PremiumGate";
 import { exportWeddingBinder } from "@/lib/export-binder";
 import { Tooltip } from "@/components/Tooltip";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -23,6 +23,7 @@ import { AttireTab } from "./_components/AttireTab";
 import { exportDayOfPDF } from "./_components/export-pdf";
 
 export default function DayOfPage() {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [plan, setPlan] = useState<DayOfPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [noWedding, setNoWedding] = useState(false);
@@ -78,6 +79,7 @@ export default function DayOfPage() {
   }, []);
 
   async function savePlan(updated: DayOfPlan) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setPlan(updated);
     try {
       const res = await fetch("/api/day-of", {
@@ -96,6 +98,7 @@ export default function DayOfPage() {
   }
 
   function updateTimeline(index: number, field: keyof TimelineItem, value: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!plan) return;
     const updated = [...plan.timeline];
     updated[index] = { ...updated[index], [field]: value };
@@ -121,11 +124,13 @@ export default function DayOfPage() {
   }
 
   function addTimelineItem() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!plan) return;
     savePlan({ ...plan, timeline: [...plan.timeline, { time: "", event: "", notes: "" }] });
   }
 
   function removeTimelineItem(index: number) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!plan) return;
     savePlan({ ...plan, timeline: plan.timeline.filter((_, i) => i !== index) });
   }
@@ -136,6 +141,7 @@ export default function DayOfPage() {
   // is active. Note: editing a row's time still re-sorts chronologically
   // (see updateTimeline) — manual order persists until the next time edit.
   function moveTimelineItem(indexA: number, indexB: number) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!plan) return;
     const { timeline } = plan;
     if (
@@ -151,6 +157,7 @@ export default function DayOfPage() {
   }
 
   function handleCeremonyTimeSet() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!plan || !ceremonyTime) return;
     if (plan.timeline.length > 0 && plan.ceremonyTime !== ceremonyTime) {
       setConfirmRegenerate(true);
@@ -160,6 +167,7 @@ export default function DayOfPage() {
   }
 
   async function doRegenerateTimeline() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!plan || !ceremonyTime) return;
     const newTimeline = generateTimelineFromCeremony(ceremonyTime);
     if (newTimeline.length === 0) {
@@ -178,6 +186,7 @@ export default function DayOfPage() {
   }
 
   function updatePackingNote(index: number, notes: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!plan) return;
     const updated = [...plan.packingChecklist];
     updated[index] = { ...updated[index], notes };
@@ -185,6 +194,7 @@ export default function DayOfPage() {
   }
 
   function addPackingItem() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!plan || !newPackingItem.trim()) return;
     savePlan({
       ...plan,
@@ -194,11 +204,13 @@ export default function DayOfPage() {
   }
 
   function removePackingItem(index: number) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!plan) return;
     savePlan({ ...plan, packingChecklist: plan.packingChecklist.filter((_, i) => i !== index) });
   }
 
   function toggleCheckItem(item: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!plan) return;
     const next = new Set(checkedItems);
     if (next.has(item)) next.delete(item);
@@ -238,6 +250,7 @@ export default function DayOfPage() {
           </div>
           <button
             onClick={async () => {
+              if (isReadOnly) { notifyReadOnly(); return; }
               let customTimeline: TimelineItem[] | null = null;
               if (ceremonyTime.trim()) {
                 customTimeline = generateTimelineFromCeremony(ceremonyTime);
@@ -284,7 +297,7 @@ export default function DayOfPage() {
                 toast.error("Couldn't generate the plan. Try again.");
               }
             }}
-            disabled={!ceremonyTime.trim()}
+            disabled={!ceremonyTime.trim() || isReadOnly}
             className="btn-primary text-[16px] px-8 py-3 disabled:opacity-40"
           >
             Generate Timeline
@@ -343,7 +356,7 @@ export default function DayOfPage() {
           aria-label="Ceremony start time"
           className="rounded-[10px] border-2 border-violet/30 px-3 py-1.5 text-[17px] font-semibold text-plum w-36 text-center"
         />
-        <button onClick={handleCeremonyTimeSet} className="btn-secondary btn-sm">
+        <button onClick={handleCeremonyTimeSet} disabled={isReadOnly} className="btn-secondary btn-sm disabled:opacity-50">
           Regenerate Timeline
         </button>
         <Tooltip text="Changing the ceremony time recalculates all events. Custom events you've added are preserved." wide />

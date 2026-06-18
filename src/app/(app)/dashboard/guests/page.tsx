@@ -79,6 +79,7 @@ export default function GuestsPage() {
 
   async function addGuest(e: React.FormEvent) {
     e.preventDefault();
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!name.trim()) return;
 
     // Capture plus-one intent before the form fields are reset below.
@@ -197,6 +198,7 @@ export default function GuestsPage() {
   }
 
   async function removeGuest(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = guests;
     // Removing a head guest also removes their party members.
     setGuests((g) => g.filter((x) => x.id !== id && x.party_head_id !== id));
@@ -212,6 +214,7 @@ export default function GuestsPage() {
   }
 
   async function updateGuest(id: string, field: string, value: string | boolean | null) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = guests;
     setGuests((g) =>
       g.map((x) => (x.id === id ? { ...x, [field]: value } : x))
@@ -236,6 +239,7 @@ export default function GuestsPage() {
   // Add a party member (child / plus-one) under a head guest. The companion
   // is a full guest row, so it counts toward the headcount and can be seated.
   async function addCompanion(head: Guest) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const companionName = (companionDraft[head.id] || "").trim();
     if (!companionName) return;
 
@@ -298,6 +302,7 @@ export default function GuestsPage() {
   }
 
   async function importFromContacts() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const contactsApi = "contacts" in navigator && "ContactsManager" in window;
     if (!contactsApi) {
       toast.error("Importing from your phone's contacts isn't supported on iPhone or iPad — use Import CSV instead. (It works in Chrome on Android.)");
@@ -347,6 +352,7 @@ export default function GuestsPage() {
   }
 
   async function importCSV() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const file = fileInput.current?.files?.[0];
     if (!file) return;
 
@@ -387,7 +393,7 @@ export default function GuestsPage() {
 
 
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const { guardAction } = usePremium();
+  const { guardAction, isReadOnly, notifyReadOnly } = usePremium();
   const [selectedGuests, setSelectedGuests] = useState<Set<string>>(new Set());
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
   const [bulkGroupValue, setBulkGroupValue] = useState("");
@@ -453,6 +459,7 @@ export default function GuestsPage() {
   }
 
   async function bulkChangeStatus(status: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const ids = [...selectedGuests];
     const prev = guests;
     setGuests((g) =>
@@ -483,6 +490,7 @@ export default function GuestsPage() {
   }
 
   async function bulkChangeGroup() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const ids = [...selectedGuests];
     const groupVal = bulkGroupValue.trim() || null;
     const prev = guests;
@@ -515,6 +523,7 @@ export default function GuestsPage() {
   }
 
   async function bulkDelete() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const ids = [...selectedGuests];
     const prev = guests;
     setGuests((g) =>
@@ -608,10 +617,10 @@ export default function GuestsPage() {
               </>
             )}
           </div>
-          <button onClick={importFromContacts} className="btn-ghost btn-sm sm:hidden">
+          <button onClick={importFromContacts} disabled={isReadOnly} className="btn-ghost btn-sm sm:hidden disabled:opacity-50">
             Contacts
           </button>
-          <button onClick={() => fileInput.current?.click()} className="btn-ghost btn-sm">
+          <button onClick={() => fileInput.current?.click()} disabled={isReadOnly} className="btn-ghost btn-sm disabled:opacity-50">
             Import CSV
           </button>
           <button onClick={downloadTemplate} className="btn-ghost btn-sm text-[12px]" title="Download a CSV template showing the expected format">
@@ -720,7 +729,7 @@ export default function GuestsPage() {
           >
             {showAddFields ? "Less" : "More Details"}
           </button>
-          <button type="submit" className="btn-primary">Add Guest</button>
+          <button type="submit" disabled={isReadOnly} className="btn-primary disabled:opacity-50">Add Guest</button>
         </div>
 
         {showAddFields && (
@@ -1078,7 +1087,7 @@ export default function GuestsPage() {
                           }}
                           className="rounded-[10px] border-border px-3 py-1.5 text-[15px] flex-1 min-w-[160px]"
                         />
-                        <button type="button" onClick={() => addCompanion(guest)} className="btn-secondary btn-sm">
+                        <button type="button" onClick={() => addCompanion(guest)} disabled={isReadOnly} className="btn-secondary btn-sm disabled:opacity-50">
                           Add
                         </button>
                       </div>

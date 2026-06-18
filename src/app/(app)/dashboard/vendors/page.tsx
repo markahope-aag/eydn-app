@@ -49,7 +49,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function VendorsPage() {
-  const { guardFeature } = usePremium();
+  const { guardFeature, isReadOnly, notifyReadOnly } = usePremium();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [noWedding, setNoWedding] = useState(false);
@@ -174,6 +174,7 @@ export default function VendorsPage() {
   }, [showAdd]);
 
   async function pickFromDirectory(match: DirMatch) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     try {
       const res = await fetch("/api/vendors", {
         method: "POST",
@@ -254,6 +255,7 @@ export default function VendorsPage() {
   }
 
   async function addFromPlace() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!placeResult) return;
     if (!newCategory) {
       toast.error("Choose a vendor category first");
@@ -326,6 +328,7 @@ export default function VendorsPage() {
 
   async function addVendor(e: React.FormEvent) {
     e.preventDefault();
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!newName.trim()) return;
     if (!newCategory) {
       toast.error("Choose a vendor category first");
@@ -401,6 +404,7 @@ export default function VendorsPage() {
   }
 
   async function updateStatus(id: string, status: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = vendors;
     const vendor = vendors.find((v) => v.id === id);
     setVendors((v) =>
@@ -433,6 +437,7 @@ export default function VendorsPage() {
   }
 
   async function deleteVendor(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = vendors;
     setVendors((v) => v.filter((x) => x.id !== id));
 
@@ -508,7 +513,8 @@ export default function VendorsPage() {
         <div className="flex gap-2">
           <button
             onClick={() => (showAdd ? closeAddForm() : setShowAdd(true))}
-            className="btn-secondary text-[13px] sm:text-[15px]"
+            disabled={isReadOnly}
+            className="btn-secondary text-[13px] sm:text-[15px] disabled:opacity-50"
           >
             {showAdd ? "Close" : "Add Your Own"}
           </button>
@@ -837,7 +843,7 @@ export default function VendorsPage() {
 
           <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-3 pt-1 border-t border-border/60">
             <div className="flex gap-2 pt-3 sm:pt-0">
-              <button type="submit" className="btn-primary">
+              <button type="submit" disabled={isReadOnly} className="btn-primary disabled:opacity-50">
                 Add Vendor
               </button>
               <button type="button" onClick={closeAddForm} className="btn-ghost">
@@ -970,7 +976,8 @@ export default function VendorsPage() {
                   key={c}
                   type="button"
                   onClick={() => { setNewCategory(c); setShowAdd(true); }}
-                  className="flex items-center justify-between rounded-[10px] border border-border px-3 py-2.5 text-left hover:border-violet/40 hover:bg-lavender/20 transition"
+                  disabled={isReadOnly}
+                  className="flex items-center justify-between rounded-[10px] border border-border px-3 py-2.5 text-left hover:border-violet/40 hover:bg-lavender/20 transition disabled:opacity-50"
                 >
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" aria-hidden="true" />

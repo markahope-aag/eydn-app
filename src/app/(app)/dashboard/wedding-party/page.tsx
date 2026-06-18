@@ -8,6 +8,7 @@ import { NoWeddingState } from "@/components/NoWeddingState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { Tooltip } from "@/components/Tooltip";
+import { usePremium } from "@/components/PremiumGate";
 
 type Member = {
   id: string;
@@ -51,6 +52,7 @@ const BASE_ROLES = [
 ];
 
 export default function WeddingPartyPage() {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [noWedding, setNoWedding] = useState(false);
@@ -113,6 +115,7 @@ export default function WeddingPartyPage() {
 
   async function addMember(e: React.FormEvent) {
     e.preventDefault();
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!name.trim()) return;
 
     const tempId = crypto.randomUUID();
@@ -167,6 +170,7 @@ export default function WeddingPartyPage() {
   }
 
   async function updateField(id: string, field: string, value: string | null) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = members;
     setMembers((m) =>
       m.map((x) => (x.id === id ? { ...x, [field]: value } : x))
@@ -185,6 +189,7 @@ export default function WeddingPartyPage() {
   }
 
   async function deleteMember(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const prev = members;
     setMembers((m) => m.filter((x) => x.id !== id));
     try {
@@ -198,6 +203,7 @@ export default function WeddingPartyPage() {
   }
 
   function handleSharedAttireChange(value: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setSharedAttireNote(value);
     if (attireTimer.current) clearTimeout(attireTimer.current);
     attireTimer.current = setTimeout(async () => {
@@ -216,6 +222,7 @@ export default function WeddingPartyPage() {
   }
 
   function toggleJob(memberId: string, job: string, currentJobs: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const jobs = currentJobs ? currentJobs.split(", ").filter(Boolean) : [];
     const idx = jobs.indexOf(job);
     if (idx >= 0) jobs.splice(idx, 1);
@@ -224,6 +231,7 @@ export default function WeddingPartyPage() {
   }
 
   async function handlePhotoUpload(memberId: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const file = photoRef.current?.files?.[0];
     if (!file) return;
     setUploadingPhoto(memberId);
@@ -268,7 +276,7 @@ export default function WeddingPartyPage() {
           <h1>Wedding Party</h1>
           <p className="mt-1 text-[15px] text-muted">{members.length} members{members.length > 0 && !members.every((m) => m.photo_url) ? " \u00B7 Tap a photo circle to add a picture" : ""}</p>
         </div>
-        <button onClick={() => setShowAdd(!showAdd)} className="btn-primary">
+        <button onClick={() => setShowAdd(!showAdd)} disabled={isReadOnly} className="btn-primary disabled:opacity-50">
           {showAdd ? "Cancel" : "Add Member"}
         </button>
       </div>
@@ -306,7 +314,7 @@ export default function WeddingPartyPage() {
             >
               {showAddDetails ? "Less" : "More Details"}
             </button>
-            <button type="submit" className="btn-primary">Add</button>
+            <button type="submit" disabled={isReadOnly} className="btn-primary disabled:opacity-50">Add</button>
           </div>
 
           {showAddDetails && (

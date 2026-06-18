@@ -92,7 +92,7 @@ export default function SettingsPage() {
   const [activityLoading, setActivityLoading] = useState(true);
 
   // Subscription
-  const { loaded: subLoaded, isTrialing, trialDaysLeft, isPaid } = usePremium();
+  const { loaded: subLoaded, isTrialing, trialDaysLeft, isPaid, isReadOnly, notifyReadOnly } = usePremium();
 
   // Export
   const [exporting, setExporting] = useState(false);
@@ -294,7 +294,9 @@ export default function SettingsPage() {
           value={keyDecisions}
           aria-label="Things Eydn should know"
           onChange={(e) => setKeyDecisions(e.target.value)}
+          disabled={isReadOnly}
           onBlur={async () => {
+            if (isReadOnly) { notifyReadOnly(); return; }
             if (!weddingId) return;
             try {
               const res = await fetch(`/api/weddings/${weddingId}`, {
