@@ -92,12 +92,17 @@ export async function resolveWeddingForUserId(
     const email = user.emailAddresses[0]?.emailAddress;
 
     if (email) {
+      // limit(1) + maybeSingle (not single) so a stray duplicate pending row
+      // can't error out and block acceptance. A unique (wedding_id, email)
+      // index now prevents duplicates, but this stays robust regardless.
       const { data: pending } = await supabase
         .from("wedding_collaborators")
         .select("id, wedding_id, role")
         .eq("email", email.toLowerCase())
         .eq("invite_status", "pending")
-        .single();
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (pending) {
         // Auto-accept: fill in user_id and mark accepted

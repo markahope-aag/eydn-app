@@ -82,8 +82,10 @@ function createMockSupabase(
       function makeQueryChain(): QueryChain {
         const chain: QueryChain = {
           eq: vi.fn(() => chain),
+          order: vi.fn(() => chain),
+          limit: vi.fn(() => chain),
           single: vi.fn(() => nextResult()),
-          order: vi.fn(() => nextResult()),
+          maybeSingle: vi.fn(() => nextResult()),
         };
         return chain;
       }
