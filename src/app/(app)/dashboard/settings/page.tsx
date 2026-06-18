@@ -268,16 +268,21 @@ export default function SettingsPage() {
         Manage your account and preferences
       </p>
 
-      <div className="mt-6 card p-5 flex items-center justify-between">
-        <div>
-          <h3 className="text-[15px] font-semibold text-plum">Review Questionnaire Answers</h3>
-          <p className="text-[13px] text-muted mt-0.5">Update your wedding date, venue, budget, and other core details</p>
-          <Tooltip text="Go back through your onboarding answers to update wedding details. Changes to the wedding date will cascade to your rehearsal dinner and task dates." wide />
+      {/* Editing core wedding details is owner-only — collaborators (incl.
+          coordinators) can't change the date/venue/budget. Hide the entry
+          point for non-owners; the onboarding route also enforces this. */}
+      {isOwner && (
+        <div className="mt-6 card p-5 flex items-center justify-between">
+          <div>
+            <h3 className="text-[15px] font-semibold text-plum">Review Questionnaire Answers</h3>
+            <p className="text-[13px] text-muted mt-0.5">Update your wedding date, venue, budget, and other core details</p>
+            <Tooltip text="Go back through your onboarding answers to update wedding details. Changes to the wedding date will cascade to your rehearsal dinner and task dates." wide />
+          </div>
+          <Link href="/dashboard/onboarding?review=true" className="btn-primary btn-sm">
+            Review &rarr;
+          </Link>
         </div>
-        <Link href="/dashboard/onboarding?review=true" className="btn-primary btn-sm">
-          Review &rarr;
-        </Link>
-      </div>
+      )}
 
       {/* Things eydn should know */}
       <div className="mt-6">

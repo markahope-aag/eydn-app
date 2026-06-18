@@ -63,6 +63,30 @@ export async function POST(request: Request) {
     .eq("user_id", userId)
     .single();
 
+  // Onboarding creates/updates the user's OWN wedding (by user_id). A
+  // collaborator invited to someone else's wedding must not use the Review
+  // Questionnaire flow to edit the couple's core details (date, venue, budget,
+  // etc.) — the role-gated /api/weddings/[id] route is the sanctioned editor and
+  // it blocks coordinators/parents. Without this guard a coordinator could
+  // change the wedding date here, bypassing that block (and spin up a phantom
+  // wedding owned by them). A brand-new user with no association falls through
+  // to the normal create path below.
+  if (!existingWedding) {
+    const { data: collab } = await supabase
+      .from("wedding_collaborators")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("invite_status", "accepted")
+      .limit(1)
+      .maybeSingle();
+    if (collab) {
+      return NextResponse.json(
+        { error: "Only the couple can edit the wedding details — ask them to update this." },
+        { status: 403 }
+      );
+    }
+  }
+
   let weddingId: string;
 
   // Geocode the venue city up front so the vendor directory's distance filter

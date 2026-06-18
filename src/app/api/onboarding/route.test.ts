@@ -45,6 +45,7 @@ function chain(terminal?: unknown) {
     "eq",
     "neq",
     "single",
+    "maybeSingle",
     "order",
     "limit",
     "head",
@@ -53,6 +54,7 @@ function chain(terminal?: unknown) {
   }
   if (terminal !== undefined) {
     obj.single = vi.fn().mockResolvedValue(terminal);
+    obj.maybeSingle = vi.fn().mockResolvedValue(terminal);
   }
   return obj;
 }
@@ -111,10 +113,11 @@ describe("POST /api/onboarding", () => {
     mockFrom.mockImplementation(() => {
       callIndex++;
       if (callIndex === 1) return selectChain; // weddings select existing
-      if (callIndex === 2) return insertChain; // weddings insert
-      if (callIndex === 3) return upsertChain; // questionnaire_responses upsert
-      if (callIndex === 4) return expensesChain; // expenses count
-      if (callIndex === 5) return chain({ data: null, error: null }); // expenses insert
+      if (callIndex === 2) return chain({ data: null }); // wedding_collaborators (not a collaborator)
+      if (callIndex === 3) return insertChain; // weddings insert
+      if (callIndex === 4) return upsertChain; // questionnaire_responses upsert
+      if (callIndex === 5) return expensesChain; // expenses count
+      if (callIndex === 6) return chain({ data: null, error: null }); // expenses insert
       return chain({ data: null, error: null });
     });
 
@@ -204,12 +207,13 @@ describe("POST /api/onboarding", () => {
     mockFrom.mockImplementation(() => {
       callIndex++;
       if (callIndex === 1) return selectChain;        // weddings select existing
-      if (callIndex === 2) return insertChain;         // weddings insert
-      if (callIndex === 3) return upsertChain;         // questionnaire_responses upsert
-      if (callIndex === 4) return deleteChain;         // tasks delete
-      if (callIndex === 5) return taskInsertChain;     // tasks insert
-      if (callIndex === 6) return expensesChain;       // expenses count
-      if (callIndex === 7) return expensesInsertChain; // expenses insert
+      if (callIndex === 2) return chain({ data: null }); // wedding_collaborators (not a collaborator)
+      if (callIndex === 3) return insertChain;         // weddings insert
+      if (callIndex === 4) return upsertChain;         // questionnaire_responses upsert
+      if (callIndex === 5) return deleteChain;         // tasks delete
+      if (callIndex === 6) return taskInsertChain;     // tasks insert
+      if (callIndex === 7) return expensesChain;       // expenses count
+      if (callIndex === 8) return expensesInsertChain; // expenses insert
       return chain({ data: null, error: null });
     });
 
@@ -253,11 +257,12 @@ describe("POST /api/onboarding", () => {
     mockFrom.mockImplementation((table: string) => {
       callIndex++;
       if (callIndex === 1) return selectChain;
-      if (callIndex === 2) return insertChain;
-      if (callIndex === 3) return upsertChain;
-      if (callIndex === 4) return expensesChain; // expenses count = 10
-      // If we get a 5th call to expenses insert, it shouldn't happen
-      if (table === "expenses" && callIndex >= 5) {
+      if (callIndex === 2) return chain({ data: null }); // wedding_collaborators (not a collaborator)
+      if (callIndex === 3) return insertChain;
+      if (callIndex === 4) return upsertChain;
+      if (callIndex === 5) return expensesChain; // expenses count = 10
+      // If we get a later call to expenses insert, it shouldn't happen
+      if (table === "expenses" && callIndex >= 6) {
         return { insert: insertSpy };
       }
       return chain({ data: null, error: null });
@@ -270,6 +275,26 @@ describe("POST /api/onboarding", () => {
     expect(res.status).toBe(201);
     // expenses.insert should NOT have been called since count > 0
     expect(insertSpy).not.toHaveBeenCalled();
+  });
+
+  it("blocks a collaborator (non-owner) from editing the wedding via onboarding", async () => {
+    mockAuth.mockResolvedValue({ userId: "coordinator_user" });
+
+    let callIndex = 0;
+    mockFrom.mockImplementation(() => {
+      callIndex++;
+      if (callIndex === 1) return chain({ data: null }); // no owned wedding
+      if (callIndex === 2) return chain({ data: { role: "coordinator" } }); // accepted collaborator
+      return chain({ data: null, error: null });
+    });
+
+    const res = await POST(
+      jsonRequest({ partner1_name: "Alice", partner2_name: "Bob", date: "2027-06-15" })
+    );
+
+    expect(res.status).toBe(403);
+    const json = await res.json();
+    expect(json.error).toMatch(/only the couple/i);
   });
 
   it("returns 400 for invalid date format", async () => {
