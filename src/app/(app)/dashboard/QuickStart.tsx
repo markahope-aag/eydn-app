@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { QuickStartStep } from "@/lib/onboarding/quick-start";
 import { QuickStartStepModal } from "./QuickStartStepModal";
+import { usePremium } from "@/components/PremiumGate";
 
 /**
  * Optional getting-started walk-through shown to new couples in place of the
@@ -23,6 +24,7 @@ export function QuickStart({
   weddingId: string;
 }) {
   const router = useRouter();
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [leaving, setLeaving] = useState(false);
   const [activeKey, setActiveKey] = useState<string | null>(null);
 
@@ -31,6 +33,7 @@ export function QuickStart({
   const activeStep = steps.find((s) => s.key === activeKey) ?? null;
 
   async function switchToFull() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setLeaving(true);
     try {
       const res = await fetch("/api/quickstart-status", { method: "PUT" });
@@ -117,8 +120,8 @@ export function QuickStart({
         <button
           type="button"
           onClick={switchToFull}
-          disabled={leaving}
-          className="text-[14px] font-semibold text-violet hover:text-soft-violet transition disabled:opacity-60"
+          disabled={leaving || isReadOnly}
+          className="text-[14px] font-semibold text-violet hover:text-soft-violet transition disabled:opacity-50"
         >
           {leaving ? "Switching…" : "Switch to full dashboard →"}
         </button>

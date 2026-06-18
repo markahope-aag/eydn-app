@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { VENDOR_CATEGORIES, categoryLabel } from "@/lib/vendors/categories";
 import { PhotoWithFallback } from "@/components/PhotoWithFallback";
+import { usePremium } from "@/components/PremiumGate";
 import { LocationBanner } from "./_components/LocationBanner";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -206,6 +207,7 @@ function parseLocation(raw: string): { city?: string; state?: string } {
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function VendorDirectoryPage() {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [vendors, setVendors] = useState<SuggestedVendor[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
@@ -436,6 +438,7 @@ export default function VendorDirectoryPage() {
   }, [debouncedSearch, debouncedLocation, filterCategory, loading, vendors.length, weddingCity]);
 
   async function addPlacesResult(place: PlaceData) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const category = placesCategory || filterCategory;
     if (!category) {
       toast.error("Pick a category for this vendor first");
@@ -598,6 +601,7 @@ export default function VendorDirectoryPage() {
   }
 
   async function addToMyVendors(vendor: SuggestedVendor) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     try {
       const res = await fetch("/api/vendors", {
         method: "POST",
@@ -815,6 +819,7 @@ export default function VendorDirectoryPage() {
                 key={v.id}
                 vendor={v}
                 onAdd={addToMyVendors}
+                isReadOnly={isReadOnly}
                 expanded={expandedId === v.id}
                 gmbState={gmbCache[v.id]}
                 onToggle={() => toggleDetails(v.id)}
@@ -833,6 +838,7 @@ export default function VendorDirectoryPage() {
               key={v.id}
               vendor={v}
               onAdd={addToMyVendors}
+              isReadOnly={isReadOnly}
               expanded={expandedId === v.id}
               gmbState={gmbCache[v.id]}
               onToggle={() => toggleDetails(v.id)}
@@ -905,7 +911,7 @@ export default function VendorDirectoryPage() {
                     </select>
                     <button
                       onClick={() => addPlacesResult(placesState.place)}
-                      disabled={placesAdding || !placesCategory}
+                      disabled={placesAdding || !placesCategory || isReadOnly}
                       className="ml-auto inline-flex items-center justify-center rounded-[12px] px-4 py-1.5 text-[13px] font-semibold bg-violet text-white hover:bg-violet/90 transition disabled:opacity-50"
                     >
                       {placesAdding ? "Adding..." : "Add to my vendors"}
@@ -1137,12 +1143,14 @@ function GmbPreview({ state }: { state: PlaceData | "loading" | "error" | undefi
 function FeaturedCard({
   vendor,
   onAdd,
+  isReadOnly,
   expanded,
   gmbState,
   onToggle,
 }: {
   vendor: SuggestedVendor;
   onAdd: (_v: SuggestedVendor) => void;
+  isReadOnly: boolean;
   expanded: boolean;
   gmbState: PlaceData | "loading" | "error" | undefined;
   onToggle: () => void;
@@ -1190,7 +1198,7 @@ function FeaturedCard({
           <p className="text-[13px] text-muted mt-2">{vendor.description}</p>
         )}
         <div className="mt-3 flex gap-2">
-          <button onClick={() => onAdd(vendor)} className="btn-primary btn-sm">
+          <button onClick={() => onAdd(vendor)} disabled={isReadOnly} className="btn-primary btn-sm disabled:opacity-50">
             Add to my vendors
           </button>
           <button onClick={onToggle} className="btn-secondary btn-sm">
@@ -1213,6 +1221,7 @@ function FeaturedCard({
 function VendorRow({
   vendor,
   onAdd,
+  isReadOnly,
   expanded,
   gmbState,
   onToggle,
@@ -1220,6 +1229,7 @@ function VendorRow({
 }: {
   vendor: SuggestedVendor;
   onAdd: (_v: SuggestedVendor) => void;
+  isReadOnly: boolean;
   expanded: boolean;
   gmbState: PlaceData | "loading" | "error" | undefined;
   onToggle: () => void;
@@ -1282,7 +1292,7 @@ function VendorRow({
         <button onClick={onToggle} className="btn-secondary btn-sm flex-shrink-0">
           {expanded ? "Hide" : "Details"}
         </button>
-        <button onClick={() => onAdd(vendor)} className="btn-primary btn-sm flex-shrink-0">
+        <button onClick={() => onAdd(vendor)} disabled={isReadOnly} className="btn-primary btn-sm flex-shrink-0 disabled:opacity-50">
           Add
         </button>
       </div>

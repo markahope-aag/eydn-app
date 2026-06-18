@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Tooltip } from "@/components/Tooltip";
+import { usePremium } from "@/components/PremiumGate";
 
 type RsvpToken = {
   id: string;
@@ -33,12 +34,14 @@ export function RsvpTab({
   setMealOptions,
   autoSave,
 }: RsvpTabProps) {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [generatingTokens, setGeneratingTokens] = useState(false);
   const [qrGenerating, setQrGenerating] = useState(false);
   const [qrCodes, setQrCodes] = useState<{ guestId: string; guestName: string; qrUrl: string }[]>([]);
   const [newMealOption, setNewMealOption] = useState("");
 
   async function generateRsvpTokens() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     setGeneratingTokens(true);
     try {
       const res = await fetch("/api/wedding-website/rsvp", { method: "POST" });
@@ -165,8 +168,8 @@ export function RsvpTab({
       <div className="flex items-center gap-4">
         <button
           onClick={generateRsvpTokens}
-          disabled={generatingTokens}
-          className="btn-primary"
+          disabled={generatingTokens || isReadOnly}
+          className="btn-primary disabled:opacity-50"
         >
           {generatingTokens ? "Generating..." : "Generate RSVP Links"}
         </button>
@@ -225,6 +228,7 @@ export function RsvpTab({
             <h2 className="text-[15px] font-semibold text-plum">Per-Guest QR Codes (one per invitation)</h2>
             <button
               onClick={async () => {
+                if (isReadOnly) { notifyReadOnly(); return; }
                 setQrGenerating(true);
                 try {
                   const res = await fetch("/api/wedding-website/qr", {
@@ -242,7 +246,7 @@ export function RsvpTab({
                   setQrGenerating(false);
                 }
               }}
-              disabled={qrGenerating}
+              disabled={qrGenerating || isReadOnly}
               className="btn-primary btn-sm disabled:opacity-50"
             >
               {qrGenerating ? "Generating..." : qrCodes.length > 0 ? "Regenerate All" : "Generate QR Codes"}

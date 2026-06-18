@@ -9,6 +9,7 @@ import { Field } from "@/components/Field";
 import { VENDOR_EMAIL_TEMPLATES } from "@/lib/vendors/email-templates";
 import { formatDueDate } from "@/lib/date-utils";
 import { Comments } from "@/components/Comments";
+import { usePremium } from "@/components/PremiumGate";
 import Link from "next/link";
 import { TASK_GUIDE_MAP } from "@/lib/tasks/task-guide-map";
 import type { Task } from "./types";
@@ -97,6 +98,7 @@ export function TaskDetail({
   onUpdateDueDate,
   onUpdateTitle,
 }: Props) {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(task.title);
   const [resources, setResources] = useState<TaskResource[]>([]);
@@ -141,6 +143,7 @@ export function TaskDetail({
 
   async function addResource(e: React.FormEvent) {
     e.preventDefault();
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!newResourceLabel.trim() || !newResourceUrl.trim()) return;
     try {
       const res = await fetch(`/api/tasks/${task.id}/resources`, {
@@ -160,6 +163,7 @@ export function TaskDetail({
   }
 
   async function deleteResource(resourceId: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     try {
       const res = await fetch(`/api/tasks/${task.id}/resources/${resourceId}`, {
         method: "DELETE",
@@ -172,6 +176,7 @@ export function TaskDetail({
   }
 
   async function linkRelatedTask(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!id) return;
     try {
       const res = await fetch(`/api/tasks/${task.id}/related`, {
@@ -189,6 +194,7 @@ export function TaskDetail({
   }
 
   async function removeRelatedTask(relationId: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     try {
       const res = await fetch(`/api/tasks/${task.id}/related/${relationId}`, {
         method: "DELETE",
@@ -629,7 +635,7 @@ export function TaskDetail({
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="btn-primary btn-sm">
+                  <button type="submit" disabled={isReadOnly} className="btn-primary btn-sm disabled:opacity-50">
                     Add
                   </button>
                 </div>
@@ -732,7 +738,8 @@ export function TaskDetail({
                 </select>
                 <button
                   onClick={() => linkRelatedTask(relatedTaskId)}
-                  className="btn-secondary btn-sm"
+                  disabled={isReadOnly}
+                  className="btn-secondary btn-sm disabled:opacity-50"
                 >
                   Link
                 </button>

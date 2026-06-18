@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { usePremium } from "@/components/PremiumGate";
 
 type RegistryLink = { id: string; name: string; url: string; sort_order: number };
 
@@ -11,6 +12,7 @@ interface RegistryTabProps {
 }
 
 export function RegistryTab({ registryLinks, loadRegistry }: RegistryTabProps) {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [newRegistryName, setNewRegistryName] = useState("");
   const [newRegistryUrl, setNewRegistryUrl] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -19,6 +21,7 @@ export function RegistryTab({ registryLinks, loadRegistry }: RegistryTabProps) {
   const [reordering, setReordering] = useState(false);
 
   async function addRegistryLink() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!newRegistryName || !newRegistryUrl) return;
     try {
       const res = await fetch("/api/wedding-website/registry", {
@@ -37,6 +40,7 @@ export function RegistryTab({ registryLinks, loadRegistry }: RegistryTabProps) {
   }
 
   async function removeRegistryLink(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     try {
       const res = await fetch(`/api/wedding-website/registry?id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
@@ -60,6 +64,7 @@ export function RegistryTab({ registryLinks, loadRegistry }: RegistryTabProps) {
   }
 
   async function saveEdit(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const name = editName.trim();
     const url = editUrl.trim();
     if (!name || !url) {
@@ -83,6 +88,7 @@ export function RegistryTab({ registryLinks, loadRegistry }: RegistryTabProps) {
 
   // Reorder by swapping a link's sort_order with its neighbour's, then reload.
   async function moveLink(index: number, direction: -1 | 1) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const target = index + direction;
     if (reordering || target < 0 || target >= registryLinks.length) return;
     const current = registryLinks[index];
@@ -238,7 +244,7 @@ export function RegistryTab({ registryLinks, loadRegistry }: RegistryTabProps) {
           aria-label="Registry URL"
           className="w-full rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
         />
-        <button onClick={addRegistryLink} className="btn-primary btn-sm">
+        <button onClick={addRegistryLink} disabled={isReadOnly} className="btn-primary btn-sm disabled:opacity-50">
           Add Link
         </button>
       </div>

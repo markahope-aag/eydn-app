@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { Tooltip } from "@/components/Tooltip";
+import { usePremium } from "@/components/PremiumGate";
 import { trackWebsitePublished } from "@/lib/analytics";
 
 type SlugStatus = "idle" | "checking" | "available" | "taken";
@@ -72,6 +73,7 @@ export function SetupTab({
   autoSaveImmediate,
   originalSlug,
 }: SetupTabProps) {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   // Persist the whole theme object together — the API replaces website_theme
   // wholesale, so partial saves would wipe the other theme fields.
   function persistTheme(
@@ -143,6 +145,7 @@ export function SetupTab({
   }
 
   async function handleCoverUpload() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const file = coverRef.current?.files?.[0];
     if (!file) return;
 
@@ -187,6 +190,7 @@ export function SetupTab({
   }
 
   async function handleCouplePhotoUpload() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const file = couplePhotoRef.current?.files?.[0];
     if (!file) return;
 
@@ -373,8 +377,8 @@ export function SetupTab({
         />
         <button
           onClick={() => coverRef.current?.click()}
-          disabled={uploadingCover}
-          className="btn-secondary btn-sm"
+          disabled={uploadingCover || isReadOnly}
+          className="btn-secondary btn-sm disabled:opacity-50"
         >
           {uploadingCover ? "Uploading..." : coverUrl ? "Change Cover" : "Upload Cover"}
         </button>
@@ -469,8 +473,8 @@ export function SetupTab({
         />
         <button
           onClick={() => couplePhotoRef.current?.click()}
-          disabled={uploadingCouplePhoto}
-          className="btn-secondary btn-sm"
+          disabled={uploadingCouplePhoto || isReadOnly}
+          className="btn-secondary btn-sm disabled:opacity-50"
         >
           {uploadingCouplePhoto ? "Uploading..." : couplePhotoUrl ? "Change Photo" : "Upload Photo"}
         </button>

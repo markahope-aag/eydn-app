@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { usePremium } from "@/components/PremiumGate";
 import { DayOfPlan } from "./types";
 
 interface AttireTabProps {
@@ -21,6 +22,7 @@ const ATTIRE_GROUPS = [
 ];
 
 export function AttireTab({ plan, savePlan }: AttireTabProps) {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const attirePhotoRef = useRef<HTMLInputElement>(null);
   const attirePhotoIndex = useRef<number | null>(null);
   const [filter, setFilter] = useState<string>("All");
@@ -72,6 +74,7 @@ export function AttireTab({ plan, savePlan }: AttireTabProps) {
             {item.photoUrl ? (
               <div className="w-20 h-20 rounded-[12px] overflow-hidden flex-shrink-0 relative cursor-pointer group"
                 onClick={() => {
+                  if (isReadOnly) { notifyReadOnly(); return; }
                   attirePhotoIndex.current = i;
                   attirePhotoRef.current?.click();
                 }}
@@ -84,11 +87,13 @@ export function AttireTab({ plan, savePlan }: AttireTabProps) {
               </div>
             ) : (
               <button
+                disabled={isReadOnly}
                 onClick={() => {
+                  if (isReadOnly) { notifyReadOnly(); return; }
                   attirePhotoIndex.current = i;
                   attirePhotoRef.current?.click();
                 }}
-                className="w-20 h-20 rounded-[12px] bg-lavender flex items-center justify-center flex-shrink-0 hover:bg-violet transition group"
+                className="w-20 h-20 rounded-[12px] bg-lavender flex items-center justify-center flex-shrink-0 hover:bg-violet transition group disabled:opacity-50"
               >
                 <span className="text-[24px] text-violet group-hover:text-white">+</span>
               </button>
@@ -99,6 +104,7 @@ export function AttireTab({ plan, savePlan }: AttireTabProps) {
                   type="text"
                   defaultValue={item.person}
                   onBlur={(e) => {
+                    if (isReadOnly) { notifyReadOnly(); return; }
                     const updated = [...plan.attire];
                     updated[i] = { ...updated[i], person: e.target.value };
                     savePlan({ ...plan, attire: updated });
@@ -109,6 +115,7 @@ export function AttireTab({ plan, savePlan }: AttireTabProps) {
                 <select
                   value={item.group || ""}
                   onChange={(e) => {
+                    if (isReadOnly) { notifyReadOnly(); return; }
                     const updated = [...plan.attire];
                     updated[i] = { ...updated[i], group: e.target.value || undefined };
                     savePlan({ ...plan, attire: updated });
@@ -125,6 +132,7 @@ export function AttireTab({ plan, savePlan }: AttireTabProps) {
               <textarea
                 defaultValue={item.description}
                 onBlur={(e) => {
+                  if (isReadOnly) { notifyReadOnly(); return; }
                   const updated = [...plan.attire];
                   updated[i] = { ...updated[i], description: e.target.value };
                   savePlan({ ...plan, attire: updated });
@@ -135,8 +143,12 @@ export function AttireTab({ plan, savePlan }: AttireTabProps) {
               />
             </div>
             <button
-              onClick={() => savePlan({ ...plan, attire: plan.attire.filter((_, j) => j !== i) })}
-              className="text-[10px] text-error hover:opacity-80 self-start"
+              disabled={isReadOnly}
+              onClick={() => {
+                if (isReadOnly) { notifyReadOnly(); return; }
+                savePlan({ ...plan, attire: plan.attire.filter((_, j) => j !== i) });
+              }}
+              className="text-[10px] text-error hover:opacity-80 self-start disabled:opacity-50"
             >
               x
             </button>
@@ -144,13 +156,15 @@ export function AttireTab({ plan, savePlan }: AttireTabProps) {
         ))}
       </div>
       <button
+        disabled={isReadOnly}
         onClick={() => {
+          if (isReadOnly) { notifyReadOnly(); return; }
           // New entries default to the active group filter so they show up where
           // you're working.
           const group = filter !== "All" && filter !== "Unassigned" ? filter : undefined;
           savePlan({ ...plan, attire: [...plan.attire, { person: "", description: "", photoUrl: null, group }] });
         }}
-        className="btn-ghost btn-sm mt-3"
+        className="btn-ghost btn-sm mt-3 disabled:opacity-50"
       >
         Add attire entry
       </button>
@@ -160,6 +174,7 @@ export function AttireTab({ plan, savePlan }: AttireTabProps) {
         accept="image/*"
         className="hidden"
         onChange={async () => {
+          if (isReadOnly) { notifyReadOnly(); return; }
           const file = attirePhotoRef.current?.files?.[0];
           const idx = attirePhotoIndex.current;
           if (!file || idx === null) return;

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import { usePremium } from "@/components/PremiumGate";
 
 type Props = {
   /** Current wedding city (already loaded by the parent). */
@@ -35,6 +36,7 @@ export function LocationBanner({
   radiusMiles = 50,
   onRadiusChange,
 }: Props) {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const hasCity = !!city && city.trim().length > 0;
   const [editing, setEditing] = useState(!hasCity);
   const [draft, setDraft] = useState(city ?? "");
@@ -53,6 +55,7 @@ export function LocationBanner({
   }, [editing]);
 
   async function save() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!weddingId) return;
     const next = draft.trim();
     if (!next) {
@@ -115,7 +118,7 @@ export function LocationBanner({
           <button
             type="button"
             onClick={save}
-            disabled={saving || !draft.trim()}
+            disabled={saving || !draft.trim() || isReadOnly}
             className="btn-primary btn-sm disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save"}
@@ -152,7 +155,7 @@ export function LocationBanner({
         <button
           type="button"
           onClick={save}
-          disabled={saving}
+          disabled={saving || isReadOnly}
           className="btn-primary btn-sm disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save"}

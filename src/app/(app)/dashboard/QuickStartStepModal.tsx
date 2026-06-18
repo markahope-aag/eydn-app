@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { VENDOR_CATEGORIES, categoryLabel } from "@/lib/vendors/categories";
 import { Modal } from "@/components/Modal";
 import { Field } from "@/components/Field";
+import { usePremium } from "@/components/PremiumGate";
 import type { QuickStartStep } from "@/lib/onboarding/quick-start";
 
 type Props = {
@@ -63,10 +64,12 @@ async function patchWedding(weddingId: string, body: Record<string, unknown>): P
 }
 
 function DateBody({ weddingId, onSaved }: { weddingId: string; onSaved: () => void }) {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [date, setDate] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function save() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     if (!date) return;
     setBusy(true);
     try {
@@ -90,7 +93,7 @@ function DateBody({ weddingId, onSaved }: { weddingId: string; onSaved: () => vo
           autoFocus
         />
       </Field>
-      <button onClick={save} disabled={!date || busy} className="btn-primary disabled:opacity-50">
+      <button onClick={save} disabled={!date || busy || isReadOnly} className="btn-primary disabled:opacity-50">
         {busy ? "Saving…" : "Save date"}
       </button>
     </div>
@@ -98,10 +101,12 @@ function DateBody({ weddingId, onSaved }: { weddingId: string; onSaved: () => vo
 }
 
 function BudgetBody({ weddingId, onSaved }: { weddingId: string; onSaved: () => void }) {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [budget, setBudget] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function save() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const value = Number(budget);
     if (!Number.isFinite(value) || value <= 0) return;
     setBusy(true);
@@ -134,7 +139,7 @@ function BudgetBody({ weddingId, onSaved }: { weddingId: string; onSaved: () => 
           </div>
         )}
       </Field>
-      <button onClick={save} disabled={!budget || busy} className="btn-primary disabled:opacity-50">
+      <button onClick={save} disabled={!budget || busy || isReadOnly} className="btn-primary disabled:opacity-50">
         {busy ? "Saving…" : "Save budget"}
       </button>
     </div>
@@ -142,11 +147,13 @@ function BudgetBody({ weddingId, onSaved }: { weddingId: string; onSaved: () => 
 }
 
 function GuestsBody({ onSaved }: { onSaved: () => void }) {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [name, setName] = useState("");
   const [added, setAdded] = useState(0);
   const [busy, setBusy] = useState(false);
 
   async function add() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const n = name.trim();
     if (!n) return;
     setBusy(true);
@@ -182,7 +189,7 @@ function GuestsBody({ onSaved }: { onSaved: () => void }) {
               className="flex-1 rounded-[10px] border-border px-3 py-2 text-[15px]"
               autoFocus
             />
-            <button onClick={add} disabled={!name.trim() || busy} className="btn-secondary disabled:opacity-50">
+            <button onClick={add} disabled={!name.trim() || busy || isReadOnly} className="btn-secondary disabled:opacity-50">
               Add
             </button>
           </div>
@@ -201,12 +208,14 @@ function GuestsBody({ onSaved }: { onSaved: () => void }) {
 }
 
 function VendorsBody({ onSaved }: { onSaved: () => void }) {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [added, setAdded] = useState(0);
   const [busy, setBusy] = useState(false);
 
   async function add() {
+    if (isReadOnly) { notifyReadOnly(); return; }
     const n = name.trim();
     if (!n || !category) return;
     setBusy(true);
@@ -251,7 +260,7 @@ function VendorsBody({ onSaved }: { onSaved: () => void }) {
           ))}
         </select>
       </Field>
-      <button onClick={add} disabled={!name.trim() || !category || busy} className="btn-secondary disabled:opacity-50">
+      <button onClick={add} disabled={!name.trim() || !category || busy || isReadOnly} className="btn-secondary disabled:opacity-50">
         Add vendor
       </button>
       {added > 0 && (
@@ -269,6 +278,7 @@ function VendorsBody({ onSaved }: { onSaved: () => void }) {
 type OpenTask = { id: string; title: string };
 
 function TasksBody({ onSaved }: { onSaved: () => void }) {
+  const { isReadOnly, notifyReadOnly } = usePremium();
   const [tasks, setTasks] = useState<OpenTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [completedAny, setCompletedAny] = useState(false);
@@ -296,6 +306,7 @@ function TasksBody({ onSaved }: { onSaved: () => void }) {
   }, []);
 
   async function markDone(id: string) {
+    if (isReadOnly) { notifyReadOnly(); return; }
     try {
       const res = await fetch(`/api/tasks/${id}`, {
         method: "PATCH",
@@ -322,7 +333,8 @@ function TasksBody({ onSaved }: { onSaved: () => void }) {
         <button
           key={t.id}
           onClick={() => markDone(t.id)}
-          className="w-full flex items-center gap-3 rounded-[10px] border border-border px-3 py-2 text-left hover:border-violet/40 hover:bg-lavender/30 transition"
+          disabled={isReadOnly}
+          className="w-full flex items-center gap-3 rounded-[10px] border border-border px-3 py-2 text-left hover:border-violet/40 hover:bg-lavender/30 transition disabled:opacity-50"
         >
           <span aria-hidden="true" className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-border text-transparent">
             ✓
