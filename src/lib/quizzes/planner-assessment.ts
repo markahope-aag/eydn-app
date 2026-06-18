@@ -99,18 +99,22 @@ export const plannerAssessmentQuiz: ScoreBandQuiz = {
   landing: {
     heroSubhead:
       "Eight quick questions score your wedding's real complexity — guest count, events, distance, runway — and tell you whether you can DIY, want a coordinator, or need a full planner.",
+    ctaText: "Find out if I need a planner →",
     benefits: [
       {
         title: "A real complexity score",
         body: "An honest read on how much wedding you're actually taking on.",
+        icon: "checklist",
       },
       {
         title: "A clear recommendation",
         body: "DIY, day-of coordinator, or full planner — no upselling, just what fits.",
+        icon: "lightbulb",
       },
       {
-        title: "Where to focus",
+        title: "What to hand off",
         body: "The parts of your wedding most likely to need an extra set of hands.",
+        icon: "hand",
       },
     ],
     resultsTeaserTitle: "What your score could mean",
@@ -119,7 +123,7 @@ export const plannerAssessmentQuiz: ScoreBandQuiz = {
       { label: "DIY, with the right setup", blurb: "Medium complexity — doable with the right tools." },
       { label: "Bring in some help", blurb: "Higher complexity — a coordinator is probably worth it." },
     ],
-    socialProof: "From Eydn — the AI wedding planner that actually does things.",
+    socialProof: "Your result will tell you exactly where Eydn can help.",
     faq: [
       { q: "How long does it take?", a: "About two minutes — eight quick questions." },
       {
@@ -129,6 +133,10 @@ export const plannerAssessmentQuiz: ScoreBandQuiz = {
       {
         q: "Is this just trying to sell me a planner?",
         a: "No — it's an honest assessment. Plenty of couples get a 'you can DIY this' result.",
+      },
+      {
+        q: "What if I'm already partway through planning?",
+        a: "Still useful. The score reflects your wedding's complexity, not how far along you are — so it tells you whether the parts still ahead of you are worth handing off, and where a coordinator or better system would help from here.",
       },
       { q: "Is it free?", a: "Completely free." },
     ],

@@ -25,7 +25,11 @@ export type QuizResult = {
  */
 export type QuizLanding = {
   heroSubhead?: string;
-  benefits: { title: string; body: string }[];
+  // Outcome-driven CTA label for the start buttons; falls back to "Start the quiz".
+  ctaText?: string;
+  // Optional pull-quote. Only render real quotes — leave undefined otherwise.
+  testimonial?: { quote: string; attribution?: string };
+  benefits: { title: string; body: string; icon?: "checklist" | "lightbulb" | "hand" }[];
   resultsTeaser?: { label: string; blurb: string }[];
   resultsTeaserTitle?: string;
   socialProof?: string;

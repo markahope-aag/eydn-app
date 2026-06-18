@@ -12,6 +12,45 @@ interface Props {
   quiz: Quiz;
 }
 
+// Small decorative icons for landing benefit cards (opt-in per quiz).
+function BenefitIcon({ name }: { name: "checklist" | "lightbulb" | "hand" }) {
+  const common = {
+    width: 20,
+    height: 20,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.6,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+  if (name === "checklist") {
+    return (
+      <svg {...common}>
+        <rect x="5" y="4" width="14" height="17" rx="2" />
+        <path d="M9 4V3.2A1.2 1.2 0 0 1 10.2 2h3.6A1.2 1.2 0 0 1 15 3.2V4" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    );
+  }
+  if (name === "lightbulb") {
+    return (
+      <svg {...common}>
+        <path d="M9.5 18h5M10.5 21h3" />
+        <path d="M12 3a6 6 0 0 0-3.8 10.6c.6.5.9 1.1.9 1.9v.5h5.8v-.5c0-.8.3-1.4.9-1.9A6 6 0 0 0 12 3z" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <path d="M8 12V5.5a1.5 1.5 0 0 1 3 0V11" />
+      <path d="M11 11V4.5a1.5 1.5 0 0 1 3 0V11" />
+      <path d="M14 11V6.5a1.5 1.5 0 0 1 3 0V13a6 6 0 0 1-6 6 6 6 0 0 1-5-2.7l-1.8-2.7a1.5 1.5 0 0 1 2.5-1.6L8 13" />
+    </svg>
+  );
+}
+
 export function QuizRunner({ quiz }: Props) {
   const [stage, setStage] = useState<Stage>("intro");
   const [answers, setAnswers] = useState<(string | number)[]>([]);
@@ -107,6 +146,7 @@ export function QuizRunner({ quiz }: Props) {
     }
 
     // Full lead-magnet landing page.
+    const ctaLabel = landing.ctaText || "Start the quiz";
     return (
       <div>
         {/* Hero */}
@@ -116,30 +156,49 @@ export function QuizRunner({ quiz }: Props) {
             {landing.heroSubhead || quiz.subtitle}
           </p>
           <button onClick={start} className="mt-8 btn-primary px-10 py-4 text-[15px]">
-            Start the quiz
+            {ctaLabel}
           </button>
           <p className="mt-4 text-[12px] text-muted">
             Free · about 2 minutes · we&apos;ll email your result
           </p>
         </div>
 
+        {/* Pull-quote — only rendered when a real testimonial is provided */}
+        {landing.testimonial && (
+          <figure className="mt-12 max-w-2xl mx-auto text-center">
+            <blockquote className="font-serif text-[22px] text-plum leading-snug">
+              &ldquo;{landing.testimonial.quote}&rdquo;
+            </blockquote>
+            {landing.testimonial.attribution && (
+              <figcaption className="mt-3 text-[13px] text-muted">
+                — {landing.testimonial.attribution}
+              </figcaption>
+            )}
+          </figure>
+        )}
+
         {/* Benefits — what you'll get */}
         <div className="mt-16 grid gap-6 sm:grid-cols-3">
           {landing.benefits.map((b, i) => (
             <div key={i} className="rounded-2xl border border-border bg-white p-6">
+              {b.icon && (
+                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-lavender/50 text-violet">
+                  <BenefitIcon name={b.icon} />
+                </div>
+              )}
               <div className="text-[15px] font-semibold text-plum">{b.title}</div>
               <p className="mt-2 text-[14px] text-muted leading-relaxed">{b.body}</p>
             </div>
           ))}
         </div>
 
-        {/* Result teaser */}
+        {/* Result teaser — single row so the tiles read as a complete set */}
         {landing.resultsTeaser && landing.resultsTeaser.length > 0 && (
-          <div className="mt-16 max-w-2xl mx-auto">
+          <div className="mt-16 max-w-3xl mx-auto">
             <h2 className="font-serif text-[28px] text-plum text-center">
               {landing.resultsTeaserTitle || "Your possible results"}
             </h2>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
               {landing.resultsTeaser.map((r, i) => (
                 <div key={i} className="rounded-xl bg-lavender/30 px-4 py-3">
                   <div className="text-[14px] font-semibold text-plum">{r.label}</div>
@@ -150,29 +209,40 @@ export function QuizRunner({ quiz }: Props) {
           </div>
         )}
 
-        {landing.socialProof && (
-          <p className="mt-12 text-center text-[14px] text-muted">{landing.socialProof}</p>
-        )}
-
-        {/* FAQ */}
+        {/* FAQ — collapsed by default, expand on click */}
         {landing.faq.length > 0 && (
           <div className="mt-16 max-w-2xl mx-auto">
             <h2 className="font-serif text-[28px] text-plum text-center">Questions</h2>
-            <div className="mt-6 space-y-4">
+            <div className="mt-6 space-y-3">
               {landing.faq.map((f, i) => (
-                <div key={i} className="rounded-xl border border-border bg-white p-5">
-                  <div className="text-[15px] font-semibold text-plum">{f.q}</div>
-                  <p className="mt-1.5 text-[14px] text-muted leading-relaxed">{f.a}</p>
-                </div>
+                <details key={i} className="group rounded-xl border border-border bg-white px-5 py-4">
+                  <summary className="flex cursor-pointer items-center justify-between gap-3 list-none text-[15px] font-semibold text-plum [&::-webkit-details-marker]:hidden">
+                    {f.q}
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                      className="flex-shrink-0 text-muted transition-transform group-open:rotate-180"
+                    >
+                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </summary>
+                  <p className="mt-2 text-[14px] text-muted leading-relaxed">{f.a}</p>
+                </details>
               ))}
             </div>
           </div>
         )}
 
-        {/* Closing CTA */}
+        {/* Closing CTA — tagline connects the result to Eydn, then the button */}
         <div className="mt-12 text-center">
+          {landing.socialProof && (
+            <p className="mb-4 text-[14px] text-muted">{landing.socialProof}</p>
+          )}
           <button onClick={start} className="btn-primary px-10 py-4 text-[15px]">
-            Start the quiz
+            {ctaLabel}
           </button>
         </div>
       </div>
