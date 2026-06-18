@@ -116,7 +116,7 @@ export default async function PublicVisionBoardPage({
             previous faint underlined text at the foot of the header. */}
         <Link
           href={`/w/${wedding.website_slug}`}
-          className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3.5 py-1.5 text-[13px] font-semibold text-white backdrop-blur-sm hover:bg-white/30 transition"
+          className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-black/35 px-3.5 py-1.5 text-[13px] font-semibold text-white ring-1 ring-white/40 backdrop-blur-sm hover:bg-black/50 transition"
         >
           <span aria-hidden="true">&larr;</span>
           Back to website
