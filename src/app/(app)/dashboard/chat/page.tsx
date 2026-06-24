@@ -251,6 +251,7 @@ export default function ChatPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask Eydn anything about your wedding..."
+          aria-label="Ask Eydn anything about your wedding"
           className="flex-1 rounded-[10px] border-border px-4 py-2.5 text-[15px]"
           disabled={streaming}
         />

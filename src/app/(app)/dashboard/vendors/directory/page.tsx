@@ -735,6 +735,7 @@ export default function VendorDirectoryPage() {
         <input
           type="text"
           placeholder="Search by name or location..."
+          aria-label="Search vendors by name or location"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="rounded-[10px] border-border px-3 py-2 text-[15px] flex-1 min-w-0"
@@ -768,6 +769,7 @@ export default function VendorDirectoryPage() {
           <select
             value={filterPrice}
             onChange={(e) => setFilterPrice(e.target.value)}
+            aria-label="Filter by price"
             className="rounded-[10px] border-border px-3 py-1.5 text-[14px]"
           >
             <option value="">Any Price</option>
@@ -779,6 +781,7 @@ export default function VendorDirectoryPage() {
           <input
             type="text"
             placeholder="City or state..."
+            aria-label="Filter by city or state"
             value={filterLocation}
             onChange={(e) => setFilterLocation(e.target.value)}
             className="rounded-[10px] border-border px-3 py-1.5 text-[14px] w-44"
@@ -786,6 +789,7 @@ export default function VendorDirectoryPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
+            aria-label="Sort vendors"
             className="rounded-[10px] border-border px-3 py-1.5 text-[14px]"
           >
             <option value="featured">Sort: Featured first</option>
@@ -898,8 +902,9 @@ export default function VendorDirectoryPage() {
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <label className="text-[12px] font-semibold text-muted">Category</label>
+                    <label htmlFor="places-category" className="text-[12px] font-semibold text-muted">Category</label>
                     <select
+                      id="places-category"
                       value={placesCategory}
                       onChange={(e) => setPlacesCategory(e.target.value)}
                       className="rounded-[10px] border-border px-2 py-1.5 text-[13px]"

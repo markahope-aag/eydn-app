@@ -72,7 +72,10 @@ export function AttireTab({ plan, savePlan }: AttireTabProps) {
         {visible.map(({ item, index: i }) => (
           <div key={`${plan.attire.length}-${i}`} className="card p-4 flex gap-4">
             {item.photoUrl ? (
-              <div className="w-20 h-20 rounded-[12px] overflow-hidden flex-shrink-0 relative cursor-pointer group"
+              <button
+                type="button"
+                aria-label="Change attire photo"
+                className="w-20 h-20 rounded-[12px] overflow-hidden flex-shrink-0 relative cursor-pointer group"
                 onClick={() => {
                   if (isReadOnly) { notifyReadOnly(); return; }
                   attirePhotoIndex.current = i;
@@ -84,7 +87,7 @@ export function AttireTab({ plan, savePlan }: AttireTabProps) {
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                   <span className="text-white text-[10px] font-semibold">Change</span>
                 </div>
-              </div>
+              </button>
             ) : (
               <button
                 disabled={isReadOnly}

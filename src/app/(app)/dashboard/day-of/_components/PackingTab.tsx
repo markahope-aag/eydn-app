@@ -52,7 +52,7 @@ export function PackingTab({
                 defaultValue={p.notes}
                 onBlur={(e) => updatePackingNote(i, e.target.value)}
                 placeholder="Add a note..."
-                className="block w-full mt-1 text-[12px] text-muted border-0 bg-transparent outline-none"
+                className="block w-full mt-1 text-[12px] text-muted border-0 bg-transparent outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet/40 rounded-[4px]"
               />
             </div>
             <button

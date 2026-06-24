@@ -6,15 +6,20 @@ type Props = {
   field: FieldType;
   value: unknown;
   onChange: (_value: unknown) => void;
+  /** DOM id for the rendered control, linked to the question's label. */
+  id?: string;
+  /** id of the question's label, for group-style fields. */
+  labelId?: string;
 };
 
-export function FieldRenderer({ field, value, onChange }: Props) {
+export function FieldRenderer({ field, value, onChange, id, labelId }: Props) {
   switch (field.kind) {
     case "number":
       return (
         <div className="flex items-center gap-2">
           {field.unit && <span className="text-muted text-[14px]">{field.unit}</span>}
           <input
+            id={id}
             type="number"
             value={(value as number) ?? ""}
             onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
@@ -29,6 +34,7 @@ export function FieldRenderer({ field, value, onChange }: Props) {
     case "text":
       return (
         <input
+          id={id}
           type="text"
           value={(value as string) ?? ""}
           onChange={(e) => onChange(e.target.value || null)}
@@ -41,6 +47,7 @@ export function FieldRenderer({ field, value, onChange }: Props) {
     case "textarea":
       return (
         <textarea
+          id={id}
           value={(value as string) ?? ""}
           onChange={(e) => onChange(e.target.value || null)}
           placeholder={field.placeholder}
@@ -52,6 +59,7 @@ export function FieldRenderer({ field, value, onChange }: Props) {
     case "date":
       return (
         <input
+          id={id}
           type="date"
           value={(value as string) ?? ""}
           onChange={(e) => onChange(e.target.value || null)}
@@ -62,6 +70,7 @@ export function FieldRenderer({ field, value, onChange }: Props) {
     case "time":
       return (
         <input
+          id={id}
           type="time"
           value={(value as string) ?? ""}
           onChange={(e) => onChange(e.target.value || null)}
@@ -71,7 +80,7 @@ export function FieldRenderer({ field, value, onChange }: Props) {
 
     case "select":
       return (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2" role="group" aria-labelledby={labelId}>
           {field.options.map((opt) => (
             <button
               key={opt.value}
@@ -93,7 +102,7 @@ export function FieldRenderer({ field, value, onChange }: Props) {
       const selected = (value as string[]) || [];
       const max = field.max;
       return (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2" role="group" aria-labelledby={labelId}>
           {field.options.map((opt) => {
             const isSelected = selected.includes(opt.value);
             const atMax = max != null && selected.length >= max && !isSelected;
@@ -133,7 +142,7 @@ export function FieldRenderer({ field, value, onChange }: Props) {
     case "scale": {
       const numValue = (value as number) ?? null;
       return (
-        <div>
+        <div role="group" aria-labelledby={labelId}>
           <div className="flex gap-1">
             {Array.from({ length: field.max - field.min + 1 }, (_, i) => {
               const n = field.min + i;

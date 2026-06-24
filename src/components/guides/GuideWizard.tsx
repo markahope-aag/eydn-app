@@ -655,7 +655,11 @@ export function GuideWizard({ guide }: Props) {
           }
           return (
             <div key={q.id}>
-              <label className="text-[14px] font-semibold text-plum block mb-2">
+              <label
+                id={`guide-field-${q.id}-label`}
+                htmlFor={`guide-field-${q.id}`}
+                className="text-[14px] font-semibold text-plum block mb-2"
+              >
                 {q.label}
                 {q.required && <span className="text-error ml-1">*</span>}
               </label>
@@ -663,6 +667,8 @@ export function GuideWizard({ guide }: Props) {
                 field={q.field}
                 value={responses[q.id]}
                 onChange={(v) => updateResponse(q.id, v)}
+                id={`guide-field-${q.id}`}
+                labelId={`guide-field-${q.id}-label`}
               />
               {q.tip && (
                 <p className="mt-1.5 text-[12px] text-violet italic">{q.tip}</p>
@@ -683,7 +689,7 @@ export function GuideWizard({ guide }: Props) {
         </button>
         <div className="flex items-center gap-3">
           {saving && (
-            <span className="text-[12px] text-muted">Saving...</span>
+            <span className="text-[12px] text-muted" role="status" aria-live="polite">Saving...</span>
           )}
           <button onClick={goNext} className="btn-primary">
             {isLastSection ? "Complete" : "Continue"}

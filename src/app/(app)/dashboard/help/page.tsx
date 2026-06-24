@@ -179,6 +179,7 @@ export default function HelpPage() {
         <input
           type="text"
           placeholder="Search help topics..."
+          aria-label="Search help topics"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full rounded-[10px] border border-border bg-white pl-11 pr-3 py-2.5 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"

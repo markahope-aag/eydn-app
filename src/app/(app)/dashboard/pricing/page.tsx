@@ -194,6 +194,7 @@ export default function PricingPage() {
                   value={promoInput}
                   onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
                   placeholder="Enter code"
+                  aria-label="Promo code"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();

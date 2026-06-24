@@ -254,21 +254,23 @@ export function SetupTab({
             placeholder="your-wedding"
             className="flex-1 rounded-[10px] border border-border px-3 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
           />
-          {slugStatus === "checking" && (
-            <span className="text-[12px] text-muted animate-pulse">Checking...</span>
-          )}
-          {slugStatus === "available" && (
-            <span className="text-[12px] text-green-600 flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-              Available
-            </span>
-          )}
-          {slugStatus === "taken" && (
-            <span className="text-[12px] text-red-500 flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              Taken
-            </span>
-          )}
+          <span aria-live="polite" role="status">
+            {slugStatus === "checking" && (
+              <span className="text-[12px] text-muted animate-pulse">Checking...</span>
+            )}
+            {slugStatus === "available" && (
+              <span className="text-[12px] text-green-600 flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                Available
+              </span>
+            )}
+            {slugStatus === "taken" && (
+              <span className="text-[12px] text-red-500 flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                Taken
+              </span>
+            )}
+          </span>
         </div>
       </div>
 

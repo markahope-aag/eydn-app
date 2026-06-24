@@ -214,6 +214,7 @@ export function Comments({ entityType, entityId }: Props) {
                 }
               }}
               placeholder="Add a comment — type @ to tag someone"
+              aria-label="Add a comment"
               className="flex-1 rounded-[10px] border-border px-3 py-1.5 text-[13px]"
               disabled={submitting}
             />

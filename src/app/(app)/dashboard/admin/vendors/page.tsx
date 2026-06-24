@@ -384,6 +384,7 @@ export default function AdminVendorsPage() {
           </svg>
           <input
             type="text"
+            aria-label="Search vendors"
             placeholder="Search vendors..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -576,19 +577,19 @@ export default function AdminVendorsPage() {
       {showAdd && (
         <form onSubmit={addVendor} className="mt-4 card p-4 space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
-            <input type="text" placeholder="Business name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]" required />
-            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]">
+            <input type="text" aria-label="Business name" placeholder="Business name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]" required />
+            <select aria-label="Category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]">
               {VENDOR_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-            <input type="text" placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]" required />
-            <select value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]" required>
+            <input type="text" aria-label="City" placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]" required />
+            <select aria-label="State" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]" required>
               <option value="">State</option>
               {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
-            <input type="text" placeholder="Website" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]" />
-            <input type="tel" placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]" />
-            <input type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]" />
-            <select value={form.price_range} onChange={(e) => setForm({ ...form, price_range: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]">
+            <input type="text" aria-label="Website" placeholder="Website" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]" />
+            <input type="tel" aria-label="Phone" placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]" />
+            <input type="email" aria-label="Email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]" />
+            <select aria-label="Price range" value={form.price_range} onChange={(e) => setForm({ ...form, price_range: e.target.value })} className="rounded-[10px] border-border px-3 py-2 text-[15px]">
               <option value="">Price range</option>
               <option value="$">$ — Budget</option>
               <option value="$$">$$ — Mid-range</option>
@@ -596,7 +597,7 @@ export default function AdminVendorsPage() {
               <option value="$$$$">$$$$ — Luxury</option>
             </select>
           </div>
-          <textarea placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none" rows={2} />
+          <textarea aria-label="Description" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full rounded-[10px] border-border px-3 py-2 text-[15px] resize-none" rows={2} />
           <label className="flex items-center gap-2 text-[15px]">
             <input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} className="accent-violet" />
             Featured vendor

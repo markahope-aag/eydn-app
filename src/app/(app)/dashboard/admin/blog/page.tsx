@@ -317,6 +317,7 @@ export default function AdminBlogPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
                 <input
+                  aria-label="Search posts"
                   placeholder="Search posts..."
                   value={blogSearch}
                   onChange={(e) => setBlogSearch(e.target.value)}

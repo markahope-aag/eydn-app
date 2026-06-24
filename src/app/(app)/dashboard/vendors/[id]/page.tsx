@@ -237,10 +237,11 @@ export default function VendorDetailPage({
       {/* Contact info */}
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <div>
-          <label className="text-[12px] font-semibold text-muted">
+          <label htmlFor="vendor-poc-name" className="text-[12px] font-semibold text-muted">
             Contact Name <Tooltip text="Your point of contact (POC) at this vendor — the person you communicate with for quotes, contracts, and day-of coordination." wide />
           </label>
           <input
+            id="vendor-poc-name"
             type="text"
             defaultValue={vendor.poc_name || ""}
             onBlur={(e) => updateField("poc_name", e.target.value || null)}
@@ -249,8 +250,9 @@ export default function VendorDetailPage({
           />
         </div>
         <div>
-          <label className="text-[12px] font-semibold text-muted">Email</label>
+          <label htmlFor="vendor-poc-email" className="text-[12px] font-semibold text-muted">Email</label>
           <input
+            id="vendor-poc-email"
             type="email"
             defaultValue={vendor.poc_email || ""}
             onBlur={(e) => updateField("poc_email", e.target.value || null)}
@@ -259,8 +261,9 @@ export default function VendorDetailPage({
           />
         </div>
         <div>
-          <label className="text-[12px] font-semibold text-muted">Phone</label>
+          <label htmlFor="vendor-poc-phone" className="text-[12px] font-semibold text-muted">Phone</label>
           <input
+            id="vendor-poc-phone"
             type="tel"
             value={phone}
             onChange={(e) => setPhone(formatPhone(e.target.value))}
@@ -274,12 +277,13 @@ export default function VendorDetailPage({
       {/* Financials */}
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <div>
-          <label className="text-[12px] font-semibold text-muted">
+          <label htmlFor="vendor-amount" className="text-[12px] font-semibold text-muted">
             Total Amount <Tooltip text="The full contracted price for this vendor. This feeds into your overall budget tracker." />
           </label>
           <div className="mt-1 flex items-center gap-1">
             <span className="text-muted">$</span>
             <input
+              id="vendor-amount"
               type="number"
               defaultValue={vendor.amount ?? ""}
               onFocus={(e) => e.target.select()}
@@ -297,12 +301,13 @@ export default function VendorDetailPage({
           </div>
         </div>
         <div>
-          <label className="text-[12px] font-semibold text-muted">
+          <label htmlFor="vendor-amount-paid" className="text-[12px] font-semibold text-muted">
             Amount Paid <Tooltip text="Track deposits and installments here. Update this as you make payments." />
           </label>
           <div className="mt-1 flex items-center gap-1">
             <span className="text-muted">$</span>
             <input
+              id="vendor-amount-paid"
               type="number"
               defaultValue={vendor.amount_paid ?? ""}
               onFocus={(e) => e.target.select()}
@@ -344,8 +349,9 @@ export default function VendorDetailPage({
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="text-[12px] font-semibold text-muted">Arrival Time <Tooltip text="When this vendor should arrive on the wedding day. This time appears in your Day-of Binder." /></label>
+            <label htmlFor="vendor-arrival-time" className="text-[12px] font-semibold text-muted">Arrival Time <Tooltip text="When this vendor should arrive on the wedding day. This time appears in your Day-of Binder." /></label>
             <input
+              id="vendor-arrival-time"
               type="time"
               defaultValue={vendor.arrival_time || ""}
               onChange={(e) => updateField("arrival_time", e.target.value || null)}
@@ -357,9 +363,10 @@ export default function VendorDetailPage({
             )}
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-muted">Vendor Meals Needed <Tooltip text="How many meals does this vendor need on the day? Bands and photographers often bring assistants — count everyone who'll eat. Vendor meals are typically a reduced rate." /></label>
+            <label htmlFor="vendor-meal-count" className="text-[12px] font-semibold text-muted">Vendor Meals Needed <Tooltip text="How many meals does this vendor need on the day? Bands and photographers often bring assistants — count everyone who'll eat. Vendor meals are typically a reduced rate." /></label>
             <div className="mt-2 flex items-center gap-2">
               <input
+                id="vendor-meal-count"
                 type="number"
                 min={0}
                 max={20}

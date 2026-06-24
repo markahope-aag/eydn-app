@@ -93,6 +93,7 @@ export function VisionBoardGrid({ items }: Props) {
           onClick={() => setLightbox(null)}
           role="dialog"
           aria-modal="true"
+          aria-label="Vision board image viewer"
         >
           <div
             className="bg-white rounded-[20px] shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"

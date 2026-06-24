@@ -199,10 +199,12 @@ function WeddingDate({
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? "onboarding-date-error" : undefined}
         className="mt-6 w-full rounded-[10px] border-border px-4 py-3.5 text-[16px]"
       />
       {error && (
-        <p className="mt-2 text-[13px] text-red-600">{error}</p>
+        <p id="onboarding-date-error" className="mt-2 text-[13px] text-red-600">{error}</p>
       )}
       {warning && (
         <p className="mt-2 text-[13px] text-amber-700 bg-amber-50 rounded-[10px] px-3 py-2">{warning}</p>

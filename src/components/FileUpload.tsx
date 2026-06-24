@@ -59,6 +59,7 @@ export function FileUpload({ entityType, entityId, onUpload, docType, label }: P
         ref={fileRef}
         type="file"
         onChange={handleUpload}
+        aria-label={label || "Attach file"}
         className="hidden"
       />
       <button

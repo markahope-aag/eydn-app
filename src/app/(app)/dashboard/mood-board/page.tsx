@@ -1054,6 +1054,15 @@ function SortableMoodCard({
       {...attributes}
       {...listeners}
       onClick={onOpen}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        listeners?.onKeyDown?.(e);
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
       className={`${sizeClass} group relative rounded-[16px] overflow-hidden bg-white border border-border hover:shadow-lg transition-shadow ${
         disabled ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"
       }`}

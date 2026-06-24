@@ -79,8 +79,9 @@ export default function SettingsTab({
         <h2 className="text-[15px] font-semibold text-plum">Limits</h2>
         <div className="mt-3 space-y-3">
           <div>
-            <label className="text-[12px] text-muted">Max guests per event</label>
+            <label htmlFor="admin-max-guests" className="text-[12px] text-muted">Max guests per event</label>
             <input
+              id="admin-max-guests"
               type="number"
               defaultValue={settings.limits.max_guests}
               onBlur={(e) => {
@@ -90,8 +91,9 @@ export default function SettingsTab({
             />
           </div>
           <div>
-            <label className="text-[12px] text-muted">Max AI chat messages per hour</label>
+            <label htmlFor="admin-max-chat-messages" className="text-[12px] text-muted">Max AI chat messages per hour</label>
             <input
+              id="admin-max-chat-messages"
               type="number"
               defaultValue={settings.limits.max_chat_messages_per_hour}
               onBlur={(e) => {
@@ -101,8 +103,9 @@ export default function SettingsTab({
             />
           </div>
           <div>
-            <label className="text-[12px] text-muted">Max file size (MB)</label>
+            <label htmlFor="admin-max-file-size" className="text-[12px] text-muted">Max file size (MB)</label>
             <input
+              id="admin-max-file-size"
               type="number"
               defaultValue={settings.limits.max_file_size_mb}
               onBlur={(e) => {

@@ -169,6 +169,7 @@ export function CommandPalette() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            aria-label="Type a command or search"
             placeholder="Type a command or search..."
             className="flex-1 py-3.5 text-[15px] text-plum placeholder:text-muted bg-transparent outline-none"
           />

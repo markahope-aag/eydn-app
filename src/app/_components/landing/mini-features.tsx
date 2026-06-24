@@ -155,7 +155,7 @@ export function MiniDataSecurity() {
     <div style={{ background: "#fff", borderRadius: 12, padding: 20, maxWidth: 360, border: "1px solid #E8D5B7", boxShadow: "0 4px 20px rgba(180,140,130,.15)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
         <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#F3EAE0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2C3E2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2C3E2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
         </div>
@@ -163,7 +163,7 @@ export function MiniDataSecurity() {
       </div>
       {items.map((item, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2C3E2D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2C3E2D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" />
           </svg>
           <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#2A2018" }}>{item}</span>

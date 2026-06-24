@@ -98,8 +98,9 @@ export default function EmailTab({
             <p className="mt-1 text-[13px] text-muted">Preview any email template by sending a test to yourself.</p>
             <div className="mt-3 flex gap-3 items-end">
               <div className="flex-1">
-                <label className="text-[12px] font-semibold text-muted">Recipient</label>
+                <label htmlFor="admin-test-email-recipient" className="text-[12px] font-semibold text-muted">Recipient</label>
                 <input
+                  id="admin-test-email-recipient"
                   type="email"
                   value={testEmailTo}
                   onChange={(e) => setTestEmailTo(e.target.value)}
@@ -149,8 +150,9 @@ export default function EmailTab({
             <p className="mt-1 text-[13px] text-muted">Send a test SMS via Twilio to verify your configuration.</p>
             <div className="mt-3 flex gap-3 items-end">
               <div className="flex-1">
-                <label className="text-[12px] font-semibold text-muted">Phone Number</label>
+                <label htmlFor="admin-test-sms-phone" className="text-[12px] font-semibold text-muted">Phone Number</label>
                 <input
+                  id="admin-test-sms-phone"
                   type="tel"
                   value={testSmsTo}
                   onChange={(e) => setTestSmsTo(e.target.value)}

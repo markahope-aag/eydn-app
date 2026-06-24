@@ -143,6 +143,7 @@ export default function LeadsPage() {
           </svg>
           <input
             type="text"
+            aria-label="Search leads by name, email, or details"
             placeholder="Search by name, email, or details..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}

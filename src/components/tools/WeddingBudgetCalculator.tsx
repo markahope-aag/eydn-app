@@ -479,6 +479,7 @@ export default function WeddingBudgetCalculator() {
                   <input
                     type="text"
                     placeholder="First name"
+                    aria-label="First name"
                     value={saveName}
                     onChange={(e) => setSaveName(e.target.value)}
                     className="w-1/3 rounded-[10px] border border-border bg-white px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
@@ -487,6 +488,7 @@ export default function WeddingBudgetCalculator() {
                   <input
                     type="email"
                     placeholder="Your email"
+                    aria-label="Your email"
                     value={saveEmail}
                     onChange={(e) => setSaveEmail(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") handleSave(); }}

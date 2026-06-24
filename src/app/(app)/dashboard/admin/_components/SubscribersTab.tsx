@@ -51,6 +51,7 @@ export default function SubscribersTab({
           </svg>
           <input
             type="text"
+            aria-label="Search subscribers by name or email"
             placeholder="Search by name or email..."
             value={subSearch}
             onChange={(e) => setSubSearch(e.target.value)}
