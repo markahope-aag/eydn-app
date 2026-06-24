@@ -20,6 +20,10 @@ const PAGES = [
   "/privacy",
   "/terms",
   "/blog",
+  "/tools",
+  "/tools/wedding-budget-calculator",
+  "/tools/do-i-need-a-planner",
+  "/tools/wedding-planning-style",
 ];
 
 for (const viewport of VIEWPORTS) {

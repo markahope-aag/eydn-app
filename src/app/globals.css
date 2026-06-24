@@ -8,7 +8,7 @@ html {
 :root {
   /* Brand Colors — Cream / Forest / Gold */
   --violet: #2C3E2D;          /* forest green — primary actions */
-  --soft-violet: #8B7A30;     /* gold — accent, hover (darkened for WCAG AA contrast) */
+  --soft-violet: #796A2A;     /* gold — accent, hover (darkened to clear WCAG AA 4.5:1 for normal text on light surfaces) */
   --blush-pink: #D4A5A5;      /* soft rose — highlights */
   --petal: #E8D5B7;           /* champagne — warm accent */
   --lavender-mist: #EDE7DF;   /* cream tint — panels */
@@ -412,7 +412,7 @@ input, textarea, select, select option {
   text-underline-offset: 2px;
 }
 .blog-content a:hover {
-  color: #C9A84C;
+  color: #796A2A;
 }
 .blog-content strong {
   font-weight: 600;

@@ -243,7 +243,7 @@ export default function WeddingBudgetCalculator() {
               className="w-full accent-[#C08080]"
               aria-label="Total wedding budget"
             />
-            <div className="flex justify-between text-[11px] text-muted/50 mt-1">
+            <div className="flex justify-between text-[11px] text-muted mt-1">
               <span>$5K</span>
               <span>$75K</span>
             </div>
@@ -265,7 +265,7 @@ export default function WeddingBudgetCalculator() {
               className="w-full accent-[#C08080]"
               aria-label="Number of wedding guests"
             />
-            <div className="flex justify-between text-[11px] text-muted/50 mt-1">
+            <div className="flex justify-between text-[11px] text-muted mt-1">
               <span>10</span>
               <span>300</span>
             </div>
@@ -420,7 +420,7 @@ export default function WeddingBudgetCalculator() {
         </div>
         <Link
           href="/sign-up"
-          className="whitespace-nowrap text-[14px] font-semibold bg-[#D4A5A5] text-white rounded-full px-6 py-2.5 hover:bg-[#C08080] transition"
+          className="whitespace-nowrap text-[14px] font-semibold bg-[#A35A5A] text-white rounded-full px-6 py-2.5 hover:bg-[#8F4A4A] transition"
         >
           Start free — $79 or $14.99/mo
         </Link>
@@ -495,7 +495,7 @@ export default function WeddingBudgetCalculator() {
                     className="flex-1 rounded-[10px] border border-border bg-white px-4 py-3 text-[15px] focus:outline-none focus:ring-2 focus:ring-violet/30"
                   />
                 </div>
-                <p className="mt-2 text-[11px] text-muted/60">
+                <p className="mt-2 text-[11px] text-muted">
                   No spam, ever. Just your saved calculator link.
                 </p>
                 <div className="mt-5 flex gap-3">

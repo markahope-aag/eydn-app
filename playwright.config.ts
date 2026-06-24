@@ -1,4 +1,8 @@
 import { defineConfig } from "@playwright/test";
+import { config as loadEnv } from "dotenv";
+
+// Load .env.local so auth.setup.ts can reach Clerk credentials (E2E_CLERK_*, CLERK_SECRET_KEY).
+loadEnv({ path: ".env.local" });
 
 export default defineConfig({
   testDir: "./__tests__/visual",
